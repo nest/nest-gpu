@@ -1,4 +1,4 @@
-# NESTGPU
+# NEST GPU
 A GPU-MPI library for simulation of large-scale networks of spiking neurons.
 Can be used in Python, in C++ and in C.
 
