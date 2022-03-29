@@ -12,7 +12,9 @@ print(' of spiking neurons')
 print('Homepage: https://github.com/golosio/NeuronGPU') 
 print('-----------------------------------------------------------------')
 
-lib_path="/usr/local/lib/libnestgpu.so"
+lib_dir=os.environ["NEST_GPU"]
+lib_path=lib_dir + "/lib/libnestgpu.so"
+#lib_path="/usr/local/lib/libnestgpu.so"
 _nestgpu=ctypes.CDLL(lib_path)
 
 c_float_p = ctypes.POINTER(ctypes.c_float)
