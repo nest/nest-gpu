@@ -137,19 +137,11 @@ else
 endif
 
 CUDA_FLAGS= -arch $(GPU_ARCH) --ptxas-options=-v --maxrregcount=55 --relocatable-device-code true
-CUDA_LIBS= -lm -lcurand -lcuda -lcudart
+CUDA_LIBS= -lm -lcurand
 #-lomp
 
-OBJS=$(ngpu_src_files:.cu=.cu.o)
-
-%.cu.o: %.cu
-	$(NVCC) -ccbin=$(MPICXX) --compiler-options  "$(COMPILER_FLAGS)" -I . $(CUDA_FLAGS) $< -c -o $@
-
-libnestgpu.la: $(OBJS)
-	$(NVCC) -ccbin=$(MPICXX) --compiler-options  "$(COMPILER_FLAGS)" -I . $(CUDA_FLAGS) --shared -o $@ $^ $(CUDA_LIBS)
-
-#libnestgpu.la: $(ngpu_src_files) $(ngpu_h_files)
-#	$(NVCC) -ccbin=$(MPICXX) --compiler-options  "$(COMPILER_FLAGS)" -I . $(CUDA_FLAGS) --shared -o $@ $(ngpu_src_files) $(CUDA_LIBS)
+libnestgpu.la: $(ngpu_src_files) $(ngpu_h_files)
+	$(NVCC) -ccbin=$(MPICXX) --compiler-options  "$(COMPILER_FLAGS)" -I . $(CUDA_FLAGS) --shared -o $@ $(ngpu_src_files) $(CUDA_LIBS)
 
 lib_LTLIBRARIES = libnestgpu.la
 
