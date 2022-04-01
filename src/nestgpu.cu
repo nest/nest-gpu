@@ -536,7 +536,10 @@ int NESTGPU::SimulationStep()
   ClearGetSpikeArrays();    
   if (n_spikes > 0) {
     time_mark = getRealTime();
-    NestedLoop(n_spikes, d_SpikeTargetNum, 0);
+    CollectSpikeKernel<<<n_spikes, 1024>>>(n_spikes, d_SpikeTargetNum);
+    gpuErrchk(cudaPeekAtLastError());
+    //gpuErrchk(cudaDeviceSynchronize());
+
     NestedLoop_time_ += (getRealTime() - time_mark);
   }
   time_mark = getRealTime();
@@ -603,7 +606,10 @@ int NESTGPU::SimulationStep()
     gpuErrchk(cudaMemcpy(&n_rev_spikes, d_RevSpikeNum, sizeof(unsigned int),
 			 cudaMemcpyDeviceToHost));
     if (n_rev_spikes > 0) {
-      NestedLoop(n_rev_spikes, d_RevSpikeNConn, 1);
+      SynapseUpdateKernel<<<n_rev_spikes, 1024>>>(n_rev_spikes, d_RevSpikeNConn);
+      gpuErrchk(cudaPeekAtLastError());
+      gpuErrchk(cudaDeviceSynchronize());
+
     }      
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   }

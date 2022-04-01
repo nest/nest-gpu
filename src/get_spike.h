@@ -34,4 +34,7 @@ __global__ void GetSpikes(double *spike_array, int array_size, int n_port,
 			  int port_input_arr_step,
 			  int port_input_port_step);
 
+
+__global__ void CollectSpikeKernel(int n_spikes, int *SpikeTargetNum);
+
 #endif
