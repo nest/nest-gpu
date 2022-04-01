@@ -7,6 +7,7 @@
 *.pyc
 *.pyo
 Makefile
+Makefile.in
 build
 build_mac
 aclocal.m4
@@ -23,6 +24,7 @@ m4/lt~obsolete.m4
 config.h
 config.log
 config.status
+configure
 configure.doc
 stamp-h1
 libtool
