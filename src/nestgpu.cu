@@ -132,8 +132,6 @@ NESTGPU::NESTGPU()
   connect_mpi_->remote_spike_height_ = false;
 #endif
   
-  NestedLoop::Init();
-
   SpikeBufferUpdate_time_ = 0;
   poisson_generator_time_ = 0;
   neuron_Update_time_ = 0;
@@ -538,7 +536,7 @@ int NESTGPU::SimulationStep()
   ClearGetSpikeArrays();    
   if (n_spikes > 0) {
     time_mark = getRealTime();
-    NestedLoop::Run(n_spikes, d_SpikeTargetNum, 0);
+    NestedLoop(n_spikes, d_SpikeTargetNum, 0);
     NestedLoop_time_ += (getRealTime() - time_mark);
   }
   time_mark = getRealTime();
@@ -605,7 +603,7 @@ int NESTGPU::SimulationStep()
     gpuErrchk(cudaMemcpy(&n_rev_spikes, d_RevSpikeNum, sizeof(unsigned int),
 			 cudaMemcpyDeviceToHost));
     if (n_rev_spikes > 0) {
-      NestedLoop::Run(n_rev_spikes, d_RevSpikeNConn, 1);
+      NestedLoop(n_rev_spikes, d_RevSpikeNConn, 1);
     }      
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   }

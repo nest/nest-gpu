@@ -19,23 +19,9 @@
  */
 
 
-
-
-
 #ifndef NESTED_LOOP_H
 #define  NESTED_LOOP_H
 
-#include "prefix_scan.h"
-
-namespace NestedLoop
-{
-  extern PrefixScan prefix_scan_;
-  
-  int Init();
-  int Run(int Nx, int *d_Ny, int i_func);
-  int CumulSumNestedLoop(int Nx, int *d_Ny, int i_func);  
-
-  int Free();
-}
+int NestedLoop(int Nx, int *d_Ny, int i_func);  
 
 #endif
