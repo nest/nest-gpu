@@ -1,4 +1,7 @@
 # NEST GPU
+
+**NEST GPU was developed under the name [NeuronGPU](https://github.com/golosio/NeuronGPU) before it has been integrated in the NEST Initiative, see [Golosio et al. (2021)](https://www.frontiersin.org/articles/10.3389/fncom.2021.627620/full). Currently this repository is being adapted to the NEST development workflow.**
+
 A GPU-MPI library for simulation of large-scale networks of spiking neurons.
 Can be used in Python, in C++ and in C.
 
