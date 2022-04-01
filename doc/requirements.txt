@@ -1,0 +1,2 @@
+sphinxi_rtd_theme
+nbsphinx
