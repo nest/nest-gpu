@@ -49,7 +49,6 @@ __device__ int MaxSpikeBufferSize;
 __device__ int NSpikeBuffer;
 __device__ int MaxDelayNum;
 
-int h_NSpikeBuffer;
 bool ConnectionSpikeTimeFlag;
 
 float *d_LastSpikeHeight; // [NSpikeBuffer];
@@ -119,12 +118,6 @@ __device__ int *SpikeBufferSize; // [NSpikeBuffer];
 // SpikeBufferSize[i_spike_buffer];
 // where i_spike_buffer is the source node index
 // number of spikes stored in the buffer
-
-int *d_SpikeBufferIdx0; // [NSpikeBuffer];
-__device__ int *SpikeBufferIdx0; // [NSpikeBuffer];
-// SpikeBufferIdx0[i_spike_buffer];
-// where i_spike_buffer is the source node index
-// index of most recent spike stored in the buffer
 
 int *d_SpikeBufferTimeIdx; // [NSpikeBuffer*MaxSpikeBufferNum];
 __device__ int *SpikeBufferTimeIdx; // [NSpikeBuffer*MaxSpikeBufferNum];
@@ -224,18 +217,23 @@ __device__ void PushSpike(int i_spike_buffer, float height)
       //exit(0);
       return;
     }
+    
     ///////////////////////////////////
     // push_front new spike in buffer
     //////////////////////////////////
     SpikeBufferSize[i_spike_buffer]++; // increase n. of spikes in buffer
-    // the index of the most recent spike is0 should be decreased by 1
-    int is0 = (SpikeBufferIdx0[i_spike_buffer] + MaxSpikeBufferSize - 1)
-      % MaxSpikeBufferSize;
-    SpikeBufferIdx0[i_spike_buffer] = is0;
-    int i_arr = is0*NSpikeBuffer+i_spike_buffer; // spike index in array
-    SpikeBufferTimeIdx[i_arr] = 0; // time index is initialized to 0
-    SpikeBufferConnIdx[i_arr] = 0; // connect. group index is initialized to 0
-    SpikeBufferHeight[i_arr] = height; // spike multiplicity
+    for (int is=Ns; is>0; is--) {
+      // shift all buffer content by one position 
+      SpikeBufferTimeIdx[is*NSpikeBuffer+i_spike_buffer] =
+	SpikeBufferTimeIdx[(is-1)*NSpikeBuffer+i_spike_buffer];
+      SpikeBufferConnIdx[is*NSpikeBuffer+i_spike_buffer] =
+	SpikeBufferConnIdx[(is-1)*NSpikeBuffer+i_spike_buffer];
+      SpikeBufferHeight[is*NSpikeBuffer+i_spike_buffer] =
+	SpikeBufferHeight[(is-1)*NSpikeBuffer+i_spike_buffer];
+    }
+    SpikeBufferTimeIdx[i_spike_buffer] = 0; // time index is initialized to 0
+    SpikeBufferConnIdx[i_spike_buffer] = 0; // connect. group index init. to 0
+    SpikeBufferHeight[i_spike_buffer] = height; // spike multiplicity
   }
 }
 
@@ -264,13 +262,12 @@ __global__ void SpikeBufferUpdate()
   else {
     den_delay_idx = 0;
   }
+
   // flag for sending spikes back through dendrites (e.g. for STDP)
   bool rev_spike = false;
-  int is0 = SpikeBufferIdx0[i_spike_buffer]; // index of most recent spike
   int Ns = SpikeBufferSize[i_spike_buffer]; // n. of spikes in buffer
   for (int is=0; is<Ns; is++) {
-    int is1 = (is0  + is)%MaxSpikeBufferSize;
-    int i_arr = is1*NSpikeBuffer+i_spike_buffer; // spike index in array
+    int i_arr = is*NSpikeBuffer+i_spike_buffer; // spike index in array
     int i_conn = SpikeBufferConnIdx[i_arr];
     int spike_time_idx = SpikeBufferTimeIdx[i_arr];
     //if (i_spike_buffer==1) {
@@ -329,7 +326,6 @@ __global__ void InitLastSpikeTimeIdx(unsigned int n_spike_buffers,
 int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
 {
   unsigned int n_spike_buffers = net_connection->connection_.size();
-  h_NSpikeBuffer = n_spike_buffers;
   int max_delay_num = net_connection->MaxDelayNum();
   //printf("mdn: %d\n", max_delay_num);
   
@@ -364,7 +360,6 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
   gpuErrchk(cudaMalloc(&d_ConnectionGroupTargetSize,
 		       n_spike_buffers*max_delay_num*sizeof(int)));
   gpuErrchk(cudaMalloc(&d_SpikeBufferSize, n_spike_buffers*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_SpikeBufferIdx0, n_spike_buffers*sizeof(int)));
   gpuErrchk(cudaMalloc(&d_SpikeBufferTimeIdx,
 		       n_spike_buffers*max_spike_buffer_size*sizeof(int)));
   gpuErrchk(cudaMalloc(&d_SpikeBufferConnIdx,
@@ -372,7 +367,6 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
   gpuErrchk(cudaMalloc(&d_SpikeBufferHeight,
 		       n_spike_buffers*max_spike_buffer_size*sizeof(float)));
   gpuErrchk(cudaMemset(d_SpikeBufferSize, 0, n_spike_buffers*sizeof(int)));
-  gpuErrchk(cudaMemset(d_SpikeBufferIdx0, 0, n_spike_buffers*sizeof(int)));
 
   gpuErrchk(cudaMalloc(&d_ConnectionGroupTargetNode,
 		     n_spike_buffers*max_delay_num*sizeof(unsigned int*)));
@@ -521,8 +515,7 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
 			   d_ConnectionGroupTargetSynGroup,
 			   d_ConnectionGroupTargetWeight,
 			   d_ConnectionGroupTargetSpikeTime,
-			   d_SpikeBufferSize, d_SpikeBufferIdx0,
-			   d_SpikeBufferTimeIdx,
+			   d_SpikeBufferSize, d_SpikeBufferTimeIdx,
 			   d_SpikeBufferConnIdx, d_SpikeBufferHeight,
 			   d_RevConnections, d_TargetRevConnectionSize,
 			   d_TargetRevConnection, d_LastRevSpikeTimeIdx
@@ -563,8 +556,7 @@ __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
 				unsigned char **conn_group_target_syn_group,
 				float **conn_group_target_weight,
 				unsigned short **conn_group_target_spike_time,
-				int *spike_buffer_size, int *spike_buffer_idx0,
-				int *spike_buffer_time,
+				int *spike_buffer_size, int *spike_buffer_time,
 				int *spike_buffer_conn,
 				float *spike_buffer_height,
 				unsigned int *rev_conn,
@@ -588,7 +580,6 @@ __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
   ConnectionGroupTargetWeight = conn_group_target_weight;
   ConnectionGroupTargetSpikeTime = conn_group_target_spike_time;
   SpikeBufferSize = spike_buffer_size;
-  SpikeBufferIdx0 = spike_buffer_idx0;
   SpikeBufferTimeIdx = spike_buffer_time;
   SpikeBufferConnIdx = spike_buffer_conn;
   SpikeBufferHeight = spike_buffer_height;

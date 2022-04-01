@@ -116,6 +116,7 @@ int BaseNeuron::Init(int i_node_0, int n_node, int n_port,
   n_port_var_ = 0;
   n_scal_param_ = 0;
   n_port_param_ = 0;
+  n_group_param_ = 0;
   n_var_ = 0;
   n_param_ = 0;
 
@@ -128,11 +129,13 @@ int BaseNeuron::Init(int i_node_0, int n_node, int n_port,
   port_input_port_step_ = 0;
   var_arr_ = NULL;
   param_arr_ = NULL;
+  group_param_ = NULL;
   int_var_name_.clear();
   scal_var_name_ = NULL;
   port_var_name_= NULL;
   scal_param_name_ = NULL;
   port_param_name_ = NULL;
+  group_param_name_ = NULL;
   array_var_name_.clear();
   array_param_name_.clear();
 
@@ -288,6 +291,20 @@ int BaseNeuron::SetArrayParam(int *i_neuron, int n_neuron,
 		       + param_name);
 }
 
+int BaseNeuron::SetGroupParam(std::string param_name, float val)
+{
+  int i_param;
+  for (i_param=0; i_param<n_group_param_; i_param++) {
+    if (param_name == group_param_name_[i_param]) {
+      group_param_[i_param] = val;
+      return 0;
+    }
+  }
+  throw ngpu_exception(std::string("Unrecognized group parameter ")
+		       + param_name);
+}
+
+  
 int BaseNeuron::SetIntVar(int i_neuron, int n_neuron,
 			  std::string var_name, int val)
 {
@@ -562,6 +579,21 @@ float *BaseNeuron::GetArrayParam(int i_neuron, std::string param_name)
 		       + param_name);
 }
 
+
+float BaseNeuron::GetGroupParam(std::string param_name)
+{
+  int i_param;
+  for (i_param=0; i_param<n_group_param_; i_param++) {
+    if (param_name == group_param_name_[i_param]) {
+      return group_param_[i_param];
+    }
+  }
+    
+  throw ngpu_exception(std::string("Unrecognized group parameter ")
+		       + param_name);
+}
+
+ 
 int *BaseNeuron::GetIntVar(int i_neuron, int n_neuron,
 				std::string var_name)
 {
@@ -939,6 +971,15 @@ bool BaseNeuron::IsArrayParam(std::string param_name)
   return false;
 }
 
+bool BaseNeuron::IsGroupParam(std::string param_name)
+{
+  int i_param;
+  for (i_param=0; i_param<n_group_param_; i_param++) {
+    if (param_name == group_param_name_[i_param]) return true;
+  }
+  return false;
+}
+
 int BaseNeuron::CheckNeuronIdx(int i_neuron)
 {
   if (i_neuron>=n_node_) {
@@ -1035,7 +1076,6 @@ float BaseNeuron::GetSpikeActivity(int i_neuron)
   int is0;
   gpuErrchk(cudaMemcpy(&is0, d_SpikeBufferIdx0 + i_spike_buffer,
 		       sizeof(int), cudaMemcpyDeviceToHost));
-  
   int i_arr = is0*h_NSpikeBuffer+i_spike_buffer; // spike index in array
 
   int time_idx;
@@ -1120,6 +1160,21 @@ std::vector<std::string> BaseNeuron::GetPortParamNames()
 int BaseNeuron::GetNPortParam()
 {
   return n_port_param_;
+}
+
+std::vector<std::string> BaseNeuron::GetGroupParamNames()
+{
+  std::vector<std::string> param_name_vect;
+  for (int i=0; i<n_group_param_; i++) {
+    param_name_vect.push_back(group_param_name_[i]);
+  }
+  
+  return param_name_vect;
+}
+  
+int BaseNeuron::GetNGroupParam()
+{
+  return n_group_param_;
 }
 
 
@@ -1231,3 +1286,8 @@ float *BaseNeuron::GetExtNeuronInputSpikes(int *n_node, int *n_port)
   throw ngpu_exception("Cannot get extern neuron input spikes from this model");
 }
 
+int BaseNeuron::SetNeuronGroupParam(std::string param_name, float val)
+{
+  throw ngpu_exception(std::string("Unrecognized neuron group parameter ")
+		       + param_name);
+}

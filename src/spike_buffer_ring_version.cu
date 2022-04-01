@@ -39,8 +39,8 @@
 
 #define LAST_SPIKE_TIME_GUARD 0x70000000
 
-extern __constant__ float NESTGPUTime;
-extern __constant__ int NESTGPUTimeIdx;
+extern __constant__ double NESTGPUTime;
+extern __constant__ long long NESTGPUTimeIdx;
 extern __constant__ float NESTGPUTimeResolution;
 extern __constant__ NodeGroupStruct NodeGroupArray[];
 extern __device__ signed char *NodeGroupMap;
@@ -55,11 +55,11 @@ bool ConnectionSpikeTimeFlag;
 float *d_LastSpikeHeight; // [NSpikeBuffer];
 __device__ float *LastSpikeHeight; //
 
-int *d_LastSpikeTimeIdx; // [NSpikeBuffer];
-__device__ int *LastSpikeTimeIdx; //
+long long *d_LastSpikeTimeIdx; // [NSpikeBuffer];
+__device__ long long *LastSpikeTimeIdx; //
 
-int *d_LastRevSpikeTimeIdx; // [NSpikeBuffer];
-__device__ int *LastRevSpikeTimeIdx; //
+long long *d_LastRevSpikeTimeIdx; // [NSpikeBuffer];
+__device__ long long *LastRevSpikeTimeIdx; //
 
 float *d_ConnectionWeight; // [NConnection];
 __device__ float *ConnectionWeight; //
@@ -151,7 +151,6 @@ __device__ int *TargetRevConnectionSize;
 unsigned int **d_TargetRevConnection; //[i][j] j=0,...,RevConnectionSize[i]-1
 __device__ unsigned int **TargetRevConnection;
 
-
 ////////////////////////////////////////////////////////////
 // push a new spike in spike buffer of a node
 ////////////////////////////////////////////////////////////
@@ -218,7 +217,7 @@ __device__ void PushSpike(int i_spike_buffer, float height)
   // spike should be stored if there are output connections
   // or if dendritic delay is > 0
   if (ConnectionGroupSize[i_spike_buffer]>0 || den_delay_idx>0) {
-    int Ns = SpikeBufferSize[i_spike_buffer]; // n. of spikes in buffer 
+    int Ns = SpikeBufferSize[i_spike_buffer]; // n. of spikes in buffer
     if (Ns>=MaxSpikeBufferSize) {
       printf("Maximum number of spikes in spike buffer exceeded"
 	     " for spike buffer %d\n", i_spike_buffer);
@@ -249,7 +248,6 @@ __global__ void SpikeBufferUpdate()
   if (i_spike_buffer>=NSpikeBuffer) return;
   
   int i_group=NodeGroupMap[i_spike_buffer];
-
   int den_delay_idx;
   float *den_delay_arr = NodeGroupArray[i_group].den_delay_arr_;
   // check if node has dendritic delay
@@ -266,7 +264,7 @@ __global__ void SpikeBufferUpdate()
   else {
     den_delay_idx = 0;
   }
-   // flag for sending spikes back through dendrites (e.g. for STDP)
+  // flag for sending spikes back through dendrites (e.g. for STDP)
   bool rev_spike = false;
   int is0 = SpikeBufferIdx0[i_spike_buffer]; // index of most recent spike
   int Ns = SpikeBufferSize[i_spike_buffer]; // n. of spikes in buffer
@@ -281,7 +279,7 @@ __global__ void SpikeBufferUpdate()
     if (spike_time_idx+1 == den_delay_idx) {
       rev_spike = true;
     }
-     // connection index in array
+    // connection index in array
     int i_conn_arr = i_conn*NSpikeBuffer+i_spike_buffer;
     // if spike time matches connection group delay deliver it
     // to global spike array
@@ -300,8 +298,7 @@ __global__ void SpikeBufferUpdate()
     // check if it is the oldest spike of the buffer
     // and if its connection group index is over the last connection group
     // and if spike time is greater than the dendritic delay
-    if (is==Ns-1
-	&& i_conn>=ConnectionGroupSize[i_spike_buffer]
+    if (is==Ns-1 && i_conn>=ConnectionGroupSize[i_spike_buffer]
 	&& spike_time_idx+1>=den_delay_idx) {
       // in this case we don't need any more to keep track of the oldest spike
       SpikeBufferSize[i_spike_buffer]--; // so remove it from buffer
@@ -336,9 +333,10 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
   int max_delay_num = net_connection->MaxDelayNum();
   //printf("mdn: %d\n", max_delay_num);
   
-  gpuErrchk(cudaMalloc(&d_LastSpikeTimeIdx, n_spike_buffers*sizeof(int)));
+  gpuErrchk(cudaMalloc(&d_LastSpikeTimeIdx, n_spike_buffers*sizeof(long long)));
   gpuErrchk(cudaMalloc(&d_LastSpikeHeight, n_spike_buffers*sizeof(float)));
-  gpuErrchk(cudaMalloc(&d_LastRevSpikeTimeIdx, n_spike_buffers*sizeof(int)));
+  gpuErrchk(cudaMalloc(&d_LastRevSpikeTimeIdx, n_spike_buffers
+		       *sizeof(long long)));
   
   unsigned int n_conn = net_connection->StoredNConnections();
   unsigned int *h_conn_target = new unsigned int[n_conn];
@@ -442,7 +440,7 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
   std::vector<std::vector<unsigned int> > rev_connections(n_spike_buffers);
   for (unsigned int i_conn=0; i_conn<n_conn; i_conn++) {
     unsigned char syn_group = h_conn_syn_group[i_conn];
-    if (syn_group==1) { // TEMPORARY, TO BE IMPROVED
+    if (syn_group>=1) { // TEMPORARY, TO BE IMPROVED
       n_rev_conn++;
       int target = h_conn_target[i_conn] & PORT_MASK;
       rev_connections[target].push_back(i_conn);
@@ -554,7 +552,7 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
 
 __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
 				int max_spike_buffer_size,
-				int *last_spike_time_idx,
+				long long *last_spike_time_idx,
 				float *last_spike_height,
 				float *conn_weight,
 				unsigned char *conn_syn_group,
@@ -572,7 +570,7 @@ __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
 				unsigned int *rev_conn,
 				int *target_rev_conn_size,
 				unsigned int **target_rev_conn,
-				int *last_rev_spike_time_idx)
+				long long *last_rev_spike_time_idx)
 {
   NSpikeBuffer = n_spike_buffers;
   MaxDelayNum = max_delay_num;

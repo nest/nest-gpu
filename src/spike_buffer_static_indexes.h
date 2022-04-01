@@ -30,7 +30,6 @@ extern __device__ int MaxSpikeBufferSize;
 extern __device__ int NSpikeBuffer;
 extern __device__ int MaxDelayNum;
 
-extern int h_NSpikeBuffer;
 extern bool ConnectionSpikeTimeFlag;
 
 extern float *d_LastSpikeHeight; // [NSpikeBuffer];
@@ -88,10 +87,6 @@ extern int *d_SpikeBufferSize;
 extern __device__ int *SpikeBufferSize;
 // number of spikes stored in the buffer
 
-extern int *d_SpikeBufferIdx0;
-extern __device__ int *SpikeBufferIdx0;
-// index of most recent spike stored in the buffer
-
 extern int *d_SpikeBufferTimeIdx;
 extern __device__ int *SpikeBufferTimeIdx;
 // time index of the spike
@@ -132,8 +127,7 @@ __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
 				unsigned char **conn_group_target_syn_group,
 				float **conn_group_target_weight,
 				unsigned short **conn_group_target_spike_time,
-				int *spike_buffer_size, int *spike_buffer_idx0,
-				int *spike_buffer_time,
+				int *spike_buffer_size, int *spike_buffer_time,
 				int *spike_buffer_conn,
 				float *spike_buffer_height,
 				unsigned int *rev_conn,
