@@ -29,6 +29,8 @@
 #include "base_neuron.h"
 #include "spike_buffer.h"
 
+
+// set equally spaced (index i*step) elements of array arr to value val
 __global__ void BaseNeuronSetIntArray(int *arr, int n_elem, int step,
 					int val)
 {
@@ -38,6 +40,8 @@ __global__ void BaseNeuronSetIntArray(int *arr, int n_elem, int step,
   }
 }
 
+// set elements of array arr to value val using indexes from pointer pos
+// and given step: index = pos[array_idx]*step
 __global__ void BaseNeuronSetIntPtArray(int *arr, int *pos, int n_elem,
 					  int step, int val)
 {
@@ -47,6 +51,8 @@ __global__ void BaseNeuronSetIntPtArray(int *arr, int *pos, int n_elem,
   }
 }
 
+// copy equally spaced elements of array arr1 to equally spaced positions
+// of array arr2
 __global__ void BaseNeuronGetIntArray(int *arr1, int *arr2, int n_elem,
 					int step1, int step2)
 {
@@ -56,6 +62,9 @@ __global__ void BaseNeuronGetIntArray(int *arr1, int *arr2, int n_elem,
   }
 }
 
+// copy elements of array arr1 with indexes from pointer pos
+// and given step (index = pos[array_idx]*step1)
+// to equally spaced positions of array arr2
 __global__ void BaseNeuronGetIntPtArray(int *arr1, int *arr2, int *pos,
 					  int n_elem, int step1, int step2)
 {
@@ -65,6 +74,7 @@ __global__ void BaseNeuronGetIntPtArray(int *arr1, int *arr2, int *pos,
   }
 }
 
+// set equally spaced (index i*step) elements of array arr to value val
 __global__ void BaseNeuronSetFloatArray(float *arr, int n_elem, int step,
 					float val)
 {
@@ -74,6 +84,8 @@ __global__ void BaseNeuronSetFloatArray(float *arr, int n_elem, int step,
   }
 }
 
+// set elements of array arr to value val using indexes from pointer pos
+// and given step: index = pos[array_idx]*step
 __global__ void BaseNeuronSetFloatPtArray(float *arr, int *pos, int n_elem,
 					  int step, float val)
 {
@@ -83,6 +95,8 @@ __global__ void BaseNeuronSetFloatPtArray(float *arr, int *pos, int n_elem,
   }
 }
 
+// copy equally spaced elements of array arr1 to equally spaced positions
+// of array arr2
 __global__ void BaseNeuronGetFloatArray(float *arr1, float *arr2, int n_elem,
 					int step1, int step2)
 {
@@ -92,6 +106,9 @@ __global__ void BaseNeuronGetFloatArray(float *arr1, float *arr2, int n_elem,
   }
 }
 
+// copy elements of array arr1 with indexes from pointer pos
+// and given step (index = pos[array_idx]*step1)
+// to equally spaced positions of array arr2
 __global__ void BaseNeuronGetFloatPtArray(float *arr1, float *arr2, int *pos,
 					  int n_elem, int step1, int step2)
 {
@@ -101,69 +118,76 @@ __global__ void BaseNeuronGetFloatPtArray(float *arr1, float *arr2, int *pos,
   }
 }
 
+// Initialization method for class BaseNeuron
 int BaseNeuron::Init(int i_node_0, int n_node, int n_port,
 		     int i_group, unsigned long long *seed)
 {
   node_type_= 0; // NULL MODEL
-  ext_neuron_flag_ = false;
-  i_node_0_ = i_node_0;
-  n_node_ = n_node;
-  n_port_ = n_port;
-  i_group_ = i_group;
+  ext_neuron_flag_ = false; // by default neuron is not external
+  i_node_0_ = i_node_0; // first neuron of group index in spike buffer array
+  n_node_ = n_node; // number of nodes in the group
+  n_port_ = n_port; // number of receptor ports
+  i_group_ = i_group; // neuron group index
   seed_ = seed;
 
-  n_scal_var_ = 0;
-  n_port_var_ = 0;
-  n_scal_param_ = 0;
-  n_port_param_ = 0;
-  n_group_param_ = 0;
-  n_var_ = 0;
-  n_param_ = 0;
+  n_scal_var_ = 0; // number of scalar state variables
+  n_port_var_ = 0; // number of receptor-port state variables
+  n_scal_param_ = 0; // number of scalar parameters
+  n_port_param_ = 0; // number of receptor-port parameters
+  n_group_param_ = 0; // number of neuron-group parameters
+  n_var_ = 0; // total number of state variables
+  n_param_ = 0; // total number of parameters
 
   get_spike_array_ = NULL;
-  port_weight_arr_ = NULL;
-  port_weight_arr_step_ = 0;
-  port_weight_port_step_ = 0;
-  port_input_arr_ = NULL;
-  port_input_arr_step_ = 0;
-  port_input_port_step_ = 0;
-  var_arr_ = NULL;
-  param_arr_ = NULL;
-  group_param_ = NULL;
-  int_var_name_.clear();
-  scal_var_name_ = NULL;
-  port_var_name_= NULL;
-  scal_param_name_ = NULL;
-  port_param_name_ = NULL;
-  group_param_name_ = NULL;
-  array_var_name_.clear();
-  array_param_name_.clear();
+  port_weight_arr_ = NULL; // pointer to array of receptor-port weights
+  port_weight_arr_step_ = 0; // step between elements for different neurons
+  port_weight_port_step_ = 0; // step between elements for different ports
+  port_input_arr_ = NULL; // pointer to array of receptor-port input
+  port_input_arr_step_ = 0; // step between elements for different neurons
+  port_input_port_step_ = 0; // step between elements for different ports
+  var_arr_ = NULL; // pointer to state-variables array
+  param_arr_ = NULL; // pointer to parameter array
+  group_param_ = NULL; // pointer to neuron-group parameters
+  int_var_name_.clear(); // vector of integer-variable names
+  scal_var_name_ = NULL; // array of scalar state-variable names
+  port_var_name_= NULL;// array of receptor-port state variable names
+  scal_param_name_ = NULL; // array of scalar parameter names
+  port_param_name_ = NULL; // array of receptor-port parameter names
+  group_param_name_ = NULL; // array of neuron-group parameter names
+  array_var_name_.clear(); // vector of array-variable names
+  array_param_name_.clear(); // vector of array-parameter names
 
-  d_dir_conn_array_ = NULL;
-  n_dir_conn_ = 0;
-  has_dir_conn_ = false;
+  d_dir_conn_array_ = NULL; // array of outgoing direct connections
+                            // used by poisson generators
+                            // to send independent spike trains through each
+                            // connection
+  n_dir_conn_ = 0; // number of direct connections
+  has_dir_conn_ = false; // true if neur. group has outgoing direct connections
 
-  spike_count_ = NULL;
-  rec_spike_times_ = NULL;
-  n_rec_spike_times_ = NULL;
-  max_n_rec_spike_times_ = 0;
-  den_delay_arr_ = NULL;
+  spike_count_ = NULL; // array of spike counters
+  rec_spike_times_ = NULL; // array of spike-time records
+  n_rec_spike_times_ = NULL; // array of number of recorded spike times
+  max_n_rec_spike_times_ = 0; // max number of recorded spike times
+  den_delay_arr_ = NULL; // array of dendritic backward delays
 
   return 0;
 }			    
 
+// allocate state-variable array
 int BaseNeuron::AllocVarArr()
 {
   gpuErrchk(cudaMalloc(&var_arr_, n_node_*n_var_*sizeof(float)));
   return 0;
 }
 
+// allocate parameter array
 int BaseNeuron::AllocParamArr()
 {
   gpuErrchk(cudaMalloc(&param_arr_, n_node_*n_param_*sizeof(float)));
   return 0;
 }
 
+// deallocate state-variable array
 int BaseNeuron::FreeVarArr()
 {
   if (var_arr_ != NULL) {
@@ -173,6 +197,7 @@ int BaseNeuron::FreeVarArr()
   return 0;
 }
 
+// deallocate parameter array
 int BaseNeuron::FreeParamArr()
 {
   if (param_arr_ != NULL) {
@@ -182,6 +207,9 @@ int BaseNeuron::FreeParamArr()
   return 0;
 }
 
+// set scalar parameter param_name of neurons
+// i_neuron, ..., i_neuron + n_neuron -1
+// to value val
 int BaseNeuron::SetScalParam(int i_neuron, int n_neuron,
 			     std::string param_name, float val)
 {
@@ -200,6 +228,9 @@ int BaseNeuron::SetScalParam(int i_neuron, int n_neuron,
   return 0;
 }
 
+// set scalar parameter param_name of neurons
+// i_neuron[0], ..., i_neuron[n_neuron -1]
+// to value val
 int BaseNeuron::SetScalParam(int *i_neuron, int n_neuron,
 			     std::string param_name, float val)
 {
@@ -221,6 +252,9 @@ int BaseNeuron::SetScalParam(int *i_neuron, int n_neuron,
   return 0;
 }
 
+// set receptor-port parameter param_name of neurons
+// i_neuron, ..., i_neuron + n_neuron -1
+// to value val
 int BaseNeuron::SetPortParam(int i_neuron, int n_neuron,
 			     std::string param_name, float *param,
 			     int vect_size)
@@ -247,6 +281,9 @@ int BaseNeuron::SetPortParam(int i_neuron, int n_neuron,
   return 0;
 }
 
+// set receptor-port parameter param_name of neurons
+// i_neuron[0], ..., i_neuron[n_neuron -1]
+// to value val
 int BaseNeuron::SetPortParam(int *i_neuron, int n_neuron,
 			     std::string param_name, float *param,
 			     int vect_size)
@@ -275,6 +312,10 @@ int BaseNeuron::SetPortParam(int *i_neuron, int n_neuron,
   return 0;
 }
 
+// set array parameter param_name of neurons
+// i_neuron, ..., i_neuron + n_neuron -1
+// to values array[0], ... , array[array_size-1]
+// Must be defined in derived classes
 int BaseNeuron::SetArrayParam(int i_neuron, int n_neuron,
 			      std::string param_name, float *array,
 			      int array_size)
@@ -283,6 +324,10 @@ int BaseNeuron::SetArrayParam(int i_neuron, int n_neuron,
 		       + param_name);
 }
 
+// set array parameter param_name of neurons
+// i_neuron[0], ..., i_neuron[n_neuron -1]
+// to values array[0], ... , array[array_size-1]
+// Must be defined in derived classes
 int BaseNeuron::SetArrayParam(int *i_neuron, int n_neuron,
 			      std::string param_name, float *array,
 			      int array_size)
@@ -291,6 +336,7 @@ int BaseNeuron::SetArrayParam(int *i_neuron, int n_neuron,
 		       + param_name);
 }
 
+// set neuron-group parameter param_name to value val
 int BaseNeuron::SetGroupParam(std::string param_name, float val)
 {
   int i_param;
@@ -304,7 +350,9 @@ int BaseNeuron::SetGroupParam(std::string param_name, float val)
 		       + param_name);
 }
 
-  
+// set integer variable var_name of neurons
+// i_neuron, ..., i_neuron + n_neuron -1
+// to value val
 int BaseNeuron::SetIntVar(int i_neuron, int n_neuron,
 			  std::string var_name, int val)
 {
@@ -323,6 +371,9 @@ int BaseNeuron::SetIntVar(int i_neuron, int n_neuron,
   return 0;
 }
 
+// set integer variable var_name of neurons
+// i_neuron[0], ..., i_neuron[n_neuron -1]
+// to value val
 int BaseNeuron::SetIntVar(int *i_neuron, int n_neuron,
 			  std::string var_name, int val)
 {
@@ -344,6 +395,9 @@ int BaseNeuron::SetIntVar(int *i_neuron, int n_neuron,
   return 0;
 }
 
+// set scalar state-variable var_name of neurons
+// i_neuron, ..., i_neuron + n_neuron -1
+// to value val
 int BaseNeuron::SetScalVar(int i_neuron, int n_neuron,
 			     std::string var_name, float val)
 {
@@ -362,6 +416,9 @@ int BaseNeuron::SetScalVar(int i_neuron, int n_neuron,
   return 0;
 }
 
+// set scalar state-variable var_name of neurons
+// i_neuron[0], ..., i_neuron[n_neuron -1]
+// to value val
 int BaseNeuron::SetScalVar(int *i_neuron, int n_neuron,
 			   std::string var_name, float val)
 {
@@ -383,6 +440,9 @@ int BaseNeuron::SetScalVar(int *i_neuron, int n_neuron,
   return 0;
 }
 
+// set receptor-port state-variable var_name of neurons
+// i_neuron, ..., i_neuron + n_neuron -1
+// to value val
 int BaseNeuron::SetPortVar(int i_neuron, int n_neuron,
 			   std::string var_name, float *var,
 			   int vect_size)
@@ -409,6 +469,9 @@ int BaseNeuron::SetPortVar(int i_neuron, int n_neuron,
   return 0;
 }
 
+// set receptor-port state-variable var_name of neurons
+// i_neuron[0], ..., i_neuron[n_neuron -1]
+// to value val
 int BaseNeuron::SetPortVar(int *i_neuron, int n_neuron,
 			   std::string var_name, float *var,
 			   int vect_size)
@@ -437,6 +500,10 @@ int BaseNeuron::SetPortVar(int *i_neuron, int n_neuron,
   return 0;
 }
 
+// set array variable var_name of neurons
+// i_neuron, ..., i_neuron + n_neuron -1
+// to values array[0], ... , array[array_size-1]
+// Must be defined in derived classes
 int BaseNeuron::SetArrayVar(int i_neuron, int n_neuron,
 			      std::string var_name, float *array,
 			      int array_size)
@@ -445,6 +512,10 @@ int BaseNeuron::SetArrayVar(int i_neuron, int n_neuron,
 		       + var_name);
 }
 
+// set array variable var_name of neurons
+// i_neuron[0], ..., i_neuron[n_neuron -1]
+// to values array[0], ... , array[array_size-1]
+// Must be defined in derived classes
 int BaseNeuron::SetArrayVar(int *i_neuron, int n_neuron,
 			      std::string var_name, float *array,
 			      int array_size)
@@ -453,6 +524,8 @@ int BaseNeuron::SetArrayVar(int *i_neuron, int n_neuron,
 		       + var_name);
 }
 
+// get scalar parameters param_name of neurons
+// i_neuron, ..., i_neuron + n_neuron -1
 float *BaseNeuron::GetScalParam(int i_neuron, int n_neuron,
 				std::string param_name)
 {
@@ -480,6 +553,8 @@ float *BaseNeuron::GetScalParam(int i_neuron, int n_neuron,
   return h_param_arr;
 }
 
+// get scalar parameters param_name of neurons
+// i_neuron[0], ..., i_neuron[n_neuron -1]
 float *BaseNeuron::GetScalParam(int *i_neuron, int n_neuron,
 				std::string param_name)
 {
@@ -510,6 +585,8 @@ float *BaseNeuron::GetScalParam(int *i_neuron, int n_neuron,
   return h_param_arr;
 }
 
+// get receptor-port parameters param_name of neurons
+// i_neuron, ..., i_neuron + n_neuron -1
 float *BaseNeuron::GetPortParam(int i_neuron, int n_neuron,
 			      std::string param_name)
 {
@@ -540,6 +617,8 @@ float *BaseNeuron::GetPortParam(int i_neuron, int n_neuron,
   return h_param_arr;
 }
 
+// get receptor-port parameters param_name of neurons
+// i_neuron[0], ..., i_neuron[n_neuron -1]
 float *BaseNeuron::GetPortParam(int *i_neuron, int n_neuron,
 				std::string param_name)
 {
@@ -573,13 +652,15 @@ float *BaseNeuron::GetPortParam(int *i_neuron, int n_neuron,
   return h_param_arr;
 }
 
+// get array-parameter param_name of neuron i_neuron
+// must be defined in the derived classes
 float *BaseNeuron::GetArrayParam(int i_neuron, std::string param_name)
 {
   throw ngpu_exception(std::string("Unrecognized parameter ")
 		       + param_name);
 }
 
-
+// get neuron-group parameter param_name
 float BaseNeuron::GetGroupParam(std::string param_name)
 {
   int i_param;
@@ -594,6 +675,8 @@ float BaseNeuron::GetGroupParam(std::string param_name)
 }
 
  
+// get integer variable var_name of neurons
+// i_neuron, ..., i_neuron + n_neuron -1
 int *BaseNeuron::GetIntVar(int i_neuron, int n_neuron,
 				std::string var_name)
 {
@@ -621,6 +704,8 @@ int *BaseNeuron::GetIntVar(int i_neuron, int n_neuron,
   return h_var_arr;
 }
 
+// get integer variable var_name of neurons
+// i_neuron[0], ..., i_neuron[n_neuron -1]
 int *BaseNeuron::GetIntVar(int *i_neuron, int n_neuron,
 			   std::string var_name)
 {
@@ -651,7 +736,8 @@ int *BaseNeuron::GetIntVar(int *i_neuron, int n_neuron,
   return h_var_arr;
 }
 
-
+// get scalar state-variable var_name of neurons
+// i_neuron, ..., i_neuron + n_neuron -1
 float *BaseNeuron::GetScalVar(int i_neuron, int n_neuron,
 				std::string var_name)
 {
@@ -679,6 +765,8 @@ float *BaseNeuron::GetScalVar(int i_neuron, int n_neuron,
   return h_var_arr;
 }
 
+// get scalar state-variable var_name of neurons
+// i_neuron[0], ..., i_neuron[n_neuron -1]
 float *BaseNeuron::GetScalVar(int *i_neuron, int n_neuron,
 				std::string var_name)
 {
@@ -709,6 +797,8 @@ float *BaseNeuron::GetScalVar(int *i_neuron, int n_neuron,
   return h_var_arr;
 }
 
+// get receptor-port state-variable var_name of neurons
+// i_neuron, ..., i_neuron + n_neuron -1
 float *BaseNeuron::GetPortVar(int i_neuron, int n_neuron,
 			      std::string var_name)
 {
@@ -739,6 +829,8 @@ float *BaseNeuron::GetPortVar(int i_neuron, int n_neuron,
   return h_var_arr;
 }
 
+// get receptor-port state-variable var_name of neurons
+// i_neuron[0], ..., i_neuron[n_neuron -1]
 float *BaseNeuron::GetPortVar(int *i_neuron, int n_neuron,
 			      std::string var_name)
 {
@@ -771,12 +863,14 @@ float *BaseNeuron::GetPortVar(int *i_neuron, int n_neuron,
   return h_var_arr;
 }
 
+// get array variable var_name of neuron  i_neuron
 float *BaseNeuron::GetArrayVar(int i_neuron, std::string var_name)
 {
   throw ngpu_exception(std::string("Unrecognized variable ")
 		       + var_name);
 }
 
+// get index of integer variable var_name
 int BaseNeuron::GetIntVarIdx(std::string var_name)
 {
   int i_var;
@@ -791,6 +885,7 @@ int BaseNeuron::GetIntVarIdx(std::string var_name)
   return i_var;
 }
 
+// get index of scalar variable var_name
 int BaseNeuron::GetScalVarIdx(std::string var_name)
 {
   int i_var;
@@ -805,6 +900,7 @@ int BaseNeuron::GetScalVarIdx(std::string var_name)
   return i_var;
 }
 
+// get index of receptor-port variable var_name
 int BaseNeuron::GetPortVarIdx(std::string var_name)
 {
   int i_var;
@@ -819,6 +915,7 @@ int BaseNeuron::GetPortVarIdx(std::string var_name)
   return i_var;
 }
 
+// get index of scalar parameter param_name
 int BaseNeuron::GetScalParamIdx(std::string param_name)
 {
   int i_param;
@@ -833,6 +930,7 @@ int BaseNeuron::GetScalParamIdx(std::string param_name)
   return i_param;
 }
 
+// get index of receptor-port parameter param_name
 int BaseNeuron::GetPortParamIdx(std::string param_name)
 {  
   int i_param;
@@ -847,17 +945,20 @@ int BaseNeuron::GetPortParamIdx(std::string param_name)
   return i_param;
 }
 
+// return pointer to state variable array
 float *BaseNeuron::GetVarArr()
 {
   return var_arr_;
 }
 
+// return pointer to parameter array
 float *BaseNeuron::GetParamArr()
 {
   return param_arr_;
 }
 
-
+// return array size for array variable var_name
+// Must be defined in derived class
 int BaseNeuron::GetArrayVarSize(int i_neuron, std::string var_name)
 {
   throw ngpu_exception(std::string("Unrecognized variable ")
@@ -865,6 +966,8 @@ int BaseNeuron::GetArrayVarSize(int i_neuron, std::string var_name)
 
 }
   
+// return array size for array parameter param_name
+// Must be defined in derived class
 int BaseNeuron::GetArrayParamSize(int i_neuron, std::string param_name)
 {
   throw ngpu_exception(std::string("Unrecognized parameter ")
@@ -872,6 +975,8 @@ int BaseNeuron::GetArrayParamSize(int i_neuron, std::string param_name)
 
 }
 
+// return size of variable var_name
+// 1 for scalar variables, n_port for receptor-port variables
 int BaseNeuron::GetVarSize(std::string var_name)
 {
   if (IsScalVar(var_name)) {
@@ -890,6 +995,8 @@ int BaseNeuron::GetVarSize(std::string var_name)
   }
 }
 
+// return size of parameter param_name
+// 1 for scalar parameters, n_port for receptor-port parameters
 int BaseNeuron::GetParamSize(std::string param_name)
 {
   if (IsScalParam(param_name)) {
@@ -908,6 +1015,7 @@ int BaseNeuron::GetParamSize(std::string param_name)
   }
 }
 
+// check if var_name is an integer variable
 bool BaseNeuron::IsIntVar(std::string var_name)
 {
   int i_var;
@@ -917,6 +1025,7 @@ bool BaseNeuron::IsIntVar(std::string var_name)
   return false;
 }
 
+// check if var_name is a scalar variable
 bool BaseNeuron::IsScalVar(std::string var_name)
 {
   int i_var;
@@ -926,6 +1035,7 @@ bool BaseNeuron::IsScalVar(std::string var_name)
   return false;
 }
 
+// check if var_name is a receptor-port variable
 bool BaseNeuron::IsPortVar(std::string var_name)
 {
   int i_var;
@@ -935,6 +1045,7 @@ bool BaseNeuron::IsPortVar(std::string var_name)
   return false;
 }
 
+// check if var_name is an array variable
 bool BaseNeuron::IsArrayVar(std::string var_name)
 {
   int i_var;
@@ -944,6 +1055,7 @@ bool BaseNeuron::IsArrayVar(std::string var_name)
   return false;
 }
 
+// check if param_name is a scalar parameter
 bool BaseNeuron::IsScalParam(std::string param_name)
 {
   int i_param;
@@ -953,6 +1065,7 @@ bool BaseNeuron::IsScalParam(std::string param_name)
   return false;
 }
 
+// check if param_name is a receptor-port parameter
 bool BaseNeuron::IsPortParam(std::string param_name)
 {  
   int i_param;
@@ -962,6 +1075,7 @@ bool BaseNeuron::IsPortParam(std::string param_name)
   return false;
 }
 
+// check if param_name is an array parameter
 bool BaseNeuron::IsArrayParam(std::string param_name)
 {
   int i_param;
@@ -971,6 +1085,7 @@ bool BaseNeuron::IsArrayParam(std::string param_name)
   return false;
 }
 
+// check if param_name is a neuron-group parameter
 bool BaseNeuron::IsGroupParam(std::string param_name)
 {
   int i_param;
@@ -980,6 +1095,7 @@ bool BaseNeuron::IsGroupParam(std::string param_name)
   return false;
 }
 
+// check if index i_neuron is >=0 and <n_node for the neuron group
 int BaseNeuron::CheckNeuronIdx(int i_neuron)
 {
   if (i_neuron>=n_node_) {
@@ -991,6 +1107,7 @@ int BaseNeuron::CheckNeuronIdx(int i_neuron)
   return 0;
 }
 
+// check if index port is >=0 and <n_port
 int BaseNeuron::CheckPortIdx(int port)
 {
   if (port>=n_port_) {
@@ -1002,7 +1119,7 @@ int BaseNeuron::CheckPortIdx(int port)
   return 0;
 }
 
-
+// return pointer to integer variable var_name for neuron i_neuron
 int *BaseNeuron::GetIntVarPt(int i_neuron, std::string var_name)
 {
   CheckNeuronIdx(i_neuron);
@@ -1017,6 +1134,8 @@ int *BaseNeuron::GetIntVarPt(int i_neuron, std::string var_name)
   }
 }
 
+// return pointer to variable var_name for neuron i_neuron
+// (and specified receptor port in case of a port variable)
 float *BaseNeuron::GetVarPt(int i_neuron, std::string var_name,
 			    int port /*=0*/)
 {
@@ -1040,6 +1159,8 @@ float *BaseNeuron::GetVarPt(int i_neuron, std::string var_name,
   }
 }
 
+// return pointer to parameter param_name for neuron i_neuron
+// (and specified receptor port in case of a port parameter)
 float *BaseNeuron::GetParamPt(int i_neuron, std::string param_name,
 			      int port /*=0*/)
 {
@@ -1062,6 +1183,9 @@ float *BaseNeuron::GetParamPt(int i_neuron, std::string param_name,
   }
 }
 
+// return spike multiplicity (spike_height) of neuron i_neuron 
+// if neuron emitted a spike in the current time step
+// otherwise return 0
 float BaseNeuron::GetSpikeActivity(int i_neuron)
 {
   CheckNeuronIdx(i_neuron);
@@ -1086,11 +1210,13 @@ float BaseNeuron::GetSpikeActivity(int i_neuron)
   return spike_height;
 }
 
+// get all names of integer variables
 std::vector<std::string> BaseNeuron::GetIntVarNames()
 {
   return int_var_name_;
 }
-  
+
+// get all names of scalar state variables
 std::vector<std::string> BaseNeuron::GetScalVarNames()
 {
   std::vector<std::string> var_name_vect;
@@ -1100,17 +1226,20 @@ std::vector<std::string> BaseNeuron::GetScalVarNames()
   
   return var_name_vect;
 }
-  
+
+// get number of scalar state variables
 int BaseNeuron::GetNScalVar()
 {
   return n_scal_var_;
 }
 
+// get number of integer variables
 int BaseNeuron::GetNIntVar()
 {
   return (int)int_var_name_.size();
 }
 
+// get all names of receptor-port state variables
 std::vector<std::string> BaseNeuron::GetPortVarNames()
 {
   std::vector<std::string> var_name_vect;
@@ -1120,12 +1249,14 @@ std::vector<std::string> BaseNeuron::GetPortVarNames()
   
   return var_name_vect;
 }
-  
+
+// get number of receptor-port variables 
 int BaseNeuron::GetNPortVar()
 {
   return n_port_var_;
 }
 
+// get all names of scalar parameters
 std::vector<std::string> BaseNeuron::GetScalParamNames()
 {
   std::vector<std::string> param_name_vect;
@@ -1135,12 +1266,14 @@ std::vector<std::string> BaseNeuron::GetScalParamNames()
   
   return param_name_vect;
 }
-  
+
+// get number of scalar parameters
 int BaseNeuron::GetNScalParam()
 {
   return n_scal_param_;
 }
 
+// get all names of receptor-port parameters
 std::vector<std::string> BaseNeuron::GetPortParamNames()
 {
   std::vector<std::string> param_name_vect;
@@ -1150,12 +1283,14 @@ std::vector<std::string> BaseNeuron::GetPortParamNames()
   
   return param_name_vect;
 }
-  
+
+// get number of receptor-port parameters
 int BaseNeuron::GetNPortParam()
 {
   return n_port_param_;
 }
 
+// get all names of neuron-group parameters
 std::vector<std::string> BaseNeuron::GetGroupParamNames()
 {
   std::vector<std::string> param_name_vect;
@@ -1165,13 +1300,14 @@ std::vector<std::string> BaseNeuron::GetGroupParamNames()
   
   return param_name_vect;
 }
-  
+
+// get number of neuron-group parameters
 int BaseNeuron::GetNGroupParam()
 {
   return n_group_param_;
 }
 
-
+// get all names of array variables
 std::vector<std::string> BaseNeuron::GetArrayVarNames()
 {
   std::vector<std::string> var_name_vect;
@@ -1181,12 +1317,14 @@ std::vector<std::string> BaseNeuron::GetArrayVarNames()
   
   return var_name_vect;
 }
-  
+
+// get number of array variables
 int BaseNeuron::GetNArrayVar()
 {
   return (int)array_var_name_.size();
 }
 
+// get all names of array parameters
 std::vector<std::string> BaseNeuron::GetArrayParamNames()
 {
   std::vector<std::string> param_name_vect;
@@ -1196,12 +1334,14 @@ std::vector<std::string> BaseNeuron::GetArrayParamNames()
   
   return param_name_vect;
 }
-  
+
+// get number of array parameters
 int BaseNeuron::GetNArrayParam()
 {
   return (int)array_param_name_.size();
 }
 
+// activate spike count for all neurons of the group
 int BaseNeuron::ActivateSpikeCount()
 {
   const std::string s = "spike_count";
@@ -1221,6 +1361,7 @@ int BaseNeuron::ActivateSpikeCount()
   return 0;
 }
 
+// activate spike-time recording for all neurons of the group
 int BaseNeuron::ActivateRecSpikeTimes(int max_n_rec_spike_times)
 {
   if(max_n_rec_spike_times<=0) {
@@ -1247,6 +1388,7 @@ int BaseNeuron::ActivateRecSpikeTimes(int max_n_rec_spike_times)
   return 0;
 }
 
+// get number of spikes recorded for neuron i_neuron
 int BaseNeuron::GetNRecSpikeTimes(int i_neuron)
 {
   CheckNeuronIdx(i_neuron);
@@ -1260,6 +1402,7 @@ int BaseNeuron::GetNRecSpikeTimes(int i_neuron)
   return n_spikes;
 }
 
+// get vector of recorded spike times for neuron i_neuron
 std::vector<float> BaseNeuron::GetRecSpikeTimes(int i_neuron)
 {
   CheckNeuronIdx(i_neuron);
@@ -1275,11 +1418,15 @@ std::vector<float> BaseNeuron::GetRecSpikeTimes(int i_neuron)
   return spike_time_vect;
 }
 
+// get input spikes from external interface
+// Must be defined in derived classes
 float *BaseNeuron::GetExtNeuronInputSpikes(int *n_node, int *n_port)
 {
   throw ngpu_exception("Cannot get extern neuron input spikes from this model");
 }
 
+// set neuron-group parameter param_name to value val
+// Must be defined in derived classes
 int BaseNeuron::SetNeuronGroupParam(std::string param_name, float val)
 {
   throw ngpu_exception(std::string("Unrecognized neuron group parameter ")
