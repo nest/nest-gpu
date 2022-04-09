@@ -291,7 +291,8 @@ extern "C" {
 
   int NESTGPU_GetNRecSpikeTimes(int i_node);
 
-  float* NESTGPU_GetRecSpikeTimes(int i_node);
+  float* NESTGPU_GetRecSpikeTimes(int i_node, int n_node,
+				  int *n_rec_spike_times_cumul);
 
   int NESTGPU_PushSpikesToNodes(int n_spikes, int *node_id);
  

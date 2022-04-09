@@ -111,8 +111,9 @@ if (len(spike_times) != len(neuron)):
     sys.exit(1)
 
 
+spike_times_list = ngpu.GetRecSpikeTimes(neuron[0], len(neuron))
 for j in range(len(neuron)):
-    spike_times1=ngpu.GetRecSpikeTimes(neuron[j])
+    spike_times1 = spike_times_list[j]
     #print (spike_times1)
     #print (spike_times[j])
     if (len(spike_times1) != spike_count[j][0]):

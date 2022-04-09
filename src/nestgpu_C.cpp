@@ -955,10 +955,27 @@ extern "C" {
       ret = NESTGPU_instance->GetNRecSpikeTimes(i_node);
   } END_ERR_PROP return ret; }
 
+  /*
   float* NESTGPU_GetRecSpikeTimes(int i_node)
   { float *ret = NULL; BEGIN_ERR_PROP {
     std::vector<float> spike_time_vect
       = NESTGPU_instance->GetRecSpikeTimes(i_node);
+
+    int ns = (int)spike_time_vect.size();
+    ret = new float[ns];
+    for (int i=0; i<ns; i++) {
+      ret[i] = spike_time_vect[i];
+    }
+    
+  } END_ERR_PROP return ret; }
+  */
+  
+  float* NESTGPU_GetRecSpikeTimes(int i_node, int n_node,
+				  int *n_rec_spike_times_cumul)
+  { float *ret = NULL; BEGIN_ERR_PROP {
+    std::vector<float> spike_time_vect
+      = NESTGPU_instance->GetRecSpikeTimes(i_node, n_node,
+					   n_rec_spike_times_cumul);
 
     int ns = (int)spike_time_vect.size();
     ret = new float[ns];

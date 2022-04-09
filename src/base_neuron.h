@@ -79,7 +79,9 @@ class BaseNeuron
 
   int *spike_count_;
   float *rec_spike_times_;
+  float *rec_spike_times_pack_;
   int *n_rec_spike_times_;
+  int *n_rec_spike_times_cumul_;
   int max_n_rec_spike_times_;
   float *den_delay_arr_;
 
@@ -294,7 +296,8 @@ class BaseNeuron
 
   virtual int GetNRecSpikeTimes(int i_neuron);
 
-  std::vector<float> GetRecSpikeTimes(int i_neuron);
+  std::vector<float> GetRecSpikeTimes(int i_neuron, int n_neuron,
+				      int *h_n_rec_spike_times_cumul);
 
   virtual float *GetExtNeuronInputSpikes(int *n_node, int *n_port);
 

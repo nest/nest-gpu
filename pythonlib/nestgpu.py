@@ -2131,16 +2131,25 @@ def GetNRecSpikeTimes(i_node):
     return ret
 
 NESTGPU_GetRecSpikeTimes = _nestgpu.NESTGPU_GetRecSpikeTimes
-NESTGPU_GetRecSpikeTimes.argtypes = (ctypes.c_int,)
+NESTGPU_GetRecSpikeTimes.argtypes = (ctypes.c_int, ctypes.c_int, c_int_p)
 NESTGPU_GetRecSpikeTimes.restype = c_float_p
-def GetRecSpikeTimes(i_node):
-    "Get recorded spike times for node"
+def GetRecSpikeTimes(i_node, n_node):
+    "Get recorded spike times for nodes"
 
+    n_spike_t_cumul = (ctypes.c_int * n_node)()
+    #n_spike_t_cumul_pt = ctypes.cast(n_spike_t_cumul, ctypes.c_void_p)    
+    n_spike_t_cumul_pt = ctypes.cast(n_spike_t_cumul, c_int_p)    
+    
     spike_time_list = []
-    data_pt = NESTGPU_GetRecSpikeTimes(ctypes.c_int(i_node))
-    array_size = GetNRecSpikeTimes(i_node)
-    for i in range(array_size):
-        spike_time_list.append(data_pt[i])
+    data_pt = NESTGPU_GetRecSpikeTimes(ctypes.c_int(i_node),
+                                       ctypes.c_int(n_node),
+                                       n_spike_t_cumul_pt)
+    for i_n in range(n_node):
+        spike_time_list.append([])
+        array_idx = n_spike_t_cumul_pt[i_n]
+        n_spike = n_spike_t_cumul_pt[i_n+1] - n_spike_t_cumul_pt[i_n]
+        for i_spike in range(n_spike):
+            spike_time_list[i_n].append(data_pt[array_idx + i_spike])
         
     ret = spike_time_list
     

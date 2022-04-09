@@ -670,7 +670,8 @@ class NESTGPU
 
   int GetNRecSpikeTimes(int i_node);
 
-  std::vector<float> GetRecSpikeTimes(int i_node);
+  std::vector<float> GetRecSpikeTimes(int i_node, int n_node,
+				      int *n_rec_spike_times_cumul);
 
   int PushSpikesToNodes(int n_spikes, int *node_id, float *spike_height);
   

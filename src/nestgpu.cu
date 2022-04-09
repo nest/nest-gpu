@@ -1499,11 +1499,13 @@ int NESTGPU::GetNRecSpikeTimes(int i_node)
   return node_vect_[i_group]->GetNRecSpikeTimes(i_neuron);
 }
 
-std::vector<float> NESTGPU::GetRecSpikeTimes(int i_node)
+std::vector<float> NESTGPU::GetRecSpikeTimes(int i_node, int n_node,
+					     int *n_rec_spike_times_cumul)
 {
   int i_group;
   int i_neuron = i_node - GetNodeSequenceOffset(i_node, 1, i_group);
-  return node_vect_[i_group]->GetRecSpikeTimes(i_neuron);
+  return node_vect_[i_group]->GetRecSpikeTimes(i_neuron, n_node,
+					       n_rec_spike_times_cumul);
 }
 
 int NESTGPU::PushSpikesToNodes(int n_spikes, int *node_id,
