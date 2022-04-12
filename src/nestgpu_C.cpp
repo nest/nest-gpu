@@ -948,6 +948,14 @@ extern "C" {
 						      max_n_rec_spike_times);
   } END_ERR_PROP return ret; }
 
+  int NESTGPU_SetRecSpikeTimesStep(int i_node, int n_node,
+				   int rec_spike_times_step)
+  { int ret = 0; BEGIN_ERR_PROP {
+    
+      ret = NESTGPU_instance->SetRecSpikeTimesStep(i_node, n_node,
+						   rec_spike_times_step);
+  } END_ERR_PROP return ret; }
+
   
   int NESTGPU_GetNRecSpikeTimes(int i_node)
   { int ret = 0; BEGIN_ERR_PROP {
@@ -955,33 +963,12 @@ extern "C" {
       ret = NESTGPU_instance->GetNRecSpikeTimes(i_node);
   } END_ERR_PROP return ret; }
 
-  /*
-  float* NESTGPU_GetRecSpikeTimes(int i_node)
-  { float *ret = NULL; BEGIN_ERR_PROP {
-    std::vector<float> spike_time_vect
-      = NESTGPU_instance->GetRecSpikeTimes(i_node);
-
-    int ns = (int)spike_time_vect.size();
-    ret = new float[ns];
-    for (int i=0; i<ns; i++) {
-      ret[i] = spike_time_vect[i];
-    }
-    
-  } END_ERR_PROP return ret; }
-  */
-  
-  float* NESTGPU_GetRecSpikeTimes(int i_node, int n_node,
-				  int *n_rec_spike_times_cumul)
-  { float *ret = NULL; BEGIN_ERR_PROP {
-    std::vector<float> spike_time_vect
-      = NESTGPU_instance->GetRecSpikeTimes(i_node, n_node,
-					   n_rec_spike_times_cumul);
-
-    int ns = (int)spike_time_vect.size();
-    ret = new float[ns];
-    for (int i=0; i<ns; i++) {
-      ret[i] = spike_time_vect[i];
-    }
+  int NESTGPU_GetRecSpikeTimes(int i_node, int n_node,
+			       int **n_spike_times_pt,
+			       float ***spike_times_pt)
+  { int ret = 0; BEGIN_ERR_PROP {
+    ret = NESTGPU_instance->GetRecSpikeTimes(i_node, n_node, n_spike_times_pt,
+					     spike_times_pt);
     
   } END_ERR_PROP return ret; }
   

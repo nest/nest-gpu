@@ -83,7 +83,13 @@ class BaseNeuron
   int *n_rec_spike_times_;
   int *n_rec_spike_times_cumul_;
   int max_n_rec_spike_times_;
+  int rec_spike_times_step_;
   float *den_delay_arr_;
+  std::vector<int*> n_spike_times_cumul_buffer_;
+  std::vector<float*> spike_times_buffer_;
+  std::vector<float*> spike_times_pt_vect_;
+  std::vector<int> n_spike_times_vect_;
+  std::vector< std::vector <float> > spike_times_vect_;
 
   std::vector<float> port_weight_vect_;
   std::vector<float> port_input_vect_;
@@ -296,8 +302,11 @@ class BaseNeuron
 
   virtual int GetNRecSpikeTimes(int i_neuron);
 
-  std::vector<float> GetRecSpikeTimes(int i_neuron, int n_neuron,
-				      int *h_n_rec_spike_times_cumul);
+  virtual int BufferRecSpikeTimes();
+  
+  virtual int GetRecSpikeTimes(int **n_spike_times_pt, float ***spike_times_pt);
+
+  virtual int SetRecSpikeTimesStep(int rec_spike_times_step);
 
   virtual float *GetExtNeuronInputSpikes(int *n_node, int *n_port);
 

@@ -170,6 +170,8 @@ int BaseNeuron::Init(int i_node_0, int n_node, int n_port,
   rec_spike_times_ = NULL; // array of spike-time records
   n_rec_spike_times_ = NULL; // array of number of recorded spike times
   max_n_rec_spike_times_ = 0; // max number of recorded spike times
+  rec_spike_times_step_ = 0; // number of time steps for spike times buffering
+                             // 0 for no buffering
   den_delay_arr_ = NULL; // array of dendritic backward delays
 
   return 0;
@@ -1386,10 +1388,21 @@ int BaseNeuron::ActivateRecSpikeTimes(int max_n_rec_spike_times)
 			 *sizeof(int)));
     gpuErrchk(cudaMalloc(&rec_spike_times_pack_, n_node_*max_n_rec_spike_times
 			 *sizeof(int)));
+    spike_times_pt_vect_.resize(n_node_, NULL);
+    n_spike_times_vect_.resize(n_node_, 0);
+    spike_times_vect_.resize(n_node_);
   }
   else {
     throw ngpu_exception("Spike times recording already activated");
   }
+
+  return 0;
+}
+
+// set number of time steps for buffering recorded spike times
+int BaseNeuron::SetRecSpikeTimesStep(int rec_spike_times_step)
+{
+  rec_spike_times_step_ = rec_spike_times_step;
 
   return 0;
 }
@@ -1407,24 +1420,6 @@ int BaseNeuron::GetNRecSpikeTimes(int i_neuron)
 		       cudaMemcpyDeviceToHost));
   return n_spikes;
 }
-
-/*
-// get vector of recorded spike times for neuron i_neuron
-std::vector<float> BaseNeuron::GetRecSpikeTimes(int i_neuron)
-{
-  CheckNeuronIdx(i_neuron);
-  if(max_n_rec_spike_times_<=0) {
-    throw ngpu_exception("Spike times recording was not activated");
-  }
-  int n_spikes = GetNRecSpikeTimes(i_neuron);
-  
-  std::vector<float> spike_time_vect(n_spikes);
-  gpuErrchk(cudaMemcpy(spike_time_vect.data(),
-		       &rec_spike_times_[i_neuron*max_n_rec_spike_times_],
-		       sizeof(float)*n_spikes, cudaMemcpyDeviceToHost));
-  return spike_time_vect;
-}
-*/
 
 // get input spikes from external interface
 // Must be defined in derived classes
@@ -1464,37 +1459,85 @@ __global__ void PackSpikeTimesKernel(int n_neuron, int *n_rec_spike_times_cumul,
   }
 }
 
-// get vector of recorded spike times for neurons
-// i_neuron, ..., i_neuron + n_neuron -1
-std::vector<float> BaseNeuron::GetRecSpikeTimes(int i_neuron, int n_neuron,
-						int *h_n_rec_spike_times_cumul)
-{
-  CheckNeuronIdx(i_neuron);
-  CheckNeuronIdx(i_neuron + n_neuron - 1);
-  
+// extract recorded spike times
+// and put them in a buffer
+int BaseNeuron::BufferRecSpikeTimes()
+{  
   if(max_n_rec_spike_times_<=0) {
     throw ngpu_exception("Spike times recording was not activated");
   }
 
-  prefix_scan(n_rec_spike_times_cumul_, &n_rec_spike_times_[i_neuron],
-	      n_neuron+1, true);
+  prefix_scan(n_rec_spike_times_cumul_, n_rec_spike_times_,
+	      n_node_+1, true);
+  int *h_n_rec_spike_times_cumul = new int[n_node_+1];
   gpuErrchk(cudaMemcpyAsync(h_n_rec_spike_times_cumul,
 			    n_rec_spike_times_cumul_,
-			    (n_neuron+1)*sizeof(int), cudaMemcpyDeviceToHost));
-  int n_spike_tot = h_n_rec_spike_times_cumul[n_neuron];
+			    (n_node_+1)*sizeof(int), cudaMemcpyDeviceToHost));
+  int n_spike_tot = h_n_rec_spike_times_cumul[n_node_];
 
-  std::vector<float> spike_time_vect(n_spike_tot);
   if (n_spike_tot>0) {
     // pack spike times in GPU memory
-    PackSpikeTimesKernel<<<(n_spike_tot+1023)/1024, 1024>>>(n_neuron,
+    PackSpikeTimesKernel<<<(n_spike_tot+1023)/1024, 1024>>>(n_node_,
 		     n_rec_spike_times_cumul_,
-		     &rec_spike_times_[i_neuron*max_n_rec_spike_times_],
+		     rec_spike_times_,
 		     rec_spike_times_pack_,
 		     n_spike_tot, max_n_rec_spike_times_);
 
-    gpuErrchk(cudaMemcpy(spike_time_vect.data(),
+    float *h_rec_spike_times_pack = new float[n_spike_tot];
+    gpuErrchk(cudaMemcpy(h_rec_spike_times_pack,
 			 rec_spike_times_pack_,
 			 sizeof(float)*n_spike_tot, cudaMemcpyDeviceToHost));
+    spike_times_buffer_.push_back(h_rec_spike_times_pack);
+    n_spike_times_cumul_buffer_.push_back(h_n_rec_spike_times_cumul);
+    gpuErrchk(cudaMemset(n_rec_spike_times_, 0, n_node_*sizeof(int)));
   }
-  return spike_time_vect;
+  else {
+    delete[] h_n_rec_spike_times_cumul;
+  }
+  
+  return 0;
 }
+
+// get recorded spike times
+int BaseNeuron::GetRecSpikeTimes(int **n_spike_times_pt,
+				 float ***spike_times_pt)
+{
+  if(max_n_rec_spike_times_<=0) {
+    throw ngpu_exception("Spike times recording was not activated");
+  }
+  BufferRecSpikeTimes();
+
+  for (int i_node=0; i_node<n_node_; i_node++) {
+    n_spike_times_vect_[i_node] = 0;
+    for (uint i_buf=0; i_buf<spike_times_buffer_.size(); i_buf++) {
+      int *n_spike_times_cumul = n_spike_times_cumul_buffer_[i_buf];
+      int n_spike = n_spike_times_cumul[i_node+1] - n_spike_times_cumul[i_node];
+      n_spike_times_vect_[i_node] += n_spike;
+    }
+    spike_times_vect_[i_node].resize(n_spike_times_vect_[i_node]);
+
+    int k = 0;
+    for (uint i_buf=0; i_buf<spike_times_buffer_.size(); i_buf++) {
+      float *spike_times_pack = spike_times_buffer_[i_buf];
+      int *n_spike_times_cumul = n_spike_times_cumul_buffer_[i_buf];
+      int array_idx = n_spike_times_cumul[i_node];
+      int n_spike = n_spike_times_cumul[i_node+1] - array_idx;
+     
+      float *pt = spike_times_pack + array_idx;
+      spike_times_vect_[i_node].insert(spike_times_vect_[i_node].begin()+k,
+				       pt, pt+n_spike);
+      k += n_spike;
+    }
+  }
+  for (int i_node=0; i_node<n_node_; i_node++) {
+    spike_times_pt_vect_[i_node] = spike_times_vect_[i_node].data();
+  }
+  spike_times_buffer_.clear();
+  n_spike_times_cumul_buffer_.clear();                                  
+ 
+  *n_spike_times_pt = n_spike_times_vect_.data();
+  *spike_times_pt = spike_times_pt_vect_.data();
+  
+  return 0;
+}
+  

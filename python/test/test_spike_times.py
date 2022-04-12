@@ -23,6 +23,7 @@ ngpu.SetStatus(pg, "rate", poiss_rate)
 neuron = ngpu.Create("aeif_cond_beta", n_neurons)
 ngpu.ActivateSpikeCount(neuron)
 ngpu.ActivateRecSpikeTimes(neuron, 500)
+ngpu.SetRecSpikeTimesStep(neuron, 5)
 
 # Create n_neurons spike detectors
 sd = ngpu.Create("spike_detector", n_neurons)
@@ -76,12 +77,9 @@ spike = row_sum[1:len(row_sum)]
 #print (spike)
 
 spike_count = ngpu.GetStatus(neuron, "spike_count")
-n_spike_times = []
-for i in range(len(neuron)):
-    n_spike_times.append(ngpu.GetNRecSpikeTimes(neuron[i]))
 #print (spike_count)
 
-if (len(spike) != len(spike_count)) | (len(spike) != len(n_spike_times)):
+if (len(spike) != len(spike_count)):
     print("Error: len(spike) != len(spike_count)")
     print("len(spike) ", len(spike))
     print("len(spike_count) ", len(spike_count)) 
@@ -96,14 +94,7 @@ for i in range(len(spike)):
         print("spike detector count ", spike[i])
         print("node count ", spike_count[i][0])
         sys.exit(1)
-    diff = spike[i] - n_spike_times[i]
-    if abs(diff) > eps:
-        print("Error: inconsistent number of spikes of node n. ", i)
-        print("spike detector count ", spike[i])
-        print("n. of recorded spike time ", n_spike_times[i]) #[0])
-        sys.exit(1)
         
-
 if (len(spike_times) != len(neuron)):
     print("Error: len(spike_times) != len(neuron)")
     print("len(spike_times) ", len(spike_times))
@@ -111,7 +102,7 @@ if (len(spike_times) != len(neuron)):
     sys.exit(1)
 
 
-spike_times_list = ngpu.GetRecSpikeTimes(neuron[0], len(neuron))
+spike_times_list = ngpu.GetRecSpikeTimes(neuron)
 for j in range(len(neuron)):
     spike_times1 = spike_times_list[j]
     #print (spike_times1)
