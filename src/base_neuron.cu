@@ -1445,15 +1445,21 @@ __global__ void PackSpikeTimesKernel(int n_neuron, int *n_rec_spike_times_cumul,
 		     float *rec_spike_times, float *rec_spike_times_pack,
 		     int n_spike_tot, int max_n_rec_spike_times)
 {
+  // array_idx: index on one-dimensional packed spike array 
   int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
   if (array_idx<n_spike_tot) {
+    // a locate of array_idx on the cumulative sum of the number of spikes
+    // of the neurons is used to get the neuron index
     int i_neuron = locate(array_idx, n_rec_spike_times_cumul, n_neuron + 1);
+    // if neuron has no spikes, go to the next
     while ((i_neuron < n_neuron) && (n_rec_spike_times_cumul[i_neuron+1]
 				  == n_rec_spike_times_cumul[i_neuron])) {
       i_neuron++;
       if (i_neuron==n_neuron) return;
     }
+    // the difference gives the spike index
     int i_spike = array_idx - n_rec_spike_times_cumul[i_neuron];
+    // copy the spike to the packed array
     rec_spike_times_pack[array_idx] =
       rec_spike_times[i_neuron*max_n_rec_spike_times + i_spike];
   }
@@ -1466,13 +1472,14 @@ int BaseNeuron::BufferRecSpikeTimes()
   if(max_n_rec_spike_times_<=0) {
     throw ngpu_exception("Spike times recording was not activated");
   }
-
+  // a cumulative sum is used by the spike-packing algorithm
   prefix_scan(n_rec_spike_times_cumul_, n_rec_spike_times_,
 	      n_node_+1, true);
   int *h_n_rec_spike_times_cumul = new int[n_node_+1];
   gpuErrchk(cudaMemcpyAsync(h_n_rec_spike_times_cumul,
 			    n_rec_spike_times_cumul_,
 			    (n_node_+1)*sizeof(int), cudaMemcpyDeviceToHost));
+  // the last element of the cumulative sum is the total number of spikes
   int n_spike_tot = h_n_rec_spike_times_cumul[n_node_];
 
   if (n_spike_tot>0) {
@@ -1487,6 +1494,7 @@ int BaseNeuron::BufferRecSpikeTimes()
     gpuErrchk(cudaMemcpy(h_rec_spike_times_pack,
 			 rec_spike_times_pack_,
 			 sizeof(float)*n_spike_tot, cudaMemcpyDeviceToHost));
+    // push the packed spike array and the cumulative sum in the buffers
     spike_times_buffer_.push_back(h_rec_spike_times_pack);
     n_spike_times_cumul_buffer_.push_back(h_n_rec_spike_times_cumul);
     gpuErrchk(cudaMemset(n_rec_spike_times_, 0, n_node_*sizeof(int)));
@@ -1505,31 +1513,42 @@ int BaseNeuron::GetRecSpikeTimes(int **n_spike_times_pt,
   if(max_n_rec_spike_times_<=0) {
     throw ngpu_exception("Spike times recording was not activated");
   }
+  // push all spikes and cumulative sums left in the buffers
   BufferRecSpikeTimes();
 
+  // first evaluate the total number of spikes for each node
   for (int i_node=0; i_node<n_node_; i_node++) {
     n_spike_times_vect_[i_node] = 0;
+    // loop on buffer entries
     for (uint i_buf=0; i_buf<spike_times_buffer_.size(); i_buf++) {
       int *n_spike_times_cumul = n_spike_times_cumul_buffer_[i_buf];
+      // get the number of spikes of each buffer entry
       int n_spike = n_spike_times_cumul[i_node+1] - n_spike_times_cumul[i_node];
+      // and add it to the number of spikes of the node
       n_spike_times_vect_[i_node] += n_spike;
     }
+    // allocate the spike vector for the considered node
     spike_times_vect_[i_node].resize(n_spike_times_vect_[i_node]);
 
     int k = 0;
+    // loop on buffer entries
     for (uint i_buf=0; i_buf<spike_times_buffer_.size(); i_buf++) {
       float *spike_times_pack = spike_times_buffer_[i_buf];
       int *n_spike_times_cumul = n_spike_times_cumul_buffer_[i_buf];
+      // array_idx: index of the first spike of node i_node
+      // on one-dimensional packed spike array      
       int array_idx = n_spike_times_cumul[i_node];
       int n_spike = n_spike_times_cumul[i_node+1] - array_idx;
      
       float *pt = spike_times_pack + array_idx;
+      // insert the spikes of node i_node in its spike vector 
       spike_times_vect_[i_node].insert(spike_times_vect_[i_node].begin()+k,
 				       pt, pt+n_spike);
       k += n_spike;
     }
   }
   for (int i_node=0; i_node<n_node_; i_node++) {
+    // pointer to spike vector data of node i_node
     spike_times_pt_vect_[i_node] = spike_times_vect_[i_node].data();
   }
   spike_times_buffer_.clear();

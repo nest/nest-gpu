@@ -611,10 +611,12 @@ int NESTGPU::SimulationStep()
   }
 
   for (unsigned int i=0; i<node_vect_.size(); i++) {
-    int n_step = node_vect_[i]->rec_spike_times_step_;
+    // if spike times recording is activated for node group...
     if (node_vect_[i]->max_n_rec_spike_times_>0) {
+      // and if buffering is activated every n_step time steps...
       int n_step = node_vect_[i]->rec_spike_times_step_;
       if (n_step>0 && (time_idx%n_step == n_step-1)) {
+	// extract recorded spike times and put them in buffers
 	node_vect_[i]->BufferRecSpikeTimes();
       }
     }
@@ -1518,6 +1520,7 @@ int NESTGPU::SetRecSpikeTimesStep(int i_node, int n_node,
   return 0;
 }
 
+// get number of recorded spike times for a node
 int NESTGPU::GetNRecSpikeTimes(int i_node)
 {
   int i_group;
@@ -1525,6 +1528,7 @@ int NESTGPU::GetNRecSpikeTimes(int i_node)
   return node_vect_[i_group]->GetNRecSpikeTimes(i_neuron);
 }
 
+// get recorded spike times for node group
 int NESTGPU::GetRecSpikeTimes(int i_node, int n_node, int **n_spike_times_pt,
 			      float ***spike_times_pt)
 {
