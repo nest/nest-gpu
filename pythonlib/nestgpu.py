@@ -19,6 +19,9 @@ c_float_p = ctypes.POINTER(ctypes.c_float)
 c_int_p = ctypes.POINTER(ctypes.c_int)
 c_char_p = ctypes.POINTER(ctypes.c_char)
 c_void_p = ctypes.c_void_p
+c_int_pp = ctypes.POINTER(ctypes.POINTER(ctypes.c_int))
+c_float_pp = ctypes.POINTER(ctypes.POINTER(ctypes.c_float))
+c_float_ppp = ctypes.POINTER(ctypes.POINTER(ctypes.POINTER(ctypes.c_float)))
 
 class NodeSeq(object):
     def __init__(self, i0, n=1):
@@ -2117,6 +2120,23 @@ def ActivateRecSpikeTimes(nodes, max_n_rec_spike_times):
         raise ValueError(GetErrorMessage())
     return ret
 
+NESTGPU_SetRecSpikeTimesStep = _nestgpu.NESTGPU_SetRecSpikeTimesStep
+NESTGPU_SetRecSpikeTimesStep.argtypes = (ctypes.c_int, ctypes.c_int, \
+                                         ctypes.c_int)
+NESTGPU_SetRecSpikeTimesStep.restype = ctypes.c_int
+def SetRecSpikeTimesStep(nodes, rec_spike_times_step):
+    "Setp number of time steps for buffering spike time recording"
+    if type(nodes)!=NodeSeq:
+        raise ValueError("Argument type of SetRecSpikeTimesStep must be NodeSeq")
+
+    ret = NESTGPU_SetRecSpikeTimesStep(ctypes.c_int(nodes.i0),
+                                       ctypes.c_int(nodes.n),
+                                       ctypes.c_int(rec_spike_times_step))
+
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
 
 NESTGPU_GetNRecSpikeTimes = _nestgpu.NESTGPU_GetNRecSpikeTimes
 NESTGPU_GetNRecSpikeTimes.argtypes = (ctypes.c_int,)
@@ -2131,16 +2151,28 @@ def GetNRecSpikeTimes(i_node):
     return ret
 
 NESTGPU_GetRecSpikeTimes = _nestgpu.NESTGPU_GetRecSpikeTimes
-NESTGPU_GetRecSpikeTimes.argtypes = (ctypes.c_int,)
-NESTGPU_GetRecSpikeTimes.restype = c_float_p
-def GetRecSpikeTimes(i_node):
-    "Get recorded spike times for node"
+NESTGPU_GetRecSpikeTimes.argtypes = (ctypes.c_int, ctypes.c_int, c_int_pp, c_float_ppp)
+NESTGPU_GetRecSpikeTimes.restype = ctypes.c_int
 
+def GetRecSpikeTimes(nodes):
+    "Get recorded spike times for node group"
+    if type(nodes)!=NodeSeq:
+        raise ValueError("First argument type of GetRecSpikeTimes must be NodeSeq")
+
+    n_spike_times = (c_int_p * 1)()
+    n_spike_times_pt = ctypes.cast(n_spike_times, c_int_pp)    
+    spike_times = (c_float_pp * 1)()
+    spike_times_pt = ctypes.cast(spike_times, c_float_ppp)    
+
+    
     spike_time_list = []
-    data_pt = NESTGPU_GetRecSpikeTimes(ctypes.c_int(i_node))
-    array_size = GetNRecSpikeTimes(i_node)
-    for i in range(array_size):
-        spike_time_list.append(data_pt[i])
+    ret1 = NESTGPU_GetRecSpikeTimes(ctypes.c_int(nodes.i0), ctypes.c_int(nodes.n),
+                                    n_spike_times_pt, spike_times_pt)
+    for i_n in range(nodes.n):
+        spike_time_list.append([])
+        n_spike = n_spike_times_pt[0][i_n]
+        for i_spike in range(n_spike):
+            spike_time_list[i_n].append(spike_times_pt[0][i_n][i_spike])
         
     ret = spike_time_list
     

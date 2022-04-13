@@ -668,9 +668,22 @@ class NESTGPU
     return ActivateRecSpikeTimes(nodes.i0, nodes.n, max_n_rec_spike_times);
   }
 
+  int SetRecSpikeTimesStep(int i_node, int n_node, int rec_spike_times_step);
+
+  int SetRecSpikeTimesStep(NodeSeq nodes, int rec_spike_times_step) {
+    return SetRecSpikeTimesStep(nodes.i0, nodes.n, rec_spike_times_step);
+  }
+
   int GetNRecSpikeTimes(int i_node);
 
-  std::vector<float> GetRecSpikeTimes(int i_node);
+  int GetRecSpikeTimes(int i_node, int n_node, int **n_spike_times_pt,
+		       float ***spike_times_pt);
+
+  int GetRecSpikeTimes(NodeSeq nodes, int **n_spike_times_pt,
+		       float ***spike_times_pt) {
+    return GetRecSpikeTimes(nodes.i0, nodes.n, n_spike_times_pt,
+			    spike_times_pt);
+  }
 
   int PushSpikesToNodes(int n_spikes, int *node_id, float *spike_height);
   
