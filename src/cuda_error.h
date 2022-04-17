@@ -22,8 +22,8 @@
 
 
 
-#ifndef CUDAERRORH
-#define CUDAERRORH
+#ifndef CUDAERROR_H
+#define CUDAERROR_H
 #include <stdio.h>
 #include "ngpu_exception.h"
 

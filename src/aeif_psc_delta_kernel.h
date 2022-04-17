@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFPSCDELTAKERNELH
-#define AEIFPSCDELTAKERNELH
+#ifndef AEIFPSCDELTAKERNEL_H
+#define AEIFPSCDELTAKERNEL_H
 
 #include <string>
 #include <cmath>

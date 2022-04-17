@@ -26,8 +26,8 @@
 // https://github.com/nest/nest-simulator/blob/master/models/iaf_psc_exp.h
 
 
-#ifndef IAFPSCEXPGH
-#define IAFPSCEXPgH
+#ifndef IAFPSCEXPG_H
+#define IAFPSCEXPG_H
 
 #include <iostream>
 #include <string>

@@ -22,8 +22,8 @@
 
 
 
-#ifndef SPIKEDETECTORH
-#define SPIKEDETECTORH
+#ifndef SPIKEDETECTOR_H
+#define SPIKEDETECTOR_H
 
 #include <iostream>
 #include <string>

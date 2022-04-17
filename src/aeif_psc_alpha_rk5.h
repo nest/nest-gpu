@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFPSCALPHARK5H
-#define AEIFPSCALPHARK5H
+#ifndef AEIFPSCALPHARK5_H
+#define AEIFPSCALPHARK5_H
 
 struct aeif_psc_alpha_rk5;
 

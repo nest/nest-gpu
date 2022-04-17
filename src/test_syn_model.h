@@ -22,8 +22,8 @@
 
 
 
-#ifndef TESTSYNMODELH
-#define TESTSYNMODELH
+#ifndef TESTSYNMODEL_H
+#define TESTSYNMODEL_H
 
 #include "syn_model.h"
 

@@ -22,8 +22,8 @@
 
 
 
-#ifndef CONNECTSPECH
-#define CONNECTSPECH
+#ifndef CONNECTSPEC_H
+#define CONNECTSPEC_H
 
 #include <iostream>
 

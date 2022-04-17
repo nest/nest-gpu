@@ -22,8 +22,8 @@
 
 
 
-#ifndef NEURONGPUH
-#define NEURONGPUH
+#ifndef NESTGPUC_H
+#define NESTGPUC_H
 
 #ifdef __cplusplus
 extern "C" {

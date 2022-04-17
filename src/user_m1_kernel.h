@@ -22,8 +22,8 @@
 
 
 
-#ifndef USERM1KERNELH
-#define USERM1KERNELH
+#ifndef USERM1KERNEL_H
+#define USERM1KERNEL_H
 
 #include <string>
 #include <cmath>

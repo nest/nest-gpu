@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFCONDBETARK5H
-#define AEIFCONDBETARK5H
+#ifndef AEIFCONDBETARK5_H
+#define AEIFCONDBETARK5_H
 
 struct aeif_cond_beta_rk5;
 

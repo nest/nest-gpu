@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFPSCEXPH
-#define AEIFPSCEXPH
+#ifndef AEIFPSCEXP_H
+#define AEIFPSCEXP_H
 
 #include <iostream>
 #include <string>

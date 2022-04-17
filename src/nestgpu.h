@@ -22,8 +22,8 @@
 
 
 
-#ifndef NEURONGPUCLASSH
-#define NEURONGPUCLASSH
+#ifndef NESTGPU_H
+#define NESTGPU_H
 
 #include <iostream>
 #include <vector>

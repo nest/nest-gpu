@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFCONDBETAH
-#define AEIFCONDBETAH
+#ifndef AEIFCONDBETA_H
+#define AEIFCONDBETA_H
 
 #include <iostream>
 #include <string>

@@ -22,8 +22,8 @@
 
 
 
-#ifndef GET_REAL_TIME_H
-#define GET_REAL_TIME_H
+#ifndef GETREALTIME_H
+#define GETREALTIME_H
 
 double getRealTime();
 

@@ -22,8 +22,8 @@
 
 
 
-#ifndef RK5H
-#define RK5H
+#ifndef RK5_H
+#define RK5_H
 
 #include "cuda_error.h"
 #include "rk5_const.h"

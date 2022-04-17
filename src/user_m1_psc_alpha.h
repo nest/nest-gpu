@@ -22,8 +22,8 @@
 
 
 
-#ifndef USERM1H
-#define USERM1H
+#ifndef USERM1PSCALPHA_H
+#define USERM1PSCALPHA_H
 
 #include <iostream>
 #include <string>

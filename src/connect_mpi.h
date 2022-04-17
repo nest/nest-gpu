@@ -23,8 +23,8 @@
 
 
 #ifdef HAVE_MPI
-#ifndef CONNECT_MPI_H
-#define CONNECT_MPI_H
+#ifndef CONNECTMPI_H
+#define CONNECTMPI_H
 #include <vector>
 #include <mpi.h>
 #include "connect.h"
