@@ -22,8 +22,8 @@
 
 
 
-#ifndef POISSGENH
-#define POISSGENH
+#ifndef POISSGEN_H
+#define POISSGEN_H
 
 #include <iostream>
 #include <string>

@@ -22,8 +22,8 @@
 
 
 
-#ifndef PARROTNEURONH
-#define PARROTNEURONH
+#ifndef PARROTNEURON_H
+#define PARROTNEURON_H
 
 #include <iostream>
 #include <string>

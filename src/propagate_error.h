@@ -1,5 +1,5 @@
-#ifndef PROPAGATEERRORH
-#define PROPAGATEERRORH
+#ifndef PROPAGATEERROR_H
+#define PROPAGATEERROR_H
 
 #define BEGIN_ERR_PROP			   \
   checkNESTGPUInstance();		   \

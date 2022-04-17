@@ -22,8 +22,8 @@
 
 
 
-#ifndef SPIKEMPIH
-#define SPIKEMPIH
+#ifndef SPIKEMPI_H
+#define SPIKEMPI_H
 
 __global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id,
                                     float *spike_height);

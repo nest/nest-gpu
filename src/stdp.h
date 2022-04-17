@@ -22,8 +22,8 @@
 
 
 
-#ifndef STDPH
-#define STDPH
+#ifndef STDP_H
+#define STDP_H
 
 #include "syn_model.h"
 

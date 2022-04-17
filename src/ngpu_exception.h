@@ -23,8 +23,8 @@
 // This class handles runtime errors
 /////////////////////////////////////
 
-#ifndef NGPUEXCEPTIONH
-#define NGPUEXCEPTIONH
+#ifndef NGPUEXCEPTION_H
+#define NGPUEXCEPTION_H
 #include <string>
 #include <cstring>
 #include <exception>

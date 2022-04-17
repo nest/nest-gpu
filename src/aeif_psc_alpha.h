@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFPSCALPHAH
-#define AEIFPSCALPHAH
+#ifndef AEIFPSCALPHA_H
+#define AEIFPSCALPHA_H
 
 #include <iostream>
 #include <string>

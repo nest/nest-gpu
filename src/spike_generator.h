@@ -22,8 +22,8 @@
 
 
 
-#ifndef SPIKEGENERATORH
-#define SPIKEGENERATORH
+#ifndef SPIKEGENERATOR_H
+#define SPIKEGENERATOR_H
 
 #include <iostream>
 #include <string>

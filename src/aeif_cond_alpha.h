@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFCONDALPHAH
-#define AEIFCONDALPHAH
+#ifndef AEIFCONDALPHA_H
+#define AEIFCONDALPHA_H
 
 #include <iostream>
 #include <string>

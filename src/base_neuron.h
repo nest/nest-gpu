@@ -22,8 +22,8 @@
 
 
 
-#ifndef BASENEURONH
-#define BASENEURONH
+#ifndef BASENEURON_H
+#define BASENEURON_H
 
 #include <string>
 #include <vector>

@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFCONDBETAKERNELH
-#define AEIFCONDBETAKERNELH
+#ifndef AEIFCONDBETAKERNEL_H
+#define AEIFCONDBETAKERNEL_H
 
 #include <string>
 #include <cmath>

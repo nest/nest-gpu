@@ -22,8 +22,8 @@
 
 
 
-#ifndef IZHIKEVICHH
-#define IZHIKEVICHH
+#ifndef IZHIKEVICH_H
+#define IZHIKEVICH_H
 
 #include <iostream>
 #include <string>

@@ -22,8 +22,8 @@
 
 
 
-#ifndef NESTED_LOOP_H
-#define  NESTED_LOOP_H
+#ifndef NESTEDLOOP_H
+#define  NESTEDLOOP_H
 
 #include "prefix_scan.h"
 
