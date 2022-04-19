@@ -5,14 +5,12 @@ import os
 import unicodedata
 import gc
 
-
-print('\n              -- NEST GPU --\n')
-print('  Copyright (C) 2004 The NEST Initiative\n')
-print(' This program is provided AS IS and comes with')
-print(' NO WARRANTY. See the file LICENSE for details.\n')
-print(' Homepage: https://github.com/nest/nest-gpu')
-print()
-
+print('-----------------------------------------------------------------')
+print('NESTGPU')
+print('A GPU-MPI library for simulation of large-scale networks')
+print(' of spiking neurons')
+print('Homepage: https://github.com/golosio/NeuronGPU') 
+print('-----------------------------------------------------------------')
 
 lib_dir=os.environ["NEST_GPU"]
 lib_path=lib_dir + "/lib/libnestgpu.so"
