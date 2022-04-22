@@ -37,13 +37,16 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'NEST-GPU'
-copyright = '2022, JoseJVS, golosio, jhnnsnk'
-author = 'JoseJVS, golosio, jhnnsnk'
+project = 'NEST GPU'
+copyright = '2022, JoseJVS, golosio, jhnnsnk, gmtiddia'
+author = 'JoseJVS, golosio, jhnnsnk, gmtiddia'
 
 # The full version, including alpha/beta/rc tags
 release = '1'
 
+
+source_suffix = '.rst'
+master_doc = 'contents'
 
 # -- General configuration ---------------------------------------------------
 
@@ -55,6 +58,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
+    'sphinx_tabs.tabs',
     'nbsphinx'
 ]
 
