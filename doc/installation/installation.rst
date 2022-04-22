@@ -123,5 +123,5 @@ Installation test
 -----------------
 
 To check the correctness of NEST GPU installation you can find some tests in the directory `python/test <https://github.com/nest/nest-gpu>`_.
-Each Python script tests a specific feature of the library, and to perform all the tests you can run the batch scripts `test_all.sh` and `test_mpi.sh`.
+Each Python script tests a specific feature of the library, and to perform all the tests you can run the bash scripts `test_all.sh` and `test_mpi.sh`.
 If everything worked well, for every test you should see a line indicating `TEST PASSED` or `MPI TEST PASSED`.
