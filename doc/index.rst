@@ -8,7 +8,7 @@ al. (2021) <https://www.frontiersin.org/articles/10.3389/fncom.2021.627620/full
 Currently this repository is being adapted to the NEST development
 workflow.**
 
-NEST GPU is a GPU-MPI library for simulation of large-scale networks of spiking
+`NEST GPU <https://github.com/nest/nest-gpu>`__ is a GPU-MPI library for simulation of large-scale networks of spiking
 neurons. Can be used in Python, in C++ and in C.
 
 With this library it is possible to run relatively fast simulations of
