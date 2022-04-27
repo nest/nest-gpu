@@ -98,6 +98,7 @@ $(top_srcdir)/src/dummyfile.cpp \
 $(top_srcdir)/src/getRealTime.cu \
 $(top_srcdir)/src/get_spike.cu \
 $(top_srcdir)/src/multimeter.cu \
+$(top_srcdir)/src/locate.cu \
 $(top_srcdir)/src/neuron_models.cu \
 $(top_srcdir)/src/nestgpu.cu \
 $(top_srcdir)/src/nestgpu_C.cpp \
