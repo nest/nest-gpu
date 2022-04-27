@@ -42,7 +42,6 @@
 #include "getRealTime.h"
 #include "random.h"
 #include "nestgpu.h"
-#include "nested_loop.h"
 #include "dir_connect.h"
 #include "rev_spike.h"
 #include "spike_mpi.h"
