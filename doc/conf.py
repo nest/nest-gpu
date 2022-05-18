@@ -37,13 +37,16 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'NEST-GPU'
-copyright = '2022, JoseJVS, golosio, jhnnsnk'
-author = 'JoseJVS, golosio, jhnnsnk'
+project = u'NEST GPU Documentation'
+copyright = u'2004, nest-simulator'
+author = u'nest-simulator'
 
 # The full version, including alpha/beta/rc tags
 release = '1'
 
+
+source_suffix = '.rst'
+master_doc = 'contents'
 
 # -- General configuration ---------------------------------------------------
 
@@ -55,6 +58,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
+    'sphinx_tabs.tabs',
     'nbsphinx'
 ]
 
@@ -89,6 +93,8 @@ intersphinx_mapping = {
 #
 html_theme = 'sphinx_rtd_theme'
 
+html_show_sphinx = False
+html_show_copyright = False
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".

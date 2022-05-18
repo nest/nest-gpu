@@ -1,14 +1,14 @@
-Welcome to NEST-GPU's documentation!
+Welcome to NEST GPU's documentation!
 ====================================
 
 **NEST GPU was developed under the
-name**\ `NeuronGPU <https://github.com/golosio/NeuronGPU>`__\ **before
-it has been integrated in the NEST Initiative, see**\ `Golosio et
+name**\  `NeuronGPU <https://github.com/golosio/NeuronGPU>`__\  **before
+it has been integrated in the NEST Initiative, see**\  `Golosio et
 al. (2021) <https://www.frontiersin.org/articles/10.3389/fncom.2021.627620/full>`__\ **.
 Currently this repository is being adapted to the NEST development
 workflow.**
 
-A GPU-MPI library for simulation of large-scale networks of spiking
+`NEST GPU <https://github.com/nest/nest-gpu>`__ is a GPU-MPI library for simulation of large-scale networks of spiking
 neurons. Can be used in Python, in C++ and in C.
 
 With this library it is possible to run relatively fast simulations of
@@ -23,12 +23,12 @@ very similar to that of the NEST simulator: the most used commands are
 practically identical, dictionaries are used to define neurons,
 connections and synapsis properties in the same way.
 
-To start using it,, have a look at the examples in the python/examples
-and c++/examples folders.
+To start using it, have a look at the examples in the `python/examples <https://github.com/nest/nest-gpu/tree/main/python/examples>`_
+and `c++/examples <https://github.com/nest/nest-gpu/tree/main/c%2B%2B/examples>`_ folders.
 
--  `Download and installation
-   instructions <https://github.com/golosio/NESTGPU/wiki/Installation-instructions>`__
--  `User guide <https://github.com/golosio/NESTGPU/wiki>`__
+* :doc:`Download NEST GPU <download/download>`
+* :doc:`Install NEST GPU <installation/installation>`
+* :doc:`User guide <guides/index>`
 
 .. toctree::
    :maxdepth: 2
@@ -36,9 +36,10 @@ and c++/examples folders.
 
 
 
-Indices and tables
-==================
+..
+   Indices and tables
+   ==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   * :ref:`genindex`
+   * :ref:`modindex`
+   * :ref:`search`!
