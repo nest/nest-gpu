@@ -105,7 +105,7 @@ html_css_files = [
     'css/pygments.css',
 ]
 
-html_logo =  '_static/img/nest_logo.png'
+html_logo =  'logo/nestgpu-logo.png'
 html_theme_options = {'logo_only': True,
                       'display_version': True}
 
