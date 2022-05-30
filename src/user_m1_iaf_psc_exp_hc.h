@@ -26,8 +26,8 @@
 // https://github.com/nest/nest-simulator/blob/master/models/user_m1.h
 
 
-#ifndef USERM1HCH
-#define USERM1HCH
+#ifndef USERM1IAFPSCEXPHC_H
+#define USERM1IAFPSCEXPHC_H
 
 #include <iostream>
 #include <string>

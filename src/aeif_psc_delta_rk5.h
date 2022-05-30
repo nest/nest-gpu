@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFPSCDELTARK5H
-#define AEIFPSCDELTARK5H
+#ifndef AEIFPSCDELTARK5_H
+#define AEIFPSCDELTARK5_H
 
 struct aeif_psc_delta_rk5;
 

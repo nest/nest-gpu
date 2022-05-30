@@ -22,8 +22,8 @@
 
 
 
-#ifndef REVSPIKEH
-#define REVSPIKEH
+#ifndef REVSPIKE_H
+#define REVSPIKE_H
 
 extern unsigned int *d_RevSpikeNum;
 extern unsigned int *d_RevSpikeTarget;

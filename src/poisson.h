@@ -22,8 +22,8 @@
 
 
 
-#ifndef POISSONH
-#define POISSONH
+#ifndef POISSON_H
+#define POISSON_H
 #include <cuda.h>
 #include <curand.h>
 

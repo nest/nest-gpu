@@ -1,9 +1,13 @@
------------------------------------------------------------------
-NESTGPU
-A GPU-MPI library for simulation of large-scale networks
- of spiking neurons
-Homepage: https://github.com/golosio/NeuronGPU
------------------------------------------------------------------
+
+              -- NEST GPU --
+
+  Copyright (C) 2004 The NEST Initiative
+
+ This program is provided AS IS and comes with
+ NO WARRANTY. See the file LICENSE for details.
+
+ Homepage: https://github.com/nest/nest-gpu
+
 ########################################
 Even to all
 {'source': 0, 'target': 1, 'port': 0, 'syn': 0, 'delay': 1.0, 'weight': 100.0}

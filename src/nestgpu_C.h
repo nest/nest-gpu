@@ -22,8 +22,8 @@
 
 
 
-#ifndef NEURONGPUH
-#define NEURONGPUH
+#ifndef NESTGPUC_H
+#define NESTGPUC_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -288,10 +288,15 @@ extern "C" {
 
   int NESTGPU_ActivateRecSpikeTimes(int i_node, int n_node,
 				      int max_n_rec_spike_times);
-
+  
+  int NESTGPU_SetRecSpikeTimesStep(int i_node, int n_node,
+				   int rec_spike_times_step);
+  
   int NESTGPU_GetNRecSpikeTimes(int i_node);
 
-  float* NESTGPU_GetRecSpikeTimes(int i_node);
+  int NESTGPU_GetRecSpikeTimes(int i_node, int n_node,
+			       int **n_spike_times_pt,
+			       float ***spike_times_pt);
 
   int NESTGPU_PushSpikesToNodes(int n_spikes, int *node_id);
  

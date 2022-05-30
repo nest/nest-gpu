@@ -22,8 +22,8 @@
 
 
 
-#ifndef SENDSPIKEH
-#define SENDSPIKEH
+#ifndef SENDSPIKE_H
+#define SENDSPIKE_H
 
 extern int *d_SpikeNum;
 extern int *d_SpikeSourceIdx;

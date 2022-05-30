@@ -22,8 +22,8 @@
 
 
 
-#ifndef USERM1RK5H
-#define USERM1RK5H
+#ifndef USERM1CONDBETARK5_H
+#define USERM1CONDBETARK5_H
 
 struct user_m1_rk5;
 

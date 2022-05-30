@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFCONDALPHARK5H
-#define AEIFCONDALPHARK5H
+#ifndef AEIFCONDALPHARK5_H
+#define AEIFCONDALPHARK5_H
 
 struct aeif_cond_alpha_rk5;
 

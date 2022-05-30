@@ -23,8 +23,8 @@
 
 
 
-#ifndef IZHIKEVICHPSCEXP5SH
-#define IZHIKEVICHPSCEXP5SH
+#ifndef IZHIKEVICHPSCEXP5S_H
+#define IZHIKEVICHPSCEXP5S_H
 
 #include <iostream>
 #include <string>

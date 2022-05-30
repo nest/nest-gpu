@@ -22,8 +22,8 @@
 
 
 
-#ifndef NEURONMODELSH
-#define NEURONMODELSH
+#ifndef NEURONMODELS_H
+#define NEURONMODELS_H
 
 enum NeuronModels {
   i_null_model = 0, i_iaf_psc_exp_g_model,

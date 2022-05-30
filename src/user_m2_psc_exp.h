@@ -22,8 +22,8 @@
 
 
 
-#ifndef USERM2H
-#define USERM2H
+#ifndef USERM2PSCEXP_H
+#define USERM2PSCEXP_H
 
 #include <iostream>
 #include <string>

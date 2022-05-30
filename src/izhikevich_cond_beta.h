@@ -22,8 +22,8 @@
 
 
 
-#ifndef IZHIKEVICHCONDBETAH
-#define IZHIKEVICHCONDBETAH
+#ifndef IZHIKEVICHCONDBETA_H
+#define IZHIKEVICHCONDBETA_H
 
 #include <iostream>
 #include <string>

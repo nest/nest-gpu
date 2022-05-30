@@ -135,7 +135,7 @@ else
 	COMPILER_FLAGS += $(OPENMP_CFLAGS)
 endif
 
-CUDA_FLAGS= -arch $(GPU_ARCH) --ptxas-options=-v --maxrregcount=64 --relocatable-device-code true
+CUDA_FLAGS= -arch $(GPU_ARCH) --ptxas-options=-v --maxrregcount=55 --relocatable-device-code true
 CUDA_LIBS= -lm -lcurand -lcuda -lcudart
 #-lomp
 

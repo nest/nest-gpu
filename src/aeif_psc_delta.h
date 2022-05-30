@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFPSCDELTAH
-#define AEIFPSCDELTAH
+#ifndef AEIFPSCDELTA_H
+#define AEIFPSCDELTA_H
 
 #include <iostream>
 #include <string>

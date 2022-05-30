@@ -22,8 +22,8 @@
 
 
 
-#ifndef SPIKEBUFFERH
-#define SPIKEBUFFERH
+#ifndef SPIKEBUFFERRINGVERSION_H
+#define SPIKEBUFFERRINGVERSION_H
 #include "connect.h"
 
 extern __device__ int MaxSpikeBufferSize;

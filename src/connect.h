@@ -22,8 +22,8 @@
 
 
 
-#ifndef CONNECTH
-#define CONNECTH
+#ifndef CONNECT_H
+#define CONNECT_H
 #include <vector>
 #include <algorithm>
 

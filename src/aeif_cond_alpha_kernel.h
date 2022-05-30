@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFCONDALPHAKERNELH
-#define AEIFCONDALPHAKERNELH
+#ifndef AEIFCONDALPHAKERNEL_H
+#define AEIFCONDALPHAKERNEL_H
 
 #include <string>
 				    //#include <cmath>
