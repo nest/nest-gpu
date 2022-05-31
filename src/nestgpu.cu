@@ -537,7 +537,6 @@ int NESTGPU::SimulationStep()
     time_mark = getRealTime();
     CollectSpikeKernel<<<n_spikes, 1024>>>(n_spikes, d_SpikeTargetNum);
     gpuErrchk(cudaPeekAtLastError());
-    //gpuErrchk(cudaDeviceSynchronize());
 
     NestedLoop_time_ += (getRealTime() - time_mark);
   }
