@@ -1072,21 +1072,15 @@ float BaseNeuron::GetSpikeActivity(int i_neuron)
   if (Ns==0) {
     return 0.0;
   }
-  
-  int is0;
-  gpuErrchk(cudaMemcpy(&is0, d_SpikeBufferIdx0 + i_spike_buffer,
-		       sizeof(int), cudaMemcpyDeviceToHost));
-  int i_arr = is0*h_NSpikeBuffer+i_spike_buffer; // spike index in array
-
   int time_idx;
   // get first (most recent) spike from buffer
-  gpuErrchk(cudaMemcpy(&time_idx, d_SpikeBufferTimeIdx + i_arr,
+  gpuErrchk(cudaMemcpy(&time_idx, d_SpikeBufferTimeIdx + i_spike_buffer,
 		       sizeof(int), cudaMemcpyDeviceToHost));
   if (time_idx!=0) { // neuron is not spiking now
     return 0.0;
   }
   float spike_height;
-  gpuErrchk(cudaMemcpy(&spike_height, d_SpikeBufferHeight + i_arr,
+  gpuErrchk(cudaMemcpy(&spike_height, d_SpikeBufferHeight + i_spike_buffer,
 		       sizeof(float), cudaMemcpyDeviceToHost));
 
   return spike_height;
