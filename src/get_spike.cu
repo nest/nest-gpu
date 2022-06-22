@@ -55,7 +55,7 @@ __device__ double atomicAddDouble(double* address, double val)
 //////////////////////////////////////////////////////////////////////
 // This is the function called by the nested loop
 // that collects the spikes
-__device__ void CollectSpikeFunction(int i_spike, int i_syn)
+__device__ void NestedLoopFunction0(int i_spike, int i_syn)
 {
   int i_source = SpikeSourceIdx[i_spike];
   int i_conn = SpikeConnIdx[i_spike];
@@ -93,20 +93,6 @@ __device__ void CollectSpikeFunction(int i_spike, int i_syn)
   }
   ////////////////////////////////////////////////////////////////
 }
-
-__global__ void CollectSpikeKernel(int n_spikes, int *SpikeTargetNum)
-{
-  const int i_spike = blockIdx.x;
-  if (i_spike<n_spikes) {
-    const int n_spike_targets = SpikeTargetNum[i_spike];
-    for (int i_syn = threadIdx.x; i_syn < n_spike_targets; i_syn += blockDim.x){
-      CollectSpikeFunction(i_spike, i_syn);
-    }
-  }
-}
-
-
-
 ///////////////
 
 // improve using a grid

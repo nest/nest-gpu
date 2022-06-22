@@ -22,23 +22,20 @@
 
 
 
-#ifndef REVSPIKE_H
-#define REVSPIKE_H
+#ifndef NESTEDLOOP_H
+#define  NESTEDLOOP_H
 
-extern unsigned int *d_RevSpikeNum;
-extern unsigned int *d_RevSpikeTarget;
-extern int *d_RevSpikeNConn;
+#include "prefix_scan.h"
 
-__global__ void RevSpikeReset();
+namespace NestedLoop
+{
+  extern PrefixScan prefix_scan_;
+  
+  int Init();
+  int Run(int Nx, int *d_Ny, int i_func);
+  int CumulSumNestedLoop(int Nx, int *d_Ny, int i_func);  
 
-__global__ void RevSpikeBufferUpdate(unsigned int n_node);
-
-int RevSpikeInit(NetConnection *net_connection);
-
-int RevSpikeFree();
-
-int ResetConnectionSpikeTimeDown(NetConnection *net_connection);
-
-int ResetConnectionSpikeTimeUp(NetConnection *net_connection);
+  int Free();
+}
 
 #endif

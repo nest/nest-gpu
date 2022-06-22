@@ -48,7 +48,7 @@ __device__ int *RevSpikeNConn;
 //////////////////////////////////////////////////////////////////////
 // This is the function called by the nested loop
 // that makes use of positive post-pre spike time difference
-__device__ void SynapseUpdateFunction(int i_spike, int i_target_rev_conn)
+__device__ void NestedLoopFunction1(int i_spike, int i_target_rev_conn)
 {
   unsigned int target = RevSpikeTarget[i_spike];
   unsigned int i_conn = TargetRevConnection[target][i_target_rev_conn];
@@ -63,18 +63,7 @@ __device__ void SynapseUpdateFunction(int i_spike, int i_target_rev_conn)
     }
   }
 }
-
-__global__ void SynapseUpdateKernel(int n_rev_spikes, int *RevSpikeNConn)
-{
-  const int i_spike = blockIdx.x;
-  if (i_spike<n_rev_spikes) {
-    const int n_spike_targets = RevSpikeNConn[i_spike];
-    for (int i_target_rev = threadIdx.x; i_target_rev < n_spike_targets; i_target_rev += blockDim.x){
-      SynapseUpdateFunction(i_spike, i_target_rev);
-    }
-  }
-}
-
+	    
 
 __global__ void RevSpikeBufferUpdate(unsigned int n_node)
 {

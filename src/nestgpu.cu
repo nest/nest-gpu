@@ -42,6 +42,7 @@
 #include "getRealTime.h"
 #include "random.h"
 #include "nestgpu.h"
+#include "nested_loop.h"
 #include "dir_connect.h"
 #include "rev_spike.h"
 #include "spike_mpi.h"
@@ -131,6 +132,8 @@ NESTGPU::NESTGPU()
   connect_mpi_->remote_spike_height_ = false;
 #endif
   
+  NestedLoop::Init();
+
   SpikeBufferUpdate_time_ = 0;
   poisson_generator_time_ = 0;
   neuron_Update_time_ = 0;
@@ -535,9 +538,7 @@ int NESTGPU::SimulationStep()
   ClearGetSpikeArrays();    
   if (n_spikes > 0) {
     time_mark = getRealTime();
-    CollectSpikeKernel<<<n_spikes, 1024>>>(n_spikes, d_SpikeTargetNum);
-    gpuErrchk(cudaPeekAtLastError());
-
+    NestedLoop::Run(n_spikes, d_SpikeTargetNum, 0);
     NestedLoop_time_ += (getRealTime() - time_mark);
   }
   time_mark = getRealTime();
@@ -604,10 +605,7 @@ int NESTGPU::SimulationStep()
     gpuErrchk(cudaMemcpy(&n_rev_spikes, d_RevSpikeNum, sizeof(unsigned int),
 			 cudaMemcpyDeviceToHost));
     if (n_rev_spikes > 0) {
-      SynapseUpdateKernel<<<n_rev_spikes, 1024>>>(n_rev_spikes, d_RevSpikeNConn);
-      gpuErrchk(cudaPeekAtLastError());
-      gpuErrchk(cudaDeviceSynchronize());
-
+      NestedLoop::Run(n_rev_spikes, d_RevSpikeNConn, 1);
     }      
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   }
