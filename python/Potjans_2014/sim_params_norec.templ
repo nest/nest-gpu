@@ -54,4 +54,4 @@ sim_dict = {
     'overwrite_files': True,
     # print the time progress. This should only be used when the simulation
     # is run on a local machine.
-    'print_time': True}
+    'print_time': False}
