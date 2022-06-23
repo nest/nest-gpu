@@ -1701,12 +1701,6 @@ int NESTGPU::ConnectRemoteNodes()
 }
 
 
-
-
-
-
-
-
 int NESTGPU::GetNBoolParam()
 {
   return N_KERNEL_BOOL_PARAM;
