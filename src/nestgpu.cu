@@ -360,7 +360,7 @@ int NESTGPU::Simulate()
   
   for (long long it=0; it<Nt_; it++) {
     if (it%100==0 && verbosity_level_>=2 && print_time_==true) {
-      printf("\r[%.2lf %%] Model time: %.3lf", 100.0*(neural_time_-neur_t0_)/sim_time_, neural_time_);
+      printf("\r[%.2lf %%] Model time: %.3lf ms", 100.0*(neural_time_-neur_t0_)/sim_time_, neural_time_);
     }
     SimulationStep();
   }
@@ -387,7 +387,7 @@ int NESTGPU::StartSimulation()
   }
   if (verbosity_level_>=1) {
     std::cout << MpiRankStr() << "Simulating ...\n";
-    printf("Neural activity simulation time: %.3lf\n", sim_time_);
+    printf("Neural activity simulation time: %.3lf ms\n", sim_time_);
   }
   
   neur_t0_ = neural_time_;
@@ -400,7 +400,7 @@ int NESTGPU::StartSimulation()
 int NESTGPU::EndSimulation()
 {
   if (verbosity_level_>=2  && print_time_==true) {
-    printf("\r[%.2lf %%] Model time: %.3lf", 100.0*(neural_time_-neur_t0_)/sim_time_, neural_time_);
+    printf("\r[%.2lf %%] Model time: %.3lf ms", 100.0*(neural_time_-neur_t0_)/sim_time_, neural_time_);
   }
 #ifdef HAVE_MPI                                        
   if (mpi_flag_) {
