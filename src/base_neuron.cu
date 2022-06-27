@@ -28,7 +28,8 @@
 #include "cuda_error.h"
 #include "base_neuron.h"
 #include "spike_buffer.h"
-#include "scan.cuh"
+#include "scan.h"
+#include "locate.h"
 
 __device__ int locate(int val, int *data, int n);
 
