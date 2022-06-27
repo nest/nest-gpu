@@ -11,6 +11,74 @@ python_PYTHON = $(top_srcdir)/pythonlib/nestgpu.py
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
+HCUSRC=\
+iaf_psc_exp_g.h \
+iaf_psc_exp_hc_params.h \
+iaf_psc_exp_hc.h \
+iaf_psc_exp.h \
+ext_neuron.h \
+aeif_cond_alpha.h \
+aeif_cond_alpha_kernel.h \
+aeif_cond_alpha_rk5.h \
+aeif_cond_beta.h \
+aeif_cond_beta_kernel.h \
+aeif_cond_beta_rk5.h \
+aeif_psc_alpha.h \
+aeif_psc_alpha_kernel.h \
+aeif_psc_alpha_rk5.h \
+aeif_psc_delta.h \
+aeif_psc_delta_kernel.h \
+aeif_psc_delta_rk5.h \
+aeif_psc_exp.h \
+aeif_psc_exp_kernel.h \
+aeif_psc_exp_rk5.h \
+base_neuron.h \
+connect.h \
+connect_mpi.h \
+connect_spec.h \
+cuda_error.h \
+dir_connect.h \
+getRealTime.h \
+get_spike.h \
+multimeter.h \
+neuron_models.h \
+nestgpu.h \
+ngpu_exception.h \
+node_group.h \
+parrot_neuron.h \
+poiss_gen.h \
+poiss_gen_variables.h \
+poisson.h \
+prefix_scan.h \
+propagate_error.h \
+random.h \
+rev_spike.h \
+rk5.h \
+rk5_const.h \
+rk5_interface.h \
+scan.h \
+send_spike.h \
+spike_buffer.h \
+spike_detector.h \
+spike_generator.h \
+spike_mpi.h \
+stdp.h \
+syn_model.h \
+test_syn_model.h \
+izhikevich_cond_beta.h \
+izhikevich_cond_beta_kernel.h \
+izhikevich_cond_beta_rk5.h \
+izhikevich.h \
+izhikevich_psc_exp.h \
+izhikevich_psc_exp_5s.h \
+izhikevich_psc_exp_2s.h \
+user_m1.h \
+user_m1_kernel.h \
+user_m1_rk5.h \
+user_m2.h \
+user_m2_kernel.h \
+user_m2_rk5.h
+
 CUSRC=\
 iaf_psc_exp_g.cu \
 iaf_psc_exp_hc.cu \
@@ -55,6 +123,10 @@ izhikevich_psc_exp.cu \
 user_m1.cu \
 user_m2.cu
 
+HCPPSRC=\
+connect_rules.h \
+nestgpu_C.h
+
 CPPSRC=\
 connect_rules.cpp \
 nestgpu_C.cpp
@@ -77,10 +149,10 @@ CUOBJ=$(CUSRC:.cu=.cu.o)
 CPPOBJ=$(CPPSRC:.cpp=.cpp.o)
 OBJDIR=obj
 OBJS=$(addprefix $(OBJDIR)/, $(CUOBJ)) $(addprefix $(OBJDIR)/, $(CPPOBJ))
-$(OBJDIR)/%.cu.o: $(top_srcdir)/src/%.cu
+$(OBJDIR)/%.cu.o: $(top_srcdir)/src/%.cu $(top_srcdir)/src/%.h
 	@mkdir -p obj
 	$(NVCC) -ccbin=$(MPICXX) --compiler-options  "$(COMPILER_FLAGS)" -I . $(CUDA_FLAGS) $< -c -o $@
-$(OBJDIR)/%.cpp.o: $(top_srcdir)/src/%.cpp
+$(OBJDIR)/%.cpp.o: $(top_srcdir)/src/%.cpp $(top_srcdir)/src/%.h
 	@mkdir -p obj
 	$(MPICXX) $(COMPILER_FLAGS) -I . $< -c -o $@
 
