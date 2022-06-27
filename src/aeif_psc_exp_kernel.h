@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFPSCEXPKERNELH
-#define AEIFPSCEXPKERNELH
+#ifndef AEIFPSCEXPKERNEL_H
+#define AEIFPSCEXPKERNEL_H
 
 #include <string>
 #include <cmath>

@@ -22,8 +22,8 @@
 
 
 
-#ifndef GETSPIKEH
-#define GETSPIKEH
+#ifndef GETSPIKE_H
+#define GETSPIKE_H
 
 __global__ void GetSpikes(double *spike_array, int array_size, int n_port,
 			  int n_var,
@@ -33,5 +33,8 @@ __global__ void GetSpikes(double *spike_array, int array_size, int n_port,
 			  float *port_input_arr,
 			  int port_input_arr_step,
 			  int port_input_port_step);
+
+
+__global__ void CollectSpikeKernel(int n_spikes, int *SpikeTargetNum);
 
 #endif

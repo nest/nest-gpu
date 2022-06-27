@@ -22,8 +22,8 @@
 
 
 
-#ifndef USERM2KERNELH
-#define USERM2KERNELH
+#ifndef USERM2CONDALPHAKERNEL_H
+#define USERM2CONDALPHAKERNEL_H
 
 #include <string>
 				    //#include <cmath>

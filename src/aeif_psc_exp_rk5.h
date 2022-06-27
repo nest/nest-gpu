@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFPSCEXPRK5H
-#define AEIFPSCEXPRK5H
+#ifndef AEIFPSCEXPRK5_H
+#define AEIFPSCEXPRK5_H
 
 struct aeif_psc_exp_rk5;
 

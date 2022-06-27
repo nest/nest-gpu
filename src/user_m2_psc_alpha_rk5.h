@@ -22,8 +22,8 @@
 
 
 
-#ifndef USERM2RK5H
-#define USERM2RK5H
+#ifndef USERM2PSCALPHARK5_H
+#define USERM2PSCALPHARK5_H
 
 struct user_m2_rk5;
 

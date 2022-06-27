@@ -22,8 +22,8 @@
 
 
 
-#ifndef MULTIMETERH
-#define MULTIMETERH
+#ifndef MULTIMETER_H
+#define MULTIMETER_H
 #include <stdio.h>
 #include <string>
 #include <vector>

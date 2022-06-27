@@ -22,8 +22,8 @@
 
 
 
-#ifndef EXTNEURONH
-#define EXTNEURONH
+#ifndef EXTNEURON_H
+#define EXTNEURON_H
 
 #include <iostream>
 #include <string>

@@ -42,7 +42,6 @@
 #include "getRealTime.h"
 #include "random.h"
 #include "nestgpu.h"
-#include "nested_loop.h"
 #include "dir_connect.h"
 #include "rev_spike.h"
 #include "spike_mpi.h"
@@ -132,8 +131,6 @@ NESTGPU::NESTGPU()
   connect_mpi_->remote_spike_height_ = false;
 #endif
   
-  NestedLoop::Init();
-
   SpikeBufferUpdate_time_ = 0;
   poisson_generator_time_ = 0;
   neuron_Update_time_ = 0;
@@ -538,7 +535,9 @@ int NESTGPU::SimulationStep()
   ClearGetSpikeArrays();    
   if (n_spikes > 0) {
     time_mark = getRealTime();
-    NestedLoop::Run(n_spikes, d_SpikeTargetNum, 0);
+    CollectSpikeKernel<<<n_spikes, 1024>>>(n_spikes, d_SpikeTargetNum);
+    gpuErrchk(cudaPeekAtLastError());
+
     NestedLoop_time_ += (getRealTime() - time_mark);
   }
   time_mark = getRealTime();
@@ -605,10 +604,26 @@ int NESTGPU::SimulationStep()
     gpuErrchk(cudaMemcpy(&n_rev_spikes, d_RevSpikeNum, sizeof(unsigned int),
 			 cudaMemcpyDeviceToHost));
     if (n_rev_spikes > 0) {
-      NestedLoop::Run(n_rev_spikes, d_RevSpikeNConn, 1);
+      SynapseUpdateKernel<<<n_rev_spikes, 1024>>>(n_rev_spikes, d_RevSpikeNConn);
+      gpuErrchk(cudaPeekAtLastError());
+      gpuErrchk(cudaDeviceSynchronize());
+
     }      
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   }
+
+  for (unsigned int i=0; i<node_vect_.size(); i++) {
+    // if spike times recording is activated for node group...
+    if (node_vect_[i]->max_n_rec_spike_times_>0) {
+      // and if buffering is activated every n_step time steps...
+      int n_step = node_vect_[i]->rec_spike_times_step_;
+      if (n_step>0 && (time_idx%n_step == n_step-1)) {
+	// extract recorded spike times and put them in buffers
+	node_vect_[i]->BufferRecSpikeTimes();
+      }
+    }
+  }
+
   it_++;
   
   return 0;
@@ -1492,6 +1507,22 @@ int NESTGPU::ActivateRecSpikeTimes(int i_node, int n_node,
   return 0;
 }
 
+int NESTGPU::SetRecSpikeTimesStep(int i_node, int n_node,
+				     int rec_spike_times_step)
+{
+  int i_group;
+  int i_node_0 = GetNodeSequenceOffset(i_node, n_node, i_group);
+  if (i_node_0!=i_node || node_vect_[i_group]->n_node_!=n_node) {
+    throw ngpu_exception("Time step for buffering spike time recording "
+			 "must be set for all and only "
+			 "the nodes of the same group");
+  }
+  node_vect_[i_group]->SetRecSpikeTimesStep(rec_spike_times_step);
+
+  return 0;
+}
+
+// get number of recorded spike times for a node
 int NESTGPU::GetNRecSpikeTimes(int i_node)
 {
   int i_group;
@@ -1499,11 +1530,20 @@ int NESTGPU::GetNRecSpikeTimes(int i_node)
   return node_vect_[i_group]->GetNRecSpikeTimes(i_neuron);
 }
 
-std::vector<float> NESTGPU::GetRecSpikeTimes(int i_node)
+// get recorded spike times for node group
+int NESTGPU::GetRecSpikeTimes(int i_node, int n_node, int **n_spike_times_pt,
+			      float ***spike_times_pt)
 {
   int i_group;
-  int i_neuron = i_node - GetNodeSequenceOffset(i_node, 1, i_group);
-  return node_vect_[i_group]->GetRecSpikeTimes(i_neuron);
+  int i_node_0 = GetNodeSequenceOffset(i_node, n_node, i_group);
+  if (i_node_0!=i_node || node_vect_[i_group]->n_node_!=n_node) {
+    throw ngpu_exception("Spike times must be extracted for all and only "
+			 " the nodes of the same group");
+  }
+  
+  return node_vect_[i_group]->GetRecSpikeTimes(n_spike_times_pt,
+					       spike_times_pt);
+					       
 }
 
 int NESTGPU::PushSpikesToNodes(int n_spikes, int *node_id,

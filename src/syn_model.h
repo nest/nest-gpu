@@ -22,8 +22,8 @@
 
 
 
-#ifndef SYNMODELH
-#define SYNMODELH
+#ifndef SYNMODEL_H
+#define SYNMODEL_H
 
 #include <string>
 #include <vector>

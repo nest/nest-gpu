@@ -22,8 +22,8 @@
 
 
 
-#ifndef CONNECTRULESH
-#define CONNECTRULESH
+#ifndef CONNECTRULES_H
+#define CONNECTRULES_H
 
 #include <iostream>
 #include <numeric>

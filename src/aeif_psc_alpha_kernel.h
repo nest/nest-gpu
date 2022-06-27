@@ -22,8 +22,8 @@
 
 
 
-#ifndef AEIFPSCALPHAKERNELH
-#define AEIFPSCALPHAKERNELH
+#ifndef AEIFPSCALPHAKERNEL_H
+#define AEIFPSCALPHAKERNEL_H
 
 #include <string>
 #include <cmath>

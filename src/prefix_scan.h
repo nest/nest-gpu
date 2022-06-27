@@ -22,8 +22,8 @@
 
 
 
-#ifndef PREFIX_SCAN_H
-#define PREFIX_SCAN_H
+#ifndef PREFIXSCAN_H
+#define PREFIXSCAN_H
 
 class PrefixScan
 {

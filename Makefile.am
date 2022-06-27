@@ -40,6 +40,7 @@ cuda_error.h \
 dir_connect.h \
 getRealTime.h \
 get_spike.h \
+locate.h \
 multimeter.h \
 neuron_models.h \
 nestgpu.h \
@@ -94,8 +95,8 @@ connect.cu \
 connect_mpi.cu \
 getRealTime.cu \
 get_spike.cu \
+locate.cu \
 multimeter.cu \
-nested_loop.cu \
 neuron_models.cu \
 nestgpu.cu \
 node_group.cu \
@@ -130,8 +131,6 @@ nestgpu_C.h
 CPPSRC=\
 connect_rules.cpp \
 nestgpu_C.cpp
-
-# $(top_srcdir)/src/
 
 COMPILER_FLAGS= -O3 -Wall -fPIC
 if OSX

@@ -22,8 +22,8 @@
 
 
 
-#ifndef POISSGENVARIABLESH
-#define POISSGENVARIABLESH
+#ifndef POISSGENVARIABLES_H
+#define POISSGENVARIABLES_H
 
 #include <string>
 

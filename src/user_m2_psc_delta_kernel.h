@@ -22,8 +22,8 @@
 
 
 
-#ifndef USERM2KERNELH
-#define USERM2KERNELH
+#ifndef USERM2PSCDELTAKERNEL_H
+#define USERM2PSCDELTAKERNEL_H
 
 #include <string>
 #include <cmath>

@@ -22,8 +22,8 @@
 
 
 
-#ifndef DIRCONNECTH
-#define DIRCONNECTH
+#ifndef DIRCONNECT_H
+#define DIRCONNECT_H
 
 struct DirectConnection
 {

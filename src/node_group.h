@@ -22,8 +22,8 @@
 
 
 
-#ifndef NODEGROUPH
-#define NODEGROUPH
+#ifndef NODEGROUP_H
+#define NODEGROUP_H
 
 #define MAX_N_NODE_GROUPS 128
 

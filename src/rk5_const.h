@@ -18,8 +18,8 @@
  *
  */
 
-
-
+#ifndef RK5CONST_H
+#define RK5CONST_H
 
 
 extern __constant__ float c2;
@@ -61,3 +61,4 @@ extern __constant__ float exp_dec;
 extern __constant__ float err_min;
 extern __constant__ float scal_min;
 
+#endif

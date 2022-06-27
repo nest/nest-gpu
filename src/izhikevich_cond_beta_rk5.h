@@ -22,8 +22,8 @@
 
 
 
-#ifndef IZHIKEVICHCONDBETARK5H
-#define IZHIKEVICHCONDBETARK5H
+#ifndef IZHIKEVICHCONDBETARK5_H
+#define IZHIKEVICHCONDBETARK5_H
 
 struct izhikevich_cond_beta_rk5;
 

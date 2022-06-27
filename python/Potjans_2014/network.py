@@ -161,11 +161,15 @@ class Network:
 
         """
         
+        spike_times_net = ngpu.GetRecSpikeTimes(self.neurons)
+        popid = 0
         for i_pop in range(len(self.pops)):
             population = self.pops[i_pop]
             data = []
+            spike_times_list = spike_times_net[popid:popid+len(population)]
+            popid += len(population)
             for i_neur in range(len(population)):
-                spike_times = ngpu.GetRecSpikeTimes(population[i_neur])
+                spike_times = spike_times_list[i_neur]
                 if (len(spike_times) != 0):
                     # print("i_pop:", i_pop, " i_neur:", i_neur, " n_spikes:",
                     #      len(spike_times))

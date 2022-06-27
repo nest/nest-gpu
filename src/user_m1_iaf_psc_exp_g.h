@@ -26,8 +26,8 @@
 // https://github.com/nest/nest-simulator/blob/master/models/iaf_psc_exp.h
 
 
-#ifndef USERM1H
-#define IAFPSCEXPgH
+#ifndef USERM1IAFPSCEXPG_H
+#define USERM1IAFPSCEXPG_H
 
 #include <iostream>
 #include <string>
