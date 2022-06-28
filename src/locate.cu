@@ -1,3 +1,5 @@
+#include "locate.h"
+
 __device__ int locate(int val, int *data, int n)
 {
   int i_left = 0;

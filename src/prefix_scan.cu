@@ -25,7 +25,7 @@
 #include <config.h>
 #include <stdio.h>
 #include "prefix_scan.h"
-#include "scan.cuh"
+#include "scan.h"
 
 const unsigned int PrefixScan::AllocSize = 13 * 1048576 / 2;
 

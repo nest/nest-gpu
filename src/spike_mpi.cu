@@ -31,7 +31,7 @@
 
 #include "spike_mpi.h"
 #include "connect_mpi.h"
-#include "scan.cuh"
+#include "scan.h"
 
 __device__ int locate(int val, int *data, int n);
 
