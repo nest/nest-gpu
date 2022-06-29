@@ -18,10 +18,6 @@
  *
  */
 
-
-
-
-
 #include <config.h>
 #include <stdio.h>
 
@@ -30,6 +26,7 @@
 #include "send_spike.h"
 #include "spike_buffer.h"
 #include "cuda_error.h"
+#include "new_connect.h"
 
 extern __constant__ long long NESTGPUTimeIdx;
 extern __constant__ float NESTGPUTimeResolution;
@@ -58,16 +55,22 @@ __device__ double atomicAddDouble(double* address, double val)
 __device__ void NestedLoopFunction0(int i_spike, int i_syn)
 {
   int i_source = SpikeSourceIdx[i_spike];
-  int i_conn = SpikeConnIdx[i_spike];
+  int i_source_conn_group = SpikeConnIdx[i_spike];
   float height = SpikeHeight[i_spike];
-  unsigned int target_port
-    = ConnectionGroupTargetNode[i_conn*NSpikeBuffer + i_source][i_syn];
-  int i_target = target_port & PORT_MASK;
-  unsigned char port = (unsigned char)(target_port >> (PORT_N_SHIFT + 24));
-  unsigned char syn_group
-    = ConnectionGroupTargetSynGroup[i_conn*NSpikeBuffer + i_source][i_syn];
-  float weight = ConnectionGroupTargetWeight[i_conn*NSpikeBuffer+i_source]
-    [i_syn];
+  int ig = ConnGroupIdx0[i_source] + i_source_conn_group;
+
+  // USARE BLOCK_SIZE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  // trovare i_block e i_block_conn
+  int64_t i_conn = ConnGroupIConn0[ig] + i_syn;
+  uint i_block = (uint)(i_conn / ConnBlockSize);
+  int64_t i_block_conn = i_conn % ConnBlockSize;
+  value_struct conn = ConnectionArray[i_block][i_block_conn];
+  //unsigned int target_port = conn.target_port;
+  //int i_target = target_port & PORT_MASK;
+  int i_target = conn.target;
+  unsigned char port = 0; //(unsigned char)(target_port >> (PORT_N_SHIFT + 24));
+  unsigned char syn_group = 0; //ValueSubarray[i_conn].syn_group;
+  float weight = conn.weight;
   //printf("handles spike %d src %d conn %d syn %d target %d"
   //" port %d weight %f\n",
   //i_spike, i_source, i_conn, i_syn, i_target,
@@ -80,6 +83,7 @@ __device__ void NestedLoopFunction0(int i_spike, int i_syn)
   double d_val = (double)(height*weight);
 
   atomicAddDouble(&NodeGroupArray[i_group].get_spike_array_[i], d_val);
+  /* RIMOSSO TEMPORANEAMENTE, RIPRISTINARE CON DOVUTE MODIFICHE
   if (syn_group>0) {
     ConnectionGroupTargetSpikeTime[i_conn*NSpikeBuffer+i_source][i_syn]
       = (unsigned short)(NESTGPUTimeIdx & 0xffff);
@@ -91,6 +95,7 @@ __device__ void NestedLoopFunction0(int i_spike, int i_syn)
 		     -NESTGPUTimeResolution*Dt_int);
     }
   }
+  */
   ////////////////////////////////////////////////////////////////
 }
 ///////////////

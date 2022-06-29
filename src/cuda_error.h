@@ -44,4 +44,17 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
      printf("Error at %s:%d\n",__FILE__,__LINE__);		\
      throw ngpu_exception("CUDA error");}} while(0)
 
+//#define DEBUG_CUDA_SYNC
+#ifdef DEBUG_CUDA_SYNC
+#define DBGCUDASYNC \
+  gpuErrchk(cudaPeekAtLastError()); \
+  gpuErrchk(cudaDeviceSynchronize());
+#else
+#define DBGCUDASYNC
+#endif
+#define CUDASYNC				\
+  gpuErrchk(cudaPeekAtLastError());		\
+  gpuErrchk(cudaDeviceSynchronize());
+
+
 #endif

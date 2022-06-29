@@ -46,6 +46,7 @@
 #include "dir_connect.h"
 #include "rev_spike.h"
 #include "spike_mpi.h"
+#include "new_connect.h"
 
 #ifdef HAVE_MPI
 #include <mpi.h>
@@ -313,7 +314,7 @@ int NESTGPU::Calibrate()
   
   SpikeInit(max_spike_num_);
   SpikeBufferInit(net_connection_, max_spike_buffer_size_);
-
+  
 #ifdef HAVE_MPI
   if (mpi_flag_) {
     // remove superfluous argument mpi_np
@@ -338,7 +339,12 @@ int NESTGPU::Calibrate()
   gpuErrchk(cudaMemcpyToSymbol(NESTGPUTimeResolution, &time_resolution_,
 			       sizeof(float)));
 ///////////////////////////////////
-
+ 
+  organizeConnections(time_resolution_, net_connection_->connection_.size(),
+		      NConn, h_ConnBlockSize,
+		      KeySubarray, ValueSubarray);
+  NewConnectInit();
+  
   return 0;
 }
 

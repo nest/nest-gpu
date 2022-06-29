@@ -12,6 +12,9 @@ CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
 ngpu_h_files=\
+$(top_srcdir)/src/copass_kernels.h \
+$(top_srcdir)/src/copass_sort.h \
+$(top_srcdir)/src/new_connect.h \
 $(top_srcdir)/src/iaf_psc_exp_g.h \
 $(top_srcdir)/src/iaf_psc_exp_hc_params.h \
 $(top_srcdir)/src/iaf_psc_exp_hc.h \
@@ -82,6 +85,9 @@ $(top_srcdir)/src/user_m2_kernel.h \
 $(top_srcdir)/src/user_m2_rk5.h
 
 ngpu_src_files=\
+$(top_srcdir)/src/copass_kernels.cu \
+$(top_srcdir)/src/copass_sort.cu \
+$(top_srcdir)/src/new_connect.cu \
 $(top_srcdir)/src/iaf_psc_exp_g.cu \
 $(top_srcdir)/src/iaf_psc_exp_hc.cu \
 $(top_srcdir)/src/iaf_psc_exp.cu \

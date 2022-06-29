@@ -32,6 +32,7 @@
 #include "connect.h"
 #include "send_spike.h"
 #include "node_group.h"
+#include "new_connect.h"
 
 #ifdef HAVE_MPI
 #include "spike_mpi.h"
@@ -216,7 +217,7 @@ __device__ void PushSpike(int i_spike_buffer, float height)
 
   // spike should be stored if there are output connections
   // or if dendritic delay is > 0
-  if (ConnectionGroupSize[i_spike_buffer]>0 || den_delay_idx>0) {
+  if (ConnGroupNum[i_spike_buffer]>0 || den_delay_idx>0) {
     int Ns = SpikeBufferSize[i_spike_buffer]; // n. of spikes in buffer
     if (Ns>=MaxSpikeBufferSize) {
       printf("Maximum number of spikes in spike buffer exceeded"
@@ -280,16 +281,16 @@ __global__ void SpikeBufferUpdate()
       rev_spike = true;
     }
     // connection index in array
-    int i_conn_arr = i_conn*NSpikeBuffer+i_spike_buffer;
+    //int i_conn_arr = i_conn*NSpikeBuffer+i_spike_buffer;
+    int ig = ConnGroupIdx0[i_spike_buffer] + i_conn;
     // if spike time matches connection group delay deliver it
     // to global spike array
-    if (i_conn<ConnectionGroupSize[i_spike_buffer] &&
-	spike_time_idx == ConnectionGroupDelay[i_conn_arr]) {
+    if (i_conn<ConnGroupNum[i_spike_buffer] &&
+	spike_time_idx == ConnGroupDelay[ig]) {
       // spike time matches connection group delay
       float height = SpikeBufferHeight[i_arr]; // spike multiplicity
       // deliver spike
-      SendSpike(i_spike_buffer, i_conn, height,
-		ConnectionGroupTargetSize[i_conn_arr]);
+      SendSpike(i_spike_buffer, i_conn, height, ConnGroupNConn[ig]);
       // increase index of the next conn. group that will emit this spike
       i_conn++;
       SpikeBufferConnIdx[i_arr] = i_conn;
@@ -298,7 +299,7 @@ __global__ void SpikeBufferUpdate()
     // check if it is the oldest spike of the buffer
     // and if its connection group index is over the last connection group
     // and if spike time is greater than the dendritic delay
-    if (is==Ns-1 && i_conn>=ConnectionGroupSize[i_spike_buffer]
+    if (is==Ns-1 && i_conn>=ConnGroupNum[i_spike_buffer]
 	&& spike_time_idx+1>=den_delay_idx) {
       // in this case we don't need any more to keep track of the oldest spike
       SpikeBufferSize[i_spike_buffer]--; // so remove it from buffer

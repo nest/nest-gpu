@@ -29,6 +29,7 @@
 #include "connect.h"
 #include "nestgpu.h"
 #include "connect_rules.h"
+#include "new_connect.h"
 
 int ConnSpec::Init()
 {
@@ -514,3 +515,5 @@ int NESTGPU::RemoteConnect(int i_source_host, std::vector<int> source,
   throw ngpu_exception("MPI is not available in your build");
 #endif
 }
+
+

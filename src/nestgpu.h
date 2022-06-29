@@ -702,5 +702,9 @@ class NESTGPU
 };
 
 
+template <>
+int NESTGPU::_ConnectAllToAll<int, int>
+(int source, int n_source, int target, int n_target, SynSpec &syn_spec);
+
 
 #endif
