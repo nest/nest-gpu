@@ -8,10 +8,7 @@ for i in range(3):
     ngpu.SetStatus(sg[i:i+1], {"spike_times": [spike_times[i]]})
 
 conn_dict={"rule": "all_to_all"}
-syn_dict={"delay": {"distribution":"normal_clipped",
-                    "mu":0.4, "low":0.1, "high":1.0, "sigma":0.2},
-          "weight": {"distribution":"normal_clipped",
-                     "mu":1.5, "low":0.5, "high":2.0, "sigma":0.25}}
+syn_dict={"weight": 1.0, "delay": 0.1}
 
 ngpu.Connect(sg, neuron, conn_dict, syn_dict)
 

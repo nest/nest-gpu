@@ -76,6 +76,12 @@ class SynGroup(object):
     def __init__(self, i_syn_group):
         self.i_syn_group = i_syn_group
 
+distribution_dict = {
+    "none": 0,
+    "normal": 1,
+    "normal_clipped": 2
+}
+        
 def to_byte_str(s):
     if type(s)==str:
         return s.encode('ascii')
@@ -1601,7 +1607,32 @@ def Connect(source, target, conn_dict, syn_dict):
         elif SynSpecIsFloatParam(param_name):
             fpar = syn_dict[param_name]
             if (type(fpar)==dict):
-                SetSynParamFromArray(param_name, fpar, array_size)
+                for dict_param_name in fpar:
+                    pval = fpar[dict_param_name]
+                    if dict_param_name=="array":
+                        arr = pval
+                        arr_param_name = param_name + "_array"
+                        if (not SynSpecIsFloatPtParam(arr_param_name)):
+                            raise ValueError("Synapse parameter cannot be set"
+                                             " by arrays")
+                        array_pt = ctypes.cast(arr, ctypes.c_void_p)
+                        SetSynSpecFloatPtParam(arr_param_name, array_pt)
+                    elif dict_param_name=="distribution":
+                        distr_idx = distribution_dict[pval]
+                        distr_param_name = param_name + "_distribution"
+                        if (not SynSpecIsIntParam(distr_param_name)):
+                            raise ValueError("Synapse parameter cannot be set"
+                                             " by distributions")
+                        SetSynSpecIntParam(distr_param_name, distr_idx)
+                    else:
+                        param_name2 = param_name + "_" + dict_param_name
+                        if SynSpecIsFloatParam(param_name2):
+                            SetSynSpecFloatParam(param_name2, pval)
+                        else:
+                            print(param_name2)
+                            raise ValueError("Unknown distribution parameter")
+
+                #SetSynParamFromArray(param_name, fpar, array_size)
             else:
                 SetSynSpecFloatParam(param_name, fpar)
 

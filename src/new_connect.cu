@@ -203,20 +203,20 @@ __global__ void setTarget(value_struct *value_subarray, uint *rand_val,
   value_subarray[i_conn].target = idx_min + rand_val[i_conn]%n_idx;
 }
 
-__global__ void setWeights(value_struct *value_subarray, float *rand_val,
+__global__ void setWeights(value_struct *value_subarray, float *arr_val,
 			   int64_t n_conn)
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  value_subarray[i_conn].weight = rand_val[i_conn];
+  value_subarray[i_conn].weight = arr_val[i_conn];
 }
 
-__global__ void setDelays(uint *key_subarray, float *rand_val,
+__global__ void setDelays(uint *key_subarray, float *arr_val,
 			  int64_t n_conn, float time_resolution)
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  int delay = (int)(rand_val[i_conn]/time_resolution);
+  int delay = (int)(arr_val[i_conn]/time_resolution);
   delay = max(delay,1);
   key_subarray[i_conn] = key_subarray[i_conn]<<10 | delay;
 }
@@ -340,15 +340,107 @@ int connect_fixed_total_number(curandGenerator_t &gen,
   return 0;
 }
 
+
+__global__ void randomNormalClippedKernel(float *arr, int64_t n, float mu,
+					  float sigma, float low, float high,
+					  double normal_cdf_alpha,
+					  double normal_cdf_beta)
+{
+  const double epsilon=1.0e-15;
+  int64_t tid = threadIdx.x + blockIdx.x * blockDim.x;
+  if (tid>=n) return;
+  float uniform = arr[tid];
+  double p = normal_cdf_alpha + (normal_cdf_beta - normal_cdf_alpha) * uniform;
+  double v = p * 2.0 - 1.0;
+  v = max(v,  epsilon - 1.0);
+  v = min(v, -epsilon + 1.0);
+  double x = (double)sigma * sqrt(2.0) * erfinv(v) + mu;
+  x = max(x, low);
+  x = min(x, high);
+  arr[tid] = (float)x;
+}
+
+double normalCDF(double value)
+{
+   return 0.5 * erfc(-value * M_SQRT1_2);
+}
+
+int randomNormalClipped(float *arr, int64_t n, float mu,
+			float sigma, float low, float high)
+{
+  double alpha = ((double)low - mu) / sigma;
+  double beta = ((double)high - mu) / sigma;
+  double normal_cdf_alpha = normalCDF(alpha);
+  double normal_cdf_beta = normalCDF(beta);
+
+  printf("mu: %f\tsigma: %f\tlow: %f\thigh: %f\tn: %ld\n",
+	 mu, sigma, low, high, n);
+  //n = 10000;
+  randomNormalClippedKernel<<<(n+1023)/1024, 1024>>>(arr, n, mu, sigma,
+						     low, high,
+						     normal_cdf_alpha,
+						     normal_cdf_beta);
+  // temporary test, remove!!!!!!!!!!!!!
+  //gpuErrchk( cudaDeviceSynchronize() );
+  //float h_arr[10000];
+  //gpuErrchk(cudaMemcpy(h_arr, arr, n*sizeof(float), cudaMemcpyDeviceToHost));
+  //for (int i=0; i<n; i++) {
+  //  printf("arr: %f\n", h_arr[i]);
+  //}
+  //exit(0);
+
+  return 0;
+}
+
+
+int setConnectionWeights(curandGenerator_t &gen, void *d_storage,
+			 value_struct *value_subarray, int64_t n_conn,
+			 SynSpec &syn_spec)
+{
+  if (syn_spec.weight_distr_!=0) { // probability distribution
+    //n_conn = 10000; // temporary, remove!!!!!!!!!!!!!!!!
+    CURAND_CALL(curandGenerateUniform(gen, (float*)d_storage, n_conn));
+    if (syn_spec.weight_distr_==2) { // normal_clipped
+      randomNormalClipped((float*)d_storage, n_conn, syn_spec.weight_mu_,
+			  syn_spec.weight_sigma_, syn_spec.weight_low_,
+			  syn_spec.weight_high_);
+    }
+    setWeights<<<(n_conn+1023)/1024, 1024>>>
+      (value_subarray, (float*)d_storage, n_conn);
+
+  }
+  return 0;
+}
+
+
+int setConnectionDelays(curandGenerator_t &gen, void *d_storage,
+			uint *key_subarray, int64_t n_conn,
+			SynSpec &syn_spec, float time_resolution)
+{
+  if (syn_spec.delay_distr_!=0) { // probability distribution
+    CURAND_CALL(curandGenerateUniform(gen, (float*)d_storage, n_conn));
+    if (syn_spec.delay_distr_==2) { // normal_clipped
+      randomNormalClipped((float*)d_storage, n_conn, syn_spec.delay_mu_,
+			  syn_spec.delay_sigma_, syn_spec.delay_low_,
+			  syn_spec.delay_high_);
+    }
+    setDelays<<<(n_conn+1023)/1024, 1024>>>
+      (key_subarray, (float*)d_storage, n_conn, time_resolution);
+
+  }
+  return 0;
+}
+
+
+
 int connect_all_to_all(curandGenerator_t &gen,
 		       void *d_storage, float time_resolution,
 		       std::vector<uint*> &key_subarray,
 		       std::vector<value_struct*> &value_subarray,
 		       int64_t &n_conn, int block_size,
 		       int i_source0, int n_source,
-		       int i_target0, int n_target, int port,
-		       float weight_mean, float weight_std,
-		       float delay_mean, float delay_std)
+		       int i_target0, int n_target,
+		       SynSpec &syn_spec)
 {
   uint64_t old_n_conn = n_conn;
   uint64_t n_new_conn = n_source*n_target;
@@ -392,20 +484,31 @@ int connect_all_to_all(curandGenerator_t &gen,
     setAllToAllSourceTarget<<<(n_block_conn+1023)/1024, 1024>>>
       (key_subarray[ib] + i_conn0, value_subarray[ib] + i_conn0,
        n_block_conn, n_prev_conn, i_source0, n_source, i_target0, n_target);
+
+    setConnectionWeights(gen, d_storage, value_subarray[ib] + i_conn0,
+			 n_block_conn, syn_spec);
+
+    setConnectionDelays(gen, d_storage, key_subarray[ib] + i_conn0,
+			n_block_conn, syn_spec, time_resolution);
     
+    //setConnectionDelays(gen, value_subarray[ib] + i_conn0, n_block_conn,
+    //			syn_spec);
+    /*
     // generate weights
     CURAND_CALL(curandGenerateNormal(gen, (float*)d_storage, n_block_conn,
 				     weight_mean, weight_std));
     setWeights<<<(n_block_conn+1023)/1024, 1024>>>
       (value_subarray[ib] + i_conn0, (float*)d_storage, n_block_conn);
-    
     // generate delays
+    float delay_mean = 0.4;
+    float delay_std = 0.2;
     CURAND_CALL(curandGenerateNormal(gen, (float*)d_storage, n_block_conn,
 				     delay_mean, delay_std));
     
     setDelays<<<(n_block_conn+1023)/1024, 1024>>>
       (key_subarray[ib] + i_conn0, (float*)d_storage, n_block_conn,
        time_resolution);
+    */
     
     n_prev_conn += n_block_conn;
   }
@@ -565,11 +668,11 @@ int NESTGPU::_ConnectAllToAll<int, int>
 (int source, int n_source, int target, int n_target, SynSpec &syn_spec)
 {
   printf("In new specialized connection all-to-all\n");
-  float weight_mean = syn_spec.weight_;
-  float weight_std = syn_spec.weight_ / 10.0;
-  float delay_mean = syn_spec.delay_;
-  float delay_std = syn_spec.delay_ / 4.0;
-  int port = syn_spec.port_;
+  //float weight_mean = syn_spec.weight_;
+  //float weight_std = syn_spec.weight_ / 10.0;
+  //float delay_mean = syn_spec.delay_;
+  //float delay_std = syn_spec.delay_ / 4.0;
+  //int port = syn_spec.port_;
   
   void *d_storage;
   gpuErrchk(cudaMalloc(&d_storage, h_ConnBlockSize*sizeof(int)));
@@ -577,8 +680,7 @@ int NESTGPU::_ConnectAllToAll<int, int>
   connect_all_to_all(*random_generator_, d_storage, time_resolution_,
 		     KeySubarray, ValueSubarray, NConn,
 		     h_ConnBlockSize, source, n_source,
-		     target, n_target, port, weight_mean, weight_std,
-		     delay_mean, delay_std);
+		     target, n_target, syn_spec);
   gpuErrchk(cudaFree(d_storage));
   
   return 0;

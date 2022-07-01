@@ -83,6 +83,15 @@ class SynSpec
   int delay_distr_;
   float *delay_array_;
   float delay_;
+  float weight_mu_;
+  float weight_low_;
+  float weight_high_;
+  float weight_sigma_;
+  float delay_mu_;
+  float delay_low_;
+  float delay_high_;
+  float delay_sigma_;
+  
  public:
   SynSpec();
   SynSpec(float weight, float delay);

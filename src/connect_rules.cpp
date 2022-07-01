@@ -184,22 +184,34 @@ int SynSpec::SetParam(std::string param_name, int value)
       throw ngpu_exception("Unknown synapse group");
     }
     syn_group_ = value;
-    return 0;
   }
   else if (param_name=="receptor") {
     if (value<0) {
       throw ngpu_exception("Port index must be >=0");
     }
     port_ = value;
-    return 0;
+  }
+  else if (param_name=="weight_distribution") {
+    weight_distr_ = value;
+    printf("weight_distribution_ idx: %d\n", value);
+  }
+  else if (param_name=="delay_distribution") {
+    delay_distr_ = value;
+    printf("delay_distribution_ idx: %d\n", value);
+  }
+  else  {
+    throw ngpu_exception("Unknown synapse int parameter");
   }
   
-  throw ngpu_exception("Unknown synapse int parameter");
+  return 0;
 }
 
 bool SynSpec::IsIntParam(std::string param_name)
 {
-  if (param_name=="synapse_group" || param_name=="receptor") {
+  if (param_name=="synapse_group" || param_name=="receptor"
+      || param_name=="weight_distribution"
+      || param_name=="delay_distribution"
+      ) {
     return true;
   }
   else {
@@ -218,6 +230,38 @@ int SynSpec::SetParam(std::string param_name, float value)
     }
     delay_ = value;
   }
+  else if (param_name=="weight_mu") {
+    weight_mu_ = value;
+    printf("weight_mu_: %f\n", value);
+  }
+  else if (param_name=="weight_low") {
+    weight_low_ = value;
+    printf("weight_low_: %f\n", value);
+  }
+  else if (param_name=="weight_high") {
+    weight_high_ = value;
+    printf("weight_high_: %f\n", value);
+  }
+  else if (param_name=="weight_sigma") {
+    weight_sigma_ = value;
+    printf("weight_sigma_: %f\n", value);
+  }
+  else if (param_name=="delay_mu") {
+    delay_mu_ = value;
+    printf("delay_mu_: %f\n", value);
+  }
+  else if (param_name=="delay_low") {
+    delay_low_ = value;
+    printf("delay_low_: %f\n", value);
+  }
+  else if (param_name=="delay_high") {
+    delay_high_ = value;
+    printf("delay_high_: %f\n", value);
+  }
+  else if (param_name=="delay_sigma") {
+    delay_sigma_ = value;
+    printf("delay_sigma_: %f\n", value);
+  }
   else {
     throw ngpu_exception("Unknown synapse float parameter");
   }
@@ -226,7 +270,12 @@ int SynSpec::SetParam(std::string param_name, float value)
 
 bool SynSpec::IsFloatParam(std::string param_name)
 {
-  if (param_name=="weight" || param_name=="delay") {
+  if (param_name=="weight" || param_name=="delay"
+      || param_name=="weight_mu" || param_name=="weight_low"
+      || param_name=="weight_high" || param_name=="weight_sigma"
+      || param_name=="delay_mu" || param_name=="delay_low"
+      || param_name=="delay_high" || param_name=="delay_sigma"
+      ) {
     return true;
   }
   else {

@@ -249,27 +249,17 @@ int copass_sort::sort_template(KeyArrayT key_array, ArrayT *h_subarray,
 
   char *d_buffer;
   
-  printf("st_bytes 6: %ld\n", st_bytes);
-  printf("block_size: %ld\n", block_size);
   array_GPUMalloc(d_storage, st_bytes, d_aux_array, block_size);
-
-  printf("st_bytes 7: %ld\n", st_bytes);
   
   position_t buffer_size = block_size/buffer_fract;
   cudaReusableAlloc(d_storage, st_bytes, &d_buffer, buffer_size, sizeof(char));
 
-  printf("st_bytes 8: %ld\n", st_bytes);
-    
   h_part_size  = new position_t[k];
   cudaReusableAlloc(d_storage, st_bytes, &d_part_size, k, sizeof(position_t));
 
-  printf("st_bytes 9: %ld\n", st_bytes);
-  
   cudaReusableAlloc(d_storage, st_bytes, &d_part_size_cumul,
 		    (k + 1), sizeof(position_t));
 
-  printf("st_bytes 10: %ld\n", st_bytes);
-  
   cudaReusableAlloc(d_storage, st_bytes, &d_m_u, k, sizeof(position_t));
   cudaReusableAlloc(d_storage, st_bytes, &d_m_d, k, sizeof(position_t));
   cudaReusableAlloc(d_storage, st_bytes, &d_mu_u, k, sizeof(position_t));
@@ -284,8 +274,6 @@ int copass_sort::sort_template(KeyArrayT key_array, ArrayT *h_subarray,
   cudaReusableAlloc(d_storage, st_bytes, &d_t_u, 1, sizeof(KeyT));
   cudaReusableAlloc(d_storage, st_bytes, &d_t_d, 1, sizeof(KeyT));
 
-  printf("st_bytes 11: %ld\n", st_bytes);
-  
   h_m_u = new position_t[k];
   h_m_d = new position_t[k];
   
@@ -296,8 +284,6 @@ int copass_sort::sort_template(KeyArrayT key_array, ArrayT *h_subarray,
   cudaReusableAlloc(d_storage, st_bytes, &d_diff_cumul,
 		    (k + 1), sizeof(position_t));
 
-  printf("st_bytes 12: %ld\n", st_bytes);
-  
   h_diff = new position_t[k];
   h_diff_cumul = new position_t[k+1];
 
@@ -308,8 +294,6 @@ int copass_sort::sort_template(KeyArrayT key_array, ArrayT *h_subarray,
 
   cudaReusableAlloc(d_storage, st_bytes, &d_t_tilde, 1, sizeof(KeyT));
 
-  printf("st_bytes 13: %ld\n", st_bytes);
-  
   k_next_pow_2 = nextPowerOf2(k);
 
   cudaReusableAlloc(d_storage, st_bytes, &d_extra_elem, k, sizeof(KeyT));
@@ -322,16 +306,12 @@ int copass_sort::sort_template(KeyArrayT key_array, ArrayT *h_subarray,
 
   cudaReusableAlloc(d_storage, st_bytes, &d_subarray, k, sizeof(ArrayT));
 
-  printf("st_bytes 14: %ld\n", st_bytes);
-  
   // if d_storage==NULL this function should only evaluate the storage bytes
   if (d_storage == NULL) {
     int64_t align_bytes = 256;
     int64_t align_mask = ~(align_bytes - 1);
 
-    printf("st_bytes 15: %ld\n", st_bytes);
     st_bytes = (st_bytes + align_bytes - 1) & align_mask;
-    printf("st_bytes 16: %ld\n", st_bytes);
     
     return 0;
   }
@@ -728,13 +708,11 @@ int copass_sort::sort(KeyT **key_subarray, ValueT **value_subarray,
     array_GPUSort(key_value_block, d_storage, ext_st_bytes);
     if (d_storage == NULL) break;
   }
-  printf("st_bytes 1: %ld\text_st_bytes: %ld\n", st_bytes, ext_st_bytes);
 
   KeyT **d_key_array_data_pt = NULL;
   cudaReusableAlloc(d_storage, st_bytes, &d_key_array_data_pt,
 		    k, sizeof(KeyT*));
   
-  printf("st_bytes 2: %ld\text_st_bytes: %ld\n", st_bytes, ext_st_bytes);
 
   if (d_storage != NULL) {
     gpuErrchk(cudaMemcpy(d_key_array_data_pt, key_subarray,
@@ -743,9 +721,7 @@ int copass_sort::sort(KeyT **key_subarray, ValueT **value_subarray,
   ValueT **d_value_array_data_pt = NULL;
   cudaReusableAlloc(d_storage, st_bytes, &d_value_array_data_pt,
 		    k, sizeof(ValueT*));
-  
-  printf("st_bytes 3: %ld\text_st_bytes: %ld\n", st_bytes, ext_st_bytes);
-  
+    
   if (d_storage != NULL) {
     gpuErrchk(cudaMemcpy(d_value_array_data_pt, value_subarray,
 			 k*sizeof(ValueT*), cudaMemcpyHostToDevice));
@@ -772,12 +748,8 @@ int copass_sort::sort(KeyT **key_subarray, ValueT **value_subarray,
 		contiguous_key_value <KeyT, ValueT> >
     (d_key_array, h_subarray, k, block_size, d_storage, st_bytes);
 
-  printf("st_bytes 5: %ld\text_st_bytes: %ld\n", st_bytes, ext_st_bytes);
-  
   st_bytes = max(st_bytes, ext_st_bytes);
 
-  printf("st_bytes 6: %ld\text_st_bytes: %ld\n", st_bytes, ext_st_bytes);
-  
   if (d_storage==NULL || compare_with_serial) return 0;
     
   for (uint i=0; i<k; i++) {
