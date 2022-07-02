@@ -64,11 +64,10 @@ __device__ void NestedLoopFunction0(int i_spike, int i_syn)
   int64_t i_conn = ConnGroupIConn0[ig] + i_syn;
   uint i_block = (uint)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
-  value_struct conn = ConnectionArray[i_block][i_block_conn];
-  //unsigned int target_port = conn.target_port;
-  //int i_target = target_port & PORT_MASK;
-  int i_target = conn.target;
-  unsigned char port = 0; //(unsigned char)(target_port >> (PORT_N_SHIFT + 24));
+  connection_struct conn = ConnectionArray[i_block][i_block_conn];
+  uint target_port = conn.target_port;
+  int i_target = target_port >> MaxPortNBits;
+  uint port = target_port & PortMask;
   unsigned char syn_group = 0; //ValueSubarray[i_conn].syn_group;
   float weight = conn.weight;
   //printf("handles spike %d src %d conn %d syn %d target %d"

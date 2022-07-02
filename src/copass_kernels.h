@@ -748,21 +748,25 @@ __global__ void max_diff_kernel(position_t *m_u, position_t *m_d,
   int i = threadIdx.x;
   if (i >= size) return;
   position_t sub_size = subarray[i].size;
-  if (sub_size <= 0) return;
-
-  diff_array[i] = m_u[i] - m_d[i];
   if (i == 0) {
     shared_arg_max = 0; // index of maximum difference
+    if (sub_size <= 0) {
+      diff_array[0] = -1;
+    }
+  }
+
+  if (sub_size > 0) {
+    diff_array[i] = m_u[i] - m_d[i];
   }
   __syncthreads();
+  if (sub_size > 0) {
 #ifdef PRINT_VRB
-  printf("diff i:%d m_u:%ld m_d:%ld diff_array:%ld\n", i, m_u[i], m_d[i],
-	 diff_array[i]);
+    printf("diff i: %d m_u:%ld m_d:%ld diff_array:%ld\n", i, m_u[i], m_d[i],
+	   diff_array[i]);
 #endif
-
-  atomicArgMax(diff_array, &shared_arg_max, i);
+    atomicArgMax(diff_array, &shared_arg_max, i);
+  }
   __syncthreads();
-  
   
   if (i == 0) {
     *max_diff = diff_array[shared_arg_max];
@@ -1024,6 +1028,7 @@ __global__ void eval_t_tilde_kernel(ArrayT *subarray,
   int m_tilde = (m_u[i] + m_d[i])/2;
   m_tilde = max(m_tilde - 1, 0);
   *t_tilde = getKey(subarray[i], m_tilde);
+  //printf("m_tilde: %d\t *t_tilde: %d\n", m_tilde, *t_tilde);
 }
 
 template <class KeyT, class ArrayT>

@@ -235,7 +235,6 @@ int NESTGPU::_ConnectFixedTotalNumber
   return 0;
 }
 
-
 template <class T1, class T2>
 int NESTGPU::_ConnectFixedIndegree
 (

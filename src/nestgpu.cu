@@ -117,7 +117,8 @@ NESTGPU::NESTGPU()
   SetTimeResolution(0.1);  // time resolution in ms
   max_spike_num_fact_ = 1.0;
   max_spike_per_host_fact_ = 1.0;
-  
+  setMaxNodeNBits(20); // maximum number of nodes is 2^20
+
   error_flag_ = false;
   error_message_ = "";
   error_code_ = 0;
@@ -289,9 +290,16 @@ int NESTGPU::Calibrate()
 {
   CheckUncalibrated("Calibration can be made only once");
   ConnectRemoteNodes();
+  // temporary
+  gpuErrchk( cudaPeekAtLastError() );
+  gpuErrchk( cudaDeviceSynchronize() );
+  
   calibrate_flag_ = true;
   BuildDirectConnections();
-
+  // temporary
+  gpuErrchk( cudaPeekAtLastError() );
+  gpuErrchk( cudaDeviceSynchronize() );
+  
   gpuErrchk(cudaMemcpyToSymbol(NESTGPUMpiFlag, &mpi_flag_, sizeof(bool)));
 
   if (verbosity_level_>=1) {
@@ -342,7 +350,7 @@ int NESTGPU::Calibrate()
  
   organizeConnections(time_resolution_, net_connection_->connection_.size(),
 		      NConn, h_ConnBlockSize,
-		      KeySubarray, ValueSubarray);
+		      KeySubarray, ConnectionSubarray);
   NewConnectInit();
   
   return 0;

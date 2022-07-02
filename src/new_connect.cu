@@ -15,6 +15,15 @@
 #include "new_connect.h"
 #include "nestgpu.h"
 
+uint h_MaxNodeNBits;
+__device__ uint MaxNodeNBits;
+
+uint h_MaxPortNBits;
+__device__ uint MaxPortNBits;
+
+uint h_PortMask;
+__device__ uint PortMask;
+
 uint *d_ConnGroupIdx0;
 __device__ uint *ConnGroupIdx0;
 
@@ -32,13 +41,13 @@ __device__ uint *ConnGroupDelay;
 
 int64_t NConn;
 
-const int64_t h_ConnBlockSize = 50000000;
+int64_t h_ConnBlockSize = 50000000;
 __device__ int64_t ConnBlockSize;
 
 std::vector<uint*> KeySubarray;
-std::vector<value_struct*> ValueSubarray;
+std::vector<connection_struct*> ConnectionSubarray;
 
-__device__ value_struct** ConnectionArray;
+__device__ connection_struct** ConnectionArray;
 
 __global__ void OrganizeConnectionGroups(uint *key_subarray,
 					 uint *key_subarray_prev,
@@ -52,7 +61,7 @@ __global__ void OrganizeConnectionGroups(uint *key_subarray,
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_block_conn) return;
   uint val = key_subarray[i_conn];
-  uint i_neuron = val >> 10;
+  uint i_neuron = val >> MaxPortNBits;
   int64_t prev_val;
   if (i_conn==0) {
     if (key_subarray_prev != NULL) {
@@ -155,13 +164,13 @@ __global__ void countConnectionGroups(uint *key_subarray,
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_block_conn) return;
   uint val = key_subarray[i_conn];
-  uint i_neuron = val >> 10;
+  uint i_neuron = val >> MaxPortNBits;
   int64_t prev_val;
   int64_t prev_neuron;
   if (i_conn==0) {
     if (key_subarray_prev != NULL) {
       prev_val = *key_subarray_prev;
-      prev_neuron = prev_val >> 10;
+      prev_neuron = prev_val >> MaxPortNBits;
     }
     else {
       prev_val = -1;      // just to ensure it is different from val
@@ -170,7 +179,7 @@ __global__ void countConnectionGroups(uint *key_subarray,
   }
   else {
     prev_val = key_subarray[i_conn-1];
-    prev_neuron = prev_val >> 10;
+    prev_neuron = prev_val >> MaxPortNBits;
   }
   if (val != prev_val) {
     atomicAdd(&conn_group_num[i_neuron], 1);
@@ -195,20 +204,28 @@ __global__ void setSource(uint *key_subarray, uint *rand_val,
   key_subarray[i_conn] = idx_min + rand_val[i_conn]%n_idx;
 }
 
-__global__ void setTarget(value_struct *value_subarray, uint *rand_val,
+__global__ void setTarget(connection_struct *conn_subarray, uint *rand_val,
 			  int64_t n_conn, uint idx_min, uint n_idx)
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  value_subarray[i_conn].target = idx_min + rand_val[i_conn]%n_idx;
+  conn_subarray[i_conn].target_port = idx_min + rand_val[i_conn]%n_idx;
 }
 
-__global__ void setWeights(value_struct *value_subarray, float *arr_val,
+__global__ void setWeights(connection_struct *conn_subarray, float weight,
 			   int64_t n_conn)
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  value_subarray[i_conn].weight = arr_val[i_conn];
+  conn_subarray[i_conn].weight = weight;
+}
+
+__global__ void setWeights(connection_struct *conn_subarray, float *arr_val,
+			   int64_t n_conn)
+{
+  int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i_conn>=n_conn) return;
+  conn_subarray[i_conn].weight = arr_val[i_conn];
 }
 
 __global__ void setDelays(uint *key_subarray, float *arr_val,
@@ -218,12 +235,30 @@ __global__ void setDelays(uint *key_subarray, float *arr_val,
   if (i_conn>=n_conn) return;
   int delay = (int)(arr_val[i_conn]/time_resolution);
   delay = max(delay,1);
-  key_subarray[i_conn] = key_subarray[i_conn]<<10 | delay;
+  key_subarray[i_conn] = (key_subarray[i_conn] << MaxPortNBits) | delay;
 }
 
+__global__ void setDelays(uint *key_subarray, float fdelay,
+			  int64_t n_conn, float time_resolution)
+{
+  int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i_conn>=n_conn) return;
+  int delay = (int)(fdelay/time_resolution);
+  delay = max(delay,1);
+  key_subarray[i_conn] = (key_subarray[i_conn] << MaxPortNBits) | delay;
+}
+
+__global__ void setPort(connection_struct *conn_subarray, uint port,
+			   int64_t n_conn)
+{
+  int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i_conn>=n_conn) return;
+  conn_subarray[i_conn].target_port =
+    (conn_subarray[i_conn].target_port << MaxPortNBits) | port; 
+}
 
 __global__ void setAllToAllSourceTarget(uint *key_subarray,
-					value_struct *value_subarray,
+					connection_struct *conn_subarray,
 					int64_t n_block_conn,
 					int64_t n_prev_conn,
 					uint i_source0, uint n_source,
@@ -235,7 +270,7 @@ __global__ void setAllToAllSourceTarget(uint *key_subarray,
   uint i_source = i_source0 + i_conn / n_target;
   uint i_target = i_target0 + i_conn % n_target;
   key_subarray[i_block_conn] = i_source;
-  value_subarray[i_block_conn].target = i_target;
+  conn_subarray[i_block_conn].target_port = i_target;
 }
 
 __global__ void getConnGroupNConn(int64_t *conn_group_iconn0,
@@ -260,86 +295,31 @@ __global__ void getConnGroupDelay(uint *conn_group_key,
 {
   uint conn_group_idx = threadIdx.x + blockIdx.x * blockDim.x;
   if (conn_group_idx >= conn_group_num) return;
-  conn_group_delay[conn_group_idx] = conn_group_key[conn_group_idx] & 0x3ff;
+  conn_group_delay[conn_group_idx] = conn_group_key[conn_group_idx]
+    & PortMask;
 }
 
-int connect_fixed_total_number(curandGenerator_t &gen,
-			       void *d_storage, float time_resolution,
-			       std::vector<uint*> &key_subarray,
-			       std::vector<value_struct*> &value_subarray,
-			       int64_t &n_conn, int block_size,
-			       int64_t total_num, int i_source0, int n_source,
-			       int i_target0, int n_target, int port,
-			       float weight_mean, float weight_std,
-			       float delay_mean, float delay_std)
+int allocateNewBlocks(std::vector<uint*> &key_subarray,
+		      std::vector<connection_struct*> &conn_subarray,
+		      int64_t block_size, uint new_n_block)
 {
-  uint64_t old_n_conn = n_conn;
-  n_conn += total_num; // new number of connections
-  uint new_n_block = (uint)((n_conn + block_size - 1) / block_size);
-  
-  printf("Allocating GPU memory for new connection blocks...\n");
+  //printf("Allocating GPU memory for new connection blocks...\n");
   // allocate new blocks if needed
   for (uint ib=key_subarray.size(); ib<new_n_block; ib++) {
+    //printf("new_n_block; %d\tib %d\tblock_size %ld\n", new_n_block, ib,
+    //	   block_size);
     uint *d_key_pt;
-    value_struct *d_value_pt;
+    connection_struct *d_connection_pt;
     // allocate GPU memory for new blocks 
     gpuErrchk(cudaMalloc(&d_key_pt, block_size*sizeof(uint)));
-    gpuErrchk(cudaMalloc(&d_value_pt, block_size*sizeof(value_struct)));
+    gpuErrchk(cudaMalloc(&d_connection_pt,
+			 block_size*sizeof(connection_struct)));
     key_subarray.push_back(d_key_pt);
-    value_subarray.push_back(d_value_pt);
+    conn_subarray.push_back(d_connection_pt);
   }
-  printf("Generating connections with fixed_total_number rule...\n");
-  uint ib0 = (uint)(old_n_conn / block_size);
-  for (uint ib=ib0; ib<new_n_block; ib++) {
-    uint64_t n_block_conn; // number of connections in a block
-    uint64_t i_conn0; // index of first connection in a block
-    if (new_n_block == ib0 + 1) {  // all connections are in the same block
-        i_conn0 = old_n_conn % block_size;
-	n_block_conn = total_num;
-    }
-    else if (ib == ib0) { // first block
-      i_conn0 = old_n_conn % block_size;
-      n_block_conn = block_size - i_conn0;
-    }
-    else if (ib == new_n_block-1) { // last block
-      i_conn0 = 0;
-      n_block_conn = (n_conn - 1) % block_size + 1;
-    }
-    else {
-      i_conn0 = 0;
-      n_block_conn = block_size;
-    }
-    // generate random source index in range 0 - n_neuron
-    CURAND_CALL(curandGenerate(gen, (uint*)d_storage, n_block_conn));
-    setSource<<<(n_block_conn+1023)/1024, 1024>>>
-      (key_subarray[ib] + i_conn0, (uint*)d_storage, n_block_conn,
-       i_source0, n_source);
 
-    // generate random target index in range 0 - n_neuron
-    CURAND_CALL(curandGenerate(gen, (uint*)d_storage, n_block_conn));
-    setTarget<<<(n_block_conn+1023)/1024, 1024>>>
-      (value_subarray[ib] + i_conn0, (uint*)d_storage, n_block_conn,
-       i_target0, n_target);
-  
-    // generate weights
-    CURAND_CALL(curandGenerateNormal(gen, (float*)d_storage, n_block_conn,
-				     weight_mean, weight_std));
-    setWeights<<<(n_block_conn+1023)/1024, 1024>>>
-      (value_subarray[ib] + i_conn0, (float*)d_storage, n_block_conn);
-  
-    // generate delays
-    CURAND_CALL(curandGenerateNormal(gen, (float*)d_storage, n_block_conn,
-				     delay_mean, delay_std));
-    
-    setDelays<<<(n_block_conn+1023)/1024, 1024>>>
-      (key_subarray[ib] + i_conn0, (float*)d_storage, n_block_conn,
-       time_resolution);
-    
-  }
-  
   return 0;
 }
-
 
 __global__ void randomNormalClippedKernel(float *arr, int64_t n, float mu,
 					  float sigma, float low, float high,
@@ -373,13 +353,14 @@ int randomNormalClipped(float *arr, int64_t n, float mu,
   double normal_cdf_alpha = normalCDF(alpha);
   double normal_cdf_beta = normalCDF(beta);
 
-  printf("mu: %f\tsigma: %f\tlow: %f\thigh: %f\tn: %ld\n",
-	 mu, sigma, low, high, n);
+  //printf("mu: %f\tsigma: %f\tlow: %f\thigh: %f\tn: %ld\n",
+  //	 mu, sigma, low, high, n);
   //n = 10000;
   randomNormalClippedKernel<<<(n+1023)/1024, 1024>>>(arr, n, mu, sigma,
 						     low, high,
 						     normal_cdf_alpha,
 						     normal_cdf_beta);
+  DBGCUDASYNC
   // temporary test, remove!!!!!!!!!!!!!
   //gpuErrchk( cudaDeviceSynchronize() );
   //float h_arr[10000];
@@ -394,7 +375,7 @@ int randomNormalClipped(float *arr, int64_t n, float mu,
 
 
 int setConnectionWeights(curandGenerator_t &gen, void *d_storage,
-			 value_struct *value_subarray, int64_t n_conn,
+			 connection_struct *conn_subarray, int64_t n_conn,
 			 SynSpec &syn_spec)
 {
   if (syn_spec.weight_distr_!=0) { // probability distribution
@@ -406,9 +387,16 @@ int setConnectionWeights(curandGenerator_t &gen, void *d_storage,
 			  syn_spec.weight_high_);
     }
     setWeights<<<(n_conn+1023)/1024, 1024>>>
-      (value_subarray, (float*)d_storage, n_conn);
+      (conn_subarray, (float*)d_storage, n_conn);
+    DBGCUDASYNC
 
   }
+  else {
+    setWeights<<<(n_conn+1023)/1024, 1024>>>
+      (conn_subarray, syn_spec.weight_, n_conn);
+    DBGCUDASYNC
+  }
+    
   return 0;
 }
 
@@ -426,8 +414,85 @@ int setConnectionDelays(curandGenerator_t &gen, void *d_storage,
     }
     setDelays<<<(n_conn+1023)/1024, 1024>>>
       (key_subarray, (float*)d_storage, n_conn, time_resolution);
+    DBGCUDASYNC
 
   }
+  else {
+    setDelays<<<(n_conn+1023)/1024, 1024>>>
+      (key_subarray, syn_spec.delay_, n_conn, time_resolution);
+    DBGCUDASYNC
+  }
+  return 0;
+}
+
+int connect_fixed_total_number(curandGenerator_t &gen,
+			       void *d_storage, float time_resolution,
+			       std::vector<uint*> &key_subarray,
+			       std::vector<connection_struct*> &conn_subarray,
+			       int64_t &n_conn, int64_t block_size,
+			       int64_t total_num, int i_source0, int n_source,
+			       int i_target0, int n_target,
+			       SynSpec &syn_spec)
+{
+  if (total_num==0) return 0;
+  uint64_t old_n_conn = n_conn;
+  uint64_t n_new_conn = total_num;
+  n_conn += n_new_conn; // new number of connections
+  uint new_n_block = (uint)((n_conn + block_size - 1) / block_size);
+
+  allocateNewBlocks(key_subarray, conn_subarray, block_size, new_n_block);
+      
+  //printf("Generating connections with fixed_total_number rule...\n");
+  uint ib0 = (uint)(old_n_conn / block_size);
+  for (uint ib=ib0; ib<new_n_block; ib++) {
+    uint64_t n_block_conn; // number of connections in a block
+    uint64_t i_conn0; // index of first connection in a block
+    if (new_n_block == ib0 + 1) {  // all connections are in the same block
+        i_conn0 = old_n_conn % block_size;
+	n_block_conn =   n_new_conn;
+    }
+    else if (ib == ib0) { // first block
+      i_conn0 = old_n_conn % block_size;
+      n_block_conn = block_size - i_conn0;
+    }
+    else if (ib == new_n_block-1) { // last block
+      i_conn0 = 0;
+      n_block_conn = (n_conn - 1) % block_size + 1;
+    }
+    else {
+      i_conn0 = 0;
+      n_block_conn = block_size;
+    }
+    // generate random source index in range 0 - n_neuron
+    CURAND_CALL(curandGenerate(gen, (uint*)d_storage, n_block_conn));
+    //printf("old_n_conn: %ld\n", old_n_conn);
+    //printf("n_new_conn: %ld\n", n_new_conn);
+    //printf("new_n_block: %d\n", new_n_block);
+    //printf("ib: %d\n", ib);
+    //printf("n_block_conn: %ld\n", n_block_conn);
+    setSource<<<(n_block_conn+1023)/1024, 1024>>>
+      (key_subarray[ib] + i_conn0, (uint*)d_storage, n_block_conn,
+       i_source0, n_source);
+    DBGCUDASYNC
+
+    // generate random target index in range 0 - n_neuron
+    CURAND_CALL(curandGenerate(gen, (uint*)d_storage, n_block_conn));
+    setTarget<<<(n_block_conn+1023)/1024, 1024>>>
+      (conn_subarray[ib] + i_conn0, (uint*)d_storage, n_block_conn,
+       i_target0, n_target);
+    DBGCUDASYNC
+
+    setConnectionWeights(gen, d_storage, conn_subarray[ib] + i_conn0,
+			 n_block_conn, syn_spec);
+
+    setConnectionDelays(gen, d_storage, key_subarray[ib] + i_conn0,
+			n_block_conn, syn_spec, time_resolution);
+
+    setPort<<<(n_block_conn+1023)/1024, 1024>>>
+      (conn_subarray[ib] + i_conn0, syn_spec.port_, n_block_conn);
+    DBGCUDASYNC
+  }
+  
   return 0;
 }
 
@@ -436,8 +501,8 @@ int setConnectionDelays(curandGenerator_t &gen, void *d_storage,
 int connect_all_to_all(curandGenerator_t &gen,
 		       void *d_storage, float time_resolution,
 		       std::vector<uint*> &key_subarray,
-		       std::vector<value_struct*> &value_subarray,
-		       int64_t &n_conn, int block_size,
+		       std::vector<connection_struct*> &conn_subarray,
+		       int64_t &n_conn, int64_t block_size,
 		       int i_source0, int n_source,
 		       int i_target0, int n_target,
 		       SynSpec &syn_spec)
@@ -446,19 +511,10 @@ int connect_all_to_all(curandGenerator_t &gen,
   uint64_t n_new_conn = n_source*n_target;
   n_conn += n_new_conn; // new number of connections
   uint new_n_block = (uint)((n_conn + block_size - 1) / block_size);
-  
-  printf("Allocating GPU memory for new connection blocks...\n");
-  // allocate new blocks if needed
-  for (uint ib=key_subarray.size(); ib<new_n_block; ib++) {
-    uint *d_key_pt;
-    value_struct *d_value_pt;
-    // allocate GPU memory for new blocks 
-    gpuErrchk(cudaMalloc(&d_key_pt, block_size*sizeof(uint)));
-    gpuErrchk(cudaMalloc(&d_value_pt, block_size*sizeof(value_struct)));
-    key_subarray.push_back(d_key_pt);
-    value_subarray.push_back(d_value_pt);
-  }
-  printf("Generating connections with all-to-all rule...\n");
+
+  allocateNewBlocks(key_subarray, conn_subarray, block_size, new_n_block);
+    
+  //printf("Generating connections with all-to-all rule...\n");
   int64_t n_prev_conn = 0;
   uint ib0 = (uint)(old_n_conn / block_size);
   for (uint ib=ib0; ib<new_n_block; ib++) {
@@ -482,33 +538,18 @@ int connect_all_to_all(curandGenerator_t &gen,
     }
     
     setAllToAllSourceTarget<<<(n_block_conn+1023)/1024, 1024>>>
-      (key_subarray[ib] + i_conn0, value_subarray[ib] + i_conn0,
+      (key_subarray[ib] + i_conn0, conn_subarray[ib] + i_conn0,
        n_block_conn, n_prev_conn, i_source0, n_source, i_target0, n_target);
-
-    setConnectionWeights(gen, d_storage, value_subarray[ib] + i_conn0,
+    DBGCUDASYNC
+    setConnectionWeights(gen, d_storage, conn_subarray[ib] + i_conn0,
 			 n_block_conn, syn_spec);
 
     setConnectionDelays(gen, d_storage, key_subarray[ib] + i_conn0,
 			n_block_conn, syn_spec, time_resolution);
     
-    //setConnectionDelays(gen, value_subarray[ib] + i_conn0, n_block_conn,
-    //			syn_spec);
-    /*
-    // generate weights
-    CURAND_CALL(curandGenerateNormal(gen, (float*)d_storage, n_block_conn,
-				     weight_mean, weight_std));
-    setWeights<<<(n_block_conn+1023)/1024, 1024>>>
-      (value_subarray[ib] + i_conn0, (float*)d_storage, n_block_conn);
-    // generate delays
-    float delay_mean = 0.4;
-    float delay_std = 0.2;
-    CURAND_CALL(curandGenerateNormal(gen, (float*)d_storage, n_block_conn,
-				     delay_mean, delay_std));
-    
-    setDelays<<<(n_block_conn+1023)/1024, 1024>>>
-      (key_subarray[ib] + i_conn0, (float*)d_storage, n_block_conn,
-       time_resolution);
-    */
+    setPort<<<(n_block_conn+1023)/1024, 1024>>>
+      (conn_subarray[ib] + i_conn0, syn_spec.port_, n_block_conn);
+    DBGCUDASYNC  
     
     n_prev_conn += n_block_conn;
   }
@@ -521,7 +562,7 @@ int connect_all_to_all(curandGenerator_t &gen,
 int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
 			int64_t block_size,
 			std::vector<uint*> &key_subarray,
-			std::vector<value_struct*> &value_subarray)
+			std::vector<connection_struct*> &conn_subarray)
 {
   typedef uint key_t;
   timeval startTV;
@@ -529,20 +570,20 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
   cudaDeviceSynchronize();
   gettimeofday(&startTV, NULL);
   
-  printf("ok0 block_size %ld\tn_node %d\tn_conn %ld\n", block_size,
-	 n_node, n_conn);
+  //printf("ok0 block_size %ld\tn_node %d\tn_conn %ld\n", block_size,
+  //	 n_node, n_conn);
   printf("Allocating auxiliary GPU memory...\n");
   int64_t storage_bytes = 0;
   void *d_storage = NULL;
-  copass_sort::sort<uint, value_struct>(key_subarray.data(),
-					value_subarray.data(), n_conn,
+  copass_sort::sort<uint, connection_struct>(key_subarray.data(),
+					conn_subarray.data(), n_conn,
 					block_size, d_storage, storage_bytes);
   printf("storage bytes: %ld\n", storage_bytes);
   gpuErrchk(cudaMalloc(&d_storage, storage_bytes));
   
   printf("Sorting...\n");
-  copass_sort::sort<uint, value_struct>(key_subarray.data(),
-					value_subarray.data(), n_conn,
+  copass_sort::sort<uint, connection_struct>(key_subarray.data(),
+					conn_subarray.data(), n_conn,
 					block_size, d_storage, storage_bytes);
   printf("Indexing connection groups...\n");
   uint k = key_subarray.size();
@@ -565,6 +606,7 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
     countConnectionGroups<<<(n_block_conn+1023)/1024, 1024>>>
       (key_subarray[i], key_subarray_prev, n_block_conn, d_ConnGroupNum,
        block_size*i, d_source_conn_idx0);
+    DBGCUDASYNC
     key_subarray_prev = key_subarray[i] + block_size - 1;
   }
   
@@ -614,6 +656,7 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
       (key_subarray[i], key_subarray_prev, n_block_conn,
        d_ConnGroupNum, block_size*i, d_ConnGroupIdx0,
        d_conn_group_iconn0_unsorted, d_conn_group_key_unsorted);
+    DBGCUDASYNC
     key_subarray_prev = key_subarray[i] + block_size - 1;
   }
   
@@ -645,13 +688,13 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
   
   getConnGroupNConn<<<(tot_conn_group_num+1023)/1024, 1024>>>
     (d_ConnGroupIConn0, d_ConnGroupNConn, tot_conn_group_num, n_conn);
-  
+  DBGCUDASYNC
   gpuErrchk(cudaMalloc(&d_ConnGroupDelay,
 		       tot_conn_group_num*sizeof(uint)));
   
   getConnGroupDelay<<<(tot_conn_group_num+1023)/1024, 1024>>>
     (d_conn_group_key, d_ConnGroupDelay, tot_conn_group_num);
-  
+  DBGCUDASYNC
   cudaDeviceSynchronize();
   gettimeofday(&endTV, NULL);
   long time = (long)((endTV.tv_sec * 1000000.0 + endTV.tv_usec)
@@ -667,7 +710,7 @@ template <>
 int NESTGPU::_ConnectAllToAll<int, int>
 (int source, int n_source, int target, int n_target, SynSpec &syn_spec)
 {
-  printf("In new specialized connection all-to-all\n");
+  //printf("In new specialized connection all-to-all\n");
   //float weight_mean = syn_spec.weight_;
   //float weight_std = syn_spec.weight_ / 10.0;
   //float delay_mean = syn_spec.delay_;
@@ -678,9 +721,33 @@ int NESTGPU::_ConnectAllToAll<int, int>
   gpuErrchk(cudaMalloc(&d_storage, h_ConnBlockSize*sizeof(int)));
   
   connect_all_to_all(*random_generator_, d_storage, time_resolution_,
-		     KeySubarray, ValueSubarray, NConn,
+		     KeySubarray, ConnectionSubarray, NConn,
 		     h_ConnBlockSize, source, n_source,
 		     target, n_target, syn_spec);
+  gpuErrchk(cudaFree(d_storage));
+  
+  return 0;
+}
+
+template <>
+int NESTGPU::_ConnectFixedTotalNumber<int, int>
+(int source, int n_source, int target, int n_target, int total_num,
+ SynSpec &syn_spec)
+{
+  //printf("In new specialized connection fixed-total-number\n");
+  //float weight_mean = syn_spec.weight_;
+  //float weight_std = syn_spec.weight_ / 10.0;
+  //float delay_mean = syn_spec.delay_;
+  //float delay_std = syn_spec.delay_ / 4.0;
+  //int port = syn_spec.port_;
+  
+  void *d_storage;
+  gpuErrchk(cudaMalloc(&d_storage, h_ConnBlockSize*sizeof(int)));
+  
+  connect_fixed_total_number(*random_generator_, d_storage, time_resolution_,
+			     KeySubarray, ConnectionSubarray, NConn,
+			     h_ConnBlockSize, total_num, source, n_source,
+			     target, n_target, syn_spec);
   gpuErrchk(cudaFree(d_storage));
   
   return 0;
@@ -692,7 +759,7 @@ __global__ void NewConnectInitKernel(uint *conn_group_idx0,
 				     int64_t *conn_group_nconn,
 				     uint *conn_group_delay,
 				     int64_t block_size,
-				     value_struct **connection_array)
+				     connection_struct **connection_array)
 {
   
   ConnGroupIdx0 = conn_group_idx0;
@@ -706,19 +773,37 @@ __global__ void NewConnectInitKernel(uint *conn_group_idx0,
 
 int NewConnectInit()
 {
-  uint k = ValueSubarray.size();
-  value_struct **d_connection_array;
-  gpuErrchk(cudaMalloc(&d_connection_array, k*sizeof(value_struct*)));
+  uint k = ConnectionSubarray.size();
+  connection_struct **d_connection_array;
+  gpuErrchk(cudaMalloc(&d_connection_array, k*sizeof(connection_struct*)));
   
-  gpuErrchk(cudaMemcpy(d_connection_array, ValueSubarray.data(),
-		       k*sizeof(value_struct*), cudaMemcpyHostToDevice));
+  gpuErrchk(cudaMemcpy(d_connection_array, ConnectionSubarray.data(),
+		       k*sizeof(connection_struct*), cudaMemcpyHostToDevice));
 
   NewConnectInitKernel<<<1,1>>>(d_ConnGroupIdx0, d_ConnGroupNum,
 				d_ConnGroupIConn0, d_ConnGroupNConn,
 				d_ConnGroupDelay, h_ConnBlockSize,
 				d_connection_array);
-
+  DBGCUDASYNC
 
   return 0;
 }
- 
+
+__global__ void setMaxNodeNBitsKernel(int max_node_nbits, int max_port_nbits,
+				      int port_mask)
+{
+  MaxNodeNBits = max_node_nbits;
+  MaxPortNBits = max_port_nbits;
+  PortMask = port_mask;
+}
+
+int setMaxNodeNBits(int max_node_nbits)
+{
+  h_MaxNodeNBits = max_node_nbits;
+  h_MaxPortNBits = 32 - h_MaxNodeNBits;
+  h_PortMask = (1 << h_MaxPortNBits) - 1;
+  setMaxNodeNBitsKernel<<<1,1>>>(h_MaxNodeNBits, h_MaxPortNBits, h_PortMask);
+  DBGCUDASYNC
+    
+  return 0;
+}  

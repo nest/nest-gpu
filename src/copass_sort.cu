@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "copass_kernels.h"
 #include "copass_sort.h"
 
-const bool print_gpu_cpu_vrb = false; //true;
+const bool print_gpu_cpu_vrb = false;
 
 namespace copass_sort
 {
@@ -72,7 +72,7 @@ int copass_sort::last_step(position_t *local_d_m_d, position_t *local_d_m_u,
     position_t tot_diff = tot_part_size - local_h_sum_m_d;
     search_down<position_t, 1024><<<1, 1024>>>
       (d_diff_cumul+1, k, tot_diff, d_num_down);
-   
+
     copass_last_step_kernel<<<1, 1024>>>(d_part_size, local_d_m_d, k,
 					 tot_diff, d_diff, d_diff_cumul,
 					 d_num_down);

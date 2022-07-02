@@ -195,7 +195,7 @@ class NESTGPU
 
   template <class T1, class T2>
     int _ConnectFixedTotalNumber
-    (T1 source, int n_source, T2 target, int n_target, int n_conn,
+    (T1 source, int n_source, T2 target, int n_target, int total_num,
      SynSpec &syn_spec);
 
   template <class T1, class T2>
@@ -705,6 +705,12 @@ class NESTGPU
 template <>
 int NESTGPU::_ConnectAllToAll<int, int>
 (int source, int n_source, int target, int n_target, SynSpec &syn_spec);
+
+template <>
+int NESTGPU::_ConnectFixedTotalNumber<int, int>
+(int source, int n_source, int target, int n_target, int total_num,
+ SynSpec &syn_spec);
+
 
 
 #endif
