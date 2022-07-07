@@ -32,7 +32,7 @@ sim_dict = {
     # The full simulation time is the sum of a presimulation time and the main
     # simulation time.
     # presimulation time (in ms)
-    't_presim': 1000.0,
+    't_presim': 500.0,
     # simulation time (in ms)
     't_sim': 10000.0,
     # resolution of the simulation (in ms)
