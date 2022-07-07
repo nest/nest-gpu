@@ -12,6 +12,7 @@
 #include "cuda_error.h"
 #include "copass_kernels.h"
 #include "copass_sort.h"
+#include "distribution.h"
 #include "new_connect.h"
 #include "nestgpu.h"
 
@@ -321,75 +322,32 @@ int allocateNewBlocks(std::vector<uint*> &key_subarray,
   return 0;
 }
 
-__global__ void randomNormalClippedKernel(float *arr, int64_t n, float mu,
-					  float sigma, float low, float high,
-					  double normal_cdf_alpha,
-					  double normal_cdf_beta)
-{
-  const double epsilon=1.0e-15;
-  int64_t tid = threadIdx.x + blockIdx.x * blockDim.x;
-  if (tid>=n) return;
-  float uniform = arr[tid];
-  double p = normal_cdf_alpha + (normal_cdf_beta - normal_cdf_alpha) * uniform;
-  double v = p * 2.0 - 1.0;
-  v = max(v,  epsilon - 1.0);
-  v = min(v, -epsilon + 1.0);
-  double x = (double)sigma * sqrt(2.0) * erfinv(v) + mu;
-  x = max(x, low);
-  x = min(x, high);
-  arr[tid] = (float)x;
-}
-
-double normalCDF(double value)
-{
-   return 0.5 * erfc(-value * M_SQRT1_2);
-}
-
-int randomNormalClipped(float *arr, int64_t n, float mu,
-			float sigma, float low, float high)
-{
-  double alpha = ((double)low - mu) / sigma;
-  double beta = ((double)high - mu) / sigma;
-  double normal_cdf_alpha = normalCDF(alpha);
-  double normal_cdf_beta = normalCDF(beta);
-
-  //printf("mu: %f\tsigma: %f\tlow: %f\thigh: %f\tn: %ld\n",
-  //	 mu, sigma, low, high, n);
-  //n = 10000;
-  randomNormalClippedKernel<<<(n+1023)/1024, 1024>>>(arr, n, mu, sigma,
-						     low, high,
-						     normal_cdf_alpha,
-						     normal_cdf_beta);
-  DBGCUDASYNC
-  // temporary test, remove!!!!!!!!!!!!!
-  //gpuErrchk( cudaDeviceSynchronize() );
-  //float h_arr[10000];
-  //gpuErrchk(cudaMemcpy(h_arr, arr, n*sizeof(float), cudaMemcpyDeviceToHost));
-  //for (int i=0; i<n; i++) {
-  //  printf("arr: %f\n", h_arr[i]);
-  //}
-  //exit(0);
-
-  return 0;
-}
-
 
 int setConnectionWeights(curandGenerator_t &gen, void *d_storage,
 			 connection_struct *conn_subarray, int64_t n_conn,
 			 SynSpec &syn_spec)
 {
-  if (syn_spec.weight_distr_!=0) { // probability distribution
+  if (syn_spec.weight_distr_ > DISTR_TYPE_ARRAY // probability distribution
+      && syn_spec.weight_distr_ < N_DISTR_TYPE) { 
     //n_conn = 10000; // temporary, remove!!!!!!!!!!!!!!!!
     CURAND_CALL(curandGenerateUniform(gen, (float*)d_storage, n_conn));
-    if (syn_spec.weight_distr_==2) { // normal_clipped
+    if (syn_spec.weight_distr_ == DISTR_TYPE_NORMAL_CLIPPED) {
       randomNormalClipped((float*)d_storage, n_conn, syn_spec.weight_mu_,
 			  syn_spec.weight_sigma_, syn_spec.weight_low_,
 			  syn_spec.weight_high_);
     }
+    else if (syn_spec.weight_distr_==DISTR_TYPE_NORMAL) {
+      float low = syn_spec.weight_mu_ - 5.0*syn_spec.weight_sigma_;
+      float high = syn_spec.weight_mu_ + 5.0*syn_spec.weight_sigma_;
+      randomNormalClipped((float*)d_storage, n_conn, syn_spec.weight_mu_,
+			  syn_spec.weight_sigma_, low, high);
+    }
+    else {
+      throw ngpu_exception("Invalid connection weight distribution type");
+    }
     setWeights<<<(n_conn+1023)/1024, 1024>>>
       (conn_subarray, (float*)d_storage, n_conn);
     DBGCUDASYNC
-
   }
   else {
     setWeights<<<(n_conn+1023)/1024, 1024>>>
@@ -405,13 +363,25 @@ int setConnectionDelays(curandGenerator_t &gen, void *d_storage,
 			uint *key_subarray, int64_t n_conn,
 			SynSpec &syn_spec, float time_resolution)
 {
-  if (syn_spec.delay_distr_!=0) { // probability distribution
+  if (syn_spec.delay_distr_ > DISTR_TYPE_ARRAY // probability distribution
+      && syn_spec.delay_distr_ < N_DISTR_TYPE) { 
     CURAND_CALL(curandGenerateUniform(gen, (float*)d_storage, n_conn));
-    if (syn_spec.delay_distr_==2) { // normal_clipped
+    if (syn_spec.delay_distr_ == DISTR_TYPE_NORMAL_CLIPPED) {
       randomNormalClipped((float*)d_storage, n_conn, syn_spec.delay_mu_,
 			  syn_spec.delay_sigma_, syn_spec.delay_low_,
 			  syn_spec.delay_high_);
     }
+    else if (syn_spec.delay_distr_ == DISTR_TYPE_NORMAL) {
+      float low = syn_spec.delay_mu_ - 5.0*syn_spec.delay_sigma_;
+      float high = syn_spec.delay_mu_ + 5.0*syn_spec.delay_sigma_;
+      randomNormalClipped((float*)d_storage, n_conn, syn_spec.delay_mu_,
+			  syn_spec.delay_sigma_, syn_spec.delay_low_,
+			  syn_spec.delay_high_);
+    }
+    else {
+      throw ngpu_exception("Invalid connection delay distribution type");
+    }
+
     setDelays<<<(n_conn+1023)/1024, 1024>>>
       (key_subarray, (float*)d_storage, n_conn, time_resolution);
     DBGCUDASYNC

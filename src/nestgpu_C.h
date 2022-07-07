@@ -104,6 +104,41 @@ extern "C" {
 				      char *var_name, float *var,
 				      int array_size);
   
+  int NESTGPU_SetNeuronScalParamDistr(int i_node, int n_neuron,
+				      char *param_name);
+
+  int NESTGPU_SetNeuronScalVarDistr(int i_node, int n_neuron,
+				    char *var_name);
+
+
+  int NESTGPU_SetNeuronPortParamDistr(int i_node, int n_neuron,
+				      char *param_name);
+
+  int NESTGPU_SetNeuronPortVarDistr(int i_node, int n_neuron,
+				    char *var_name);
+
+  int NESTGPU_SetNeuronPtScalParamDistr(int *i_node, int n_neuron,
+					char *param_name);
+
+  int NESTGPU_SetNeuronPtScalVarDistr(int *i_node, int n_neuron,
+				      char *var_name);
+
+  int NESTGPU_SetNeuronPtPortParamDistr(int *i_node, int n_neuron,
+					char *param_name);
+
+  int NESTGPU_SetNeuronPtPortVarDistr(int *i_node, int n_neuron,
+				      char *var_name);
+
+  int NESTGPU_SetDistributionIntParam(char *param_name, int val);
+
+  int NESTGPU_SetDistributionScalParam(char *param_name, float val);
+
+  int NESTGPU_SetDistributionVectParam(char *param_name, float val, int i);
+
+  int NESTGPU_SetDistributionFloatPtParam(char *param_name, float *array_pt);
+
+  int NESTGPU_IsDistributionFloatParam(char *param_name);
+  
   int NESTGPU_IsNeuronIntVar(int i_node, char *var_name);
 
   int NESTGPU_IsNeuronScalVar(int i_node, char *var_name);

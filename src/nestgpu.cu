@@ -107,7 +107,8 @@ NESTGPU::NESTGPU()
   SetRandomSeed(54321ULL);
   
   calibrate_flag_ = false;
-
+  create_flag_ = false;
+  
   start_real_time_ = getRealTime();
   max_spike_buffer_size_ = 20;
   t_min_ = 0.0;
@@ -186,7 +187,8 @@ int NESTGPU::SetRandomSeed(unsigned long long seed)
 				    CURAND_RNG_PSEUDO_DEFAULT));
   CURAND_CALL(curandSetPseudoRandomGeneratorSeed(*random_generator_, seed));
   poiss_generator_->random_generator_ = random_generator_;
-
+  distribution_.setCurandGenerator(random_generator_);
+  
   return 0;
 }
 
@@ -256,6 +258,10 @@ int NESTGPU::CreateNodeGroup(int n_node, int n_port)
 
 NodeSeq NESTGPU::CreatePoissonGenerator(int n_node, float rate)
 {
+  if (!create_flag_) {
+    create_flag_ = true;
+    start_real_time_ = getRealTime();
+  }
   CheckUncalibrated("Poisson generator cannot be created after calibration");
   if (n_poiss_node_ != 0) {
     throw ngpu_exception("Number of poisson generators cannot be modified.");
@@ -763,6 +769,116 @@ int NESTGPU::SetNeuronParam( int *i_node, int n_node,
 					      param_name, param, array_size);
   }    
 }
+
+////////////////////////////////////////////////////////////////////////
+
+int NESTGPU::SetNeuronScalParamDistr(int i_node, int n_node,
+				     std::string param_name)
+{
+  int i_group;
+  int i_neuron = i_node - GetNodeSequenceOffset(i_node, n_node, i_group);
+  
+  return node_vect_[i_group]->SetScalParamDistr(i_neuron, n_node, param_name,
+						distribution_);
+}
+
+int NESTGPU::SetNeuronScalVarDistr(int i_node, int n_node,
+				   std::string var_name)
+{
+  int i_group;
+  int i_neuron = i_node - GetNodeSequenceOffset(i_node, n_node, i_group);
+  
+  return node_vect_[i_group]->SetScalVarDistr(i_neuron, n_node, var_name,
+						distribution_);
+}
+
+int NESTGPU::SetNeuronPortParamDistr(int i_node, int n_node,
+				     std::string param_name)
+{
+  int i_group;
+  int i_neuron = i_node - GetNodeSequenceOffset(i_node, n_node, i_group);
+  
+  return node_vect_[i_group]->SetPortParamDistr(i_neuron, n_node, param_name,
+						distribution_);
+}
+
+int NESTGPU::SetNeuronPortVarDistr(int i_node, int n_node,
+				   std::string var_name)
+{
+  int i_group;
+  int i_neuron = i_node - GetNodeSequenceOffset(i_node, n_node, i_group);
+  
+  return node_vect_[i_group]->SetPortVarDistr(i_neuron, n_node, var_name,
+						distribution_);
+}
+
+int NESTGPU::SetNeuronPtScalParamDistr(int *i_node, int n_node,
+				       std::string param_name)
+{
+  int i_group;
+  std::vector<int> nodes = GetNodeArrayWithOffset(i_node, n_node,
+						  i_group);
+  return node_vect_[i_group]->SetScalParamDistr(nodes.data(), n_node,
+						param_name, distribution_);
+}
+
+int NESTGPU::SetNeuronPtScalVarDistr(int *i_node, int n_node,
+				       std::string var_name)
+{
+  int i_group;
+  std::vector<int> nodes = GetNodeArrayWithOffset(i_node, n_node,
+						  i_group);
+  return node_vect_[i_group]->SetScalVarDistr(nodes.data(), n_node,
+						var_name, distribution_);
+}
+
+int NESTGPU::SetNeuronPtPortParamDistr(int *i_node, int n_node,
+				       std::string param_name)
+{
+  int i_group;
+  std::vector<int> nodes = GetNodeArrayWithOffset(i_node, n_node,
+						  i_group);
+  return node_vect_[i_group]->SetPortParamDistr(nodes.data(), n_node,
+						param_name, distribution_);
+}
+
+int NESTGPU::SetNeuronPtPortVarDistr(int *i_node, int n_node,
+				       std::string var_name)
+{
+  int i_group;
+  std::vector<int> nodes = GetNodeArrayWithOffset(i_node, n_node,
+						  i_group);
+  return node_vect_[i_group]->SetPortVarDistr(nodes.data(), n_node,
+						var_name, distribution_);
+}
+
+int NESTGPU::SetDistributionIntParam(std::string param_name, int val)
+{
+  return distribution_.SetIntParam(param_name, val);
+}
+
+int NESTGPU::SetDistributionScalParam(std::string param_name, float val)
+{
+  return distribution_.SetScalParam(param_name, val);
+}
+
+int NESTGPU::SetDistributionVectParam(std::string param_name, float val, int i)
+{
+  return distribution_.SetVectParam(param_name, val, i);
+}
+
+int NESTGPU::SetDistributionFloatPtParam(std::string param_name,
+					 float *array_pt)
+{
+  return distribution_.SetFloatPtParam(param_name, array_pt);
+}
+
+int NESTGPU::IsDistributionFloatParam(std::string param_name)
+{
+  return distribution_.IsFloatParam(param_name);
+}
+
+////////////////////////////////////////////////////////////////////////
 
 int NESTGPU::IsNeuronScalParam(int i_node, std::string param_name)
 {
@@ -1882,6 +1998,10 @@ int NESTGPU::SetIntParam(std::string param_name, int val)
 RemoteNodeSeq NESTGPU::RemoteCreate(int i_host, std::string model_name,
 				      int n_node /*=1*/, int n_port /*=1*/)
 {
+  if (!create_flag_) {
+    create_flag_ = true;
+    start_real_time_ = getRealTime();
+  }
 #ifdef HAVE_MPI
   if (i_host<0 || i_host>=MpiNp()) {
     throw ngpu_exception("Invalid host index in RemoteCreate");

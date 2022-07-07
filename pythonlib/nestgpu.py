@@ -78,8 +78,9 @@ class SynGroup(object):
 
 distribution_dict = {
     "none": 0,
-    "normal": 1,
-    "normal_clipped": 2
+    "array": 1,
+    "normal": 2,
+    "normal_clipped": 3
 }
         
 def to_byte_str(s):
@@ -534,6 +535,223 @@ def SetNeuronPtArrayVar(nodes, var_name, var_list):
         raise ValueError(GetErrorMessage())
     return ret
 
+
+#####################################################################
+
+NESTGPU_SetNeuronScalParamDistr = _nestgpu.NESTGPU_SetNeuronScalParamDistr
+NESTGPU_SetNeuronScalParamDistr.argtypes = (ctypes.c_int, ctypes.c_int,
+                                            c_char_p)
+NESTGPU_SetNeuronScalParamDistr.restype = ctypes.c_int
+def SetNeuronScalParamDistr(i_node, n_node, param_name):
+    "Set neuron scalar parameter value using distribution or array"
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    ret = NESTGPU_SetNeuronScalParamDistr(ctypes.c_int(i_node),
+                                          ctypes.c_int(n_node), c_param_name) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+
+NESTGPU_SetNeuronScalVarDistr = _nestgpu.NESTGPU_SetNeuronScalVarDistr
+NESTGPU_SetNeuronScalVarDistr.argtypes = (ctypes.c_int, ctypes.c_int,
+                                            c_char_p)
+NESTGPU_SetNeuronScalVarDistr.restype = ctypes.c_int
+def SetNeuronScalVarDistr(i_node, n_node, var_name):
+    "Set neuron scalar variable using distribution or array"
+    c_var_name = ctypes.create_string_buffer(to_byte_str(var_name),
+                                             len(var_name)+1)
+    ret = NESTGPU_SetNeuronScalVarDistr(ctypes.c_int(i_node),
+                                          ctypes.c_int(n_node), c_var_name) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+
+NESTGPU_SetNeuronPortParamDistr = _nestgpu.NESTGPU_SetNeuronPortParamDistr
+NESTGPU_SetNeuronPortParamDistr.argtypes = (ctypes.c_int, ctypes.c_int,
+                                            c_char_p)
+NESTGPU_SetNeuronPortParamDistr.restype = ctypes.c_int
+def SetNeuronPortParamDistr(i_node, n_node, param_name):
+    "Set neuron port parameter value using distribution or array"
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    ret = NESTGPU_SetNeuronPortParamDistr(ctypes.c_int(i_node),
+                                          ctypes.c_int(n_node), c_param_name) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_SetNeuronPortVarDistr = _nestgpu.NESTGPU_SetNeuronPortVarDistr
+NESTGPU_SetNeuronPortVarDistr.argtypes = (ctypes.c_int, ctypes.c_int,
+                                          c_char_p)
+NESTGPU_SetNeuronPortVarDistr.restype = ctypes.c_int
+def SetNeuronPortVarDistr(i_node, n_node, var_name):
+    "Set neuron port variable using distribution or array"
+    c_var_name = ctypes.create_string_buffer(to_byte_str(var_name),
+                                             len(var_name)+1)
+    ret = NESTGPU_SetNeuronPortVarDistr(ctypes.c_int(i_node),
+                                        ctypes.c_int(n_node), c_var_name) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+#####################################################################
+
+#SetNeuronPtScalParamDistr(nodes, var_name)
+#SetNeuronPtScalVarDistr(nodes, var_name)
+#SetNeuronPtPortParamDistr(nodes, var_name)
+#SetNeuronPtPortVarDistr(nodes, var_name)
+
+NESTGPU_SetNeuronPtScalParamDistr = _nestgpu.NESTGPU_SetNeuronPtScalParamDistr
+NESTGPU_SetNeuronPtScalParamDistr.argtypes = (ctypes.c_void_p, ctypes.c_int,
+                                              c_char_p)
+NESTGPU_SetNeuronPtScalParamDistr.restype = ctypes.c_int
+def SetNeuronPtScalParamDistr(nodes, param_name):
+    "Set neuron list scalar parameter using distribution or array"
+    n_node = len(nodes)
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    node_arr = (ctypes.c_int * len(nodes))(*nodes)
+    node_pt = ctypes.cast(node_arr, ctypes.c_void_p)
+    ret = NESTGPU_SetNeuronPtScalParamDistr(node_pt,
+                                            ctypes.c_int(n_node), c_param_name) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+
+NESTGPU_SetNeuronPtScalVarDistr = _nestgpu.NESTGPU_SetNeuronPtScalVarDistr
+NESTGPU_SetNeuronPtScalVarDistr.argtypes = (ctypes.c_void_p, ctypes.c_int,
+                                              c_char_p)
+NESTGPU_SetNeuronPtScalVarDistr.restype = ctypes.c_int
+def SetNeuronPtScalVarDistr(nodes, var_name):
+    "Set neuron list scalar variable using distribution or array"
+    n_node = len(nodes)
+    c_var_name = ctypes.create_string_buffer(to_byte_str(var_name),
+                                             len(var_name)+1)
+    node_arr = (ctypes.c_int * len(nodes))(*nodes)
+    node_pt = ctypes.cast(node_arr, ctypes.c_void_p)
+    ret = NESTGPU_SetNeuronPtScalVarDistr(node_pt,
+                                          ctypes.c_int(n_node), c_var_name) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+
+
+NESTGPU_SetNeuronPtPortParamDistr = _nestgpu.NESTGPU_SetNeuronPtPortParamDistr
+NESTGPU_SetNeuronPtPortParamDistr.argtypes = (ctypes.c_void_p, ctypes.c_int,
+                                              c_char_p)
+NESTGPU_SetNeuronPtPortParamDistr.restype = ctypes.c_int
+def SetNeuronPtPortParamDistr(nodes, param_name):
+    "Set neuron list port parameter using distribution or array"
+    n_node = len(nodes)
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    node_arr = (ctypes.c_int * len(nodes))(*nodes)
+    node_pt = ctypes.cast(node_arr, ctypes.c_void_p)
+    ret = NESTGPU_SetNeuronPtPortParamDistr(node_pt,
+                                            ctypes.c_int(n_node), c_param_name) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+
+NESTGPU_SetNeuronPtPortVarDistr = _nestgpu.NESTGPU_SetNeuronPtPortVarDistr
+NESTGPU_SetNeuronPtPortVarDistr.argtypes = (ctypes.c_void_p, ctypes.c_int,
+                                              c_char_p)
+NESTGPU_SetNeuronPtPortVarDistr.restype = ctypes.c_int
+def SetNeuronPtPortVarDistr(nodes, var_name):
+    "Set neuron list port variable using distribution or array"
+    n_node = len(nodes)
+    c_var_name = ctypes.create_string_buffer(to_byte_str(var_name),
+                                             len(var_name)+1)
+    node_arr = (ctypes.c_int * len(nodes))(*nodes)
+    node_pt = ctypes.cast(node_arr, ctypes.c_void_p)
+    ret = NESTGPU_SetNeuronPtPortVarDistr(node_pt,
+                                          ctypes.c_int(n_node), c_var_name) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+#####################################################################
+
+NESTGPU_SetDistributionIntParam = _nestgpu.NESTGPU_SetDistributionIntParam
+NESTGPU_SetDistributionIntParam.argtypes = (c_char_p, ctypes.c_int)
+NESTGPU_SetDistributionIntParam.restype = ctypes.c_int
+def SetDistributionIntParam(param_name, val):
+    "Set distribution integer parameter"
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    ret = NESTGPU_SetDistributionIntParam(c_param_name,
+                                          ctypes.c_int(val)) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+
+NESTGPU_SetDistributionScalParam = _nestgpu.NESTGPU_SetDistributionScalParam
+NESTGPU_SetDistributionScalParam.argtypes = (c_char_p, ctypes.c_float)
+NESTGPU_SetDistributionScalParam.restype = ctypes.c_int
+def SetDistributionScalParam(param_name, val):
+    "Set distribution scalar parameter"
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    ret = NESTGPU_SetDistributionScalParam(c_param_name,
+                                           ctypes.c_float(val)) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_SetDistributionVectParam = _nestgpu.NESTGPU_SetDistributionVectParam
+NESTGPU_SetDistributionVectParam.argtypes = (c_char_p, ctypes.c_float,
+                                             ctypes.c_int)
+NESTGPU_SetDistributionVectParam.restype = ctypes.c_int
+def SetDistributionVectParam(param_name, val, i):
+    "Set distribution vector parameter"
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    ret = NESTGPU_SetDistributionVectParam(c_param_name,
+                                           ctypes.c_float(val),
+                                           ctypes.c_int(i)) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+
+#SetDistributionFloatPtParam("array_pt", array_pt)
+NESTGPU_SetDistributionFloatPtParam = \
+    _nestgpu.NESTGPU_SetDistributionFloatPtParam
+NESTGPU_SetDistributionFloatPtParam.argtypes = (c_char_p, ctypes.c_void_p)
+NESTGPU_SetDistributionFloatPtParam.restype = ctypes.c_int
+def SetDistributionFloatPtParam(param_name, arr):
+    "Set distribution pointer to float parameter"
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    if (type(arr) is list)  | (type(arr) is tuple):
+        arr = (ctypes.c_float * len(arr))(*arr)
+    arr_pt = ctypes.cast(arr, ctypes.c_void_p)
+    ret = NESTGPU_SetDistributionFloatPtParam(c_param_name, arr_pt)
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+
+NESTGPU_IsDistributionFloatParam = _nestgpu.NESTGPU_IsDistributionFloatParam
+NESTGPU_IsDistributionFloatParam.argtypes = (c_char_p,)
+NESTGPU_IsDistributionFloatParam.restype = ctypes.c_int
+def IsDistributionFloatParam(param_name):
+    "Check name of distribution float parameter"
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    ret = (NESTGPU_IsDistributionFloatParam(c_param_name)!=0) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+
+#####################################################################
 
 NESTGPU_IsNeuronIntVar = _nestgpu.NESTGPU_IsNeuronIntVar
 NESTGPU_IsNeuronIntVar.argtypes = (ctypes.c_int, c_char_p)
@@ -1155,15 +1373,88 @@ def SetNeuronStatus(nodes, var_name, val):
     if (type(nodes)!=list) & (type(nodes)!=tuple) & (type(nodes)!=NodeSeq):
         raise ValueError("Unknown node type")
     if (type(val)==dict):
-        array_size = len(nodes)
-        arr = DictToArray(val, array_size)
-        for i in range(array_size):
-            SetNeuronStatus([nodes[i]], var_name, arr[i])
-        return
-    
-    c_var_name = ctypes.create_string_buffer(to_byte_str(var_name),
-                                               len(var_name)+1)
-    if type(nodes)==NodeSeq:
+        # print("pok0")
+        if ((type(nodes)==NodeSeq
+             and (IsNeuronScalParam(nodes.i0, var_name)
+                  or IsNeuronScalVar(nodes.i0, var_name)
+                  or IsNeuronPortParam(nodes.i0, var_name)
+                  or IsNeuronPortVar(nodes.i0, var_name)))
+            or IsNeuronScalParam(nodes[0], var_name)
+            or IsNeuronScalVar(nodes[0], var_name)
+            or IsNeuronPortParam(nodes[0], var_name)
+            or IsNeuronPortVar(nodes[0], var_name)):
+            # print("pok1")
+            for dict_param_name in val:
+                pval = val[dict_param_name]
+                # print("pok2 ", dict_param_name, pval) 
+                if dict_param_name=="array":
+                    arr = pval
+                    array_pt = ctypes.cast(arr, ctypes.c_void_p)
+                    SetDistributionFloatPtParam("array_pt", array_pt)
+                    distr_idx = distribution_dict["array"]
+                    SetDistributionIntParam("distr_idx", distr_idx)
+                elif dict_param_name=="distribution":
+                    distr_idx = distribution_dict[pval]
+                    SetDistributionIntParam("distr_idx", distr_idx)
+                    # print("pok3 distr_idx", distr_idx) 
+                else:
+                    if IsDistributionFloatParam(dict_param_name):
+                        if ((type(nodes)==NodeSeq
+                            and (IsNeuronScalParam(nodes.i0, var_name)
+                                 or IsNeuronScalVar(nodes.i0, var_name)))
+                            or IsNeuronScalParam(nodes[0], var_name)
+                            or IsNeuronScalVar(nodes[0], var_name)):
+                            # print("pok4")
+                            SetDistributionIntParam("vect_size", 1)
+                            # print("pok5 ", dict_param_name, pval)
+                            SetDistributionScalParam(dict_param_name, pval)
+                            # print("pok6 ", dict_param_name, pval)
+                        elif ((type(nodes)==NodeSeq
+                            and (IsNeuronPortParam(nodes.i0, var_name)
+                                 or IsNeuronPortVar(nodes.i0, var_name)))
+                            or IsNeuronPortParam(nodes[0], var_name)
+                            or IsNeuronPortVar(nodes[0], var_name)):
+                            SetDistributionIntParam("vect_size", len(pval))
+                            for i, value in enumerate(pval):
+                                SetDistributionVectParam(dict_param_name,
+                                                          value, i)
+                    else:
+                        print("Parameter name: ", dict_param_name)
+                        raise ValueError("Unknown distribution parameter")
+                    # print("pok7")
+            # set values from array or from distribution
+            if type(nodes)==NodeSeq:
+                # print("pok8")
+                if IsNeuronScalParam(nodes.i0, var_name):
+                    SetNeuronScalParamDistr(nodes.i0, nodes.n, var_name)
+                elif IsNeuronScalVar(nodes.i0, var_name):
+                    # print("pok9")
+                    SetNeuronScalVarDistr(nodes.i0, nodes.n, var_name)
+                    # print("pok10")
+                elif IsNeuronPortParam(nodes.i0, var_name):
+                    SetNeuronPortParamDistr(nodes.i0, nodes.n, var_name)
+                elif IsNeuronPortVar(nodes.i0, var_name):
+                    SetNeuronPortVarDistr(nodes.i0, nodes.n, var_name)
+                else:
+                    raise ValueError("Unknown neuron variable or parameter")
+                    
+            else:
+                if IsNeuronScalParam(nodes[0], var_name):
+                    SetNeuronPtScalParamDistr(nodes, var_name)
+                elif IsNeuronScalVar(nodes[0], var_name):
+                    SetNeuronPtScalVarDistr(nodes, var_name)
+                elif IsNeuronPortParam(nodes[0], var_name):
+                    SetNeuronPtPortParamDistr(nodes, var_name)
+                elif IsNeuronPortVar(nodes[0], var_name):
+                    SetNeuronPtPortVarDistr(nodes, var_name)
+                else:
+                    raise ValueError("Unknown neuron variable or parameter")
+
+        else:
+            print("Parameter or variable ", var_name)
+            raise ValueError("cannot be initialized by arrays or distributions")
+            
+    elif type(nodes)==NodeSeq:
         if IsNeuronGroupParam(nodes.i0, var_name):
             SetNeuronGroupParam(nodes, var_name, val)
         elif IsNeuronScalParam(nodes.i0, var_name):
@@ -1180,7 +1471,7 @@ def SetNeuronStatus(nodes, var_name, val):
             SetNeuronArrayVar(nodes.i0, nodes.n, var_name, val)
         else:
             raise ValueError("Unknown neuron variable or parameter")
-    else:        
+    else:
         if IsNeuronScalParam(nodes[0], var_name):
             SetNeuronPtScalParam(nodes, var_name, val)
         elif (IsNeuronPortParam(nodes[0], var_name) |

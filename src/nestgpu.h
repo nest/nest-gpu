@@ -37,6 +37,7 @@
 #include "connect_spec.h"
 #include "connect.h"
 #include "syn_model.h"
+#include "distribution.h"
 
 #ifdef HAVE_MPI
 class ConnectMpi;
@@ -107,7 +108,9 @@ class NESTGPU
   curandGenerator_t *random_generator_;
   unsigned long long kernel_seed_;
   bool calibrate_flag_; // becomes true after calibration
+  bool create_flag_; // becomes true just before creation of the first node
 
+  Distribution distribution_;
   PoissonGenerator *poiss_generator_;
   Multimeter *multimeter_;
   std::vector<BaseNeuron*> node_vect_; // -> node_group_vect
@@ -393,6 +396,45 @@ class NESTGPU
 			  array_size);
   }
 
+////////////////////////////////////////////////////////////////////////
+
+  int SetNeuronScalParamDistr(int i_node, int n_node,
+			      std::string param_name);
+  
+  int SetNeuronScalVarDistr(int i_node, int n_node,
+			    std::string var_name);
+  
+  int SetNeuronPortParamDistr(int i_node, int n_node,
+			      std::string param_name);
+  
+  int SetNeuronPortVarDistr(int i_node, int n_node,
+			    std::string var_name);
+  
+  int SetNeuronPtScalParamDistr(int *i_node, int n_node,
+				std::string param_name);
+  
+  int SetNeuronPtScalVarDistr(int *i_node, int n_node,
+			      std::string var_name);
+  
+  int SetNeuronPtPortParamDistr(int *i_node, int n_node,
+				std::string param_name);
+  
+  int SetNeuronPtPortVarDistr(int *i_node, int n_node,
+			      std::string var_name);
+  
+  int SetDistributionIntParam(std::string param_name, int val);
+  
+  int SetDistributionScalParam(std::string param_name, float val);
+
+  int SetDistributionVectParam(std::string param_name, float val, int i);
+
+  int SetDistributionFloatPtParam(std::string param_name,
+				  float *array_pt);
+
+  int IsDistributionFloatParam(std::string param_name);
+				  
+////////////////////////////////////////////////////////////////////////
+  
   int GetNeuronParamSize(int i_node, std::string param_name);
 
   int GetNeuronVarSize(int i_node, std::string var_name);

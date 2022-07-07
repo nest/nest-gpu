@@ -269,6 +269,115 @@ extern "C" {
 					     var_name_str, var,
 					     array_size);
   } END_ERR_PROP return ret; }
+
+
+  
+  int NESTGPU_SetNeuronScalParamDistr(int i_node, int n_neuron,
+				      char *param_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+    
+    std::string param_name_str = std::string(param_name);
+    ret = NESTGPU_instance->SetNeuronScalParamDistr(i_node, n_neuron,
+						    param_name_str);
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_SetNeuronScalVarDistr(int i_node, int n_neuron,
+				    char *var_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+    
+    std::string var_name_str = std::string(var_name);
+    ret = NESTGPU_instance->SetNeuronScalVarDistr(i_node, n_neuron,
+						  var_name_str);
+  } END_ERR_PROP return ret; }
+
+
+  int NESTGPU_SetNeuronPortParamDistr(int i_node, int n_neuron,
+				      char *param_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+    
+    std::string param_name_str = std::string(param_name);
+    ret = NESTGPU_instance->SetNeuronPortParamDistr(i_node, n_neuron,
+						    param_name_str);
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_SetNeuronPortVarDistr(int i_node, int n_neuron,
+				    char *var_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+    
+    std::string var_name_str = std::string(var_name);
+    ret = NESTGPU_instance->SetNeuronPortVarDistr(i_node, n_neuron,
+						  var_name_str);
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_SetNeuronPtScalParamDistr(int *i_node, int n_neuron,
+					char *param_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+    std::string param_name_str = std::string(param_name);
+    ret = NESTGPU_instance->SetNeuronPtScalParamDistr(i_node, n_neuron,
+						      param_name_str);
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_SetNeuronPtScalVarDistr(int *i_node, int n_neuron,
+					char *var_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+    std::string var_name_str = std::string(var_name);
+    ret = NESTGPU_instance->SetNeuronPtScalVarDistr(i_node, n_neuron,
+						    var_name_str);
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_SetNeuronPtPortParamDistr(int *i_node, int n_neuron,
+					char *param_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+    std::string param_name_str = std::string(param_name);
+    ret = NESTGPU_instance->SetNeuronPtPortParamDistr(i_node, n_neuron,
+						      param_name_str);
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_SetNeuronPtPortVarDistr(int *i_node, int n_neuron,
+				      char *var_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+    std::string var_name_str = std::string(var_name);
+    ret = NESTGPU_instance->SetNeuronPtPortVarDistr(i_node, n_neuron,
+						    var_name_str);
+  } END_ERR_PROP return ret; }
+
+
+  int NESTGPU_SetDistributionIntParam(char *param_name, int val)
+  { int ret = 0; BEGIN_ERR_PROP {
+    
+    std::string param_name_str = std::string(param_name);
+    ret = NESTGPU_instance->SetDistributionIntParam(param_name_str, val);
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_SetDistributionScalParam(char *param_name, float val)
+  { int ret = 0; BEGIN_ERR_PROP {
+    
+    std::string param_name_str = std::string(param_name);
+    ret = NESTGPU_instance->SetDistributionScalParam(param_name_str, val);
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_SetDistributionVectParam(char *param_name, float val, int i)
+  { int ret = 0; BEGIN_ERR_PROP {
+    
+    std::string param_name_str = std::string(param_name);
+    ret = NESTGPU_instance->SetDistributionVectParam(param_name_str, val, i);
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_SetDistributionFloatPtParam(char *param_name, float *array_pt)
+  { int ret = 0; BEGIN_ERR_PROP {
+    
+    std::string param_name_str = std::string(param_name);
+    ret = NESTGPU_instance->SetDistributionFloatPtParam(param_name_str,
+							array_pt);
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_IsDistributionFloatParam(char *param_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+    std::string param_name_str = std::string(param_name);
+    
+    ret = NESTGPU_instance->IsDistributionFloatParam(param_name_str);
+  } END_ERR_PROP return ret; }
+
   
   int NESTGPU_IsNeuronIntVar(int i_node, char *var_name)
   { int ret = 0; BEGIN_ERR_PROP {
