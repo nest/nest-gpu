@@ -24,13 +24,12 @@
 
 #include <config.h>
 #include <iostream>
+#include "utilities.h"
 #include "ngpu_exception.h"
 #include "cuda_error.h"
 #include "base_neuron.h"
 #include "spike_buffer.h"
 #include "scan.cuh"
-
-__device__ int locate(int val, int *data, int n);
 
 // set equally spaced (index i*step) elements of array arr to value val
 __global__ void BaseNeuronSetIntArray(int *arr, int n_elem, int step,

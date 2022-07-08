@@ -26,6 +26,7 @@
 #include <list>
 
 #include "cuda_error.h"
+#include "utilities.h"
 #include "spike_buffer.h"
 #include "getRealTime.h"
 
@@ -33,7 +34,7 @@
 #include "connect_mpi.h"
 #include "scan.cuh"
 
-__device__ int locate(int val, int *data, int n);
+__device__ __forceinline__ int locate(int val, int *data, int n);
 
 // Simple kernel for pushing remote spikes in local spike buffers
 // Version with spike multiplicity array (spike_height) 

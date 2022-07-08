@@ -30,6 +30,7 @@
 #include <curand.h>
 #include <curand_kernel.h>
 
+#include "utilities.h"
 #include "nestgpu.h"
 #include "neuron_models.h"
 #include "poiss_gen.h"
@@ -37,8 +38,6 @@
 
 extern __constant__ NodeGroupStruct NodeGroupArray[];
 extern __device__ signed char *NodeGroupMap;
-
-extern __device__ double atomicAddDouble(double* address, double val);
 
 __global__ void SetupPoissKernel(curandState *curand_state, uint64_t n_dir_conn,
 				 unsigned long long seed)

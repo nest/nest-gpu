@@ -18,17 +18,20 @@
  *
  */
 
-
-
-
-
 #include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 				    //#include "cuda_error_nl.h"
 #include "cuda_error.h"
+#include "utilities.h"
+#include "get_spike.h"
+#include "send_spike.h"
+#include "node_group.h"
+#include "spike_buffer.h"
+#include "new_connect.h"
 #include "nested_loop.h"
+
 
 //TMP
 #include "getRealTime.h"
@@ -36,9 +39,17 @@
 
 //////////////////////////////////////////////////////////////////////
 // declare here the functions called by the nested loop 
-__device__ void NestedLoopFunction0(int ix, int iy);
+//__device__ void NestedLoopFunction0(int ix, int iy);
 __device__ void NestedLoopFunction1(int ix, int iy);
 //////////////////////////////////////////////////////////////////////
+extern __constant__ long long NESTGPUTimeIdx;
+extern __constant__ float NESTGPUTimeResolution;
+extern __constant__ NodeGroupStruct NodeGroupArray[];
+extern __device__ signed char *NodeGroupMap;
+
+extern __device__ void SynapseUpdate(int syn_group, float *w, float Dt);
+
+
 
 namespace NestedLoop
 {
@@ -46,20 +57,6 @@ namespace NestedLoop
   int *d_Ny_cumul_sum_;   
 }
 
-__device__ int locate(int val, int *data, int n)
-{
-  int i_left = 0;
-  int i_right = n-1;
-  int i = (i_left+i_right)/2;
-  while(i_right-i_left>1) {
-    if (data[i] > val) i_right = i;
-    else if (data[i]<val) i_left = i;
-    else break;
-    i=(i_left+i_right)/2;
-  }
-
-  return i;
-}
 
 __global__ void CumulSumNestedLoopKernel0(int Nx, int *Ny_cumul_sum,
 					 int Ny_sum)

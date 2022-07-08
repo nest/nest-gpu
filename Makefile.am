@@ -12,6 +12,7 @@ CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
 ngpu_h_files=\
+$(top_srcdir)/src/utilities.h \
 $(top_srcdir)/src/distribution.h \
 $(top_srcdir)/src/copass_kernels.h \
 $(top_srcdir)/src/copass_sort.h \
@@ -86,6 +87,7 @@ $(top_srcdir)/src/user_m2_kernel.h \
 $(top_srcdir)/src/user_m2_rk5.h
 
 ngpu_src_files=\
+$(top_srcdir)/src/utilities.cu \
 $(top_srcdir)/src/distribution.cu \
 $(top_srcdir)/src/copass_kernels.cu \
 $(top_srcdir)/src/copass_sort.cu \
@@ -102,7 +104,7 @@ $(top_srcdir)/src/aeif_psc_exp.cu \
 $(top_srcdir)/src/base_neuron.cu \
 $(top_srcdir)/src/connect.cu \
 $(top_srcdir)/src/connect_mpi.cu \
-$(top_srcdir)/src/connect_rules.cpp \
+$(top_srcdir)/src/connect_rules.cu \
 $(top_srcdir)/src/dummyfile.cpp \
 $(top_srcdir)/src/getRealTime.cu \
 $(top_srcdir)/src/get_spike.cu \
