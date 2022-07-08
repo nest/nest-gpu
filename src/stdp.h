@@ -19,20 +19,10 @@
  */
 
 
-
-
-
 #ifndef STDP_H
 #define STDP_H
+#include <cmath>
 
-#include "syn_model.h"
-
-class STDP : public SynModel
-{
- public:
-  STDP() {Init();}
-  int Init();
-};
 
 namespace stdp_ns
 {
@@ -47,6 +37,38 @@ namespace stdp_ns
     //, "den_delay"
   };
 
+
+
+  __device__ __forceinline__ void STDPUpdate(float *weight_pt, float Dt,
+					     float *param)
+  {
+    //printf("Dt: %f\n", Dt);
+    double tau_plus = param[i_tau_plus];
+    double tau_minus = param[i_tau_minus];
+    double lambda = param[i_lambda];
+    double alpha = param[i_alpha];
+    double mu_plus = param[i_mu_plus];
+    double mu_minus = param[i_mu_minus];
+    double Wmax = param[i_Wmax];
+    //double den_delay = param[i_den_delay];
+    
+    double w = *weight_pt;
+    double w1;
+    //Dt += den_delay;
+    if (Dt>=0) {
+      double fact = lambda*exp(-(double)Dt/tau_plus);
+      w1 = w + fact*Wmax*pow(1.0 - w/Wmax, mu_plus);
+    }
+    else {
+      double fact = -alpha*lambda*exp((double)Dt/tau_minus);
+      w1 = w + fact*Wmax*pow(w/Wmax, mu_minus);
+    }
+    
+    w1 = w1 >0.0 ? w1 : 0.0;
+    w1 = w1 < Wmax ? w1 : Wmax;
+    *weight_pt = (float)w1;
+  }
 }
+
 
 #endif

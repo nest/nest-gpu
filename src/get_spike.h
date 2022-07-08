@@ -29,10 +29,14 @@
 extern __constant__ NodeGroupStruct NodeGroupArray[];
 extern __device__ signed char *NodeGroupMap;
 
+template<int i_func>
+__device__  __forceinline__ void NestedLoopFunction(int i_spike, int i_syn);
+
 //////////////////////////////////////////////////////////////////////
 // This is the function called by the nested loop
 // that collects the spikes
-__device__  __forceinline__ void NestedLoopFunction0(int i_spike, int i_syn)
+template<>
+__device__  __forceinline__ void NestedLoopFunction<0>(int i_spike, int i_syn)
 {
   int i_source = SpikeSourceIdx[i_spike];
   int i_source_conn_group = SpikeConnIdx[i_spike];
