@@ -155,6 +155,8 @@ class NESTGPU
 
   int verbosity_level_;
 
+  int nested_loop_algo_;
+
   std::vector<RemoteConnection> remote_connection_vect_;
   std::vector<int> ext_neuron_input_spike_node_;
   std::vector<int> ext_neuron_input_spike_port_;
@@ -288,6 +290,8 @@ class NESTGPU
     verbosity_level_ = verbosity_level;
     return 0;
   }
+
+  int SetNestedLoopAlgo(int nested_loop_algo);
 
   int SetMaxSpikeBufferSize(int max_size);
   int GetMaxSpikeBufferSize();

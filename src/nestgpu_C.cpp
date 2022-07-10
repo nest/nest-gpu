@@ -99,6 +99,11 @@ extern "C" {
     ret = NESTGPU_instance->SetVerbosityLevel(verbosity_level);
   } END_ERR_PROP return ret; }
 
+  int NESTGPU_SetNestedLoopAlgo(int nested_loop_algo)
+  { int ret = 0; BEGIN_ERR_PROP {
+    ret = NESTGPU_instance->SetNestedLoopAlgo(nested_loop_algo);
+  } END_ERR_PROP return ret; }
+
   
   int NESTGPU_Create(char *model_name, int n_neuron, int n_port)
   { int ret = 0; BEGIN_ERR_PROP {

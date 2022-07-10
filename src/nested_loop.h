@@ -18,37 +18,30 @@
  *
  */
 
+#ifndef NESTED_LOOP_H
+#define NESTED_LOOP_H
+
 #include <cub/cub.cuh>
 #include "cuda_error.h"
+#include "prefix_scan.h"
 #include "get_spike.h"
 #include "rev_spike.h"
+
 
 extern const int Ny_arr_size_;
 extern int Ny_th_arr_[];
 
-namespace NestedLoop
-{
-  //#include "Ny_th.h"
-  extern void *d_sort_storage_;
-  extern size_t sort_storage_bytes_;
-  extern void *d_reduce_storage_;
-  extern size_t reduce_storage_bytes_;
-
-  extern int Nx_max_;
-  extern int *d_max_Ny_;
-  extern int *d_sorted_Ny_;
-
-  extern int *d_idx_;
-  extern int *d_sorted_idx_;
-
-  extern int block_dim_x_;
-  extern int block_dim_y_;
-  extern int frame_area_;
-  extern float x_lim_;
-}
-
-
-extern int *d_Ny_cumul_sum_;
+enum NestedLoopAlgo {
+  BlockStepNestedLoopAlgo,
+  CumulSumNestedLoopAlgo,
+  SimpleNestedLoopAlgo,
+  ParallelInnerNestedLoopAlgo,
+  ParallelOuterNestedLoopAlgo,
+  Frame1DNestedLoopAlgo,
+  Frame2DNestedLoopAlgo,
+  Smart1DNestedLoopAlgo,
+  Smart2DNestedLoopAlgo
+};
 
 //////////////////////////////////////////////////////////////////////
 template<int i_func> 
@@ -171,13 +164,29 @@ __global__ void Smart2DNestedLoopKernel(int ix0, int iy0, int dim_x,
 
 
 
-#ifndef NESTEDLOOP_H
-#define  NESTEDLOOP_H
 
-#include "prefix_scan.h"
 
 namespace NestedLoop
 {
+  extern void *d_sort_storage_;
+  extern size_t sort_storage_bytes_;
+  extern void *d_reduce_storage_;
+  extern size_t reduce_storage_bytes_;
+
+  extern int Nx_max_;
+  extern int *d_max_Ny_;
+  extern int *d_sorted_Ny_;
+
+  extern int *d_idx_;
+  extern int *d_sorted_idx_;
+
+  extern int block_dim_x_;
+  extern int block_dim_y_;
+  extern int frame_area_;
+  extern float x_lim_;
+  
+  extern int *d_Ny_cumul_sum_;
+
   extern PrefixScan prefix_scan_;
   
   int Init();
@@ -185,7 +194,7 @@ namespace NestedLoop
   int Init(int Nx_max);
 
   template<int i_func>
-    int Run(int Nx, int *d_Ny);
+  int Run(int nested_loop_algo, int Nx, int *d_Ny);
 
   template<int i_func>
   int BlockStepNestedLoop(int Nx, int *d_Ny);
@@ -222,17 +231,39 @@ namespace NestedLoop
 
 //////////////////////////////////////////////////////////////////////
 template<int i_func>
-int NestedLoop::Run(int Nx, int *d_Ny)
+int NestedLoop::Run(int nested_loop_algo, int Nx, int *d_Ny)
 {
-  //return BlockStepNestedLoop<i_func>(Nx, d_Ny);
-  return CumulSumNestedLoop<i_func>(Nx, d_Ny);
-  //return SimpleNestedLoop<i_func>(Nx, d_Ny);
-  //return ParallelInnerNestedLoop<i_func>(Nx, d_Ny);
-  //return ParallelOuterNestedLoop<i_func>(Nx, d_Ny);
-  //return Frame1DNestedLoop<i_func>(Nx, d_Ny);
-  //return Frame2DNestedLoop<i_func>(Nx, d_Ny);
-  //return Smart1DNestedLoop<i_func>(Nx, d_Ny);
-  //return Smart2DNestedLoop<i_func>(Nx, d_Ny);  
+  switch(nested_loop_algo) {
+  case BlockStepNestedLoopAlgo:
+    return BlockStepNestedLoop<i_func>(Nx, d_Ny);
+    break;
+  case CumulSumNestedLoopAlgo:
+    return CumulSumNestedLoop<i_func>(Nx, d_Ny);
+    break;
+  case SimpleNestedLoopAlgo:
+    return SimpleNestedLoop<i_func>(Nx, d_Ny);
+    break;
+  case ParallelInnerNestedLoopAlgo:
+    return ParallelInnerNestedLoop<i_func>(Nx, d_Ny);
+    break;
+  case ParallelOuterNestedLoopAlgo:
+    return ParallelOuterNestedLoop<i_func>(Nx, d_Ny);
+    break;
+  case Frame1DNestedLoopAlgo:
+    return Frame1DNestedLoop<i_func>(Nx, d_Ny);
+    break;
+  case Frame2DNestedLoopAlgo:
+    return Frame2DNestedLoop<i_func>(Nx, d_Ny);
+    break;
+  case Smart1DNestedLoopAlgo:
+    return Smart1DNestedLoop<i_func>(Nx, d_Ny);
+    break;
+  case Smart2DNestedLoopAlgo:
+    return Smart2DNestedLoop<i_func>(Nx, d_Ny);
+    break;
+  default:
+    return -1;
+  }
 }
 
 

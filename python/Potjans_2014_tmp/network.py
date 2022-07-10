@@ -289,6 +289,7 @@ class Network:
 
         master_seed = self.sim_dict['master_seed']
         ngpu.SetRandomSeed(master_seed)
+        ngpu.SetNestedLoopAlgo(ngpu.NestedLoopAlgo.BlockStep)
         self.sim_resolution = self.sim_dict['sim_resolution']
 
     def __create_neuronal_populations(self):

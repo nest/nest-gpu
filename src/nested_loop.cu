@@ -90,10 +90,11 @@ extern __constant__ float NESTGPUTimeResolution;
 extern __constant__ NodeGroupStruct NodeGroupArray[];
 extern __device__ signed char *NodeGroupMap;
 
-int *d_Ny_cumul_sum_;
+
 
 namespace NestedLoop
 {
+  int *d_Ny_cumul_sum_;
   PrefixScan prefix_scan_;
 }
 

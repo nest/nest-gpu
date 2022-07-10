@@ -49,6 +49,8 @@ extern "C" {
 
   int NESTGPU_SetVerbosityLevel(int verbosity_level);
 
+  int NESTGPU_SetNestedLoopAlgo(int nested_loop_algo);
+
   int NESTGPU_Create(char *model_name, int n_neuron, int n_port);
 
   int NESTGPU_CreatePoissonGenerator(int n_node, float rate);

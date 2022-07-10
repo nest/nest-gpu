@@ -82,6 +82,19 @@ distribution_dict = {
     "normal": 2,
     "normal_clipped": 3
 }
+
+# the following must match the enum NestedLoopAlgo in nested_loop.h
+class NestedLoopAlgo:
+  BlockStep = 0
+  CumulSum = 1
+  Simple = 2
+  ParallelInner = 3
+  ParallelOuter = 4
+  Frame1D = 5
+  Frame2D = 6
+  Smart1D = 7
+  Smart2D = 8
+
         
 def to_byte_str(s):
     if type(s)==str:
@@ -196,6 +209,16 @@ NESTGPU_SetVerbosityLevel.restype = ctypes.c_int
 def SetVerbosityLevel(verbosity_level):
     "Set verbosity level"
     ret = NESTGPU_SetVerbosityLevel(ctypes.c_int(verbosity_level))
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_SetNestedLoopAlgo = _nestgpu.NESTGPU_SetNestedLoopAlgo
+NESTGPU_SetNestedLoopAlgo.argtypes = (ctypes.c_int,)
+NESTGPU_SetNestedLoopAlgo.restype = ctypes.c_int
+def SetNestedLoopAlgo(nested_loop_algo):
+    "Set CUDA nested loop algorithm"
+    ret = NESTGPU_SetNestedLoopAlgo(ctypes.c_int(nested_loop_algo))
     if GetErrorCode() != 0:
         raise ValueError(GetErrorMessage())
     return ret

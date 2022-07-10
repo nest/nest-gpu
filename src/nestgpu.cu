@@ -135,7 +135,8 @@ NESTGPU::NESTGPU()
   connect_mpi_->remote_spike_height_ = false;
 #endif
   
-  NestedLoop::Init();
+  // NestedLoop::Init(); moved to calibrate
+  nested_loop_algo_ = CumulSumNestedLoopAlgo;
 
   SpikeBufferUpdate_time_ = 0;
   poisson_generator_time_ = 0;
@@ -196,6 +197,13 @@ int NESTGPU::SetTimeResolution(float time_res)
 {
   time_resolution_ = time_res;
   net_connection_->time_resolution_ = time_res;
+  
+  return 0;
+}
+
+int NESTGPU::SetNestedLoopAlgo(int nested_loop_algo)
+{
+  nested_loop_algo_ = nested_loop_algo;
   
   return 0;
 }
@@ -295,6 +303,10 @@ int NESTGPU::CheckUncalibrated(std::string message)
 int NESTGPU::Calibrate()
 {
   CheckUncalibrated("Calibration can be made only once");
+
+  unsigned int n_spike_buffers = net_connection_->connection_.size();
+  NestedLoop::Init(n_spike_buffers);
+		   
   ConnectRemoteNodes();
   // temporary
   gpuErrchk( cudaPeekAtLastError() );
@@ -558,7 +570,7 @@ int NESTGPU::SimulationStep()
   ClearGetSpikeArrays();    
   if (n_spikes > 0) {
     time_mark = getRealTime();
-    NestedLoop::Run<0>(n_spikes, d_SpikeTargetNum);
+    NestedLoop::Run<0>(nested_loop_algo_, n_spikes, d_SpikeTargetNum);
     NestedLoop_time_ += (getRealTime() - time_mark);
   }
   time_mark = getRealTime();
@@ -625,7 +637,7 @@ int NESTGPU::SimulationStep()
     gpuErrchk(cudaMemcpy(&n_rev_spikes, d_RevSpikeNum, sizeof(unsigned int),
 			 cudaMemcpyDeviceToHost));
     if (n_rev_spikes > 0) {
-      NestedLoop::Run<1>(n_rev_spikes, d_RevSpikeNConn);
+      NestedLoop::Run<1>(nested_loop_algo_, n_rev_spikes, d_RevSpikeNConn);
     }      
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   }
