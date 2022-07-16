@@ -131,7 +131,7 @@ __global__ void PoissGenSendSpikeKernel(curandState *curand_state, double t,
 }
 */
 
-__global__ void PoissGenSendSpikeKernel(//curandState *curand_state,
+__global__ void PoissGenSendSpikeKernel(curandState *curand_state,
 					long long time_idx,
 					float *mu_arr,
 					uint *poiss_key_array,
@@ -149,27 +149,22 @@ __global__ void PoissGenSendSpikeKernel(//curandState *curand_state,
   int i_delay = source_delay & PortMask;
   int id = (int)((time_idx - i_delay + 1) % max_delay);
   float mu = mu_arr[id*n_node + i_source];
-  float height = mu;
-  
-  int64_t i_conn = i_conn_0 + i_conn_rel;
-  int i_block = (int)(i_conn / block_size);
-  int64_t i_block_conn = i_conn % block_size;
-  connection_struct conn = ConnectionArray[i_block][i_block_conn];
-  uint target_port = conn.target_port;
-  int i_target = target_port >> MaxPortNBits;
-  uint port = target_port & PortMask;
-  float weight = conn.weight;
+  int n = curand_poisson(curand_state+i_conn_rel, mu);
+  if (n>0) {
+    int64_t i_conn = i_conn_0 + i_conn_rel;
+    int i_block = (int)(i_conn / block_size);
+    int64_t i_block_conn = i_conn % block_size;
+    connection_struct conn = ConnectionArray[i_block][i_block_conn];
+    uint target_port = conn.target_port;
+    int i_target = target_port >> MaxPortNBits;
+    uint port = target_port & PortMask;
+    float weight = conn.weight;
 
-  int i_group=NodeGroupMap[i_target];
-  int i = port*NodeGroupArray[i_group].n_node_ + i_target
-    - NodeGroupArray[i_group].i_node_0_;
-  double d_val = (double)(height*weight);
-  atomicAddDouble(&NodeGroupArray[i_group].get_spike_array_[i], d_val);
-  if ((i_conn_rel%1000)==0) {
-    printf("i_conn_rel: %ld\ti_conn: %ld\ti_source: %d\ti_delay: %d\t"
-	   "mu: %f\ti_target: %d\tport: %d\tweight: %f\n",
-	   i_conn_rel, i_conn, i_source, i_delay,
-	   mu, i_target, port, weight);
+    int i_group=NodeGroupMap[i_target];
+    int i = port*NodeGroupArray[i_group].n_node_ + i_target
+      - NodeGroupArray[i_group].i_node_0_;
+    double d_val = (double)(weight*n);
+    atomicAddDouble(&NodeGroupArray[i_group].get_spike_array_[i], d_val);
   }
 }
 
@@ -195,10 +190,7 @@ int poiss_gen::Init(int i_node_0, int n_node, int /*n_port*/,
 
 int poiss_gen::Calibrate(double, float)
 {
-  printf("ok0\n");
   buildDirectConnections();
-  printf("ok100\n");
-  //exit(0);
   gpuErrchk(cudaMalloc(&d_curand_state_, n_conn_*sizeof(curandState)));
 
   unsigned int grid_dim_x, grid_dim_y;
@@ -286,7 +278,7 @@ int poiss_gen::SendDirectSpikes(long long time_idx)
   }
   dim3 numBlocks(grid_dim_x, grid_dim_y);
   PoissGenSendSpikeKernel<<<numBlocks, 1024>>>
-    (//d_curand_state_,
+    (d_curand_state_,
      time_idx, d_mu_arr_, d_poiss_key_array_,
      n_conn_, i_conn0_,
      h_ConnBlockSize, n_node_, max_delay_);
@@ -301,9 +293,7 @@ int poiss_gen::SendDirectSpikes(long long time_idx)
 namespace poiss_conn
 {
   int OrganizeDirectConnections()
-  {
-    printf("in poiss_gen::OrganizeConnections()\n");
-    
+  {    
     uint k = KeySubarray.size();
     int64_t n = NConn;
     int64_t block_size = h_ConnBlockSize;
@@ -342,18 +332,14 @@ int poiss_gen::buildDirectConnections()
 {
   uint k = KeySubarray.size();
   int64_t block_size = h_ConnBlockSize;
-  printf("ok1 k: %d bs: %ld\n", k, block_size);
   
-  poiss_conn::key_t **key_subarray = KeySubarray.data();
-  
+  poiss_conn::key_t **key_subarray = KeySubarray.data();  
   poiss_conn::key_t h_poiss_thresh[2];
   h_poiss_thresh[0] = i_node_0_ << h_MaxPortNBits;
   h_poiss_thresh[1] = (i_node_0_ + n_node_) << h_MaxPortNBits;
   gpuErrchk(cudaMemcpy(poiss_conn::d_poiss_thresh, h_poiss_thresh,
 		       2*sizeof(poiss_conn::key_t),
 		       cudaMemcpyHostToDevice));
-
-  printf("ok2 k: %d bs: %ld\n", k, block_size);
   
   int64_t h_poiss_num[2*k];
   int64_t *d_num0 = &poiss_conn::d_poiss_num[0];
@@ -361,8 +347,6 @@ int poiss_gen::buildDirectConnections()
   int64_t *h_num0 = &h_poiss_num[0];
   int64_t *h_num1 = &h_poiss_num[k];
 
-  printf("ok3 k: %d bs: %ld\n", k, block_size);
-  
   search_multi_down<poiss_conn::key_t, poiss_conn::array_t, 1024>
     (poiss_conn::d_poiss_subarray, k, &poiss_conn::d_poiss_thresh[0], d_num0,
      &poiss_conn::d_poiss_sum[0]);
@@ -373,19 +357,9 @@ int poiss_gen::buildDirectConnections()
      &poiss_conn::d_poiss_sum[1]);
   CUDASYNC
 
-  printf("ok4 k: %d bs: %ld\n", k, block_size);
-  
   gpuErrchk(cudaMemcpy(h_poiss_num, poiss_conn::d_poiss_num,
 		       2*k*sizeof(int64_t), cudaMemcpyDeviceToHost));
 
-  printf("ok5 k: %d bs: %ld\n", k, block_size);
-  for (uint i=0; i<k; i++) {
-    printf("i: %d\th_num0: %ld\n", i, h_num0[i]);
-  }
-  for (uint i=0; i<k; i++) {
-    printf("i: %d\th_num1: %ld\n", i, h_num1[i]);
-  }
-    
   i_conn0_ = 0;
   int64_t i_conn1 = 0;
   uint ib0 = 0;
@@ -398,15 +372,12 @@ int poiss_gen::buildDirectConnections()
     }
   }
   for (uint i=0; i<k; i++) {
-    printf("ok i: %d\th_num1: %ld\n", i, h_num1[i]);
     if (h_num1[i] < block_size) {
       i_conn1 = block_size*i + h_num1[i];
       ib1 = i;
       break;
     }
   }
-  printf("ib0: %d\ti_conn0: %ld\tib1: %d\ti_conn1: %ld\n",
-	 ib0, i_conn0_, ib1, i_conn1);
   n_conn_ = i_conn1 - i_conn0_;
   if (n_conn_>0) {
     gpuErrchk(cudaMalloc(&d_poiss_key_array_, n_conn_*sizeof(key_t)));
@@ -439,19 +410,6 @@ int poiss_gen::buildDirectConnections()
 	offset += block_size;
       }
     }
-    key_t *h_poiss_key_array = new key_t[n_conn_];
-    gpuErrchk(cudaMemcpy(h_poiss_key_array, d_poiss_key_array_,
-			 n_conn_*sizeof(key_t),
-			 cudaMemcpyDeviceToHost));
-    printf("i_conn0: %ld\ti_conn1: %ld\tn_conn_: %ld\n", i_conn0_, i_conn1,
-	   n_conn_);
-    int i_min = h_poiss_key_array[0] >> h_MaxPortNBits;
-    int d_min = h_poiss_key_array[0] & h_PortMask;
-    int i_max = h_poiss_key_array[n_conn_ - 1] >> h_MaxPortNBits;
-    int d_max = h_poiss_key_array[n_conn_ - 1] & h_PortMask;
-    printf("i_min: %d\ti_max: %d\td_min: %d\td_max: %d\n",
-	   i_min, i_max, d_min, d_max);
-
 
     unsigned int grid_dim_x, grid_dim_y;
   
@@ -470,20 +428,9 @@ int poiss_gen::buildDirectConnections()
       grid_dim_y = (n_conn_ + grid_dim_x*1024 -1) / (grid_dim_x*1024);
     }
     dim3 numBlocks(grid_dim_x, grid_dim_y);
-    printf("n_conn_: %ld\ti_node_0_: %d\n", n_conn_, i_node_0_);
     PoissGenSubstractFirstNodeIndexKernel<<<numBlocks, 1024>>>
       (n_conn_, d_poiss_key_array_, i_node_0_);
     DBGCUDASYNC
-
-    gpuErrchk(cudaMemcpy(h_poiss_key_array, d_poiss_key_array_,
-			 n_conn_*sizeof(key_t),
-			 cudaMemcpyDeviceToHost));
-    i_min = h_poiss_key_array[0] >> h_MaxPortNBits;
-    d_min = h_poiss_key_array[0] & h_PortMask;
-    i_max = h_poiss_key_array[n_conn_ - 1] >> h_MaxPortNBits;
-    d_max = h_poiss_key_array[n_conn_ - 1] & h_PortMask;
-    printf("i_min: %d\ti_max: %d\td_min: %d\td_max: %d\n",
-	   i_min, i_max, d_min, d_max);
 
   }
 
