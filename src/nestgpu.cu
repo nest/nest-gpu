@@ -47,6 +47,7 @@
 #include "rev_spike.h"
 #include "spike_mpi.h"
 #include "new_connect.h"
+#include "poiss_gen.h"
 
 #ifdef HAVE_MPI
 #include <mpi.h>
@@ -331,6 +332,9 @@ int NESTGPU::Calibrate()
   max_spike_num_ = (int)round(max_spike_num_fact_
                  * net_connection_->connection_.size()
   		 * net_connection_->MaxDelayNum());
+  //printf("%ld\t%d\n", net_connection_->connection_.size(),
+  //	 net_connection_->MaxDelayNum());
+  //exit(0);
   max_spike_num_ = (max_spike_num_>1) ? max_spike_num_ : 1;
 
   max_spike_per_host_ = (int)round(max_spike_per_host_fact_
@@ -356,12 +360,13 @@ int NESTGPU::Calibrate()
   
   multimeter_->OpenFiles();
   
+  /*
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     node_vect_[i]->Calibrate(t_min_, time_resolution_);
   }
   
   SynGroupCalibrate();
-  
+  */
   gpuErrchk(cudaMemcpyToSymbol(NESTGPUTimeResolution, &time_resolution_,
 			       sizeof(float)));
 ///////////////////////////////////
@@ -370,6 +375,14 @@ int NESTGPU::Calibrate()
 		      NConn, h_ConnBlockSize,
 		      KeySubarray, ConnectionSubarray);
   NewConnectInit();
+
+  poiss_conn::OrganizeDirectConnections();
+  
+  for (unsigned int i=0; i<node_vect_.size(); i++) {
+    node_vect_[i]->Calibrate(t_min_, time_resolution_);
+  }
+  
+  SynGroupCalibrate();
   
   return 0;
 }
@@ -576,7 +589,7 @@ int NESTGPU::SimulationStep()
   time_mark = getRealTime();
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     if (node_vect_[i]->has_dir_conn_) {
-      node_vect_[i]->SendDirectSpikes(neural_time_, time_resolution_/1000.0);
+      node_vect_[i]->SendDirectSpikes(time_idx);
     }
   }
   poisson_generator_time_ += (getRealTime() - time_mark);

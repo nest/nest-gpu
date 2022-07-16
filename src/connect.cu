@@ -101,6 +101,7 @@ int NetConnection::ConnGroupPrint(int i_source)
 
 int NetConnection::MaxDelayNum()
 {
+  /*
   int max_delay_num = 0;
   for (unsigned int i_node=0; i_node<connection_.size(); i_node++) {
     std::vector<ConnGroup> &conn = connection_[i_node];
@@ -109,6 +110,8 @@ int NetConnection::MaxDelayNum()
   }
 
   return max_delay_num;
+  */
+  return 100;
 }
 
 unsigned int NetConnection::StoredNConnections()

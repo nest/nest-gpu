@@ -292,7 +292,7 @@ class BaseNeuron
 			    int port=0);
   virtual float GetSpikeActivity(int i_neuron);
 
-  virtual int SendDirectSpikes(double t, float time_step) {return 0;}
+  virtual int SendDirectSpikes(long long time_idx) {return 0;}
 
   virtual std::vector<std::string> GetIntVarNames();
 

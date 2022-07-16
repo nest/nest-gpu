@@ -234,7 +234,7 @@ __global__ void setDelays(uint *key_subarray, float *arr_val,
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  int delay = (int)(arr_val[i_conn]/time_resolution);
+  int delay = (int)round(arr_val[i_conn]/time_resolution);
   delay = max(delay,1);
   key_subarray[i_conn] = (key_subarray[i_conn] << MaxPortNBits) | delay;
 }
@@ -244,7 +244,7 @@ __global__ void setDelays(uint *key_subarray, float fdelay,
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  int delay = (int)(fdelay/time_resolution);
+  int delay = (int)round(fdelay/time_resolution);
   delay = max(delay,1);
   key_subarray[i_conn] = (key_subarray[i_conn] << MaxPortNBits) | delay;
 }
