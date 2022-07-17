@@ -179,11 +179,6 @@ int BaseNeuron::Init(int i_node_0, int n_node, int n_port,
   array_var_name_.clear(); // vector of array-variable names
   array_param_name_.clear(); // vector of array-parameter names
 
-  d_dir_conn_array_ = NULL; // array of outgoing direct connections
-                            // used by poisson generators
-                            // to send independent spike trains through each
-                            // connection
-  n_dir_conn_ = 0; // number of direct connections
   has_dir_conn_ = false; // true if neur. group has outgoing direct connections
 
   spike_count_ = NULL; // array of spike counters

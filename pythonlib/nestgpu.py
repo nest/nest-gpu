@@ -244,19 +244,6 @@ def Create(model_name, n_node=1, n_ports=1, status_dict=None):
         raise ValueError(GetErrorMessage())
     return ret
 
-
-NESTGPU_CreatePoissonGenerator = _nestgpu.NESTGPU_CreatePoissonGenerator
-NESTGPU_CreatePoissonGenerator.argtypes = (ctypes.c_int, ctypes.c_float)
-NESTGPU_CreatePoissonGenerator.restype = ctypes.c_int
-def CreatePoissonGenerator(n_node, rate):
-    "Create a poisson-distributed spike generator"
-    i_node = NESTGPU_CreatePoissonGenerator(ctypes.c_int(n_node), ctypes.c_float(rate)) 
-    ret = NodeSeq(i_node, n_node)
-    if GetErrorCode() != 0:
-        raise ValueError(GetErrorMessage())
-    return ret
-
-
 NESTGPU_CreateRecord = _nestgpu.NESTGPU_CreateRecord
 NESTGPU_CreateRecord.argtypes = (c_char_p, ctypes.POINTER(c_char_p), c_int_p, c_int_p, ctypes.c_int)
 NESTGPU_CreateRecord.restype = ctypes.c_int

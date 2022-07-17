@@ -113,13 +113,6 @@ extern "C" {
     ret = neur[0];
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_CreatePoissonGenerator(int n_node, float rate)
-  { int ret = 0; BEGIN_ERR_PROP {
-    NodeSeq pg = NESTGPU_instance->CreatePoissonGenerator(n_node, rate);
-
-    ret = pg[0];
-  } END_ERR_PROP return ret; }
-  
   int NESTGPU_CreateRecord(char *file_name, char *var_name_arr[],
 			     int *i_node_arr, int *port_arr,
 			     int n_node)

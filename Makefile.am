@@ -56,7 +56,6 @@ $(top_srcdir)/src/node_group.h \
 $(top_srcdir)/src/parrot_neuron.h \
 $(top_srcdir)/src/poiss_gen.h \
 $(top_srcdir)/src/poiss_gen_variables.h \
-$(top_srcdir)/src/poisson.h \
 $(top_srcdir)/src/prefix_scan.h \
 $(top_srcdir)/src/propagate_error.h \
 $(top_srcdir)/src/random.h \
@@ -116,7 +115,6 @@ $(top_srcdir)/src/nestgpu_C.cpp \
 $(top_srcdir)/src/node_group.cu \
 $(top_srcdir)/src/parrot_neuron.cu \
 $(top_srcdir)/src/poiss_gen.cu \
-$(top_srcdir)/src/poisson.cu \
 $(top_srcdir)/src/prefix_scan.cu \
 $(top_srcdir)/src/random.cu \
 $(top_srcdir)/src/rev_spike.cu \

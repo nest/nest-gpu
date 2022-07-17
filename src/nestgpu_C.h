@@ -53,8 +53,6 @@ extern "C" {
 
   int NESTGPU_Create(char *model_name, int n_neuron, int n_port);
 
-  int NESTGPU_CreatePoissonGenerator(int n_node, float rate);
-  
   int NESTGPU_CreateRecord(char *file_name, char *var_name_arr[],
 			     int *i_node_arr, int *port_arr,
 			     int n_node);

@@ -27,7 +27,6 @@
 
 #include <string>
 #include <vector>
-#include "dir_connect.h"
 #include <stdint.h>
 #include "distribution.h"
 
@@ -74,8 +73,6 @@ class BaseNeuron
   std::vector<std::string> array_var_name_;
   std::vector<std::string> array_param_name_;
   
-  DirectConnection *d_dir_conn_array_;
-  uint64_t n_dir_conn_; // = 0;
   bool has_dir_conn_; // = false;
 
   int *spike_count_;

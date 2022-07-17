@@ -38,12 +38,10 @@
 
 #include "spike_generator.h"
 #include "multimeter.h"
-#include "poisson.h"
 #include "getRealTime.h"
 #include "random.h"
 #include "nestgpu.h"
 #include "nested_loop.h"
-#include "dir_connect.h"
 #include "rev_spike.h"
 #include "spike_mpi.h"
 #include "new_connect.h"
@@ -101,7 +99,6 @@ NESTGPU::NESTGPU()
   random_generator_ = new curandGenerator_t;
   CURAND_CALL(curandCreateGenerator(random_generator_,
 				    CURAND_RNG_PSEUDO_DEFAULT));
-  poiss_generator_ = new PoissonGenerator;
   multimeter_ = new Multimeter;
   net_connection_ = new NetConnection;
   
@@ -175,7 +172,6 @@ NESTGPU::~NESTGPU()
 
   delete net_connection_;
   delete multimeter_;
-  delete poiss_generator_;
   curandDestroyGenerator(*random_generator_);
   delete random_generator_;
 }
@@ -188,7 +184,6 @@ int NESTGPU::SetRandomSeed(unsigned long long seed)
   CURAND_CALL(curandCreateGenerator(random_generator_,
 				    CURAND_RNG_PSEUDO_DEFAULT));
   CURAND_CALL(curandSetPseudoRandomGeneratorSeed(*random_generator_, seed));
-  poiss_generator_->random_generator_ = random_generator_;
   distribution_.setCurandGenerator(random_generator_);
   
   return 0;
@@ -265,33 +260,6 @@ int NESTGPU::CreateNodeGroup(int n_node, int n_port)
   return i_node_0;
 }
 
-NodeSeq NESTGPU::CreatePoissonGenerator(int n_node, float rate)
-{
-  if (!create_flag_) {
-    create_flag_ = true;
-    start_real_time_ = getRealTime();
-  }
-  CheckUncalibrated("Poisson generator cannot be created after calibration");
-  if (n_poiss_node_ != 0) {
-    throw ngpu_exception("Number of poisson generators cannot be modified.");
-  }
-  else if (n_node <= 0) {
-    throw ngpu_exception("Number of nodes must be greater than zero.");
-  }
-  
-  n_poiss_node_ = n_node;               
- 
-  BaseNeuron *bn = new BaseNeuron;
-  node_vect_.push_back(bn);
-  int i_node_0 = CreateNodeGroup( n_node, 0);
-  
-  float lambda = rate*time_resolution_ / 1000.0; // rate is in Hz, time in ms
-  poiss_generator_->Create(random_generator_, i_node_0, n_node, lambda);
-    
-  return NodeSeq(i_node_0, n_node);
-}
-
-
 int NESTGPU::CheckUncalibrated(std::string message)
 {
   if (calibrate_flag_ == true) {
@@ -303,6 +271,7 @@ int NESTGPU::CheckUncalibrated(std::string message)
 
 int NESTGPU::Calibrate()
 {
+  int max_delay_num = 100;
   CheckUncalibrated("Calibration can be made only once");
 
   unsigned int n_spike_buffers = net_connection_->connection_.size();
@@ -314,10 +283,6 @@ int NESTGPU::Calibrate()
   gpuErrchk( cudaDeviceSynchronize() );
   
   calibrate_flag_ = true;
-  BuildDirectConnections();
-  // temporary
-  gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
   
   gpuErrchk(cudaMemcpyToSymbol(NESTGPUMpiFlag, &mpi_flag_, sizeof(bool)));
 
@@ -330,16 +295,16 @@ int NESTGPU::Calibrate()
   NodeGroupArrayInit();
   
   max_spike_num_ = (int)round(max_spike_num_fact_
-                 * net_connection_->connection_.size()
-  		 * net_connection_->MaxDelayNum());
+			      * net_connection_->connection_.size()
+			      * max_delay_num);
   //printf("%ld\t%d\n", net_connection_->connection_.size(),
-  //	 net_connection_->MaxDelayNum());
+  //	 max_delay_num);
   //exit(0);
   max_spike_num_ = (max_spike_num_>1) ? max_spike_num_ : 1;
 
   max_spike_per_host_ = (int)round(max_spike_per_host_fact_
-                 * net_connection_->connection_.size()
-  		 * net_connection_->MaxDelayNum());
+				   * net_connection_->connection_.size()
+				   * max_delay_num);
   max_spike_per_host_ = (max_spike_per_host_>1) ? max_spike_per_host_ : 1;
   
   SpikeInit(max_spike_num_);
@@ -508,16 +473,13 @@ int NESTGPU::SimulationStep()
   double time_mark;
 
   time_mark = getRealTime();
+  //printf("net_connection_->connection_.size(): %ld\n",
+  //	 net_connection_->connection_.size());
   SpikeBufferUpdate<<<(net_connection_->connection_.size()+1023)/1024,
     1024>>>();
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
   SpikeBufferUpdate_time_ += (getRealTime() - time_mark);
-  time_mark = getRealTime();
-  if (n_poiss_node_>0) {
-    poiss_generator_->Update(Nt_-it_);
-    poisson_generator_time_ += (getRealTime() - time_mark);
-  }
   time_mark = getRealTime();
   neural_time_ = neur_t0_ + (double)time_resolution_*(it_+1);
   gpuErrchk(cudaMemcpyToSymbol(NESTGPUTime, &neural_time_, sizeof(double)));
@@ -1329,44 +1291,6 @@ float *NESTGPU::RandomNormalClipped(size_t n, float mean, float stddev,
   }
 
   return arr; 
-}
-
-int NESTGPU::BuildDirectConnections()
-{
-  for (unsigned int iv=0; iv<node_vect_.size(); iv++) {
-    if (node_vect_[iv]->has_dir_conn_) {
-      std::vector<DirectConnection> dir_conn_vect;
-      int i0 = node_vect_[iv]->i_node_0_;
-      int n = node_vect_[iv]->n_node_;
-      for (int i_source=i0; i_source<i0+n; i_source++) {
-	std::vector<ConnGroup> &conn = net_connection_->connection_[i_source];
-	for (unsigned int id=0; id<conn.size(); id++) {
-	  std::vector<TargetSyn> tv = conn[id].target_vect;
-	  for (unsigned int i=0; i<tv.size(); i++) {
-	    DirectConnection dir_conn;
-	    dir_conn.irel_source_ = i_source - i0;
-	    dir_conn.i_target_ = tv[i].node;
-	    dir_conn.port_ = tv[i].port;
-	    dir_conn.weight_ = tv[i].weight;
-	    dir_conn.delay_ = time_resolution_*(conn[id].delay+1);
-	    dir_conn_vect.push_back(dir_conn);
-	  }
-	}
-      }
-      uint64_t n_dir_conn = dir_conn_vect.size();
-      node_vect_[iv]->n_dir_conn_ = n_dir_conn;
-      
-      DirectConnection *d_dir_conn_array;
-      gpuErrchk(cudaMalloc(&d_dir_conn_array,
-			   n_dir_conn*sizeof(DirectConnection )));
-      gpuErrchk(cudaMemcpy(d_dir_conn_array, dir_conn_vect.data(),
-			   n_dir_conn*sizeof(DirectConnection),
-			   cudaMemcpyHostToDevice));
-      node_vect_[iv]->d_dir_conn_array_ = d_dir_conn_array;
-    }
-  }
-
-  return 0;
 }
 
 std::vector<std::string> NESTGPU::GetIntVarNames(int i_node)

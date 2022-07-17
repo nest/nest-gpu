@@ -43,7 +43,6 @@
 class ConnectMpi;
 #endif
 
-class PoissonGenerator;
 class Multimeter;
 class NetConnection;
 struct curandGenerator_st;
@@ -111,7 +110,6 @@ class NESTGPU
   bool create_flag_; // becomes true just before creation of the first node
 
   Distribution distribution_;
-  PoissonGenerator *poiss_generator_;
   Multimeter *multimeter_;
   std::vector<BaseNeuron*> node_vect_; // -> node_group_vect
   std::vector<SynModel*> syn_group_vect_;
@@ -311,7 +309,7 @@ class NESTGPU
   int SetIntParam(std::string param_name, int val);
 
   NodeSeq Create(std::string model_name, int n_neuron=1, int n_port=1);
-  NodeSeq CreatePoissonGenerator(int n_node, float rate);
+
   RemoteNodeSeq RemoteCreate(int i_host, std::string model_name,
 			     int n_node=1, int n_port=1);
 
@@ -617,7 +615,6 @@ class NESTGPU
 		    int i_target_host, std::vector<int> target,
 		    ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int BuildDirectConnections();
 
   std::vector<std::string> GetScalVarNames(int i_node);
 
