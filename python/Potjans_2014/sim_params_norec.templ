@@ -32,7 +32,7 @@ sim_dict = {
     # The full simulation time is the sum of a presimulation time and the main
     # simulation time.
     # presimulation time (in ms)
-    't_presim': 0.1,
+    't_presim': 500.0,
     # simulation time (in ms)
     't_sim': 10000.0,
     # resolution of the simulation (in ms)
@@ -54,4 +54,4 @@ sim_dict = {
     'overwrite_files': True,
     # print the time progress. This should only be used when the simulation
     # is run on a local machine.
-    'print_time': True}
+    'print_time': False}

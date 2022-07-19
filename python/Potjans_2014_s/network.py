@@ -286,6 +286,7 @@ class Network:
 
         master_seed = self.sim_dict['master_seed']
         ngpu.SetRandomSeed(master_seed)
+        ngpu.SetKernelStatus({'print_time': self.sim_dict['print_time']})
         self.sim_resolution = self.sim_dict['sim_resolution']
 
     def __create_neuronal_populations(self):

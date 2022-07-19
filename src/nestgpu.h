@@ -151,6 +151,7 @@ class NESTGPU
   int on_exception_;
 
   int verbosity_level_;
+  bool print_time_;
 
   std::vector<RemoteConnection> remote_connection_vect_;
   std::vector<int> ext_neuron_input_spike_node_;
@@ -286,8 +287,21 @@ class NESTGPU
     return 0;
   }
 
+  inline int SetPrintTime(bool print_time) {
+    print_time_ = print_time;
+    return 0;
+  }
+
+
   int SetMaxSpikeBufferSize(int max_size);
   int GetMaxSpikeBufferSize();
+
+  int GetNBoolParam();
+  std::vector<std::string> GetBoolParamNames();
+  bool IsBoolParam(std::string param_name);
+  int GetBoolParamIdx(std::string param_name);
+  bool GetBoolParam(std::string param_name);
+  int SetBoolParam(std::string param_name, bool val);
 
   int GetNFloatParam();
   std::vector<std::string> GetFloatParamNames();

@@ -80,6 +80,11 @@ enum KernelIntParamIndexes {
   N_KERNEL_INT_PARAM
 };
 
+enum KernelBoolParamIndexes {
+  i_print_time,
+  N_KERNEL_BOOL_PARAM
+};
+
 const std::string kernel_float_param_name[N_KERNEL_FLOAT_PARAM] = {
   "time_resolution",
   "max_spike_num_fact",
@@ -91,6 +96,10 @@ const std::string kernel_int_param_name[N_KERNEL_INT_PARAM] = {
   "verbosity_level",
   "max_spike_buffer_size",
   "remote_spike_height_flag"
+};
+
+const std::string kernel_bool_param_name[N_KERNEL_BOOL_PARAM] = {
+  "print_time"
 };
 
 NESTGPU::NESTGPU()
@@ -123,6 +132,7 @@ NESTGPU::NESTGPU()
   on_exception_ = ON_EXCEPTION_EXIT;
 
   verbosity_level_ = 4;
+  print_time_ = false;
   
   mpi_flag_ = false;
 #ifdef HAVE_MPI
@@ -349,8 +359,8 @@ int NESTGPU::Simulate()
   StartSimulation();
   
   for (long long it=0; it<Nt_; it++) {
-    if (it%100==0 && verbosity_level_>=2) {
-      printf("%.3lf\n", neural_time_);
+    if (it%100==0 && verbosity_level_>=2 && print_time_==true) {
+      printf("\r[%.2lf %%] Model time: %.3lf ms", 100.0*(neural_time_-neur_t0_)/sim_time_, neural_time_);
     }
     SimulationStep();
   }
@@ -377,7 +387,7 @@ int NESTGPU::StartSimulation()
   }
   if (verbosity_level_>=1) {
     std::cout << MpiRankStr() << "Simulating ...\n";
-    printf("Neural activity simulation time: %.3lf\n", sim_time_);
+    printf("Neural activity simulation time: %.3lf ms\n", sim_time_);
   }
   
   neur_t0_ = neural_time_;
@@ -389,8 +399,8 @@ int NESTGPU::StartSimulation()
 
 int NESTGPU::EndSimulation()
 {
-  if (verbosity_level_>=2) {
-    printf("%.3lf\n", neural_time_);
+  if (verbosity_level_>=2  && print_time_==true) {
+    printf("\r[%.2lf %%] Model time: %.3lf ms", 100.0*(neural_time_-neur_t0_)/sim_time_, neural_time_);
   }
 #ifdef HAVE_MPI                                        
   if (mpi_flag_) {
@@ -1689,6 +1699,74 @@ int NESTGPU::ConnectRemoteNodes()
   
   return 0;
 }
+
+
+int NESTGPU::GetNBoolParam()
+{
+  return N_KERNEL_BOOL_PARAM;
+}
+
+std::vector<std::string> NESTGPU::GetBoolParamNames()
+{
+  std::vector<std::string> param_name_vect;
+  for (int i=0; i<N_KERNEL_BOOL_PARAM; i++) {
+    param_name_vect.push_back(kernel_bool_param_name[i]);
+  }
+  
+  return param_name_vect;
+}
+
+bool NESTGPU::IsBoolParam(std::string param_name)
+{
+  int i_param;
+  for (i_param=0; i_param<N_KERNEL_BOOL_PARAM; i_param++) {
+    if (param_name == kernel_bool_param_name[i_param]) return true;
+  }
+  return false;
+}
+
+int NESTGPU::GetBoolParamIdx(std::string param_name)
+{
+  int i_param;
+  for (i_param=0; i_param<N_KERNEL_BOOL_PARAM; i_param++) {
+    if (param_name == kernel_bool_param_name[i_param]) break;
+  }
+  if (i_param == N_KERNEL_BOOL_PARAM) {
+    throw ngpu_exception(std::string("Unrecognized kernel boolean parameter ")
+			 + param_name);
+  }
+  
+  return i_param;
+}
+
+bool NESTGPU::GetBoolParam(std::string param_name)
+{
+  int i_param =  GetBoolParamIdx(param_name);
+  switch (i_param) {
+  case i_print_time:
+    return print_time_;
+  default:
+    throw ngpu_exception(std::string("Unrecognized kernel boolean parameter ")
+			 + param_name);
+  }
+}
+
+int NESTGPU::SetBoolParam(std::string param_name, bool val)
+{
+  int i_param =  GetBoolParamIdx(param_name);
+
+  switch (i_param) {
+  case i_time_resolution:
+    print_time_ = val;
+    break;
+  default:
+    throw ngpu_exception(std::string("Unrecognized kernel boolean parameter ")
+			 + param_name);
+  }
+  
+  return 0;
+}
+
 
 int NESTGPU::GetNFloatParam()
 {
