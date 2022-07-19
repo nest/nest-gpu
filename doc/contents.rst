@@ -19,5 +19,6 @@ Table of Contents
    :maxdepth: 2
    :caption: Getting Involved
 
+   Community <community>
    Publications <publications>
 
