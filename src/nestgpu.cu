@@ -298,7 +298,7 @@ int NESTGPU::Calibrate()
   calibrate_flag_ = true;
   BuildDirectConnections();
 
-  gpuErrchk(cudaMemcpyToSymbol(NESTGPUMpiFlag, &mpi_flag_, sizeof(bool)));
+  gpuErrchk(cudaMemcpyToSymbolAsync(NESTGPUMpiFlag, &mpi_flag_, sizeof(bool)));
 
   if (verbosity_level_>=1) {
     std::cout << MpiRankStr() << "Calibrating ...\n";
@@ -342,7 +342,7 @@ int NESTGPU::Calibrate()
   
   SynGroupCalibrate();
   
-  gpuErrchk(cudaMemcpyToSymbol(NESTGPUTimeResolution, &time_resolution_,
+  gpuErrchk(cudaMemcpyToSymbolAsync(NESTGPUTimeResolution, &time_resolution_,
 			       sizeof(float)));
 ///////////////////////////////////
 
@@ -380,7 +380,7 @@ int NESTGPU::StartSimulation()
   }
 #endif
   if (first_simulation_flag_) {
-    gpuErrchk(cudaMemcpyToSymbol(NESTGPUTime, &neural_time_, sizeof(double)));
+    gpuErrchk(cudaMemcpyToSymbolAsync(NESTGPUTime, &neural_time_, sizeof(double)));
     multimeter_->WriteRecords(neural_time_);
     build_real_time_ = getRealTime();
     first_simulation_flag_ = false;
@@ -482,9 +482,9 @@ int NESTGPU::SimulationStep()
   }
   time_mark = getRealTime();
   neural_time_ = neur_t0_ + (double)time_resolution_*(it_+1);
-  gpuErrchk(cudaMemcpyToSymbol(NESTGPUTime, &neural_time_, sizeof(double)));
+  gpuErrchk(cudaMemcpyToSymbolAsync(NESTGPUTime, &neural_time_, sizeof(double)));
   long long time_idx = (int)round(neur_t0_/time_resolution_) + it_ + 1;
-  gpuErrchk(cudaMemcpyToSymbol(NESTGPUTimeIdx, &time_idx, sizeof(long long)));
+  gpuErrchk(cudaMemcpyToSymbolAsync(NESTGPUTimeIdx, &time_idx, sizeof(long long)));
 
   if (ConnectionSpikeTimeFlag) {
     if ( (time_idx & 0xffff) == 0x8000) {
@@ -1563,9 +1563,10 @@ int NESTGPU::PushSpikesToNodes(int n_spikes, int *node_id,
   float *d_spike_height;
   gpuErrchk(cudaMalloc(&d_node_id, n_spikes*sizeof(int)));
   gpuErrchk(cudaMalloc(&d_spike_height, n_spikes*sizeof(float)));
-  gpuErrchk(cudaMemcpy(d_node_id, node_id, n_spikes*sizeof(int),
+  // Memcpy are synchronized by PushSpikeFromRemote kernel
+  gpuErrchk(cudaMemcpyAsync(d_node_id, node_id, n_spikes*sizeof(int),
 		       cudaMemcpyHostToDevice));
-  gpuErrchk(cudaMemcpy(d_spike_height, spike_height, n_spikes*sizeof(float),
+  gpuErrchk(cudaMemcpyAsync(d_spike_height, spike_height, n_spikes*sizeof(float),
 		       cudaMemcpyHostToDevice));
   PushSpikeFromRemote<<<(n_spikes+1023)/1024, 1024>>>(n_spikes, d_node_id,
 						     d_spike_height);
@@ -1587,7 +1588,8 @@ int NESTGPU::PushSpikesToNodes(int n_spikes, int *node_id)
 
   int *d_node_id;
   gpuErrchk(cudaMalloc(&d_node_id, n_spikes*sizeof(int)));
-  gpuErrchk(cudaMemcpy(d_node_id, node_id, n_spikes*sizeof(int),
+  // memcopy data transfer is overlapped with PushSpikeFromRemote kernel
+  gpuErrchk(cudaMemcpyAsync(d_node_id, node_id, n_spikes*sizeof(int),
 		       cudaMemcpyHostToDevice));  
   PushSpikeFromRemote<<<(n_spikes+1023)/1024, 1024>>>(n_spikes, d_node_id);
   gpuErrchk( cudaPeekAtLastError() );
