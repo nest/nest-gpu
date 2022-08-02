@@ -8,7 +8,7 @@ Issues and pull requests on GitHub
 
 On `<https://github.com/nest/nest-gpu>`_, you can submit
 
-* issues for reporting bugs and requesting features, and
+* issues for reporting bugs and requesting features
 * pull requests for contributing to the source code and the documentation.
 
 Mailing list
