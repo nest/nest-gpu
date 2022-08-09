@@ -317,7 +317,7 @@ int ConnectMpi::SendSpikeToRemote(int n_hosts, int max_spike_per_host)
   int n_spike_tot = JoinSpikes(n_hosts, max_spike_per_host);
 
   time_mark = getRealTime();
-    // copy spikes from GPU to CPU memory
+  // copy spikes from GPU to CPU memory
   gpuErrchk(cudaMemcpy(h_ExternalTargetSpikeNodeId,
 		       d_ExternalTargetSpikeNodeIdJoin,
 		       n_spike_tot*sizeof(int),
@@ -420,8 +420,9 @@ int ConnectMpi::CopySpikeFromRemote(int n_hosts, int max_spike_per_host,
 
   if (n_spike_tot>0) {
     time_mark = getRealTime();
+    // Memcopy will be synchronized with AddOffset kernel
     // copy to GPU memory packed spikes from remote MPI proc
-    gpuErrchk(cudaMemcpy(d_ExternalSourceSpikeNodeId,
+    gpuErrchk(cudaMemcpyAsync(d_ExternalSourceSpikeNodeId,
 			 h_ExternalSourceSpikeNodeId,
 			 n_spike_tot*sizeof(int), cudaMemcpyHostToDevice));
     RecvSpikeFromRemote_CUDAcp_time_ += (getRealTime() - time_mark);
