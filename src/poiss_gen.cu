@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <curand.h>
 #include <curand_kernel.h>
+#include <cub/cub.cuh>
 
 #include "utilities.h"
 #include "nestgpu.h"
@@ -52,6 +53,18 @@ namespace poiss_conn
   int64_t *d_poiss_num;
   int64_t *d_poiss_sum;
   key_t *d_poiss_thresh;
+};
+
+// max delay functor
+struct MaxDelay
+{
+    template <typename T>
+    __device__ __forceinline__
+    T operator()(const T &source_delay_a, const T &source_delay_b) const {
+      int i_delay_a = source_delay_a & PortMask;
+      int i_delay_b = source_delay_b & PortMask;
+        return (i_delay_b > i_delay_a) ? i_delay_b : i_delay_a;
+    }
 };
 
 __global__ void SetupPoissKernel(curandState *curand_state, uint64_t n_conn,
@@ -434,7 +447,28 @@ int poiss_gen::buildDirectConnections()
 
   }
 
-  max_delay_ = 200;
+  // Find maximum delay of poisson direct connections
+  int *d_max_delay; // maximum delay pointer in device memory
+  gpuErrchk(cudaMalloc(&d_max_delay, sizeof(int)));
+  MaxDelay max_op; // comparison operator used by Reduce function 
+  // Determine temporary device storage requirements
+  void *d_temp_storage = NULL;
+  size_t temp_storage_bytes = 0;
+  cub::DeviceReduce::Reduce(d_temp_storage, temp_storage_bytes,
+			    d_poiss_key_array_, d_max_delay, n_conn_, max_op,
+			    INT_MIN);
+  // Allocate temporary storage
+  gpuErrchk(cudaMalloc(&d_temp_storage, temp_storage_bytes));
+  // Run reduction
+  cub::DeviceReduce::Reduce(d_temp_storage, temp_storage_bytes,
+			    d_poiss_key_array_, d_max_delay, n_conn_, max_op,
+			    INT_MIN);
+  gpuErrchk(cudaMemcpy(&max_delay_, d_max_delay, sizeof(int),
+		       cudaMemcpyDeviceToHost));
+
+  // max_delay_ = 200;
+  printf("Max delay of direct (poisson generator) connections: %d\n",
+	 max_delay_);
   gpuErrchk(cudaMalloc(&d_mu_arr_, n_node_*max_delay_*sizeof(float)));
   gpuErrchk(cudaMemset(d_mu_arr_, 0, n_node_*max_delay_*sizeof(float)));
   
