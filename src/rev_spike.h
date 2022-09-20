@@ -21,7 +21,7 @@
 #ifndef REVSPIKE_H
 #define REVSPIKE_H
 
-#include "connect.h"
+//#include "connect.h"
 #include "spike_buffer.h"
 #include "syn_model.h"
 #include "get_spike.h"
@@ -38,13 +38,13 @@ __global__ void RevSpikeReset();
 
 __global__ void RevSpikeBufferUpdate(unsigned int n_node);
 
-int RevSpikeInit(NetConnection *net_connection);
+int RevSpikeInit(uint n_spike_buffers, uint stored_n_connections);
 
 int RevSpikeFree();
 
-int ResetConnectionSpikeTimeDown(NetConnection *net_connection);
+int ResetConnectionSpikeTimeDown(uint stored_n_connections);
 
-int ResetConnectionSpikeTimeUp(NetConnection *net_connection);
+int ResetConnectionSpikeTimeUp(uint stored_n_connections);
 
 template<int i_func>
 __device__  __forceinline__ void NestedLoopFunction(int i_spike, int i_syn);

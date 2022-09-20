@@ -24,7 +24,7 @@
 
 #ifndef SPIKEBUFFER_H
 #define SPIKEBUFFER_H
-#include "connect.h"
+//#include "connect.h"
 
 extern __device__ int MaxSpikeBufferSize;
 extern __device__ int NSpikeBuffer;
@@ -141,6 +141,6 @@ __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
 				unsigned int **target_rev_conn,
 				long long *last_rev_spike_time_idx);
 
-int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size);
+int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size);
 
 #endif

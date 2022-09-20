@@ -31,7 +31,7 @@
 #include "nestgpu.h"
 
 #ifdef HAVE_MPI
-#include "connect_mpi.h"
+//#include "connect_mpi.h"
 #endif
 
 #ifdef _OPENMP
@@ -70,6 +70,7 @@ int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
   // }
   
   switch (conn_spec.rule_) {
+    /*
   case ONE_TO_ONE:
     if (n_source != n_target) {
       throw ngpu_exception("Number of source and target nodes must be equal "
@@ -77,6 +78,7 @@ int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
     }
     return _ConnectOneToOne<T1, T2>(source, target, n_source, syn_spec);
     break;
+    */
   case ALL_TO_ALL:
     return _ConnectAllToAll<T1, T2>(source, n_source, target, n_target,
 				    syn_spec);
@@ -85,6 +87,7 @@ int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
     return _ConnectFixedTotalNumber<T1, T2>(source, n_source, target, n_target,
 				       conn_spec.total_num_, syn_spec);
     break;
+    /*
   case FIXED_INDEGREE:
     return _ConnectFixedIndegree<T1, T2>(source, n_source, target, n_target,
 				    conn_spec.indegree_, syn_spec);
@@ -93,12 +96,14 @@ int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
     return _ConnectFixedOutdegree<T1, T2>(source, n_source, target, n_target,
 					  conn_spec.outdegree_, syn_spec);
     break;
+    */
   default:
     throw ngpu_exception("Unknown connection rule");
   }
   return 0;
 }
 
+/*
 template<class T1, class T2>
 int NESTGPU::_SingleConnect(T1 source, int i_source, T2 target, int i_target,
 			      int i_array, SynSpec &syn_spec)
@@ -407,7 +412,7 @@ int NESTGPU::_ConnectFixedOutdegree
   
   return 0;
 }
-
+*/
 
 #ifdef HAVE_MPI
 
@@ -417,6 +422,7 @@ int NESTGPU::_RemoteConnect(RemoteNode<T1> source, int n_source,
 			      ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   CheckUncalibrated("Connections cannot be created after calibration");
+  /*
   switch (conn_spec.rule_) {
   case ONE_TO_ONE:
     if (n_source != n_target) {
@@ -448,10 +454,11 @@ int NESTGPU::_RemoteConnect(RemoteNode<T1> source, int n_source,
   default:
     throw ngpu_exception("Unknown connection rule");
   }
+  */
   return 0;
 }
 
-
+/*
 template <class T1, class T2>
   int NESTGPU::_RemoteConnectOneToOne
   (RemoteNode<T1> source, RemoteNode<T2> target, int n_node,
@@ -845,6 +852,7 @@ template <class T1, class T2>
 
   return 0;
 }
+*/
 
 #endif
 

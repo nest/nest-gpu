@@ -50,4 +50,6 @@ __device__  __forceinline__ int locate(int val, int *data, int n)
   return i;
 }
 
+int IntPow(int x, unsigned int p);
+  
 #endif

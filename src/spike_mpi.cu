@@ -18,7 +18,7 @@
  *
  */
 
-
+/*
 #include <config.h>
 
 #include <stdio.h>
@@ -31,7 +31,7 @@
 #include "getRealTime.h"
 
 #include "spike_mpi.h"
-#include "connect_mpi.h"
+//#include "connect_mpi.h"
 #include "scan.cuh"
 
 __device__ __forceinline__ int locate(int val, int *data, int n);
@@ -353,7 +353,7 @@ int ConnectMpi::SendSpikeToRemote(int n_hosts, int max_spike_per_host)
 
 // Receive spikes from remote MPI processes
 int ConnectMpi::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
-				    
+  
 {
   std::list<int> recv_list;
   std::list<int>::iterator list_it;
@@ -361,9 +361,9 @@ int ConnectMpi::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
   MPI_Status Stat;
   int mpi_id, tag = 1; // id is already in the class, can be removed
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_id);
-
+  
   double time_mark = getRealTime();
-
+  
   // loop on remote MPI proc
   for (int i_host=0; i_host<n_hosts; i_host++) {
     if (i_host == mpi_id) continue; // skip self MPI proc
@@ -373,7 +373,7 @@ int ConnectMpi::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
 	      max_spike_per_host, MPI_INT, i_host, tag, MPI_COMM_WORLD,
 	      &recv_mpi_request[i_host]);
   }
-
+  
   // loop until list is empty, i.e. until receive is complete
   // from all MPI proc
   while (recv_list.size()>0) {
@@ -418,7 +418,7 @@ int ConnectMpi::CopySpikeFromRemote(int n_hosts, int max_spike_per_host,
     }
   }
   JoinSpike_time_ += (getRealTime() - time_mark);
-
+  
   if (n_spike_tot>0) {
     time_mark = getRealTime();
     // copy to GPU memory packed spikes from remote MPI proc
@@ -502,3 +502,4 @@ int ConnectMpi::JoinSpikes(int n_hosts, int max_spike_per_host)
 }
 
 #endif
+*/

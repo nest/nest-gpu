@@ -19,7 +19,8 @@ NE = 4 * order       # number of excitatory neurons
 NI = 1 * order       # number of inhibitory neurons
 n_neurons = NE + NI  # number of neurons in total
 
-CPN = 1000 # number of connections per neuron
+CE = 800   # number of excitatory synapses per neuron
+CI = CE//4  # number of inhibitory synapses per neuron
 
 Wex = 0.05
 Win = 0.35
@@ -35,7 +36,7 @@ ngpu.SetStatus(pg, "rate", poiss_rate)
 pg_list = pg.ToList()
 
 # Create n_neurons neurons with n_receptor receptor ports
-neuron = ngpu.Create("aeif_cond_beta", n_neurons, n_receptors)
+neuron = ngpu.Create("user_m1", n_neurons, n_receptors)
 exc_neuron = neuron[0:NE]      # excitatory neurons
 inh_neuron = neuron[NE:n_neurons]   # inhibitory neurons
 neuron_list = neuron.ToList()
@@ -55,29 +56,31 @@ std_delay = 0.25
 min_delay = 0.1
 # Excitatory connections
 # connect excitatory neurons to port 0 of all neurons
-# normally distributed delays, weight Wex and CPN connections per neuron
-exc_conn_dict={"rule": "fixed_total_number", "total_num": CPN*NE}
+# normally distributed delays, weight Wex and CE connections per neuron
+exc_conn_dict={"rule": "fixed_indegree", "indegree": CE}
 exc_syn_dict={"weight": Wex, "delay": {"distribution":"normal_clipped",
                                        "mu":mean_delay, "low":min_delay,
                                        "high":mean_delay+3*std_delay,
                                        "sigma":std_delay}, "receptor":0}
-ngpu.Connect(exc_neuron, neuron, exc_conn_dict, exc_syn_dict)
+ngpu.Connect(exc_neuron, neuron_list, exc_conn_dict, exc_syn_dict)
 
 # Inhibitory connections
 # connect inhibitory neurons to port 1 of all neurons
-# normally distributed delays, weight Win and CPN connections per neuron
-inh_conn_dict={"rule": "fixed_total_number", "total_num": CPN*NI}
+# normally distributed delays, weight Win and CI connections per neuron
+inh_conn_dict={"rule": "fixed_indegree", "indegree": CI}
 inh_syn_dict={"weight": Win, "delay":{"distribution":"normal_clipped",
                                        "mu":mean_delay, "low":min_delay,
                                        "high":mean_delay+3*std_delay,
                                        "sigma":std_delay}, "receptor":1}
-ngpu.Connect(inh_neuron, neuron, inh_conn_dict, inh_syn_dict)
+ngpu.Connect(inh_neuron_list, exc_neuron_list, inh_conn_dict, inh_syn_dict)
+ngpu.Connect(inh_neuron_list, inh_neuron, inh_conn_dict, inh_syn_dict)
 
 #connect poisson generator to port 0 of all neurons
 pg_conn_dict={"rule": "all_to_all"}
-pg_syn_dict={"weight": poiss_weight, "delay": poiss_delay, "receptor":0}
+pg_syn_dict={"weight": poiss_weight, "delay": poiss_delay,
+              "receptor":0}
 
-ngpu.Connect(pg, neuron, pg_conn_dict, pg_syn_dict)
+ngpu.Connect(pg_list, neuron_list, pg_conn_dict, pg_syn_dict)
 
 i_neuron_list = [neuron[0], neuron[n_neurons-1]]
 i_receptor_list = [0, 0]
@@ -95,17 +98,27 @@ ngpu.Simulate()
 
 data_list = ngpu.GetRecordData(record)
 
-n_conn_tot = 0
 for i in range(1000):
     conn_id = ngpu.GetConnections(i+1)
     n_out_conn = len(conn_id)
-    n_conn_tot = n_conn_tot + n_out_conn
-
-if (n_conn_tot!=(NE+NI)*CPN):
-    print("Expected total number of connections: ", (NE+NI)*CPN)
-    print("Total number of connections ", n_conn_tot)
-    #sys.exit(1)
+    if (n_out_conn!=NE+NI):
+        print("Expected number of out connections per neuron: ", NE+NI)
+        print("Number of out connections of neuron ", i + 1, ": ", \
+              n_out_conn)
+        sys.exit(1)
         
+
+for i in range(10):
+    i_target = randrange(n_neurons)
+    conn_id = ngpu.GetConnections(target=i_target+1)
+    n_in_conn = len(conn_id)
+    if (n_in_conn!=NE+NI+1):
+        print("Expected number of in connections per neuron: ", NE+NI+1)
+        print("Number of in connections of neuron ", i_target, ": ", \
+              n_in_conn)
+        sys.exit(1)
+
+
 row_sum = list(data_list[0])
 for row in data_list[1:len(data_list)]:
     for i in range(len(row_sum)):

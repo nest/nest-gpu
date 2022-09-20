@@ -35,7 +35,7 @@
 #include "node_group.h"
 #include "base_neuron.h"
 #include "connect_spec.h"
-#include "connect.h"
+//#include "connect.h"
 #include "syn_model.h"
 #include "distribution.h"
 
@@ -155,7 +155,7 @@ class NESTGPU
 
   int nested_loop_algo_;
 
-  std::vector<RemoteConnection> remote_connection_vect_;
+  //std::vector<RemoteConnection> remote_connection_vect_;
   std::vector<int> ext_neuron_input_spike_node_;
   std::vector<int> ext_neuron_input_spike_port_;
   std::vector<float> ext_neuron_input_spike_height_;
@@ -293,6 +293,8 @@ class NESTGPU
 
   int SetMaxSpikeBufferSize(int max_size);
   int GetMaxSpikeBufferSize();
+  
+  uint GetNNode();
 
   int GetNFloatParam();
   std::vector<std::string> GetFloatParamNames();
@@ -648,6 +650,7 @@ class NESTGPU
   
   int GetNArrayVar(int i_node);
 
+  /*
   ConnectionStatus GetConnectionStatus(ConnectionId conn_id);
   
   std::vector<ConnectionStatus> GetConnectionStatus(std::vector<ConnectionId>
@@ -682,6 +685,7 @@ class NESTGPU
   std::vector<ConnectionId> GetConnections(std::vector<int> source,
 					   std::vector<int> target,
 					   int syn_group=-1);
+  */
 
   int CreateSynGroup(std::string model_name);
 

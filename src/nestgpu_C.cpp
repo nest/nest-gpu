@@ -890,6 +890,7 @@ extern "C" {
   int *NESTGPU_GetSeqSeqConnections(int i_source, int n_source, int i_target,
 				      int n_target, int syn_group, int *n_conn)
   { int *ret = NULL; BEGIN_ERR_PROP {
+      /*
       std::vector<ConnectionId> conn_id_vect =
 	NESTGPU_instance->GetConnections(i_source, n_source, i_target,
 					   n_target, syn_group);
@@ -901,12 +902,14 @@ extern "C" {
 	conn_id_array[i*3 + 2] = conn_id_vect[i].i_conn_;
       }
       ret = conn_id_array;
+      */
   } END_ERR_PROP return ret; }
 
   int *NESTGPU_GetSeqGroupConnections(int i_source, int n_source,
 					int *i_target, int n_target,
 					int syn_group, int *n_conn)
   { int *ret = NULL; BEGIN_ERR_PROP {
+      /*
       std::vector<ConnectionId> conn_id_vect =
 	NESTGPU_instance->GetConnections(i_source, n_source, i_target,
 					   n_target, syn_group);
@@ -918,12 +921,14 @@ extern "C" {
 	conn_id_array[i*3 + 2] = conn_id_vect[i].i_conn_;
       }
       ret = conn_id_array;
+      */
   } END_ERR_PROP return ret; }
 
   int *NESTGPU_GetGroupSeqConnections(int *i_source, int n_source,
 					int i_target, int n_target,
 					int syn_group, int *n_conn)
   { int *ret = NULL; BEGIN_ERR_PROP {
+      /*
       std::vector<ConnectionId> conn_id_vect =
 	NESTGPU_instance->GetConnections(i_source, n_source, i_target,
 					   n_target, syn_group);
@@ -935,12 +940,14 @@ extern "C" {
 	conn_id_array[i*3 + 2] = conn_id_vect[i].i_conn_;
       }
       ret = conn_id_array;
+      */
   } END_ERR_PROP return ret; }
 
   int *NESTGPU_GetGroupGroupConnections(int *i_source, int n_source,
 					 int *i_target, int n_target,
 					 int syn_group, int *n_conn)
   { int *ret = NULL; BEGIN_ERR_PROP {
+      /*
       std::vector<ConnectionId> conn_id_vect =
 	NESTGPU_instance->GetConnections(i_source, n_source, i_target,
 					   n_target, syn_group);
@@ -952,6 +959,7 @@ extern "C" {
 	conn_id_array[i*3 + 2] = conn_id_vect[i].i_conn_;
       }
       ret = conn_id_array;
+      */
   } END_ERR_PROP return ret; }
 
   int NESTGPU_GetConnectionStatus(int i_source, int i_group, int i_conn,
@@ -959,6 +967,7 @@ extern "C" {
 				    unsigned char *syn_group, float *delay,
 				    float *weight)
   { int ret = 0; BEGIN_ERR_PROP {
+      /*
       ConnectionId conn_id;
       conn_id.i_source_ = i_source;
       conn_id.i_group_ = i_group;
@@ -972,6 +981,7 @@ extern "C" {
       *weight = conn_stat.weight;
       
       ret = 0;
+      */
   } END_ERR_PROP return ret; }
 
 

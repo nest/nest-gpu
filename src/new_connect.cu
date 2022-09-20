@@ -45,6 +45,8 @@ int64_t NConn;
 int64_t h_ConnBlockSize = 50000000;
 __device__ int64_t ConnBlockSize;
 
+uint h_MaxDelayNum;
+
 std::vector<uint*> KeySubarray;
 std::vector<connection_struct*> ConnectionSubarray;
 
@@ -404,6 +406,7 @@ int connect_fixed_total_number(curandGenerator_t &gen,
 			       int i_target0, int n_target,
 			       SynSpec &syn_spec)
 {
+  printf("ok_cftn_0\n");
   if (total_num==0) return 0;
   uint64_t old_n_conn = n_conn;
   uint64_t n_new_conn = total_num;
@@ -540,8 +543,8 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
   cudaDeviceSynchronize();
   gettimeofday(&startTV, NULL);
   
-  //printf("ok0 block_size %ld\tn_node %d\tn_conn %ld\n", block_size,
-  //	 n_node, n_conn);
+  printf("ok0 block_size %ld\tn_node %d\tn_conn %ld\n", block_size,
+  	 n_node, n_conn);
   printf("Allocating auxiliary GPU memory...\n");
   int64_t storage_bytes = 0;
   void *d_storage = NULL;
@@ -558,11 +561,14 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
   printf("Indexing connection groups...\n");
   uint k = key_subarray.size();
   storage_bytes = 0; // free temporarily allocated storage
-  
+
+  printf("ok n_node %d\n", n_node);
+  printf("ok n_node*sizeof(uint) %ld\n", n_node*sizeof(uint));
   gpuErrchk(cudaMalloc(&d_ConnGroupNum, n_node*sizeof(uint)));
   gpuErrchk(cudaMalloc(&d_ConnGroupIdx0, (n_node+1)*sizeof(uint)));
   gpuErrchk(cudaMemset(d_ConnGroupNum, 0, n_node*sizeof(uint)));
-	    
+  printf("ok d_ConnGroupIdx0 %lld\n", (unsigned long long int)d_ConnGroupIdx0);
+  
   int64_t *d_source_conn_idx0;
   int64_t *d_source_conn_num;
   cudaReusableAlloc(d_storage, storage_bytes, &d_source_conn_idx0,
@@ -581,24 +587,27 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
   }
   
   
-  void *d_cumul_storage = NULL;
-  size_t cumul_storage_bytes = 0;
+  void *d_temp_storage = NULL;
+  size_t temp_storage_bytes = 0;
   
   // Determine temporary device storage requirements for prefix sum
-  cub::DeviceScan::ExclusiveSum(d_cumul_storage, cumul_storage_bytes,
+  cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
 				d_ConnGroupNum, d_ConnGroupIdx0,
 				n_node+1);
   size_t storage_bytes_bk = storage_bytes; // backup storage bytes
   // Allocate temporary storage for prefix sum
-  cudaReusableAlloc(d_storage, storage_bytes, &d_cumul_storage,
-		    cumul_storage_bytes, sizeof(char));
+  cudaReusableAlloc(d_storage, storage_bytes, &d_temp_storage,
+		    temp_storage_bytes, sizeof(char));
   // Run exclusive prefix sum
-  cub::DeviceScan::ExclusiveSum(d_cumul_storage, cumul_storage_bytes,
+  cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
 				d_ConnGroupNum, d_ConnGroupIdx0,
 				n_node+1);
   storage_bytes = storage_bytes_bk; // free temporary allocated storage
   
   uint tot_conn_group_num;
+  printf("ok1 n_node %d\n", n_node);
+  printf("ok1 d_ConnGroupIdx0 %lld\n", (unsigned long long int)d_ConnGroupIdx0);
+  printf("ok1 &d_ConnGroupIdx0[n_node] %lld\n", (unsigned long long int)&d_ConnGroupIdx0[n_node]);
   gpuErrchk(cudaMemcpy(&tot_conn_group_num, &d_ConnGroupIdx0[n_node],
 		       sizeof(uint), cudaMemcpyDeviceToHost));
   printf("Total number of connection groups: %d\n", tot_conn_group_num);
@@ -665,7 +674,31 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
   getConnGroupDelay<<<(tot_conn_group_num+1023)/1024, 1024>>>
     (d_conn_group_key, d_ConnGroupDelay, tot_conn_group_num);
   DBGCUDASYNC
-  cudaDeviceSynchronize();
+
+  // find maxumum number of connection groups (delays) over all neurons
+  uint *d_max_delay_num = NULL;  
+  d_temp_storage = NULL;
+  temp_storage_bytes = 0;  
+  // Determine temporary device storage requirements
+  cub::DeviceReduce::Max(d_temp_storage, temp_storage_bytes,
+			 d_ConnGroupNum, d_max_delay_num, n_node);
+  storage_bytes_bk = storage_bytes; // backup storage bytes
+  // Allocate temporary storage
+  cudaReusableAlloc(d_storage, storage_bytes, &d_temp_storage,
+		    temp_storage_bytes, sizeof(char));
+  cudaReusableAlloc(d_storage, storage_bytes, &d_max_delay_num,
+		    1, sizeof(uint));
+  
+  // Run maximum search
+  cub::DeviceReduce::Max(d_temp_storage, temp_storage_bytes,
+			 d_ConnGroupNum, d_max_delay_num, n_node);
+  storage_bytes = storage_bytes_bk; // free temporary allocated storage  
+  CUDASYNC    
+  gpuErrchk(cudaMemcpy(&h_MaxDelayNum, d_max_delay_num,
+		       sizeof(uint), cudaMemcpyDeviceToHost));
+  printf("Maximum number of connection groups (delays) over all nodes: %d\n",
+	 h_MaxDelayNum);
+
   gettimeofday(&endTV, NULL);
   long time = (long)((endTV.tv_sec * 1000000.0 + endTV.tv_usec)
 		     - (startTV.tv_sec * 1000000.0 + startTV.tv_usec));
@@ -704,7 +737,7 @@ int NESTGPU::_ConnectFixedTotalNumber<int, int>
 (int source, int n_source, int target, int n_target, int total_num,
  SynSpec &syn_spec)
 {
-  //printf("In new specialized connection fixed-total-number\n");
+  printf("In new specialized connection fixed-total-number\n");
   //float weight_mean = syn_spec.weight_;
   //float weight_std = syn_spec.weight_ / 10.0;
   //float delay_mean = syn_spec.delay_;

@@ -29,10 +29,9 @@
 
 #include "cuda_error.h"
 #include "spike_buffer.h"
-//#include "connect.h"
+#include "connect.h"
 #include "send_spike.h"
 #include "node_group.h"
-#include "new_connect.h"
 
 #ifdef HAVE_MPI
 #include "spike_mpi.h"
@@ -183,15 +182,14 @@ __device__ void PushSpike(int i_spike_buffer, float height)
     // last time when spike is sent back to dendrites (e.g. for STDP)
     LastRevSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx;
   }
-
-  /*
+  
 #ifdef HAVE_MPI
   if (NESTGPUMpiFlag) {
     // if MPI is active spike should eventually be sent to remote connections
     PushExternalSpike(i_spike_buffer, height);
   }
 #endif
-  */
+
   // if recording  spike counts is activated, increase counter
   if (NodeGroupArray[i_group].spike_count_ != NULL) {
     int i_node_0 = NodeGroupArray[i_group].i_node_0_;
@@ -218,7 +216,7 @@ __device__ void PushSpike(int i_spike_buffer, float height)
 
   // spike should be stored if there are output connections
   // or if dendritic delay is > 0
-  if (ConnGroupNum[i_spike_buffer]>0 || den_delay_idx>0) {
+  if (ConnectionGroupSize[i_spike_buffer]>0 || den_delay_idx>0) {
     int Ns = SpikeBufferSize[i_spike_buffer]; // n. of spikes in buffer
     if (Ns>=MaxSpikeBufferSize) {
       printf("Maximum number of spikes in spike buffer exceeded"
@@ -282,16 +280,16 @@ __global__ void SpikeBufferUpdate()
       rev_spike = true;
     }
     // connection index in array
-    //int i_conn_arr = i_conn*NSpikeBuffer+i_spike_buffer;
-    int ig = ConnGroupIdx0[i_spike_buffer] + i_conn;
+    int i_conn_arr = i_conn*NSpikeBuffer+i_spike_buffer;
     // if spike time matches connection group delay deliver it
     // to global spike array
-    if (i_conn<ConnGroupNum[i_spike_buffer] &&
-	spike_time_idx == ConnGroupDelay[ig]) {
+    if (i_conn<ConnectionGroupSize[i_spike_buffer] &&
+	spike_time_idx == ConnectionGroupDelay[i_conn_arr]) {
       // spike time matches connection group delay
       float height = SpikeBufferHeight[i_arr]; // spike multiplicity
       // deliver spike
-      SendSpike(i_spike_buffer, i_conn, height, ConnGroupNConn[ig]);
+      SendSpike(i_spike_buffer, i_conn, height,
+		ConnectionGroupTargetSize[i_conn_arr]);
       // increase index of the next conn. group that will emit this spike
       i_conn++;
       SpikeBufferConnIdx[i_arr] = i_conn;
@@ -300,7 +298,7 @@ __global__ void SpikeBufferUpdate()
     // check if it is the oldest spike of the buffer
     // and if its connection group index is over the last connection group
     // and if spike time is greater than the dendritic delay
-    if (is==Ns-1 && i_conn>=ConnGroupNum[i_spike_buffer]
+    if (is==Ns-1 && i_conn>=ConnectionGroupSize[i_spike_buffer]
 	&& spike_time_idx+1>=den_delay_idx) {
       // in this case we don't need any more to keep track of the oldest spike
       SpikeBufferSize[i_spike_buffer]--; // so remove it from buffer
@@ -328,11 +326,11 @@ __global__ void InitLastSpikeTimeIdx(unsigned int n_spike_buffers,
 }
 
 
-int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
+int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
 {
-  //unsigned int n_spike_buffers = net_connection->connection_.size();
+  unsigned int n_spike_buffers = net_connection->connection_.size();
   h_NSpikeBuffer = n_spike_buffers;
-  int max_delay_num = h_MaxDelayNum;
+  int max_delay_num = net_connection->MaxDelayNum();
   //printf("mdn: %d\n", max_delay_num);
   
   gpuErrchk(cudaMalloc(&d_LastSpikeTimeIdx, n_spike_buffers*sizeof(long long)));
@@ -340,6 +338,15 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
   gpuErrchk(cudaMalloc(&d_LastRevSpikeTimeIdx, n_spike_buffers
 		       *sizeof(long long)));
   
+  unsigned int n_conn = net_connection->StoredNConnections();
+  unsigned int *h_conn_target = new unsigned int[n_conn];
+  unsigned char *h_conn_syn_group = new unsigned char[n_conn];
+  float *h_conn_weight = new float[n_conn];
+  // unsigned short *h_conn_spike_time; //USELESS, REMOVE
+  unsigned int *d_conn_target;
+  gpuErrchk(cudaMalloc(&d_conn_target, n_conn*sizeof(unsigned int)));
+  gpuErrchk(cudaMalloc(&d_ConnectionSynGroup, n_conn*sizeof(unsigned char)));
+  gpuErrchk(cudaMalloc(&d_ConnectionWeight, n_conn*sizeof(float)));
   int *h_ConnectionGroupSize = new int[n_spike_buffers];
   int *h_ConnectionGroupDelay = new int[n_spike_buffers*max_delay_num];
   int *h_ConnectionGroupTargetSize = new int[n_spike_buffers*max_delay_num];
@@ -374,7 +381,6 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
   gpuErrchk(cudaMalloc(&d_ConnectionGroupTargetWeight,
 		     n_spike_buffers*max_delay_num*sizeof(float*)));
 
-  /*
   if (ConnectionSpikeTimeFlag){
     //h_conn_spike_time = new unsigned short[n_conn];
     gpuErrchk(cudaMalloc(&d_ConnectionSpikeTime,
@@ -387,9 +393,49 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
 			 n_spike_buffers*max_delay_num
 			 *sizeof(unsigned short*)));
   }
-  */
   
-  /*
+  unsigned int i_conn = 0;
+  for (unsigned int i_source=0; i_source<n_spike_buffers; i_source++) {
+    std::vector<ConnGroup> *conn = &(net_connection->connection_[i_source]);
+    h_ConnectionGroupSize[i_source] = conn->size();
+    for (unsigned int id=0; id<conn->size(); id++) {
+      h_ConnectionGroupDelay[id*n_spike_buffers+i_source] = conn->at(id).delay;
+     int n_target = conn->at(id).target_vect.size();
+     h_ConnectionGroupTargetSize[id*n_spike_buffers+i_source] = n_target;
+
+     h_ConnectionGroupTargetNode[id*n_spike_buffers+i_source]
+       = &d_conn_target[i_conn];
+     h_ConnectionGroupTargetSynGroup[id*n_spike_buffers+i_source]
+       = &d_ConnectionSynGroup[i_conn];
+     h_ConnectionGroupTargetWeight[id*n_spike_buffers+i_source]
+       = &d_ConnectionWeight[i_conn];
+     if (ConnectionSpikeTimeFlag){
+       h_ConnectionGroupTargetSpikeTime[id*n_spike_buffers+i_source]
+	 = &d_ConnectionSpikeTime[i_conn];
+     }
+     unsigned int *target_arr = &h_conn_target[i_conn];
+     unsigned char *syn_group_arr = &h_conn_syn_group[i_conn];
+     float *weight_arr = &h_conn_weight[i_conn];
+     for (int it=0; it<n_target; it++) {
+       unsigned int target = conn->at(id).target_vect[it].node;
+       unsigned int port = conn->at(id).target_vect[it].port;
+       target_arr[it] = (port << (24 + PORT_N_SHIFT)) | target;
+       syn_group_arr[it] = conn->at(id).target_vect[it].syn_group;
+       weight_arr[it] = conn->at(id).target_vect[it].weight;
+     }
+     i_conn += n_target;
+   }
+  }
+  
+  cudaMemcpy(d_conn_target, h_conn_target, n_conn*sizeof(unsigned int),
+	     cudaMemcpyHostToDevice);
+  cudaMemcpy(d_ConnectionSynGroup, h_conn_syn_group,
+	     n_conn*sizeof(unsigned char), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_ConnectionWeight, h_conn_weight, n_conn*sizeof(float),
+	     cudaMemcpyHostToDevice);
+
+  delete[] h_conn_weight;
+
   unsigned int n_rev_conn = 0;
   std::vector<std::vector<unsigned int> > rev_connections(n_spike_buffers);
   for (unsigned int i_conn=0; i_conn<n_conn; i_conn++) {
@@ -401,6 +447,8 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
     }
   }
   
+  delete[] h_conn_target;
+  delete[] h_conn_syn_group;
   
   net_connection->SetNRevConnections(n_rev_conn);
 
@@ -436,7 +484,6 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
     delete[] h_target_rev_conn_size;
     delete[] h_target_rev_conn;
   }
-  */
   
   cudaMemcpy(d_ConnectionGroupSize, h_ConnectionGroupSize,
 	     n_spike_buffers*sizeof(int), cudaMemcpyHostToDevice);

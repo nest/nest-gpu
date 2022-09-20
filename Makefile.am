@@ -38,12 +38,9 @@ $(top_srcdir)/src/aeif_psc_exp.h \
 $(top_srcdir)/src/aeif_psc_exp_kernel.h \
 $(top_srcdir)/src/aeif_psc_exp_rk5.h \
 $(top_srcdir)/src/base_neuron.h \
-$(top_srcdir)/src/connect.h \
-$(top_srcdir)/src/connect_mpi.h \
 $(top_srcdir)/src/connect_rules.h \
 $(top_srcdir)/src/connect_spec.h \
 $(top_srcdir)/src/cuda_error.h \
-$(top_srcdir)/src/dir_connect.h \
 $(top_srcdir)/src/getRealTime.h \
 $(top_srcdir)/src/get_spike.h \
 $(top_srcdir)/src/multimeter.h \
@@ -101,8 +98,6 @@ $(top_srcdir)/src/aeif_psc_alpha.cu \
 $(top_srcdir)/src/aeif_psc_delta.cu \
 $(top_srcdir)/src/aeif_psc_exp.cu \
 $(top_srcdir)/src/base_neuron.cu \
-$(top_srcdir)/src/connect.cu \
-$(top_srcdir)/src/connect_mpi.cu \
 $(top_srcdir)/src/connect_rules.cu \
 $(top_srcdir)/src/dummyfile.cpp \
 $(top_srcdir)/src/getRealTime.cu \

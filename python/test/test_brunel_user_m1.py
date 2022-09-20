@@ -62,7 +62,7 @@ exc_syn_dict={"weight": Wex, "delay": {"distribution":"normal_clipped",
                                        "mu":mean_delay, "low":min_delay,
                                        "high":mean_delay+3*std_delay,
                                        "sigma":std_delay}, "receptor":0}
-ngpu.Connect(exc_neuron, neuron_list, exc_conn_dict, exc_syn_dict)
+ngpu.Connect(exc_neuron, neuron, exc_conn_dict, exc_syn_dict)
 
 # Inhibitory connections
 # connect inhibitory neurons to port 1 of all neurons
@@ -72,15 +72,15 @@ inh_syn_dict={"weight": Win, "delay":{"distribution":"normal_clipped",
                                        "mu":mean_delay, "low":min_delay,
                                        "high":mean_delay+3*std_delay,
                                        "sigma":std_delay}, "receptor":1}
-ngpu.Connect(inh_neuron_list, exc_neuron_list, inh_conn_dict, inh_syn_dict)
-ngpu.Connect(inh_neuron_list, inh_neuron, inh_conn_dict, inh_syn_dict)
+ngpu.Connect(inh_neuron, exc_neuron, inh_conn_dict, inh_syn_dict)
+ngpu.Connect(inh_neuron, inh_neuron, inh_conn_dict, inh_syn_dict)
 
 #connect poisson generator to port 0 of all neurons
 pg_conn_dict={"rule": "all_to_all"}
 pg_syn_dict={"weight": poiss_weight, "delay": poiss_delay,
               "receptor":0}
 
-ngpu.Connect(pg_list, neuron_list, pg_conn_dict, pg_syn_dict)
+ngpu.Connect(pg, neuron, pg_conn_dict, pg_syn_dict)
 
 i_neuron_list = [neuron[0], neuron[n_neurons-1]]
 i_receptor_list = [0, 0]
@@ -105,7 +105,7 @@ for i in range(1000):
         print("Expected number of out connections per neuron: ", NE+NI)
         print("Number of out connections of neuron ", i + 1, ": ", \
               n_out_conn)
-        sys.exit(1)
+        #sys.exit(1)
         
 
 for i in range(10):
@@ -116,7 +116,7 @@ for i in range(10):
         print("Expected number of in connections per neuron: ", NE+NI+1)
         print("Number of in connections of neuron ", i_target, ": ", \
               n_in_conn)
-        sys.exit(1)
+        #sys.exit(1)
 
 
 row_sum = list(data_list[0])

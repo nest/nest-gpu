@@ -112,35 +112,36 @@ __global__ void RevSpikeReset()
 }
   
 
-int ResetConnectionSpikeTimeUp(NetConnection *net_connection)
+int ResetConnectionSpikeTimeUp(uint stored_n_connections)
 {  
   ResetConnectionSpikeTimeUpKernel
-    <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
-    (net_connection->StoredNConnections());
+    <<<(stored_n_connections+1023)/1024, 1024>>>
+    (stored_n_connections);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
   return 0;
 }
 
-int ResetConnectionSpikeTimeDown(NetConnection *net_connection)
+int ResetConnectionSpikeTimeDown(uint stored_n_connections)
 {  
   ResetConnectionSpikeTimeDownKernel
-    <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
-    (net_connection->StoredNConnections());
+    <<<(stored_n_connections+1023)/1024, 1024>>>
+    (stored_n_connections);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
   return 0;
 }
 
-int RevSpikeInit(NetConnection *net_connection)
+int RevSpikeInit(uint n_spike_buffers, uint stored_n_connections)
 {
-  int n_spike_buffers = net_connection->connection_.size();
-  
+  printf("n_spike_buffers: %d\n", n_spike_buffers);
+
+  /*
   SetConnectionSpikeTime
-    <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
-    (net_connection->StoredNConnections(), 0x8000);
+    <<<(stored_n_connections+1023)/1024, 1024>>>
+    (stored_n_connections, 0x8000);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
@@ -155,7 +156,7 @@ int RevSpikeInit(NetConnection *net_connection)
 			      d_RevSpikeNConn);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-
+  */
   return 0;
 }
 

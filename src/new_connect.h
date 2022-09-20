@@ -39,6 +39,8 @@ extern int64_t NConn;
 extern int64_t h_ConnBlockSize;
 extern __device__ int64_t ConnBlockSize;
 
+extern uint h_MaxDelayNum;
+
 extern std::vector<uint*> KeySubarray;
 extern std::vector<connection_struct*> ConnectionSubarray;
 

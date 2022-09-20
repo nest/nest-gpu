@@ -26,7 +26,7 @@
 #include <config.h>
 #include <iostream>
 #include "ngpu_exception.h"
-#include "connect.h"
+//#include "connect.h"
 #include "nestgpu.h"
 #include "connect_rules.h"
 #include "new_connect.h"
@@ -308,17 +308,21 @@ bool SynSpec::IsFloatPtParam(std::string param_name)
   }
 }
 
+
 int NESTGPU::Connect(int i_source_node, int i_target_node,
 		       unsigned char port, unsigned char syn_group,
 		       float weight, float delay)
 {
   CheckUncalibrated("Connections cannot be created after calibration");
+/*
   net_connection_->Connect(i_source_node, i_target_node,
 			   port, syn_group, weight, delay);
 
+*/
   return 0;
 }
 
+/*
 template<>
 int NESTGPU::_SingleConnect<int, int>
 (int i_source0, int i_source, int i_target0,
@@ -397,6 +401,7 @@ int NESTGPU::_RemoteSingleConnect<int*>
     remote_connection_vect_.push_back(rc);
     return 0;
 }
+*/
 
 int NESTGPU::Connect(int i_source, int n_source, int i_target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
@@ -408,54 +413,56 @@ int NESTGPU::Connect(int i_source, int n_source, int i_target, int n_target,
 int NESTGPU::Connect(int i_source, int n_source, int* target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return _Connect<int, int*>(i_source, n_source, target, n_target,
-			     conn_spec, syn_spec);
+  return 0; //_Connect<int, int*>(i_source, n_source, target, n_target,
+	//		     conn_spec, syn_spec);
 }
 int NESTGPU::Connect(int* source, int n_source, int i_target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return _Connect<int*, int>(source, n_source, i_target, n_target,
-			     conn_spec, syn_spec);
+  return 0; //_Connect<int*, int>(source, n_source, i_target, n_target,
+  //		     conn_spec, syn_spec);
 }
 int NESTGPU::Connect(int* source, int n_source, int* target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return _Connect<int*, int*>(source, n_source, target, n_target,
-			conn_spec, syn_spec);
+  return 0; //_Connect<int*, int*>(source, n_source, target, n_target,
+  //		conn_spec, syn_spec);
 }
 
 int NESTGPU::Connect(NodeSeq source, NodeSeq target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return _Connect<int, int>(source.i0, source.n, target.i0, target.n,
-			    conn_spec, syn_spec);
+  return 0; //_Connect<int, int>(source.i0, source.n, target.i0, target.n,
+  //		    conn_spec, syn_spec);
 }
 
 int NESTGPU::Connect(NodeSeq source, std::vector<int> target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return _Connect<int, int*>(source.i0, source.n, target.data(),
-			     target.size(), conn_spec, syn_spec);
+  return 0; //_Connect<int, int*>(source.i0, source.n, target.data(),
+  //		     target.size(), conn_spec, syn_spec);
 }
 
 int NESTGPU::Connect(std::vector<int> source, NodeSeq target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return _Connect<int*, int>(source.data(), source.size(), target.i0,
-			     target.n, conn_spec, syn_spec);
+  return 0; //_Connect<int*, int>(source.data(), source.size(), target.i0,
+  //		     target.n, conn_spec, syn_spec);
 }
 
 int NESTGPU::Connect(std::vector<int> source, std::vector<int> target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return _Connect<int*, int*>(source.data(), source.size(), target.data(),
-			target.size(), conn_spec, syn_spec);
+  return 0; //_Connect<int*, int*>(source.data(), source.size(), target.data(),
+  //		target.size(), conn_spec, syn_spec);
 }
+
 
 int NESTGPU::RemoteConnect(int i_source_host, int i_source, int n_source,
 			     int i_target_host, int i_target, int n_target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int> rsource(i_source_host, i_source);
   RemoteNode<int> rtarget(i_target_host, i_target);
@@ -464,12 +471,15 @@ int NESTGPU::RemoteConnect(int i_source_host, int i_source, int n_source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 
 int NESTGPU::RemoteConnect(int i_source_host, int i_source, int n_source,
 			     int i_target_host, int* target, int n_target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int> rsource(i_source_host, i_source);
   RemoteNode<int*> rtarget(i_target_host, target);  
@@ -478,11 +488,14 @@ int NESTGPU::RemoteConnect(int i_source_host, int i_source, int n_source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
 			     int i_target_host, int i_target, int n_target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int*> rsource(i_source_host, source);
   RemoteNode<int> rtarget(i_target_host, i_target);
@@ -492,11 +505,14 @@ int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
 			     int i_target_host, int* target, int n_target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int*> rsource(i_source_host, source);
   RemoteNode<int*> rtarget(i_target_host, target);
@@ -506,12 +522,15 @@ int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 
 int NESTGPU::RemoteConnect(int i_source_host, NodeSeq source,
 			     int i_target_host, NodeSeq target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int> rsource(i_source_host, source.i0);
   RemoteNode<int> rtarget(i_target_host, target.i0);
@@ -521,12 +540,15 @@ int NESTGPU::RemoteConnect(int i_source_host, NodeSeq source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 
 int NESTGPU::RemoteConnect(int i_source_host, NodeSeq source,
 			     int i_target_host, std::vector<int> target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int> rsource(i_source_host, source.i0);
   RemoteNode<int*> rtarget(i_target_host, target.data());
@@ -535,12 +557,15 @@ int NESTGPU::RemoteConnect(int i_source_host, NodeSeq source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 
 int NESTGPU::RemoteConnect(int i_source_host, std::vector<int> source,
 			     int i_target_host, NodeSeq target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int*> rsource(i_source_host, source.data());
   RemoteNode<int> rtarget(i_target_host, target.i0);
@@ -549,12 +574,15 @@ int NESTGPU::RemoteConnect(int i_source_host, std::vector<int> source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 
 int NESTGPU::RemoteConnect(int i_source_host, std::vector<int> source,
 			     int i_target_host, std::vector<int> target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int*> rsource(i_source_host, source.data());
   RemoteNode<int*> rtarget(i_target_host, target.data());
@@ -563,6 +591,7 @@ int NESTGPU::RemoteConnect(int i_source_host, std::vector<int> source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
-
 

@@ -18,11 +18,11 @@
  *
  */
 
-
-
-
+#include <vector>
+#include <algorithm>
 
 #include <config.h>
+
 #include <iostream>
 #include "utilities.h"
 #include "ngpu_exception.h"
