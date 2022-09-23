@@ -413,48 +413,74 @@ int NESTGPU::Connect(int i_source, int n_source, int i_target, int n_target,
 int NESTGPU::Connect(int i_source, int n_source, int* target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return 0; //_Connect<int, int*>(i_source, n_source, target, n_target,
-	//		     conn_spec, syn_spec);
+  int *d_target;
+  gpuErrchk(cudaMalloc(&d_target, n_target*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(int),
+		       cudaMemcpyHostToDevice));
+  int ret = _Connect<int, int*>(i_source, n_source, d_target, n_target,
+				conn_spec, syn_spec);
+  gpuErrchk(cudaFree(d_target));
+
+  return ret;
 }
 int NESTGPU::Connect(int* source, int n_source, int i_target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return 0; //_Connect<int*, int>(source, n_source, i_target, n_target,
-  //		     conn_spec, syn_spec);
+  int *d_source;
+  gpuErrchk(cudaMalloc(&d_source, n_source*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(int),
+		       cudaMemcpyHostToDevice));
+  int ret = _Connect<int*, int>(d_source, n_source, i_target, n_target,
+				conn_spec, syn_spec);
+  gpuErrchk(cudaFree(d_source));
+  
+  return ret;
 }
 int NESTGPU::Connect(int* source, int n_source, int* target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return 0; //_Connect<int*, int*>(source, n_source, target, n_target,
-  //		conn_spec, syn_spec);
+  int *d_source;
+  gpuErrchk(cudaMalloc(&d_source, n_source*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(int),
+		       cudaMemcpyHostToDevice));
+  int *d_target;
+  gpuErrchk(cudaMalloc(&d_target, n_target*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(int),
+		       cudaMemcpyHostToDevice));
+  int ret = _Connect<int*, int*>(d_source, n_source, d_target, n_target,
+				 conn_spec, syn_spec);
+  gpuErrchk(cudaFree(d_source));
+  gpuErrchk(cudaFree(d_target));
+
+  return ret;
 }
 
 int NESTGPU::Connect(NodeSeq source, NodeSeq target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return 0; //_Connect<int, int>(source.i0, source.n, target.i0, target.n,
-  //		    conn_spec, syn_spec);
+  return _Connect<int, int>(source.i0, source.n, target.i0, target.n,
+			    conn_spec, syn_spec);
 }
 
 int NESTGPU::Connect(NodeSeq source, std::vector<int> target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return 0; //_Connect<int, int*>(source.i0, source.n, target.data(),
-  //		     target.size(), conn_spec, syn_spec);
+  return _Connect<int, int*>(source.i0, source.n, target.data(),
+			     target.size(), conn_spec, syn_spec);
 }
 
 int NESTGPU::Connect(std::vector<int> source, NodeSeq target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return 0; //_Connect<int*, int>(source.data(), source.size(), target.i0,
-  //		     target.n, conn_spec, syn_spec);
+  return _Connect<int*, int>(source.data(), source.size(), target.i0,
+			     target.n, conn_spec, syn_spec);
 }
 
 int NESTGPU::Connect(std::vector<int> source, std::vector<int> target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return 0; //_Connect<int*, int*>(source.data(), source.size(), target.data(),
-  //		target.size(), conn_spec, syn_spec);
+  return _Connect<int*, int*>(source.data(), source.size(), target.data(),
+			      target.size(), conn_spec, syn_spec);
 }
 
 

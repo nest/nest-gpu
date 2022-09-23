@@ -958,7 +958,8 @@ __global__ void threshold_range_kernel(ArrayT* subarray,
     //printf("i: %d\t sa pt: %lld\n", i, (long long int)subarray[i].data_pt);
     sub_size = subarray[i].size;
     if (sub_size > 0) {
-      position_t m0_u = (tot_part_size + k -1) / k; // ceil (tot_part_size / k)
+      position_t m0_u = tot_part_size;
+      // (tot_part_size + k -2) / (k-1); // ceil (tot_part_size / k)
       position_t m0_d = tot_part_size / k; // floor (tot_part_size / k)
 #ifdef PRINT_VRB
       if (print_vrb) printf("tot_part_size: %ld\n", tot_part_size);
