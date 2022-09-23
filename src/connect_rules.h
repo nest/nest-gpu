@@ -86,7 +86,6 @@ int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
     return _ConnectFixedTotalNumber<T1, T2>(source, n_source, target, n_target,
 				       conn_spec.total_num_, syn_spec);
     break;
-    /*
   case FIXED_INDEGREE:
     return _ConnectFixedIndegree<T1, T2>(source, n_source, target, n_target,
 				    conn_spec.indegree_, syn_spec);
@@ -95,7 +94,6 @@ int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
     return _ConnectFixedOutdegree<T1, T2>(source, n_source, target, n_target,
 					  conn_spec.outdegree_, syn_spec);
     break;
-    */
   default:
     throw ngpu_exception("Unknown connection rule");
   }

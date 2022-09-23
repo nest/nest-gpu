@@ -205,15 +205,13 @@ class NESTGPU
     int _ConnectFixedIndegree
     (
      T1 source, int n_source, T2 target, int n_target, int indegree,
-     SynSpec &syn_spec
-     );
+     SynSpec &syn_spec);
 
   template <class T1, class T2>
     int _ConnectFixedOutdegree
     (
      T1 source, int n_source, T2 target, int n_target, int outdegree,
-     SynSpec &syn_spec
-     );
+     SynSpec &syn_spec);
 
 #ifdef HAVE_MPI
   template <class T1, class T2>
