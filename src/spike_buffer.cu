@@ -287,7 +287,7 @@ __global__ void SpikeBufferUpdate()
     // if spike time matches connection group delay deliver it
     // to global spike array
     if (i_conn<ConnGroupNum[i_spike_buffer] &&
-	spike_time_idx == ConnGroupDelay[ig]) {
+	spike_time_idx+1 == ConnGroupDelay[ig]) {
       // spike time matches connection group delay
       float height = SpikeBufferHeight[i_arr]; // spike multiplicity
       // deliver spike

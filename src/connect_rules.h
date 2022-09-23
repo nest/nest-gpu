@@ -70,7 +70,6 @@ int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
   // }
   
   switch (conn_spec.rule_) {
-    /*
   case ONE_TO_ONE:
     if (n_source != n_target) {
       throw ngpu_exception("Number of source and target nodes must be equal "
@@ -78,7 +77,7 @@ int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
     }
     return _ConnectOneToOne<T1, T2>(source, target, n_source, syn_spec);
     break;
-    */
+
   case ALL_TO_ALL:
     return _ConnectAllToAll<T1, T2>(source, n_source, target, n_target,
 				    syn_spec);
