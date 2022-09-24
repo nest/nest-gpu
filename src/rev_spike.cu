@@ -38,9 +38,31 @@ unsigned int *d_RevSpikeNum;
 unsigned int *d_RevSpikeTarget;
 int *d_RevSpikeNConn;
 
+extern __device__ void SynapseUpdate(int syn_group, float *w, float Dt);
+
 __device__ unsigned int *RevSpikeNum;
 __device__ unsigned int *RevSpikeTarget;
 __device__ int *RevSpikeNConn;
+
+
+//////////////////////////////////////////////////////////////////////
+// This is the function called by the nested loop
+// that makes use of positive post-pre spike time difference
+__device__ void NestedLoopFunction1(int i_spike, int i_target_rev_conn)
+{
+  unsigned int target = RevSpikeTarget[i_spike];
+  unsigned int i_conn = TargetRevConnection[target][i_target_rev_conn];
+  unsigned char syn_group = ConnectionSynGroup[i_conn];
+  if (syn_group>0) {
+    float *weight = &ConnectionWeight[i_conn];
+    unsigned short spike_time_idx = ConnectionSpikeTime[i_conn];
+    unsigned short time_idx = (unsigned short)(NESTGPUTimeIdx & 0xffff);
+    unsigned short Dt_int = time_idx - spike_time_idx;
+    if (Dt_int<MAX_SYN_DT) {
+      SynapseUpdate(syn_group, weight, NESTGPUTimeResolution*Dt_int);
+    }
+  }
+}
 
 
 __global__ void RevSpikeBufferUpdate(unsigned int n_node)

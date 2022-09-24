@@ -12,6 +12,7 @@ struct connection_struct
 {
   int target_port;
   float weight;
+  unsigned char syn_group;
 };
 
 extern uint h_MaxNodeNBits;
@@ -66,6 +67,9 @@ int setConnectionDelays(curandGenerator_t &gen, void *d_storage,
 
 __global__ void setPort(connection_struct *conn_subarray, uint port,
 			int64_t n_conn);
+
+__global__ void setSynGroup(connection_struct *conn_subarray,
+			    unsigned char syn_group, int64_t n_conn);
 
 int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
 			int64_t block_size,
@@ -216,6 +220,9 @@ int connect_one_to_one(curandGenerator_t &gen,
     setPort<<<(n_block_conn+1023)/1024, 1024>>>
       (conn_subarray[ib] + i_conn0, syn_spec.port_, n_block_conn);
     DBGCUDASYNC
+    setSynGroup<<<(n_block_conn+1023)/1024, 1024>>>
+      (conn_subarray[ib] + i_conn0, syn_spec.syn_group_, n_block_conn);
+    DBGCUDASYNC
 
     n_prev_conn += n_block_conn;
   }
@@ -278,6 +285,9 @@ int connect_all_to_all(curandGenerator_t &gen,
 
     setPort<<<(n_block_conn+1023)/1024, 1024>>>
       (conn_subarray[ib] + i_conn0, syn_spec.port_, n_block_conn);
+    DBGCUDASYNC
+    setSynGroup<<<(n_block_conn+1023)/1024, 1024>>>
+      (conn_subarray[ib] + i_conn0, syn_spec.syn_group_, n_block_conn);
     DBGCUDASYNC
 
     n_prev_conn += n_block_conn;
@@ -354,6 +364,10 @@ int connect_fixed_total_number(curandGenerator_t &gen,
     setPort<<<(n_block_conn+1023)/1024, 1024>>>
       (conn_subarray[ib] + i_conn0, syn_spec.port_, n_block_conn);
     DBGCUDASYNC
+    setSynGroup<<<(n_block_conn+1023)/1024, 1024>>>
+      (conn_subarray[ib] + i_conn0, syn_spec.syn_group_, n_block_conn);
+    DBGCUDASYNC
+
   }
 
   return 0;
@@ -425,6 +439,9 @@ int connect_fixed_indegree(curandGenerator_t &gen,
     setPort<<<(n_block_conn+1023)/1024, 1024>>>
       (conn_subarray[ib] + i_conn0, syn_spec.port_, n_block_conn);
     DBGCUDASYNC
+    setSynGroup<<<(n_block_conn+1023)/1024, 1024>>>
+      (conn_subarray[ib] + i_conn0, syn_spec.syn_group_, n_block_conn);
+    DBGCUDASYNC
 
     n_prev_conn += n_block_conn;
   }
@@ -493,6 +510,9 @@ int connect_fixed_outdegree(curandGenerator_t &gen,
 
     setPort<<<(n_block_conn+1023)/1024, 1024>>>
       (conn_subarray[ib] + i_conn0, syn_spec.port_, n_block_conn);
+    DBGCUDASYNC
+    setSynGroup<<<(n_block_conn+1023)/1024, 1024>>>
+      (conn_subarray[ib] + i_conn0, syn_spec.syn_group_, n_block_conn);
     DBGCUDASYNC
 
     n_prev_conn += n_block_conn;

@@ -105,7 +105,8 @@ NESTGPU::NESTGPU()
   
   calibrate_flag_ = false;
   create_flag_ = false;
-  
+  ConnectionSpikeTimeFlag = false;
+
   start_real_time_ = getRealTime();
   max_spike_buffer_size_ = 20;
   t_min_ = 0.0;

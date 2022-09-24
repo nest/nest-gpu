@@ -30,6 +30,8 @@
 #include <stdio.h>
 #include "nestgpu.h"
 
+extern bool ConnectionSpikeTimeFlag;
+
 #ifdef HAVE_MPI
 //#include "connect_mpi.h"
 #endif
@@ -61,14 +63,11 @@ int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
 {
   CheckUncalibrated("Connections cannot be created after calibration");
   ////////////////////////
-  // TO DO:
-  // if (syn_spec.weight_distr_ != NULL) {
-  //   syn_spec.weight_array_ = Distribution(syn_spec.weight_distr, n);
-  // }
-  // if (syn_spec.delay_distr_ != NULL) {
-  //   syn_spec.delay_array_ = Distribution(syn_spec.delay_distr, n);
-  // }
-  
+    //TEMPORARY, TO BE IMPROVED
+  if (syn_spec.syn_group_>=1) {
+    ConnectionSpikeTimeFlag=true;
+  }
+
   switch (conn_spec.rule_) {
   case ONE_TO_ONE:
     if (n_source != n_target) {

@@ -374,20 +374,18 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
   gpuErrchk(cudaMalloc(&d_ConnectionGroupTargetWeight,
 		     n_spike_buffers*max_delay_num*sizeof(float*)));
 
-  /*
   if (ConnectionSpikeTimeFlag){
     //h_conn_spike_time = new unsigned short[n_conn];
     gpuErrchk(cudaMalloc(&d_ConnectionSpikeTime,
 			 n_conn*sizeof(unsigned short)));
     //gpuErrchk(cudaMemset(d_ConnectionSpikeTime, 0,
     //			 n_conn*sizeof(unsigned short)));
-    h_ConnectionGroupTargetSpikeTime
-      = new unsigned short*[n_spike_buffers*max_delay_num];
-    gpuErrchk(cudaMalloc(&d_ConnectionGroupTargetSpikeTime,
-			 n_spike_buffers*max_delay_num
-			 *sizeof(unsigned short*)));
+    //h_ConnectionGroupTargetSpikeTime
+    //  = new unsigned short*[n_spike_buffers*max_delay_num];
+    //gpuErrchk(cudaMalloc(&d_ConnectionGroupTargetSpikeTime,
+    //			 n_spike_buffers*max_delay_num
+    //			 *sizeof(unsigned short*)));
   }
-  */
   
   /*
   unsigned int n_rev_conn = 0;

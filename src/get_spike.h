@@ -25,9 +25,12 @@
 #include "send_spike.h"
 #include "new_connect.h"
 #include "node_group.h"
+#include "spike_buffer.h"
 
 extern __constant__ NodeGroupStruct NodeGroupArray[];
 extern __device__ signed char *NodeGroupMap;
+extern __constant__ float NESTGPUTimeResolution;
+extern __constant__ long long NESTGPUTimeIdx;
 
 template<int i_func>
 __device__  __forceinline__ void NestedLoopFunction(int i_spike, int i_syn);
@@ -52,7 +55,7 @@ __device__  __forceinline__ void NestedLoopFunction<0>(int i_spike, int i_syn)
   uint target_port = conn.target_port;
   int i_target = target_port >> MaxPortNBits;
   uint port = target_port & PortMask;
-  unsigned char syn_group = 0; //ValueSubarray[i_conn].syn_group;
+  unsigned char syn_group = conn.syn_group;
   float weight = conn.weight;
   //printf("handles spike %d src %d conn %d syn %d target %d"
   //" port %d weight %f\n",
@@ -66,19 +69,18 @@ __device__  __forceinline__ void NestedLoopFunction<0>(int i_spike, int i_syn)
   double d_val = (double)(height*weight);
 
   atomicAddDouble(&NodeGroupArray[i_group].get_spike_array_[i], d_val);
-  /* RIMOSSO TEMPORANEAMENTE, RIPRISTINARE CON DOVUTE MODIFICHE
   if (syn_group>0) {
-    ConnectionGroupTargetSpikeTime[i_conn*NSpikeBuffer+i_source][i_syn]
+    //ConnectionGroupTargetSpikeTime[i_conn*NSpikeBuffer+i_source][i_syn]
+    ConnectionSpikeTime[i_conn]
       = (unsigned short)(NESTGPUTimeIdx & 0xffff);
     
     long long Dt_int = NESTGPUTimeIdx - LastRevSpikeTimeIdx[i_target];
      if (Dt_int>0 && Dt_int<MAX_SYN_DT) {
-       SynapseUpdate(syn_group, &ConnectionGroupTargetWeight
-		    [i_conn*NSpikeBuffer+i_source][i_syn],
+       SynapseUpdate(syn_group, &conn.weight, //&ConnectionGroupTargetWeight
+		     //[i_conn*NSpikeBuffer+i_source][i_syn],
 		     -NESTGPUTimeResolution*Dt_int);
     }
   }
-  */
   ////////////////////////////////////////////////////////////////
 }
 ///////////////

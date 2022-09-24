@@ -243,6 +243,14 @@ __global__ void setPort(connection_struct *conn_subarray, uint port,
     (conn_subarray[i_conn].target_port << MaxPortNBits) | port; 
 }
 
+__global__ void setSynGroup(connection_struct *conn_subarray,
+			    unsigned char syn_group,
+			    int64_t n_conn)
+{
+  int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i_conn>=n_conn) return;
+  conn_subarray[i_conn].syn_group = syn_group; 
+}
 
 __global__ void getConnGroupNConn(int64_t *conn_group_iconn0,
 				  int64_t *conn_group_nconn,
