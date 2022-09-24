@@ -386,7 +386,56 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
     //			 n_spike_buffers*max_delay_num
     //			 *sizeof(unsigned short*)));
   }
+
+  /////// Organize reverse connections (new version)
+  // Alloc number of reverse connections per target node
+  // and initialize it to 0
+  gpuErrchk(cudaMalloc(&d_TargetRevConnectionSize,
+		       n_spike_buffers*sizeof(int)));
+  gpuErrchk(cudaMemset(d_TargetRevConnectionSize, 0,
+		       n_spike_buffers*sizeof(int)));
   
+  // Check syn_group of all connections.
+  // If syn_group ==1 must create a reverse connection:
+  //    - first get target node index
+  //    - (atomic)increase the number of reverse connections for that node
+  // CountRevConnectionsKernel<<<NConn..., ...>>>
+  //    (NConn, block_size, d_TargetRevConnectionSize)
+
+  // Evaluate exclusive sum of reverse connections per target node
+  gpuErrchk(cudaMalloc(&d_TargetRevConnectionCumul,
+		       (n_spike_buffers+1)*sizeof(int)));
+  // ExclusiveSum(.....)
+  //    - the last element is the total number of reverse connections
+  cudaMemcpy(&n_rev_conn, &d_TargetRevConnectionCumul[n_spike_buffers]
+	     sizeof(int), cudaMemcpyDeviceToHost);
+  // Allocate array of reverse connection indexes
+  gpuErrchk(cudaMalloc(&d_RevConnections, n_rev_conn*sizeof(unsigned int)));  
+  // For each target node evaluate the pointer
+  // to its first reverse connection using the exclusive sum
+  gpuErrchk(cudaMalloc(&d_TargetRevConnection, n_spike_buffers
+		       *sizeof(unsigned int*)));
+  // SetTargetRevConnectionsPtKernel<<<NConn..., ...>>>
+  //    (d_TargetRevConnectionCumul, d_TargetRevConnection, d_RevConnections)
+  //
+  // Temporarily set the number of reverse connections per target node
+  // again to 0
+  gpuErrchk(cudaMemset(d_TargetRevConnectionSize, 0,
+		       n_spike_buffers*sizeof(int)));
+  // Fill array of reverse connection indexes
+  // - check syn_group of all connections.
+  // - if syn_group ==1 must create a reverse connection:
+  //    - first get target node index
+  //    - (atomic)increase the number of reverse connections for that node
+  //    - evaluate the pointer to the rev connection position in the
+  //      array of reverse connection indexes
+  //    - fill it with the connection index
+  // SetRevConnectionsIndexKernel
+  //    (NConn, block_size, d_TargetRevConnectionSize,
+  //     d_TargetRevConnection)
+
+
+  ///////////////////////////////////////////////////////////////////////
   /*
   unsigned int n_rev_conn = 0;
   std::vector<std::vector<unsigned int> > rev_connections(n_spike_buffers);
