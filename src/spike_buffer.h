@@ -105,16 +105,6 @@ extern __device__ float *SpikeBufferHeight;
 // spike height
 
 
-extern unsigned int *d_RevConnections; //[i] i=0,..., n_rev_conn - 1;
-extern __device__ unsigned int *RevConnections;
-
-extern int *d_TargetRevConnectionSize; //[i] i=0,..., n_neuron-1;
-extern __device__ int *TargetRevConnectionSize;
-
-extern unsigned int **d_TargetRevConnection; //[i][j] j<=RevConnectionSize[i]-1
-extern __device__ unsigned int **TargetRevConnection;
-
-
 __device__ void PushSpike(int i_spike_buffer, float height);
 
 __global__ void SpikeBufferUpdate();
@@ -136,10 +126,7 @@ __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
 				int *spike_buffer_time,
 				int *spike_buffer_conn,
 				float *spike_buffer_height,
-				unsigned int *rev_conn,
-				int *target_rev_conn_size,
-				unsigned int **target_rev_conn,
-				long long *last_rev_spike_time_idx);
+                                long long *last_rev_spike_time_idx);
 
 int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size);
 

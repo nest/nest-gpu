@@ -26,6 +26,7 @@
 #include "syn_model.h"
 #include "get_spike.h"
 
+extern int64_t h_NRevConn;
 extern unsigned int *d_RevSpikeNum;
 extern unsigned int *d_RevSpikeTarget;
 extern int *d_RevSpikeNConn;
@@ -38,13 +39,13 @@ __global__ void RevSpikeReset();
 
 __global__ void RevSpikeBufferUpdate(unsigned int n_node);
 
-int RevSpikeInit(uint n_spike_buffers, uint stored_n_connections);
+int RevSpikeInit(uint n_spike_buffers);
 
 int RevSpikeFree();
 
-int ResetConnectionSpikeTimeDown(uint stored_n_connections);
+int ResetConnectionSpikeTimeDown();
 
-int ResetConnectionSpikeTimeUp(uint stored_n_connections);
+int ResetConnectionSpikeTimeUp();
 
 template<int i_func>
 __device__  __forceinline__ void NestedLoopFunction(int i_spike, int i_syn);

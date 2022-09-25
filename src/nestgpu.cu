@@ -315,21 +315,9 @@ int NESTGPU::Calibrate()
   */
 #endif
 
-  /*
-  if (net_connection_->NRevConnections()>0) {
-    RevSpikeInit(net_connection_); 
-  }
-  */
-  
+  RevSpikeInit(GetNNode()); 
+ 
   multimeter_->OpenFiles();
-  
-  /*
-  for (unsigned int i=0; i<node_vect_.size(); i++) {
-    node_vect_[i]->Calibrate(t_min_, time_resolution_);
-  }
-  
-  SynGroupCalibrate();
-  */
   
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     node_vect_[i]->Calibrate(t_min_, time_resolution_);
@@ -593,14 +581,12 @@ int NESTGPU::SimulationStep()
 #endif
   */
   
-  /*
-  if (net_connection_->NRevConnections()>0) {
+  if (h_NRevConn > 0) {
     //time_mark = getRealTime();
     RevSpikeReset<<<1, 1>>>();
     gpuErrchk( cudaPeekAtLastError() );
     gpuErrchk( cudaDeviceSynchronize() );
-    RevSpikeBufferUpdate<<<(net_connection_->connection_.size()+1023)/1024,
-      1024>>>(net_connection_->connection_.size());
+    RevSpikeBufferUpdate<<<(GetNNode()+1023)/1024, 1024>>>(GetNNode());
     gpuErrchk( cudaPeekAtLastError() );
     gpuErrchk( cudaDeviceSynchronize() );
     unsigned int n_rev_spikes;
@@ -611,7 +597,7 @@ int NESTGPU::SimulationStep()
     }      
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   }
-  */
+
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     // if spike times recording is activated for node group...
     if (node_vect_[i]->max_n_rec_spike_times_>0) {
