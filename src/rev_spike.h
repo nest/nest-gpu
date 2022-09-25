@@ -58,15 +58,17 @@ __device__ __forceinline__ void NestedLoopFunction<1>
 (int i_spike, int i_target_rev_conn)
 {
   unsigned int target = RevSpikeTarget[i_spike];
-  unsigned int i_conn = TargetRevConnection[target][i_target_rev_conn];
-  unsigned char syn_group = ConnectionSynGroup[i_conn];
+  int64_t i_conn = TargetRevConnection[target][i_target_rev_conn];
+  uint i_block = (uint)(i_conn / ConnBlockSize);
+  int64_t i_block_conn = i_conn % ConnBlockSize;
+  connection_struct conn = ConnectionArray[i_block][i_block_conn];
+  unsigned char syn_group = conn.syn_group;
   if (syn_group>0) {
-    float *weight = &ConnectionWeight[i_conn];
     unsigned short spike_time_idx = ConnectionSpikeTime[i_conn];
     unsigned short time_idx = (unsigned short)(NESTGPUTimeIdx & 0xffff);
     unsigned short Dt_int = time_idx - spike_time_idx;
     if (Dt_int<MAX_SYN_DT) {
-      SynapseUpdate(syn_group, weight, NESTGPUTimeResolution*Dt_int);
+      SynapseUpdate(syn_group, &conn.weight, NESTGPUTimeResolution*Dt_int);
     }
   }
 }

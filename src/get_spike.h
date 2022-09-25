@@ -46,8 +46,6 @@ __device__  __forceinline__ void NestedLoopFunction<0>(int i_spike, int i_syn)
   float height = SpikeHeight[i_spike];
   int ig = ConnGroupIdx0[i_source] + i_source_conn_group;
 
-  // USARE BLOCK_SIZE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  // trovare i_block e i_block_conn
   int64_t i_conn = ConnGroupIConn0[ig] + i_syn;
   uint i_block = (uint)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;

@@ -18,39 +18,74 @@
 
 uint h_MaxNodeNBits;
 __device__ uint MaxNodeNBits;
+// maximum number of bits used to represent node index 
 
 uint h_MaxPortNBits;
 __device__ uint MaxPortNBits;
+// maximum number of bits used to represent receptor port index and delays 
 
 uint h_PortMask;
 __device__ uint PortMask;
-
-uint *d_ConnGroupIdx0;
-__device__ uint *ConnGroupIdx0;
+// bit mask used to extract port index
 
 uint *d_ConnGroupNum;
 __device__ uint *ConnGroupNum;
+// ConnGroupNum[i_spike_buffer]
+// Number of connection groups outgoing from node i_spike_buffer
+// where i_spike_buffer is the source node index
+// Output connections from the source nodes are organized in groups
+// All connection of a group have the same delay
+
+uint *d_ConnGroupIdx0;
+__device__ uint *ConnGroupIdx0;
+// ig0 = ConnGroupIdx0[i_spike_buffer] is the index in the whole
+// connection-group array of the first connection group outgoing
+// from the node i_spike_buffer
 
 int64_t *d_ConnGroupIConn0;
 __device__ int64_t *ConnGroupIConn0;
+// i_conn0 = ConnGroupIConn0[ig] with ig = 0, ..., Ng
+//  is the index in the whole connection array of the first connection
+// belonging to the connection group ig
 
 int64_t *d_ConnGroupNConn;
 __device__ int64_t *ConnGroupNConn;
+// ConnGroupNConn[ig] with ig = 0, ..., Ng
+// Ng: total number of connection groups for the whole network
+// number of output connections in the connection group ig
+// of the node i_spike_buffer
 
 uint *d_ConnGroupDelay;
 __device__ uint *ConnGroupDelay;
+// ConnGroupDelay[ig]
+// delay associated to all connections of the connection group ig
+// with ig = 0, ..., Ng
 
-int64_t NConn;
+int64_t NConn; // total number of connections in the whole network
 
 int64_t h_ConnBlockSize = 50000000;
 __device__ int64_t ConnBlockSize;
+// size (i.e. number of connections) of connection blocks 
 
 uint h_MaxDelayNum;
 
 std::vector<uint*> KeySubarray;
-std::vector<connection_struct*> ConnectionSubarray;
+// Array of source node indexes and delays of all connections
+// Source node indexes and delays are merged in a single integer variable
+// The most significant MaxNodeNBits are used for the node index 
+// the others (less significant) bits are used to represent the delay
+// This array is used as a key array for sorting the connections
+// in ascending order according to the source node index
+// Connections from the same source node are sorted according to
+// the delay
 
+std::vector<connection_struct*> ConnectionSubarray;
 __device__ connection_struct** ConnectionArray;
+// array of target node indexes, receptor port index, synapse type,
+// weight of all connections
+// used as a value for key-value sorting of the connections (see above)
+
+
 
 __global__ void OrganizeConnectionGroups(uint *key_subarray,
 					 uint *key_subarray_prev,

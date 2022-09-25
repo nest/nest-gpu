@@ -42,47 +42,9 @@ extern __device__ long long *LastSpikeTimeIdx; //
 extern long long *d_LastRevSpikeTimeIdx; // [NSpikeBuffer];
 extern __device__ long long *LastRevSpikeTimeIdx; //
 
-extern float *d_ConnectionWeight; // [NConnection];
-extern __device__ float *ConnectionWeight; //
-
-extern unsigned char *d_ConnectionSynGroup; // [NConnection];
-extern __device__ unsigned char *ConnectionSynGroup; //
-
 extern unsigned short *d_ConnectionSpikeTime; // [NConnection];
 extern __device__ unsigned short *ConnectionSpikeTime; //
 
-extern int *d_ConnectionGroupSize;
-extern __device__ int *ConnectionGroupSize;
-// Output connections from the source node are organized in groups
-// All connection of a group have the same delay
-
-extern int *d_ConnectionGroupDelay;
-extern __device__ int *ConnectionGroupDelay;
-// delay associated to all connections of this group
-
-extern int *d_ConnectionGroupTargetSize;
-extern __device__ int *ConnectionGroupTargetSize;
-// number of output connections in the group i_delay
-
-extern unsigned int **d_ConnectionGroupTargetNode;
-extern __device__ unsigned int **ConnectionGroupTargetNode;
-// is a pointer to an integer array of size ConnectionGroupTargetSize
-// that contains the indexes of the target nodes
-
-extern unsigned char **d_ConnectionGroupTargetSynGroup;
-extern __device__ unsigned char **ConnectionGroupTargetSynGroup;
-// Connection target synapse group
-
-extern float **h_ConnectionGroupTargetWeight;
-extern float **d_ConnectionGroupTargetWeight;
-extern __device__ float **ConnectionGroupTargetWeight;
-// Connection weight
-
-extern unsigned short **d_ConnectionGroupTargetSpikeTime;
-extern __device__ unsigned short **ConnectionGroupTargetSpikeTime;
-// Connection last spike time index
-
-//////////////////////////////////////////////////////////////////////
 
 extern int *d_SpikeBufferSize;
 extern __device__ int *SpikeBufferSize;
@@ -113,15 +75,7 @@ __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
 				int max_spike_buffer_size,
 				long long *last_spike_time_idx,
 				float *last_spike_height,
-				float *conn_weight,
-				unsigned char *conn_syn_group,
 				unsigned short *conn_spike_time,      
-				int *conn_group_size, int *conn_group_delay,
-				int *conn_group_target_size,
-				unsigned int **conn_group_target_node,
-				unsigned char **conn_group_target_syn_group,
-				float **conn_group_target_weight,
-				unsigned short **conn_group_target_spike_time,
 				int *spike_buffer_size, int *spike_buffer_idx0,
 				int *spike_buffer_time,
 				int *spike_buffer_conn,

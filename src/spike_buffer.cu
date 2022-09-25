@@ -62,56 +62,8 @@ __device__ long long *LastSpikeTimeIdx; //
 long long *d_LastRevSpikeTimeIdx; // [NSpikeBuffer];
 __device__ long long *LastRevSpikeTimeIdx; //
 
-float *d_ConnectionWeight; // [NConnection];
-__device__ float *ConnectionWeight; //
-
-unsigned char *d_ConnectionSynGroup; // [NConnection];
-__device__ unsigned char *ConnectionSynGroup; //
-
 unsigned short *d_ConnectionSpikeTime; // [NConnection];
 __device__ unsigned short *ConnectionSpikeTime; //
-
-int *d_ConnectionGroupSize; // [NSpikeBuffer];
-__device__ int *ConnectionGroupSize; // [NSpikeBuffer];
-// ConnectionGroupSize[i_spike_buffer]
-// where i_spike_buffer is the source node index
-// Output connections from the source node are organized in groups
-// All connection of a group have the same delay
-
-int *d_ConnectionGroupDelay; // [NSpikeBuffer*MaxDelayNum];
-__device__ int *ConnectionGroupDelay; // [NSpikeBuffer*MaxDelayNum];
-// ConnectionGroupDelay[i_delay*NSpikeBuffer+i_spike_buffer];
-// delay associated to all connections of this group
-
-int *d_ConnectionGroupTargetSize; // [NSpikeBuffer*MaxDelayNum];
-__device__ int *ConnectionGroupTargetSize; // [NSpikeBuffer*MaxDelayNum];
-// ConnectionGroupTargetSize[i_delay*NSpikeBuffer+i_spike_buffer];
-// number of output connections in the group i_delay
-
-unsigned int **d_ConnectionGroupTargetNode; // [NSpikeBuffer*MaxDelayNum];
-__device__ unsigned int **ConnectionGroupTargetNode;
-// [NSpikeBuffer*MaxDelayNum];
-// ConnectionGroupTargetNode[i_delay*NSpikeBuffer+i_spike_buffer];
-// is a pointer to an integer array of size ConnectionGroupTargetSize
-// that contains the indexes of the target nodes
-
-unsigned char **d_ConnectionGroupTargetSynGroup; // [NSpikeBuffer*MaxDelayNum];
-__device__ unsigned char **ConnectionGroupTargetSynGroup;
-// [NSpikeBuffer*MaxDelayNum];
-// ConnectionGroupTargetSynGroup[i_delay*NSpikeBuffer+i_spike_buffer];
-// Connection target port
-
-
-float **h_ConnectionGroupTargetWeight; //[NSpikeBuffer*MaxDelayNum];
-float **d_ConnectionGroupTargetWeight; // [NSpikeBuffer*MaxDelayNum];
-__device__ float **ConnectionGroupTargetWeight; // [NSpikeBuffer*MaxDelayNum];
-// ConnectionGroupTargetWeight[i_delay*NSpikeBuffer+i_spike_buffer];
-// Connection weight
-
-unsigned short **d_ConnectionGroupTargetSpikeTime; //[NSpikeBuffer*MaxDelayNum];
-__device__ unsigned short **ConnectionGroupTargetSpikeTime;
-// ConnectionGroupTargetSpikeTime[i_delay*NSpikeBuffer+i_spike_buffer];
-// Connection last spike time index
 
 //////////////////////////////////////////////////////////////////////
 
@@ -331,22 +283,6 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
   gpuErrchk(cudaMalloc(&d_LastRevSpikeTimeIdx, n_spike_buffers
 		       *sizeof(long long)));
   
-  int *h_ConnectionGroupSize = new int[n_spike_buffers];
-  int *h_ConnectionGroupDelay = new int[n_spike_buffers*max_delay_num];
-  int *h_ConnectionGroupTargetSize = new int[n_spike_buffers*max_delay_num];
-  unsigned int **h_ConnectionGroupTargetNode =
-    new unsigned int*[n_spike_buffers*max_delay_num];
-  unsigned char **h_ConnectionGroupTargetSynGroup =
-    new unsigned char*[n_spike_buffers*max_delay_num];
-  h_ConnectionGroupTargetWeight = new float*[n_spike_buffers
-					     *max_delay_num];
-  unsigned short **h_ConnectionGroupTargetSpikeTime = NULL;
-
-  gpuErrchk(cudaMalloc(&d_ConnectionGroupSize, n_spike_buffers*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_ConnectionGroupDelay,
-		       n_spike_buffers*max_delay_num*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_ConnectionGroupTargetSize,
-		       n_spike_buffers*max_delay_num*sizeof(int)));
   gpuErrchk(cudaMalloc(&d_SpikeBufferSize, n_spike_buffers*sizeof(int)));
   gpuErrchk(cudaMalloc(&d_SpikeBufferIdx0, n_spike_buffers*sizeof(int)));
   gpuErrchk(cudaMalloc(&d_SpikeBufferTimeIdx,
@@ -358,63 +294,27 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
   gpuErrchk(cudaMemset(d_SpikeBufferSize, 0, n_spike_buffers*sizeof(int)));
   gpuErrchk(cudaMemset(d_SpikeBufferIdx0, 0, n_spike_buffers*sizeof(int)));
 
-  gpuErrchk(cudaMalloc(&d_ConnectionGroupTargetNode,
-		     n_spike_buffers*max_delay_num*sizeof(unsigned int*)));
-  gpuErrchk(cudaMalloc(&d_ConnectionGroupTargetSynGroup,
-		     n_spike_buffers*max_delay_num*sizeof(unsigned char*)));
-  gpuErrchk(cudaMalloc(&d_ConnectionGroupTargetWeight,
-		     n_spike_buffers*max_delay_num*sizeof(float*)));
-
   if (ConnectionSpikeTimeFlag){
     //h_conn_spike_time = new unsigned short[n_conn];
     gpuErrchk(cudaMalloc(&d_ConnectionSpikeTime,
 			 NConn*sizeof(unsigned short)));
     //gpuErrchk(cudaMemset(d_ConnectionSpikeTime, 0,
     //			 n_conn*sizeof(unsigned short)));
-    //h_ConnectionGroupTargetSpikeTime
-    //  = new unsigned short*[n_spike_buffers*max_delay_num];
-    //gpuErrchk(cudaMalloc(&d_ConnectionGroupTargetSpikeTime,
-    //			 n_spike_buffers*max_delay_num
-    //			 *sizeof(unsigned short*)));
   }
 
-  
-  cudaMemcpy(d_ConnectionGroupSize, h_ConnectionGroupSize,
-	     n_spike_buffers*sizeof(int), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_ConnectionGroupDelay, h_ConnectionGroupDelay,
-	     n_spike_buffers*max_delay_num*sizeof(int), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_ConnectionGroupTargetSize, h_ConnectionGroupTargetSize,
-	     n_spike_buffers*max_delay_num*sizeof(int), cudaMemcpyHostToDevice);
-
-  cudaMemcpy(d_ConnectionGroupTargetNode, h_ConnectionGroupTargetNode,
-	     n_spike_buffers*max_delay_num*sizeof(unsigned int*),
-	     cudaMemcpyHostToDevice);
-  
-  cudaMemcpy(d_ConnectionGroupTargetSynGroup, h_ConnectionGroupTargetSynGroup,
-	     n_spike_buffers*max_delay_num*sizeof(unsigned char*),
-	     cudaMemcpyHostToDevice);
-  
-  cudaMemcpy(d_ConnectionGroupTargetWeight, h_ConnectionGroupTargetWeight,
-	     n_spike_buffers*max_delay_num*sizeof(float*),
-	     cudaMemcpyHostToDevice);
+  /*
   if(ConnectionSpikeTimeFlag) {
     cudaMemcpy(d_ConnectionGroupTargetSpikeTime,
 	       h_ConnectionGroupTargetSpikeTime,
 	       n_spike_buffers*max_delay_num*sizeof(unsigned short*),
 	       cudaMemcpyHostToDevice);
   }
-
+  */
+  
   DeviceSpikeBufferInit<<<1,1>>>(n_spike_buffers, max_delay_num,
 			   max_spike_buffer_size,
 			   d_LastSpikeTimeIdx, d_LastSpikeHeight,	 
-			   d_ConnectionWeight, d_ConnectionSynGroup,
 			   d_ConnectionSpikeTime,
-			   d_ConnectionGroupSize, d_ConnectionGroupDelay,
-			   d_ConnectionGroupTargetSize,
-			   d_ConnectionGroupTargetNode,
-			   d_ConnectionGroupTargetSynGroup,
-			   d_ConnectionGroupTargetWeight,
-			   d_ConnectionGroupTargetSpikeTime,
 			   d_SpikeBufferSize, d_SpikeBufferIdx0,
 			   d_SpikeBufferTimeIdx,
 			   d_SpikeBufferConnIdx, d_SpikeBufferHeight,
@@ -430,15 +330,6 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
   gpuErrchk( cudaDeviceSynchronize() );
   gpuErrchk(cudaMemset(d_LastSpikeHeight, 0,
 		       n_spike_buffers*sizeof(unsigned short)));
-
-  delete[] h_ConnectionGroupSize;
-  delete[] h_ConnectionGroupDelay;
-  delete[] h_ConnectionGroupTargetNode;
-  delete[] h_ConnectionGroupTargetSynGroup;
-  //delete[] h_ConnectionGroupTargetWeight;
-  if(h_ConnectionGroupTargetSpikeTime != NULL) {
-    delete[] h_ConnectionGroupTargetSpikeTime;
-  }
   
   return 0;
 }
@@ -447,15 +338,7 @@ __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
 				int max_spike_buffer_size,
 				long long *last_spike_time_idx,
 				float *last_spike_height,
-				float *conn_weight,
-				unsigned char *conn_syn_group,
-				unsigned short *conn_spike_time,      
-				int *conn_group_size, int *conn_group_delay,
-				int *conn_group_target_size,
-				unsigned int **conn_group_target_node,
-				unsigned char **conn_group_target_syn_group,
-				float **conn_group_target_weight,
-				unsigned short **conn_group_target_spike_time,
+				unsigned short *conn_spike_time,
 				int *spike_buffer_size, int *spike_buffer_idx0,
 				int *spike_buffer_time,
 				int *spike_buffer_conn,
@@ -467,16 +350,7 @@ __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
   MaxSpikeBufferSize = max_spike_buffer_size;
   LastSpikeTimeIdx = last_spike_time_idx;
   LastSpikeHeight = last_spike_height;
-  ConnectionWeight = conn_weight;
-  ConnectionSynGroup = conn_syn_group;
   ConnectionSpikeTime = conn_spike_time;
-  ConnectionGroupSize = conn_group_size;
-  ConnectionGroupDelay = conn_group_delay;
-  ConnectionGroupTargetSize = conn_group_target_size;
-  ConnectionGroupTargetNode = conn_group_target_node;
-  ConnectionGroupTargetSynGroup = conn_group_target_syn_group;
-  ConnectionGroupTargetWeight = conn_group_target_weight;
-  ConnectionGroupTargetSpikeTime = conn_group_target_spike_time;
   SpikeBufferSize = spike_buffer_size;
   SpikeBufferIdx0 = spike_buffer_idx0;
   SpikeBufferTimeIdx = spike_buffer_time;
