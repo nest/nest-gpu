@@ -387,14 +387,19 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
     //			 *sizeof(unsigned short*)));
   }
 
+  //////////////////////////////////////////////////////////////////////
   /////// Organize reverse connections (new version)
+  // CHECK THE GLOBAL VARIABLES THAT MUST BE CONVERTED TO 64 bit ARRAYS
+  //////////////////////////////////////////////////////////////////////  
   // Alloc number of reverse connections per target node
   // and initialize it to 0
   gpuErrchk(cudaMalloc(&d_TargetRevConnectionSize,
 		       n_spike_buffers*sizeof(int)));
   gpuErrchk(cudaMemset(d_TargetRevConnectionSize, 0,
 		       n_spike_buffers*sizeof(int)));
-  
+
+  // Forse nel 'primo round' questo si può fare direttamente sull'array
+  // a 64 bit d_TargetRevConnectionSize_64?
   // Check syn_group of all connections.
   // If syn_group ==1 must create a reverse connection:
   //    - first get target node index
@@ -403,23 +408,37 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
   //    (NConn, block_size, d_TargetRevConnectionSize)
 
   // Evaluate exclusive sum of reverse connections per target node
+  // We need to converts TargetRevConnectionSize to int64_t
+  // so first allocate a new array
+  gpuErrchk(cudaMalloc(&d_TargetRevConnectionSize_64,
+		       n_spike_buffers*sizeof(int64_t)));
+  // then call kernel to copy 32 bit to 64 bit array
+  Convert32to64bitArrayKernel<<<n_spike_buffers+...,...>>>
+    (d_TargetRevConnectionSize, d_TargetRevConnectionSize_64, n_spike_buffers);
+  // alternatively we can alloc and set the 64 bit array directly in the
+  // "first round" using the CountRevConnectionsKernel on it
+  // Allocate array for cumulative sum
   gpuErrchk(cudaMalloc(&d_TargetRevConnectionCumul,
-		       (n_spike_buffers+1)*sizeof(int)));
+		       (n_spike_buffers+1)*sizeof(int64_t)));
   // ExclusiveSum(.....)
   //    - the last element is the total number of reverse connections
   cudaMemcpy(&n_rev_conn, &d_TargetRevConnectionCumul[n_spike_buffers]
-	     sizeof(int), cudaMemcpyDeviceToHost);
+	     sizeof(int64_t), cudaMemcpyDeviceToHost);
   // Allocate array of reverse connection indexes
-  gpuErrchk(cudaMalloc(&d_RevConnections, n_rev_conn*sizeof(unsigned int)));  
+  // CHECK THAT d_RevConnections is of type int64_t array
+  gpuErrchk(cudaMalloc(&d_RevConnections, n_rev_conn*sizeof(int64_t)));  
   // For each target node evaluate the pointer
   // to its first reverse connection using the exclusive sum
+  // CHECK THAT d_TargetRevConnection is of type int64_t* pointer
   gpuErrchk(cudaMalloc(&d_TargetRevConnection, n_spike_buffers
-		       *sizeof(unsigned int*)));
+		       *sizeof(int64_t*)));
   // SetTargetRevConnectionsPtKernel<<<NConn..., ...>>>
   //    (d_TargetRevConnectionCumul, d_TargetRevConnection, d_RevConnections)
   //
   // Temporarily set the number of reverse connections per target node
   // again to 0
+  // in the alternative approach (see above) alloc d_TargetRevConnectionSize
+  // before initializing it to 0
   gpuErrchk(cudaMemset(d_TargetRevConnectionSize, 0,
 		       n_spike_buffers*sizeof(int)));
   // Fill array of reverse connection indexes
@@ -434,7 +453,34 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
   //    (NConn, block_size, d_TargetRevConnectionSize,
   //     d_TargetRevConnection)
 
-
+  // Kernels (move in proper file/place)
+  __global__ void SetRevConnectionsIndexKernel
+    (int64_t n_conn, int64_t block_size,int target_rev_connection_size,
+     int *target_rev_connection)
+  {
+    int64_t i_conn = blockidx.x + ....; // sistemare, controllare max index
+    if (i_conn > n_conn) return;
+    int i_block = (int)(i_conn / block_size);
+    int64_t i_block_conn = i_conn % block_size;
+    Connection conn = ConnectionArray[i_block][i_block_conn]; // check name
+    // TO BE IMPROVED WHEN ADDITIONAL SYN GROUP WILL BE IMPLEMENTED
+    // - Check syn_group of all connections.
+    // - If syn_group ==1 must create a reverse connection:
+    if (conn.syn_group == 1) {
+      // First get target node index
+      int target_port = conn.target_port;
+      int target = target_port >> MaxPortNBits; // controllare
+      // (atomic)increase the number of reverse connections for target
+      int pos = atomicAdd(&target_rev_connection_size[target], 1);
+      // THE FOLLOWING SHOULD BE REMOVED IN CountRevConnectionsKernel
+      // Evaluate the pointer to the rev connection position in the
+      // array of reverse connection indexes
+      int64_t rev_conn_pt = target_rev_connection[target] + pos;
+      // Fill it with the connection index
+      *rev_conn_pt = i_conn;
+    }
+  }
+  
   ///////////////////////////////////////////////////////////////////////
   /*
   unsigned int n_rev_conn = 0;
