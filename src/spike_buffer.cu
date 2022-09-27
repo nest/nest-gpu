@@ -122,8 +122,8 @@ __device__ void PushSpike(int i_spike_buffer, float height)
   else {
     den_delay_idx = 0;
   }
-  printf("Node %d spikes at time %lld , den_delay_idx: %d\n",
-	 i_spike_buffer, NESTGPUTimeIdx, den_delay_idx); 
+  // printf("Node %d spikes at time %lld , den_delay_idx: %d\n",
+  //	 i_spike_buffer, NESTGPUTimeIdx, den_delay_idx); 
   if (den_delay_idx==0) {
     // last time when spike is sent back to dendrites (e.g. for STDP)
     LastRevSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx;

@@ -291,9 +291,6 @@ int NESTGPU::Calibrate()
   max_spike_num_ = (int)round(max_spike_num_fact_
 			      * GetNNode()
 			      * max_delay_num);
-  //printf("%ld\t%d\n", net_connection_->connection_.size(),
-  //	 max_delay_num);
-  //exit(0);
   max_spike_num_ = (max_spike_num_>1) ? max_spike_num_ : 1;
 
   max_spike_per_host_ = (int)round(max_spike_per_host_fact_
@@ -437,24 +434,6 @@ int NESTGPU::EndSimulation()
     std::cout << MpiRankStr() << "Simulation time: " <<
       (end_real_time_ - build_real_time_) << "\n";
   }
-
-  ////////////////////// temporary, for testing. Remove!!!!!!!!!!!!!!
-  connection_struct* conn_arr = new connection_struct[NConn];
-  gpuErrchk(cudaMemcpy(conn_arr, ConnectionSubarray[0],
-		       NConn*sizeof(connection_struct),
-		       cudaMemcpyDeviceToHost));
-  for (int i_conn=0; i_conn<NConn; i_conn++) {
-    connection_struct conn = conn_arr[i_conn];
-    uint target_port = conn.target_port;
-    int i_target = target_port >> h_MaxPortNBits;
-    uint port = target_port & h_PortMask;
-    unsigned char syn_group = conn.syn_group;
-    float weight = conn.weight;
-
-    printf("target: %d\tport: %d\t syn_group: %d\tweight-0.0005: %.7e\n",
-	   i_target, port, syn_group, weight-0.0005);
-  }
-  ////////////////////////////////////////////////////////
   
   return 0;
 }
@@ -468,8 +447,6 @@ int NESTGPU::SimulationStep()
   double time_mark;
 
   time_mark = getRealTime();
-  //printf("net_connection_->connection_.size(): %ld\n",
-  //	 net_connection_->connection_.size());
   SpikeBufferUpdate<<<(GetNNode()+1023)/1024, 1024>>>();
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
@@ -610,7 +587,6 @@ int NESTGPU::SimulationStep()
     gpuErrchk(cudaMemcpy(&n_rev_spikes, d_RevSpikeNum, sizeof(unsigned int),
 			 cudaMemcpyDeviceToHost));
     if (n_rev_spikes > 0) {
-      printf("ok1 n_rev_spikes %d\n", n_rev_spikes);
       NestedLoop::Run<1>(nested_loop_algo_, n_rev_spikes, d_RevSpikeNConn);
     }      
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);

@@ -231,7 +231,7 @@ int RevSpikeFree()
 
 int RevSpikeInit(uint n_spike_buffers)
 {
-  printf("n_spike_buffers: %d\n", n_spike_buffers);
+  //printf("n_spike_buffers: %d\n", n_spike_buffers);
 
   //////////////////////////////////////////////////////////////////////
   /////// Organize reverse connections (new version)

@@ -68,10 +68,10 @@ __device__ __forceinline__ void NestedLoopFunction<1>
     unsigned short time_idx = (unsigned short)(NESTGPUTimeIdx & 0xffff);
     unsigned short Dt_int = time_idx - spike_time_idx;
 
-    printf("rev spike target %d conn %lld weight %f syn_group %d "
-	   "TimeIdx %lld CST %d Dt %d\n",
-	   target, i_conn, conn.weight, syn_group,
-	   NESTGPUTimeIdx, spike_time_idx, Dt_int);
+    //printf("rev spike target %d conn %lld weight %f syn_group %d "
+    //	   "TimeIdx %lld CST %d Dt %d\n",
+    //	   target, i_conn, conn.weight, syn_group,
+    //	   NESTGPUTimeIdx, spike_time_idx, Dt_int);
    
     if (Dt_int<MAX_SYN_DT) {
       SynapseUpdate(syn_group,
