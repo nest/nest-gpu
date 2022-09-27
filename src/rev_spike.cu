@@ -242,9 +242,9 @@ int RevSpikeInit(uint n_spike_buffers)
   int64_t *d_TargetRevConnectionSize_64;
   int64_t *d_TargetRevConnectionCumul;
   gpuErrchk(cudaMalloc(&d_TargetRevConnectionSize_64,
-		       n_spike_buffers*sizeof(int64_t)));
+		       (n_spike_buffers+1)*sizeof(int64_t)));
   gpuErrchk(cudaMemset(d_TargetRevConnectionSize_64, 0,
-		       n_spike_buffers*sizeof(int64_t)));
+		       (n_spike_buffers+1)*sizeof(int64_t)));
   // Count number of reverse connections per target node
   CountRevConnectionsKernel<<<(NConn+1023)/1024, 1024>>>
     (NConn, d_TargetRevConnectionSize_64);
@@ -258,14 +258,14 @@ int RevSpikeInit(uint n_spike_buffers)
   cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
 				d_TargetRevConnectionSize_64,
 				d_TargetRevConnectionCumul,
-				n_spike_buffers);
+				n_spike_buffers+1);
   // Allocate temporary storage
   gpuErrchk(cudaMalloc(&d_temp_storage, temp_storage_bytes));
   // Run exclusive prefix sum
   cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
 				d_TargetRevConnectionSize_64,
 				d_TargetRevConnectionCumul,
-				n_spike_buffers);
+				n_spike_buffers+1);
   // The last element is the total number of reverse connections
   cudaMemcpy(&h_NRevConn, &d_TargetRevConnectionCumul[n_spike_buffers],
 	     sizeof(int64_t), cudaMemcpyDeviceToHost);
