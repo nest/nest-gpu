@@ -67,8 +67,16 @@ __device__ __forceinline__ void NestedLoopFunction<1>
     unsigned short spike_time_idx = ConnectionSpikeTime[i_conn];
     unsigned short time_idx = (unsigned short)(NESTGPUTimeIdx & 0xffff);
     unsigned short Dt_int = time_idx - spike_time_idx;
+
+    printf("rev spike target %d conn %lld weight %f syn_group %d "
+	   "TimeIdx %lld CST %d Dt %d\n",
+	   target, i_conn, conn.weight, syn_group,
+	   NESTGPUTimeIdx, spike_time_idx, Dt_int);
+   
     if (Dt_int<MAX_SYN_DT) {
-      SynapseUpdate(syn_group, &conn.weight, NESTGPUTimeResolution*Dt_int);
+      SynapseUpdate(syn_group,
+		    &(ConnectionArray[i_block][i_block_conn].weight),
+		    NESTGPUTimeResolution*Dt_int);
     }
   }
 }

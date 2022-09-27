@@ -29,6 +29,7 @@ class Distribution
   curandGenerator_t *curand_generator_;
   int distr_idx_;
   int vect_size_;
+  float *h_array_pt_;
   float *d_array_pt_;
   std::vector<float> mu_;
   std::vector<float> sigma_;
@@ -55,7 +56,7 @@ public:
 
   int SetVectParam(std::string param_name, float val, int i);
 
-  int SetFloatPtParam(std::string param_name, float *d_array_pt);
+  int SetFloatPtParam(std::string param_name, float *h_array_pt);
 
   bool IsFloatParam(std::string param_name);
 

@@ -1880,7 +1880,7 @@ def Connect(source, target, conn_dict, syn_dict):
     if (type(target)!=list) & (type(target)!=tuple) & (type(target)!=NodeSeq):
         raise ValueError("Unknown target type")
 
-    gc.disable()
+    gc.disable() # temporarily disable garbage collection
     ConnSpecInit()
     SynSpecInit()
     for param_name in conn_dict:

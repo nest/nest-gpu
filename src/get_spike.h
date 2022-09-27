@@ -55,10 +55,13 @@ __device__  __forceinline__ void NestedLoopFunction<0>(int i_spike, int i_syn)
   uint port = target_port & PortMask;
   unsigned char syn_group = conn.syn_group;
   float weight = conn.weight;
-  //printf("handles spike %d src %d conn %d syn %d target %d"
-  //" port %d weight %f\n",
-  //i_spike, i_source, i_conn, i_syn, i_target,
-  //port, weight);
+  //printf("ok target: %d\tport: %d\t syn_group: %d\tweight-0.0005: %.7e\n",
+  //	 i_target, port, syn_group, weight-0.0005);
+
+  printf("handles spike %d src %d conn %ld syn %d target %d"
+	 " port %d weight %f syn_group %d\n",
+	 i_spike, i_source, i_conn, i_syn, i_target,
+	 port, weight, syn_group);
   
   /////////////////////////////////////////////////////////////////
   int i_group=NodeGroupMap[i_target];
@@ -73,9 +76,15 @@ __device__  __forceinline__ void NestedLoopFunction<0>(int i_spike, int i_syn)
       = (unsigned short)(NESTGPUTimeIdx & 0xffff);
     
     long long Dt_int = NESTGPUTimeIdx - LastRevSpikeTimeIdx[i_target];
+
+    printf("spike src %d target %d weight %f syn_group %d "
+	   "TimeIdx %lld LRST %lld Dt %lld\n",
+	   i_source, i_target, weight, syn_group,
+	   NESTGPUTimeIdx, LastRevSpikeTimeIdx[i_target], Dt_int);
+    
      if (Dt_int>0 && Dt_int<MAX_SYN_DT) {
-       SynapseUpdate(syn_group, &conn.weight, //&ConnectionGroupTargetWeight
-		     //[i_conn*NSpikeBuffer+i_source][i_syn],
+       SynapseUpdate(syn_group,
+		     &(ConnectionArray[i_block][i_block_conn].weight),
 		     -NESTGPUTimeResolution*Dt_int);
     }
   }

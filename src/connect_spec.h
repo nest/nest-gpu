@@ -78,10 +78,10 @@ class SynSpec
   unsigned char syn_group_;
   uint port_;
   int weight_distr_;
-  float *weight_array_;
+  float *weight_h_array_pt_;
   float weight_;
   int delay_distr_;
-  float *delay_array_;
+  float *delay_h_array_pt_;
   float delay_;
   float weight_mu_;
   float weight_low_;

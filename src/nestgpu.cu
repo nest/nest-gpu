@@ -437,6 +437,24 @@ int NESTGPU::EndSimulation()
     std::cout << MpiRankStr() << "Simulation time: " <<
       (end_real_time_ - build_real_time_) << "\n";
   }
+
+  ////////////////////// temporary, for testing. Remove!!!!!!!!!!!!!!
+  connection_struct* conn_arr = new connection_struct[NConn];
+  gpuErrchk(cudaMemcpy(conn_arr, ConnectionSubarray[0],
+		       NConn*sizeof(connection_struct),
+		       cudaMemcpyDeviceToHost));
+  for (int i_conn=0; i_conn<NConn; i_conn++) {
+    connection_struct conn = conn_arr[i_conn];
+    uint target_port = conn.target_port;
+    int i_target = target_port >> h_MaxPortNBits;
+    uint port = target_port & h_PortMask;
+    unsigned char syn_group = conn.syn_group;
+    float weight = conn.weight;
+
+    printf("target: %d\tport: %d\t syn_group: %d\tweight-0.0005: %.7e\n",
+	   i_target, port, syn_group, weight-0.0005);
+  }
+  ////////////////////////////////////////////////////////
   
   return 0;
 }

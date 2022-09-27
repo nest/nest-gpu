@@ -115,10 +115,14 @@ int Distribution::vectSize()
 float *Distribution::getArray(int64_t n_elem, int i_vect)
 {
   checkDistributionInitialized();
-  if (distr_idx_>DISTR_TYPE_ARRAY) {
+  if (distr_idx_>=DISTR_TYPE_ARRAY) {
     gpuErrchk(cudaMalloc(&d_array_pt_, n_elem*sizeof(float)));
   }
-  if (distr_idx_==DISTR_TYPE_NORMAL_CLIPPED) {
+  if (distr_idx_==DISTR_TYPE_ARRAY) {
+    gpuErrchk(cudaMemcpy(d_array_pt_, h_array_pt_, n_elem*sizeof(float),
+			 cudaMemcpyHostToDevice));    
+  }
+  else if (distr_idx_==DISTR_TYPE_NORMAL_CLIPPED) {
     //printf("ok0\n");
     CURAND_CALL(curandGenerateUniform(*curand_generator_, d_array_pt_, n_elem));
     //printf("ok1\n");
@@ -223,11 +227,11 @@ int Distribution::SetVectParam(std::string param_name, float val, int i)
   return 0;
 }
 
-int Distribution::SetFloatPtParam(std::string param_name, float *d_array_pt)
+int Distribution::SetFloatPtParam(std::string param_name, float *h_array_pt)
 {
   if (param_name=="array_pt") {
     distr_idx_ = DISTR_TYPE_ARRAY;
-    d_array_pt_ = d_array_pt;
+    h_array_pt_ = h_array_pt;
   }
   else {
     throw ngpu_exception(std::string("Unrecognized distribution "

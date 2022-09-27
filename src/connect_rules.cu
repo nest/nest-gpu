@@ -30,6 +30,7 @@
 #include "nestgpu.h"
 #include "connect_rules.h"
 #include "new_connect.h"
+#include "distribution.h"
 
 int ConnSpec::Init()
 {
@@ -131,10 +132,10 @@ int SynSpec::Init()
   port_ = 0;
   weight_ = 0;
   delay_ = 0;
-  weight_distr_ = 0;
-  delay_distr_ = 0;
-  weight_array_ = NULL;
-  delay_array_ = NULL;
+  weight_distr_ = DISTR_TYPE_NONE;
+  delay_distr_ = DISTR_TYPE_NONE;
+  weight_h_array_pt_ = NULL;
+  delay_h_array_pt_ = NULL;
 
   return 0;
 }
@@ -286,10 +287,12 @@ bool SynSpec::IsFloatParam(std::string param_name)
 int SynSpec::SetParam(std::string param_name, float *array_pt)
 {
   if (param_name=="weight_array") {
-    weight_array_ = array_pt;
+    weight_h_array_pt_ = array_pt;
+    weight_distr_ = DISTR_TYPE_ARRAY;
   }
   else if (param_name=="delay_array") {
-    delay_array_ = array_pt;
+    delay_h_array_pt_ = array_pt;
+    delay_distr_ = DISTR_TYPE_ARRAY;
   }
   else {
     throw ngpu_exception("Unknown synapse array parameter");
