@@ -47,8 +47,9 @@ extern __device__ int64_t ConnBlockSize;
 extern uint h_MaxDelayNum;
 
 extern std::vector<uint*> KeySubarray;
-extern std::vector<connection_struct*> ConnectionSubarray;
+extern __device__ uint** SourceDelayArray;
 
+extern std::vector<connection_struct*> ConnectionSubarray;
 extern __device__ connection_struct** ConnectionArray;
 
 int setMaxNodeNBits(int max_node_nbits);

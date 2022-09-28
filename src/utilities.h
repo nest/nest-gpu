@@ -35,11 +35,12 @@ __device__  __forceinline__ double atomicAddDouble(double* address, double val)
     return __longlong_as_double(old);
 }
 
-__device__  __forceinline__ int locate(int val, int *data, int n)
+template <class T1, class T2>
+__device__  __forceinline__ T2 locate(T1 val, T1 *data, T2 n)
 {
-  int i_left = 0;
-  int i_right = n-1;
-  int i = (i_left+i_right)/2;
+  T2 i_left = 0;
+  T2 i_right = n-1;
+  T2 i = (i_left+i_right)/2;
   while(i_right-i_left>1) {
     if (data[i] > val) i_right = i;
     else if (data[i]<val) i_left = i;

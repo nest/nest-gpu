@@ -15,6 +15,7 @@
 #include "distribution.h"
 #include "new_connect.h"
 #include "nestgpu.h"
+#include "utilities.h"
 
 uint h_MaxNodeNBits;
 __device__ uint MaxNodeNBits;
@@ -70,6 +71,7 @@ __device__ int64_t ConnBlockSize;
 uint h_MaxDelayNum;
 
 std::vector<uint*> KeySubarray;
+__device__ uint** SourceDelayArray;
 // Array of source node indexes and delays of all connections
 // Source node indexes and delays are merged in a single integer variable
 // The most significant MaxNodeNBits are used for the node index 
@@ -591,6 +593,7 @@ __global__ void NewConnectInitKernel(uint *conn_group_idx0,
 				     int64_t *conn_group_nconn,
 				     uint *conn_group_delay,
 				     int64_t block_size,
+				     uint **source_delay_array,
 				     connection_struct **connection_array)
 {
   
@@ -600,21 +603,27 @@ __global__ void NewConnectInitKernel(uint *conn_group_idx0,
   ConnGroupNConn = conn_group_nconn;
   ConnGroupDelay = conn_group_delay;
   ConnBlockSize = block_size;
+  SourceDelayArray = source_delay_array;
   ConnectionArray = connection_array;
 }
 
 int NewConnectInit()
 {
   uint k = ConnectionSubarray.size();
+  uint **d_source_delay_array;
+  gpuErrchk(cudaMalloc(&d_source_delay_array, k*sizeof(uint*)));
+  gpuErrchk(cudaMemcpy(d_source_delay_array, KeySubarray.data(),
+		       k*sizeof(uint*), cudaMemcpyHostToDevice));
+  
   connection_struct **d_connection_array;
   gpuErrchk(cudaMalloc(&d_connection_array, k*sizeof(connection_struct*)));
-  
   gpuErrchk(cudaMemcpy(d_connection_array, ConnectionSubarray.data(),
 		       k*sizeof(connection_struct*), cudaMemcpyHostToDevice));
 
   NewConnectInitKernel<<<1,1>>>(d_ConnGroupIdx0, d_ConnGroupNum,
 				d_ConnGroupIConn0, d_ConnGroupNConn,
 				d_ConnGroupDelay, h_ConnBlockSize,
+				d_source_delay_array,
 				d_connection_array);
   DBGCUDASYNC
 
@@ -640,12 +649,187 @@ int setMaxNodeNBits(int max_node_nbits)
   return 0;
 }  
 
+int *sortArray(int *h_arr, int n_elem)
+{
+  // allocate unsorted and sorted array in device memory
+  int *d_arr_unsorted;
+  int *d_arr_sorted;
+  gpuErrchk(cudaMalloc(&d_arr_unsorted, n_elem*sizeof(int)));
+  gpuErrchk(cudaMalloc(&d_arr_sorted, n_elem*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_arr_unsorted, h_arr, n_elem*sizeof(int),
+		       cudaMemcpyHostToDevice));
+  void *d_storage = NULL;
+  size_t storage_bytes = 0;
+  // Determine temporary storage requirements for sorting source indexes
+  cub::DeviceRadixSort::SortKeys(d_storage, storage_bytes, d_arr_unsorted,
+				 d_arr_sorted, n_elem);
+  // Allocate temporary storage for sorting
+  gpuErrchk(cudaMalloc(&d_storage, storage_bytes));
+  // Run radix sort
+  cub::DeviceRadixSort::SortKeys(d_storage, storage_bytes, d_arr_unsorted,
+				 d_arr_sorted, n_elem);
+  gpuErrchk(cudaFree(d_storage));
+  gpuErrchk(cudaFree(d_arr_unsorted));
+
+  return d_arr_sorted;
+}
+
+__global__ void setSourceTargetIndexKernel(int64_t n_src_tgt, int  n_source,
+					   int n_target, int64_t *d_src_tgt_arr,
+					   int *d_src_arr, int *d_tgt_arr)
+{
+  int64_t i_src_tgt = (int64_t)blockIdx.x * blockDim.x + threadIdx.x; 
+  if (i_src_tgt >= n_src_tgt) return;
+  int i_src =(int)(i_src_tgt / n_target);
+  int i_tgt =(int)(i_src_tgt % n_target);
+  int src_id = d_src_arr[i_src];
+  int tgt_id = d_tgt_arr[i_tgt];
+  int64_t src_tgt_id = ((int64_t)src_id) << 32 + tgt_id;
+  d_src_tgt_arr[i_src_tgt] = src_tgt_id;
+}
+
+
+// Count number of connections per source-target couple
+__global__ void CountConnectionsKernel(int64_t n_conn, int n_source,
+				       int n_target, int64_t *src_tgt_arr,
+				       int64_t *src_tgt_conn_num,
+				       int syn_group)
+{
+  int64_t i_conn = (int64_t)blockIdx.x * blockDim.x + threadIdx.x; 
+  if (i_conn >= n_conn) return;
+
+  uint i_block = (uint)(i_conn / ConnBlockSize);
+  int64_t i_block_conn = i_conn % ConnBlockSize;
+  connection_struct conn = ConnectionArray[i_block][i_block_conn];
+  if (syn_group==-1 || conn.syn_group == syn_group) {
+    // First get target node index
+    uint target_port = conn.target_port;
+    int i_target = target_port >> MaxPortNBits;
+    uint source_delay = SourceDelayArray[i_block][i_block_conn];
+    int i_source = source_delay >> MaxPortNBits;
+    int64_t i_src_tgt = ((int64_t)i_source << 32) + i_target;
+    int64_t i_arr = locate(i_src_tgt, src_tgt_arr, n_source*n_target);
+    if (src_tgt_arr[i_arr] == i_src_tgt) {
+      // (atomic)increase the number of connections for source-target couple
+      atomicAdd((unsigned long long *)&src_tgt_conn_num[i_arr], 1);
+    }
+  }
+}
+
+
+// Fill array of connection indexes
+__global__ void SetConnectionsIndexKernel(int64_t n_conn, int n_source,
+					  int n_target, int64_t *src_tgt_arr,
+					  int64_t *src_tgt_conn_num,
+					  int64_t *src_tgt_conn_cumul,
+					  int syn_group, int64_t *conn_ids)
+{
+  int64_t i_conn = (int64_t)blockIdx.x * blockDim.x + threadIdx.x; 
+  if (i_conn >= n_conn) return;
+
+  uint i_block = (uint)(i_conn / ConnBlockSize);
+  int64_t i_block_conn = i_conn % ConnBlockSize;
+  connection_struct conn = ConnectionArray[i_block][i_block_conn];
+  if (syn_group==-1 || conn.syn_group == syn_group) {
+    // First get target node index
+    uint target_port = conn.target_port;
+    int i_target = target_port >> MaxPortNBits;
+    uint source_delay = SourceDelayArray[i_block][i_block_conn];
+    int i_source = source_delay >> MaxPortNBits;
+    int64_t i_src_tgt = ((int64_t)i_source << 32) & i_target;
+    int64_t i_arr = locate(i_src_tgt, src_tgt_arr, n_source*n_target);
+    if (src_tgt_arr[i_arr] == i_src_tgt) {
+      // (atomic)increase the number of connections for source-target couple
+      int64_t pos =
+	atomicAdd((unsigned long long *)&src_tgt_conn_num[i_arr], 1);
+      conn_ids[src_tgt_conn_cumul[i_arr] + pos] = i_conn;
+    }
+  }
+}
+
+
 int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
 				 int *i_target_pt, int n_target,
 				 int syn_group, int64_t *n_conn)
-{  
-  int64_t *conn_ids = NULL;
+{
+  printf("GetConnections n_source: %d n_target: %d syn_group: %d\n",
+	 n_source, n_target, syn_group);
+  
+  int64_t *h_conn_ids = NULL;
+  int64_t *d_conn_ids = NULL;
+  int64_t n_src_tgt = (int64_t)n_source * n_target;
+  int64_t n_conn_ids = 0;
 
+  if (n_src_tgt > 0) {
+    // sort source node index array in GPU memory
+    int *d_src_arr = sortArray(i_source_pt, n_source);
+    // sort target node index array in GPU memory
+    int *d_tgt_arr = sortArray(i_target_pt, n_target);
+    // Allocate array of combined source-target indexes (src_arr x tgt_arr)
+    int64_t *d_src_tgt_arr;
+    gpuErrchk(cudaMalloc(&d_src_tgt_arr, n_src_tgt*sizeof(int64_t)));
+    // Fill it with combined source-target indexes
+    setSourceTargetIndexKernel<<<(n_src_tgt+1023)/1024, 1024>>>
+      (n_src_tgt, n_source, n_target, d_src_tgt_arr, d_src_arr, d_tgt_arr);
+    // Allocate array of number of connections per source-target couple
+    // and initialize it to 0
+    int64_t *d_src_tgt_conn_num;
+    gpuErrchk(cudaMalloc(&d_src_tgt_conn_num, (n_src_tgt + 1)*sizeof(int64_t)));
+    gpuErrchk(cudaMemset(d_src_tgt_conn_num, 0,
+			 (n_src_tgt + 1)*sizeof(int64_t)));
 
-  return conn_ids;
+    // Count number of connections per source-target couple
+    CountConnectionsKernel<<<(NConn+1023)/1024, 1024>>>
+      (NConn, n_source, n_target, d_src_tgt_arr, d_src_tgt_conn_num, syn_group);
+    // Evaluate exclusive sum of connections per source-target couple
+    // Allocate array for cumulative sum
+    int64_t *d_src_tgt_conn_cumul;
+    gpuErrchk(cudaMalloc(&d_src_tgt_conn_cumul,
+			 (n_src_tgt + 1)*sizeof(int64_t)));
+    // Determine temporary device storage requirements
+    void *d_temp_storage = NULL;
+    size_t temp_storage_bytes = 0;
+    cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
+				  d_src_tgt_conn_num,
+				  d_src_tgt_conn_cumul,
+				  n_src_tgt + 1);
+    // Allocate temporary storage
+    gpuErrchk(cudaMalloc(&d_temp_storage, temp_storage_bytes));
+    // Run exclusive prefix sum
+    cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
+				  d_src_tgt_conn_num,
+				  d_src_tgt_conn_cumul,
+				  n_src_tgt + 1);
+    gpuErrchk(cudaFree(d_temp_storage));
+    
+    // The last element is the total number of required connection Ids
+    cudaMemcpy(&n_conn_ids, &d_src_tgt_conn_cumul[n_src_tgt],
+	       sizeof(int64_t), cudaMemcpyDeviceToHost);
+    if (n_conn_ids > 0) {
+      // Allocate array of connection indexes
+      gpuErrchk(cudaMalloc(&d_conn_ids, n_conn_ids*sizeof(int64_t)));  
+      // Set number of connections per source-target couple to 0 again
+      gpuErrchk(cudaMemset(d_src_tgt_conn_num, 0,
+			   (n_src_tgt + 1)*sizeof(int64_t)));
+      // Fill array of connection indexes
+      SetConnectionsIndexKernel<<<(NConn+1023)/1024, 1024>>>
+	(NConn, n_source, n_target, d_src_tgt_arr, d_src_tgt_conn_num,
+	 d_src_tgt_conn_cumul, syn_group, d_conn_ids);
+
+      /// check if allocating with new is more appropriate
+      h_conn_ids = (int64_t*)malloc(n_conn_ids*sizeof(int64_t));
+      gpuErrchk(cudaMemcpy(h_conn_ids, d_conn_ids,
+			   n_conn_ids*sizeof(int64_t),
+			   cudaMemcpyDeviceToHost));
+	
+      gpuErrchk(cudaFree(d_src_tgt_arr));
+      gpuErrchk(cudaFree(d_src_tgt_conn_num));
+      gpuErrchk(cudaFree(d_src_tgt_conn_cumul));
+      gpuErrchk(cudaFree(d_conn_ids));
+    }
+  }
+  printf("GetConnections n_conn_ids: %ld\n", n_conn_ids);
+  *n_conn = n_conn_ids;
+  
+  return h_conn_ids;
 }
