@@ -286,24 +286,26 @@ extern "C" {
   
   int NESTGPU_GetNArrayVar(int i_node);
     
-  int *NESTGPU_GetSeqSeqConnections(int i_source, int n_source, int i_target,
-				      int n_target, int syn_group, int *n_conn);
-
-  int *NESTGPU_GetSeqGroupConnections(int i_source, int n_source,
-					int *i_target, int n_target,
-					int syn_group, int *n_conn);
-
-  int *NESTGPU_GetGroupSeqConnections(int *i_source, int n_source,
+  int64_t *NESTGPU_GetSeqSeqConnections(int i_source, int n_source,
 					int i_target, int n_target,
-					int syn_group, int *n_conn);
+					int syn_group, int64_t *n_conn);
 
-  int *NESTGPU_GetGroupGroupConnections(int *i_source, int n_source,
-					  int *i_target, int n_target,
-					  int syn_group, int *n_conn);
-  int NESTGPU_GetConnectionStatus(int i_source, int i_group, int i_conn,
-				    int *i_target, unsigned char *port,
-				    unsigned char *syn_group, float *delay,
-				    float *weight);
+  int64_t *NESTGPU_GetSeqGroupConnections(int i_source, int n_source,
+					  int *i_target_pt, int n_target,
+					  int syn_group, int64_t *n_conn);
+
+  int64_t *NESTGPU_GetGroupSeqConnections(int *i_source_pt, int n_source,
+					  int i_target, int n_target,
+					  int syn_group, int64_t *n_conn);
+
+  int64_t *NESTGPU_GetGroupGroupConnections(int *i_source_pt, int n_source,
+					    int *i_target_pt, int n_target,
+					    int syn_group, int64_t *n_conn);
+  
+  int NESTGPU_GetConnectionStatus(int64_t i_conn, int *i_source,
+				  int *i_target, unsigned char *port,
+				  unsigned char *syn_group, float *delay,
+				  float *weight);
 
   int NESTGPU_CreateSynGroup(char *model_name);
   

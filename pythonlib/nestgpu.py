@@ -21,6 +21,7 @@ _nestgpu=ctypes.CDLL(lib_path)
 
 c_float_p = ctypes.POINTER(ctypes.c_float)
 c_int_p = ctypes.POINTER(ctypes.c_int)
+c_int64_p = ctypes.POINTER(ctypes.c_int64)
 c_char_p = ctypes.POINTER(ctypes.c_char)
 c_void_p = ctypes.c_void_p
 c_int_pp = ctypes.POINTER(ctypes.POINTER(ctypes.c_int))
@@ -67,9 +68,7 @@ class RemoteNodeSeq(object):
         self.node_seq = node_seq
 
 class ConnectionId(object):
-    def __init__(self, i_source, i_group, i_conn):
-        self.i_source = i_source
-        self.i_group = i_group
+    def __init__(self, i_conn):
         self.i_conn = i_conn
 
 class SynGroup(object):
@@ -2102,26 +2101,26 @@ def SetStatus(gen_object, params, val=None):
 NESTGPU_GetSeqSeqConnections = _nestgpu.NESTGPU_GetSeqSeqConnections
 NESTGPU_GetSeqSeqConnections.argtypes = (ctypes.c_int, ctypes.c_int,
                                            ctypes.c_int, ctypes.c_int,
-                                           ctypes.c_int, c_int_p)
-NESTGPU_GetSeqSeqConnections.restype = c_int_p
+                                           ctypes.c_int, c_int64_p)
+NESTGPU_GetSeqSeqConnections.restype = c_int64_p
 
 NESTGPU_GetSeqGroupConnections = _nestgpu.NESTGPU_GetSeqGroupConnections
 NESTGPU_GetSeqGroupConnections.argtypes = (ctypes.c_int, ctypes.c_int,
                                              c_void_p, ctypes.c_int,
-                                             ctypes.c_int, c_int_p)
-NESTGPU_GetSeqGroupConnections.restype = c_int_p
+                                             ctypes.c_int, c_int64_p)
+NESTGPU_GetSeqGroupConnections.restype = c_int64_p
 
 NESTGPU_GetGroupSeqConnections = _nestgpu.NESTGPU_GetGroupSeqConnections
 NESTGPU_GetGroupSeqConnections.argtypes = (c_void_p, ctypes.c_int,
                                              ctypes.c_int, ctypes.c_int,
-                                             ctypes.c_int, c_int_p)
-NESTGPU_GetGroupSeqConnections.restype = c_int_p
+                                             ctypes.c_int, c_int64_p)
+NESTGPU_GetGroupSeqConnections.restype = c_int64_p
 
 NESTGPU_GetGroupGroupConnections = _nestgpu.NESTGPU_GetGroupGroupConnections
 NESTGPU_GetGroupGroupConnections.argtypes = (c_void_p, ctypes.c_int,
                                                c_void_p, ctypes.c_int,
-                                               ctypes.c_int, c_int_p)
-NESTGPU_GetGroupGroupConnections.restype = c_int_p
+                                               ctypes.c_int, c_int64_p)
+NESTGPU_GetGroupGroupConnections.restype = c_int64_p
 
 def GetConnections(source=None, target=None, syn_group=-1): 
     "Get connections between two node groups"
@@ -2138,7 +2137,7 @@ def GetConnections(source=None, target=None, syn_group=-1):
     if (type(target)!=list) & (type(target)!=tuple) & (type(target)!=NodeSeq):
         raise ValueError("Unknown target type")
     
-    n_conn = ctypes.c_int(0)
+    n_conn = ctypes.c_int64(0)
     if (type(source)==NodeSeq) & (type(target)==NodeSeq) :
         conn_arr = NESTGPU_GetSeqSeqConnections(source.i0, source.n,
                                                   target.i0, target.n,
@@ -2173,8 +2172,7 @@ def GetConnections(source=None, target=None, syn_group=-1):
 
     conn_list = []
     for i_conn in range(n_conn.value):
-        conn_id = ConnectionId(conn_arr[i_conn*3], conn_arr[i_conn*3 + 1],
-                   conn_arr[i_conn*3 + 2])
+        conn_id = ConnectionId(conn_arr[i_conn])
         conn_list.append(conn_id)
         
     ret = conn_list
@@ -2185,29 +2183,29 @@ def GetConnections(source=None, target=None, syn_group=-1):
 
  
 NESTGPU_GetConnectionStatus = _nestgpu.NESTGPU_GetConnectionStatus
-NESTGPU_GetConnectionStatus.argtypes = (ctypes.c_int, ctypes.c_int,
-                                         ctypes.c_int, c_int_p,
+NESTGPU_GetConnectionStatus.argtypes = (ctypes.c_int64, c_int_p, c_int_p,
                                          c_char_p, c_char_p,
                                          c_float_p, c_float_p)
 NESTGPU_GetConnectionStatus.restype = ctypes.c_int
 
 def GetConnectionStatus(conn_id):
-    i_source = conn_id.i_source
-    i_group = conn_id.i_group
     i_conn = conn_id.i_conn
-    
+
+    i_source = ctypes.c_int(0)
     i_target = ctypes.c_int(0)
     i_port = ctypes.c_char()
     i_syn = ctypes.c_char()
     delay = ctypes.c_float(0.0)
     weight = ctypes.c_float(0.0)
 
-    NESTGPU_GetConnectionStatus(i_source, i_group, i_conn,
-                                  ctypes.byref(i_target),
-                                  ctypes.byref(i_port),
-                                  ctypes.byref(i_syn),
-                                  ctypes.byref(delay),
-                                  ctypes.byref(weight))
+    NESTGPU_GetConnectionStatus(i_conn,
+                                ctypes.byref(i_source),
+                                ctypes.byref(i_target),
+                                ctypes.byref(i_port),
+                                ctypes.byref(i_syn),
+                                ctypes.byref(delay),
+                                ctypes.byref(weight))
+    i_source = i_source.value
     i_target = i_target.value
     i_port = ord(i_port.value)
     i_syn = ord(i_syn.value)

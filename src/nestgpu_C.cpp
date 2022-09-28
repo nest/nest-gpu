@@ -887,85 +887,43 @@ extern "C" {
   } END_ERR_PROP return ret; }
 
 
-  int *NESTGPU_GetSeqSeqConnections(int i_source, int n_source, int i_target,
-				      int n_target, int syn_group, int *n_conn)
-  { int *ret = NULL; BEGIN_ERR_PROP {
-      /*
-      std::vector<ConnectionId> conn_id_vect =
-	NESTGPU_instance->GetConnections(i_source, n_source, i_target,
-					   n_target, syn_group);
-      *n_conn = conn_id_vect.size();
-      int *conn_id_array = (int*)malloc((*n_conn)*3*sizeof(int));
-      for (int i=0; i<(*n_conn); i++) {
-	conn_id_array[i*3] = conn_id_vect[i].i_source_;
-	conn_id_array[i*3 + 1] = conn_id_vect[i].i_group_;
-	conn_id_array[i*3 + 2] = conn_id_vect[i].i_conn_;
-      }
-      ret = conn_id_array;
-      */
-  } END_ERR_PROP return ret; }
-
-  int *NESTGPU_GetSeqGroupConnections(int i_source, int n_source,
-					int *i_target, int n_target,
-					int syn_group, int *n_conn)
-  { int *ret = NULL; BEGIN_ERR_PROP {
-      /*
-      std::vector<ConnectionId> conn_id_vect =
-	NESTGPU_instance->GetConnections(i_source, n_source, i_target,
-					   n_target, syn_group);
-      *n_conn = conn_id_vect.size();
-      int *conn_id_array = (int*)malloc((*n_conn)*3*sizeof(int));
-      for (int i=0; i<(*n_conn); i++) {
-	conn_id_array[i*3] = conn_id_vect[i].i_source_;
-	conn_id_array[i*3 + 1] = conn_id_vect[i].i_group_;
-	conn_id_array[i*3 + 2] = conn_id_vect[i].i_conn_;
-      }
-      ret = conn_id_array;
-      */
-  } END_ERR_PROP return ret; }
-
-  int *NESTGPU_GetGroupSeqConnections(int *i_source, int n_source,
+  int64_t *NESTGPU_GetSeqSeqConnections(int i_source, int n_source,
 					int i_target, int n_target,
-					int syn_group, int *n_conn)
-  { int *ret = NULL; BEGIN_ERR_PROP {
-      /*
-      std::vector<ConnectionId> conn_id_vect =
-	NESTGPU_instance->GetConnections(i_source, n_source, i_target,
-					   n_target, syn_group);
-      *n_conn = conn_id_vect.size();
-      int *conn_id_array = (int*)malloc((*n_conn)*3*sizeof(int));
-      for (int i=0; i<(*n_conn); i++) {
-	conn_id_array[i*3] = conn_id_vect[i].i_source_;
-	conn_id_array[i*3 + 1] = conn_id_vect[i].i_group_;
-	conn_id_array[i*3 + 2] = conn_id_vect[i].i_conn_;
-      }
-      ret = conn_id_array;
-      */
+					int syn_group, int64_t *n_conn)
+  { int64_t *ret = NULL; BEGIN_ERR_PROP {
+      ret = NESTGPU_instance->GetConnections(i_source, n_source, i_target,
+					     n_target, syn_group, n_conn);
   } END_ERR_PROP return ret; }
 
-  int *NESTGPU_GetGroupGroupConnections(int *i_source, int n_source,
-					 int *i_target, int n_target,
-					 int syn_group, int *n_conn)
-  { int *ret = NULL; BEGIN_ERR_PROP {
-      /*
-      std::vector<ConnectionId> conn_id_vect =
-	NESTGPU_instance->GetConnections(i_source, n_source, i_target,
-					   n_target, syn_group);
-      *n_conn = conn_id_vect.size();
-      int *conn_id_array = (int*)malloc((*n_conn)*3*sizeof(int));
-      for (int i=0; i<(*n_conn); i++) {
-	conn_id_array[i*3] = conn_id_vect[i].i_source_;
-	conn_id_array[i*3 + 1] = conn_id_vect[i].i_group_;
-	conn_id_array[i*3 + 2] = conn_id_vect[i].i_conn_;
-      }
-      ret = conn_id_array;
-      */
+  int64_t *NESTGPU_GetSeqGroupConnections(int i_source, int n_source,
+					  int *i_target_pt, int n_target,
+					  int syn_group, int64_t *n_conn)
+  { int64_t *ret = NULL; BEGIN_ERR_PROP {
+      ret = NESTGPU_instance->GetConnections(i_source, n_source, i_target_pt,
+					     n_target, syn_group, n_conn);
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_GetConnectionStatus(int i_source, int i_group, int i_conn,
-				    int *i_target, unsigned char *port,
-				    unsigned char *syn_group, float *delay,
-				    float *weight)
+  int64_t *NESTGPU_GetGroupSeqConnections(int *i_source_pt, int n_source,
+					  int i_target, int n_target,
+					  int syn_group, int64_t *n_conn)
+  { int64_t *ret = NULL; BEGIN_ERR_PROP {
+      ret = NESTGPU_instance->GetConnections(i_source_pt, n_source, i_target,
+					     n_target, syn_group, n_conn);
+  } END_ERR_PROP return ret; }
+
+  int64_t *NESTGPU_GetGroupGroupConnections(int *i_source_pt, int n_source,
+					    int *i_target_pt, int n_target,
+					    int syn_group, int64_t *n_conn)
+  { int64_t *ret = NULL; BEGIN_ERR_PROP {
+      ret = NESTGPU_instance->GetConnections(i_source_pt, n_source,
+					     i_target_pt, n_target,
+					     syn_group, n_conn);
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_GetConnectionStatus(int64_t i_conn, int *i_source,
+				  int *i_target, unsigned char *port,
+				  unsigned char *syn_group, float *delay,
+				  float *weight)
   { int ret = 0; BEGIN_ERR_PROP {
       /*
       ConnectionId conn_id;

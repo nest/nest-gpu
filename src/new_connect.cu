@@ -649,3 +649,12 @@ int setMaxNodeNBits(int max_node_nbits)
   return 0;
 }  
 
+int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
+				 int *i_target_pt, int n_target,
+				 int syn_group, int64_t *n_conn)
+{  
+  int64_t *conn_ids = NULL;
+
+
+  return conn_ids;
+}

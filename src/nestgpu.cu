@@ -1459,89 +1459,112 @@ std::vector<ConnectionStatus> NESTGPU::GetConnectionStatus(std::vector
   }
   return conn_stat_vect;
 }
-  
-std::vector<ConnectionId> NESTGPU::GetConnections(int i_source, int n_source,
-						    int i_target, int n_target,
-						    int syn_group) {
-  if (n_source<=0) {
-    i_source = 0;
-    n_source = GetNNode();
-  }
-  if (n_target<=0) {
-    i_target = 0;
-    n_target = GetNNode();
-  }
-
-  return net_connection_->GetConnections<int>(i_source, n_source, i_target,
-					      n_target, syn_group);    
-}
-
-std::vector<ConnectionId> NESTGPU::GetConnections(int *i_source, int n_source,
-						    int i_target, int n_target,
-						    int syn_group) {
-  if (n_target<=0) {
-    i_target = 0;
-    n_target = GetNNode();
-  }
-
-  return net_connection_->GetConnections<int*>(i_source, n_source, i_target,
-					       n_target, syn_group);
-}
-
-
-std::vector<ConnectionId> NESTGPU::GetConnections(int i_source, int n_source,
-						    int *i_target, int n_target,
-						    int syn_group) {
-  if (n_source<=0) {
-    i_source = 0;
-    n_source = GetNNode();
-  }
-
-  return net_connection_->GetConnections<int>(i_source, n_source, i_target,
-					      n_target, syn_group);
-}
-
-std::vector<ConnectionId> NESTGPU::GetConnections(int *i_source, int n_source,
-						    int *i_target, int n_target,
-						    int syn_group) {
-  
-  return net_connection_->GetConnections<int*>(i_source, n_source, i_target,
-					       n_target, syn_group);  
-}
-
-
-std::vector<ConnectionId> NESTGPU::GetConnections(NodeSeq source,
-						    NodeSeq target,
-						    int syn_group) {
-  return net_connection_->GetConnections<int>(source.i0, source.n, target.i0,
-					      target.n, syn_group);
-}
-
-std::vector<ConnectionId> NESTGPU::GetConnections(std::vector<int> source,
-						    NodeSeq target,
-						    int syn_group) {
-  return net_connection_->GetConnections<int*>(source.data(), source.size(),
-					       target.i0, target.n,
-					       syn_group);
-}
-
-
-std::vector<ConnectionId> NESTGPU::GetConnections(NodeSeq source,
-						    std::vector<int> target,
-						    int syn_group) {
-  return net_connection_->GetConnections<int>(source.i0, source.n,
-					      target.data(), target.size(),
-					      syn_group);
-}
-
-std::vector<ConnectionId> NESTGPU::GetConnections(std::vector<int> source,
-						    std::vector<int> target,
-						    int syn_group) {
-  return net_connection_->GetConnections<int*>(source.data(), source.size(),
-					       target.data(), target.size(),
-					       syn_group);
-}
 */
+
+int64_t *NESTGPU::GetConnections(int i_source, int n_source,
+				 int i_target, int n_target,
+				 int syn_group, int64_t *n_conn)
+{
+  if (n_source<=0) {
+    i_source = 0;
+    n_source = GetNNode();
+  }
+  if (n_target<=0) {
+    i_target = 0;
+    n_target = GetNNode();
+  }
+  int *i_source_pt = new int[n_source];
+  for (int i=0; i<n_source; i++) {
+    i_source_pt[i] = i_source + i;
+  }
+  int *i_target_pt = new int[n_target];
+  for (int i=0; i<n_target; i++) {
+    i_target_pt[i] = i_target + i;
+  }
+  
+  int64_t *conn_ids =
+    GetConnections(i_source_pt, n_source, i_target_pt, n_target, syn_group,
+		   n_conn);
+  delete[] i_source_pt;
+  delete[] i_target_pt;
+
+  return conn_ids;
+}
+
+int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
+				 int i_target, int n_target,
+				 int syn_group, int64_t *n_conn)
+{
+  if (n_target<=0) {
+    i_target = 0;
+    n_target = GetNNode();
+  }
+  int *i_target_pt = new int[n_target];
+  for (int i=0; i<n_target; i++) {
+    i_target_pt[i] = i_target + i;
+  }
+  
+  int64_t *conn_ids =
+    GetConnections(i_source_pt, n_source, i_target_pt, n_target, syn_group,
+		   n_conn);
+  delete[] i_target_pt;
+
+  return conn_ids;
+}
+
+
+int64_t *NESTGPU::GetConnections(int i_source, int n_source,
+				 int *i_target_pt, int n_target,
+				 int syn_group, int64_t *n_conn)
+{
+  if (n_source<=0) {
+    i_source = 0;
+    n_source = GetNNode();
+  }
+  int *i_source_pt = new int[n_source];
+  for (int i=0; i<n_source; i++) {
+    i_source_pt[i] = i_source + i;
+  }
+
+  int64_t *conn_ids =
+    GetConnections(i_source_pt, n_source, i_target_pt, n_target, syn_group,
+		   n_conn);
+  delete[] i_source_pt;
+
+  return conn_ids;
+}
+
+int64_t *NESTGPU::GetConnections(NodeSeq source, NodeSeq target,
+				 int syn_group, int64_t *n_conn)
+{
+  return GetConnections(source.i0, source.n, target.i0, target.n, syn_group,
+			n_conn);
+}
+
+int64_t *NESTGPU::GetConnections(std::vector<int> source, NodeSeq target,
+				 int syn_group, int64_t *n_conn)
+{
+  return GetConnections(source.data(), source.size(), target.i0, target.n,
+			syn_group, n_conn);
+}
+
+
+int64_t *NESTGPU::GetConnections(NodeSeq source, std::vector<int> target,
+				 int syn_group, int64_t *n_conn)
+{
+  return GetConnections(source.i0, source.n, target.data(), target.size(),
+			syn_group, n_conn);
+}
+
+int64_t *NESTGPU::GetConnections(std::vector<int> source,
+				 std::vector<int> target,
+				 int syn_group, int64_t *n_conn)
+{
+  return GetConnections(source.data(), source.size(),
+			target.data(), target.size(),
+			syn_group, n_conn);
+}
+
 
 int NESTGPU::ActivateSpikeCount(int i_node, int n_node)
 {

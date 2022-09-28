@@ -653,37 +653,34 @@ class NESTGPU
   
   std::vector<ConnectionStatus> GetConnectionStatus(std::vector<ConnectionId>
 						    &conn_id_vect);
-
-  std::vector<ConnectionId> GetConnections(int i_source, int n_source,
-					   int i_target, int n_target,
-					   int syn_group=-1);
-
-  std::vector<ConnectionId> GetConnections(int *i_source, int n_source,
-					   int i_target, int n_target,
-					   int syn_group=-1);
-
-  std::vector<ConnectionId> GetConnections(int i_source, int n_source,
-					   int *i_target, int n_target,
-					   int syn_group=-1);
-
-  std::vector<ConnectionId> GetConnections(int *i_source, int n_source,
-					   int *i_target, int n_target,
-					   int syn_group=-1);
-    
-  std::vector<ConnectionId> GetConnections(NodeSeq source, NodeSeq target,
-					   int syn_group=-1);
-
-  std::vector<ConnectionId> GetConnections(std::vector<int> source,
-					   NodeSeq target, int syn_group=-1);
-
-  std::vector<ConnectionId> GetConnections(NodeSeq source,
-					   std::vector<int> target,
-					   int syn_group=-1);
-
-  std::vector<ConnectionId> GetConnections(std::vector<int> source,
-					   std::vector<int> target,
-					   int syn_group=-1);
   */
+  int64_t *GetConnections(int i_source, int n_source,
+			  int i_target, int n_target,
+			  int syn_group, int64_t *n_conn);
+
+  int64_t *GetConnections(int *i_source_pt, int n_source,
+			  int i_target, int n_target,
+			  int syn_group, int64_t *n_conn);
+
+  int64_t *GetConnections(int i_source, int n_source,
+			  int *i_target_pt, int n_target,
+			  int syn_group, int64_t *n_conn);
+
+  int64_t *GetConnections(int *i_source_pt, int n_source,
+			  int *i_target_pt, int n_target,
+			  int syn_group, int64_t *n_conn);
+    
+  int64_t *GetConnections(NodeSeq source, NodeSeq target,
+			  int syn_group, int64_t *n_conn);
+
+  int64_t *GetConnections(std::vector<int> source, NodeSeq target,
+			  int syn_group, int64_t *n_conn);
+
+  int64_t *GetConnections(NodeSeq source, std::vector<int> target,
+			  int syn_group, int64_t *n_conn);
+
+  int64_t *GetConnections(std::vector<int> source, std::vector<int> target,
+			  int syn_group, int64_t *n_conn);
 
   int CreateSynGroup(std::string model_name);
 
