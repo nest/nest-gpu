@@ -39,7 +39,7 @@ template <class T1, class T2>
 __device__  __forceinline__ T2 locate(T1 val, T1 *data, T2 n)
 {
   T2 i_left = 0;
-  T2 i_right = n-1;
+  T2 i_right = n;
   T2 i = (i_left+i_right)/2;
   while(i_right-i_left>1) {
     if (data[i] > val) i_right = i;
