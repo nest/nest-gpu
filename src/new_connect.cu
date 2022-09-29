@@ -684,8 +684,18 @@ __global__ void setSourceTargetIndexKernel(int64_t n_src_tgt, int  n_source,
   int i_tgt =(int)(i_src_tgt % n_target);
   int src_id = d_src_arr[i_src];
   int tgt_id = d_tgt_arr[i_tgt];
-  int64_t src_tgt_id = ((int64_t)src_id) << 32 + tgt_id;
+  int64_t src_tgt_id = ((int64_t)src_id << 32) + tgt_id;
   d_src_tgt_arr[i_src_tgt] = src_tgt_id;
+  if (i_src==0 && i_tgt<50) {
+    printf(
+	   "i_src_tgt %lld\t"
+	   "i_src %d\t"
+	   "i_tgt %d\t"
+	   "src_id %d\t"
+	   "tgt_id %d\t"
+	   "src_tgt_id %lld\n",
+	   i_src_tgt,  i_src, i_tgt, src_id, tgt_id, src_tgt_id);
+  }	   
 }
 
 
@@ -709,6 +719,12 @@ __global__ void CountConnectionsKernel(int64_t n_conn, int n_source,
     int i_source = source_delay >> MaxPortNBits;
     int64_t i_src_tgt = ((int64_t)i_source << 32) + i_target;
     int64_t i_arr = locate(i_src_tgt, src_tgt_arr, n_source*n_target);
+    if (i_conn>1000 && i_conn < 1050) {
+      printf("i_conn: %lld is: %d it: %d i_src_tgt: %lld i_arr: %lld\n",
+	     i_conn, i_source, i_target, i_src_tgt, i_arr);
+      printf("i_conn: %lld src_tgt_arr[i_arr] %lld i_src_tgt %lld\n",
+	     i_conn, src_tgt_arr[i_arr], i_src_tgt);
+    }
     if (src_tgt_arr[i_arr] == i_src_tgt) {
       // (atomic)increase the number of connections for source-target couple
       atomicAdd((unsigned long long *)&src_tgt_conn_num[i_arr], 1);
@@ -805,6 +821,10 @@ int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
     // The last element is the total number of required connection Ids
     cudaMemcpy(&n_conn_ids, &d_src_tgt_conn_cumul[n_src_tgt],
 	       sizeof(int64_t), cudaMemcpyDeviceToHost);
+
+    printf("GetConnections n_conn_ids: %ld\n", n_conn_ids);
+    exit(0);
+    
     if (n_conn_ids > 0) {
       // Allocate array of connection indexes
       gpuErrchk(cudaMalloc(&d_conn_ids, n_conn_ids*sizeof(int64_t)));  
