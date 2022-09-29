@@ -141,9 +141,7 @@ __global__ void checkConnGroups(uint n_neuron, int64_t *source_conn_idx0,
   for (int64_t ic=ic0; ic<ic0+nc; ic++) {
     uint ib =(uint)(ic / block_size);
     int64_t jc = ic % block_size;
-    //printf("i_neuron: %d\tib: %d\tjc:%ld\n", i_neuron, ib, jc);
     uint val = key_subarray[ib][jc];
-    //printf("i_neuron: %d\tib: %d\tjc:%ld\tval: %d\n", i_neuron, ib, jc, val);
     
     uint prev_val = 0;
     if (jc==0 && ib!=0) {
@@ -152,21 +150,12 @@ __global__ void checkConnGroups(uint n_neuron, int64_t *source_conn_idx0,
     else if (jc>0) {
       prev_val = key_subarray[ib][jc-1];
     }
-    //printf("i_neuron: %d\tib: %d\tjc:%ld\tprev_val: %d\n", i_neuron, ib, jc,
-    //	   prev_val);
     if (i_source_conn_group==0 || val!=prev_val) {
       uint conn_group_idx = ig0 + i_source_conn_group;
-      //printf("i_neuron: %d ok0\tig0: %d\ti_source_conn_group: %d\t"
-      //     "conn_group_idx: %d\tic: %ld\n",
-      //     i_neuron, ig0, i_source_conn_group, conn_group_idx, ic);
       conn_group_iconn0[conn_group_idx] = ic;
-      //printf("i_neuron: %d ok1\n", i_neuron);
       if (ic > ic0) {
-	//printf("i_neuron: %d ok2\n", i_neuron);
 	conn_group_nconn[conn_group_idx - 1] = ic
 	  - conn_group_iconn0[conn_group_idx - 1];
-	//printf("i_neuron: %d ok3\n", i_neuron);
-	//conn_group_delay[conn_group_idx] = val % 1024;
       }
       i_source_conn_group++;
     }
@@ -311,11 +300,9 @@ int allocateNewBlocks(std::vector<uint*> &key_subarray,
 		      std::vector<connection_struct*> &conn_subarray,
 		      int64_t block_size, uint new_n_block)
 {
-  //printf("Allocating GPU memory for new connection blocks...\n");
+  // Allocating GPU memory for new connection blocks
   // allocate new blocks if needed
   for (uint ib=key_subarray.size(); ib<new_n_block; ib++) {
-    //printf("new_n_block; %d\tib %d\tblock_size %ld\n", new_n_block, ib,
-    //	   block_size);
     uint *d_key_pt;
     connection_struct *d_connection_pt;
     // allocate GPU memory for new blocks 
@@ -423,8 +410,6 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
   cudaDeviceSynchronize();
   gettimeofday(&startTV, NULL);
   
-  //printf("ok0 block_size %ld\tn_node %d\tn_conn %ld\n", block_size,
-  //	 n_node, n_conn);
   printf("Allocating auxiliary GPU memory...\n");
   int64_t storage_bytes = 0;
   void *d_storage = NULL;
@@ -686,18 +671,6 @@ __global__ void setSourceTargetIndexKernel(int64_t n_src_tgt, int  n_source,
   int tgt_id = d_tgt_arr[i_tgt];
   int64_t src_tgt_id = ((int64_t)src_id << 32) + tgt_id;
   d_src_tgt_arr[i_src_tgt] = src_tgt_id;
-  /*
-  if (i_src==0 && i_tgt<50) {
-    printf(
-	   "i_src_tgt %lld\t"
-	   "i_src %d\t"
-	   "i_tgt %d\t"
-	   "src_id %d\t"
-	   "tgt_id %d\t"
-	   "src_tgt_id %lld\n",
-	   i_src_tgt,  i_src, i_tgt, src_id, tgt_id, src_tgt_id);
-  }
-  */	   
 }
 
 
@@ -721,23 +694,9 @@ __global__ void CountConnectionsKernel(int64_t n_conn, int n_source,
     int i_source = source_delay >> MaxPortNBits;
     int64_t i_src_tgt = ((int64_t)i_source << 32) + i_target;
     int64_t i_arr = locate(i_src_tgt, src_tgt_arr, n_source*n_target);
-    if (i_source==1) {//(i_conn>1980 && i_conn < 1990) {
-      printf("okkk i_conn: %lld is: %d it: %d i_src_tgt: %lld i_arr: %lld\n",
-	     i_conn, i_source, i_target, i_src_tgt, i_arr);
-      printf("i_conn: %lld src_tgt_arr[i_arr] %lld i_src_tgt %lld\n",
-	     i_conn, src_tgt_arr[i_arr], i_src_tgt);
-    }
     if (src_tgt_arr[i_arr] == i_src_tgt) {
       // (atomic)increase the number of connections for source-target couple
       atomicAdd((unsigned long long *)&src_tgt_conn_num[i_arr], 1);
-    }
-    else if (i_source==1) {
-      printf("here1 i_conn: %lld is: %d it: %d i_src_tgt: %lld i_arr: %lld\n",
-	     i_conn, i_source, i_target, i_src_tgt, i_arr);
-      printf("here2 i_conn: %lld src_tgt_arr[i_arr] %lld i_src_tgt %lld\n",
-	     i_conn, src_tgt_arr[i_arr], i_src_tgt);
-      printf("here3 src_tgt_arr[i_arr+1] %lld n_source %d n_target %d\n",
-	     src_tgt_arr[i_arr+1], n_source, n_target);
     }
   }
 }
@@ -777,10 +736,7 @@ __global__ void SetConnectionsIndexKernel(int64_t n_conn, int n_source,
 int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
 				 int *i_target_pt, int n_target,
 				 int syn_group, int64_t *n_conn)
-{
-  printf("GetConnections n_source: %d n_target: %d syn_group: %d\n",
-	 n_source, n_target, syn_group);
-  
+{  
   int64_t *h_conn_ids = NULL;
   int64_t *d_conn_ids = NULL;
   int64_t n_src_tgt = (int64_t)n_source * n_target;
@@ -831,9 +787,6 @@ int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
     // The last element is the total number of required connection Ids
     cudaMemcpy(&n_conn_ids, &d_src_tgt_conn_cumul[n_src_tgt],
 	       sizeof(int64_t), cudaMemcpyDeviceToHost);
-
-    //printf("GetConnections n_conn_ids: %ld\n", n_conn_ids);
-    //exit(0);
     
     if (n_conn_ids > 0) {
       // Allocate array of connection indexes
@@ -858,7 +811,6 @@ int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
       gpuErrchk(cudaFree(d_conn_ids));
     }
   }
-  printf("GetConnections n_conn_ids: %ld\n", n_conn_ids);
   *n_conn = n_conn_ids;
   
   return h_conn_ids;

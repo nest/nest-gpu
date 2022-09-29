@@ -435,30 +435,6 @@ int NESTGPU::EndSimulation()
       (end_real_time_ - build_real_time_) << "\n";
   }
 
-  //////////////////////////////////////////////////////////////////////
-  /////// TEMPORARY. REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  printf("NConn %ld", NConn);
-  int N = 20000;
-  uint source_delay[N];
-  uint count[10];
-  for(int i=0; i<10; i++) {
-    count[i] = 0;
-  }
-    
-  gpuErrchk(cudaMemcpy(source_delay, KeySubarray[0], N*sizeof(uint),
-		       cudaMemcpyDeviceToHost));
-  for(int i=0; i<N; i++) {
-    int source = source_delay[i] >> h_MaxPortNBits;
-    //printf("i: %d\t source: %d\n", i, source);
-    if (source < 10) {
-      count[source]++;
-    }
-  }
-  for(int i=0; i<10; i++) {
-    printf("i_source: %d count: %d\n", i, count[i]);
-  }
-  //////////////////////////////////////////////////////////////////////
-
   return 0;
 }
 
