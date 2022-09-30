@@ -29,7 +29,7 @@
 //#include "connect.h"
 #include "nestgpu.h"
 #include "connect_rules.h"
-#include "new_connect.h"
+#include "connect.h"
 #include "distribution.h"
 
 int ConnSpec::Init()

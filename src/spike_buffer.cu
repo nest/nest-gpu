@@ -32,7 +32,7 @@
 //#include "connect.h"
 #include "send_spike.h"
 #include "node_group.h"
-#include "new_connect.h"
+#include "connect.h"
 
 #ifdef HAVE_MPI
 #include "spike_mpi.h"

@@ -37,7 +37,7 @@
 #include "poiss_gen.h"
 #include "poiss_gen_variables.h"
 #include "copass_kernels.h"
-#include "new_connect.h"
+#include "connect.h"
 
 extern __constant__ double NESTGPUTime;
 extern __constant__ float NESTGPUTimeResolution;

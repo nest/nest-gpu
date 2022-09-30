@@ -25,6 +25,7 @@
 				    //#include "cuda_error_nl.h"
 #include "cuda_error.h"
 #include "utilities.h"
+#include "syn_model.h"
 #include "nested_loop.h"
 
 const int Ny_arr_size_ = 24;

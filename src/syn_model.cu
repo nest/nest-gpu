@@ -202,9 +202,10 @@ int NESTGPU::SynGroupCalibrate()
   gpuErrchk(cudaMalloc(&d_SynGroupTypeMap, n_group*sizeof(int)));
   gpuErrchk(cudaMalloc(&d_SynGroupParamMap, n_group*sizeof(float*)));
 
-  gpuErrchk(cudaMemcpy(d_SynGroupTypeMap, h_SynGroupTypeMap,
+  // Memcopies will be synchronised with SynGroupInit kernel
+  gpuErrchk(cudaMemcpyAsync(d_SynGroupTypeMap, h_SynGroupTypeMap,
 		       n_group*sizeof(int), cudaMemcpyHostToDevice));
-  gpuErrchk(cudaMemcpy(d_SynGroupParamMap, h_SynGroupParamMap,
+  gpuErrchk(cudaMemcpyAsync(d_SynGroupParamMap, h_SynGroupParamMap,
 		       n_group*sizeof(float*), cudaMemcpyHostToDevice));
 
   SynGroupInit<<<1,1>>>(d_SynGroupTypeMap, d_SynGroupParamMap);

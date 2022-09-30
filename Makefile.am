@@ -11,125 +11,128 @@ python_PYTHON = $(top_srcdir)/pythonlib/nestgpu.py
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
-ngpu_h_files=\
-$(top_srcdir)/src/utilities.h \
-$(top_srcdir)/src/distribution.h \
-$(top_srcdir)/src/copass_kernels.h \
-$(top_srcdir)/src/copass_sort.h \
-$(top_srcdir)/src/new_connect.h \
-$(top_srcdir)/src/iaf_psc_exp_g.h \
-$(top_srcdir)/src/iaf_psc_exp_hc_params.h \
-$(top_srcdir)/src/iaf_psc_exp_hc.h \
-$(top_srcdir)/src/iaf_psc_exp.h \
-$(top_srcdir)/src/ext_neuron.h \
-$(top_srcdir)/src/aeif_cond_alpha.h \
-$(top_srcdir)/src/aeif_cond_alpha_kernel.h \
-$(top_srcdir)/src/aeif_cond_alpha_rk5.h \
-$(top_srcdir)/src/aeif_cond_beta.h \
-$(top_srcdir)/src/aeif_cond_beta_kernel.h \
-$(top_srcdir)/src/aeif_cond_beta_rk5.h \
-$(top_srcdir)/src/aeif_psc_alpha.h \
-$(top_srcdir)/src/aeif_psc_alpha_kernel.h \
-$(top_srcdir)/src/aeif_psc_alpha_rk5.h \
-$(top_srcdir)/src/aeif_psc_delta.h \
-$(top_srcdir)/src/aeif_psc_delta_kernel.h \
-$(top_srcdir)/src/aeif_psc_delta_rk5.h \
-$(top_srcdir)/src/aeif_psc_exp.h \
-$(top_srcdir)/src/aeif_psc_exp_kernel.h \
-$(top_srcdir)/src/aeif_psc_exp_rk5.h \
-$(top_srcdir)/src/base_neuron.h \
-$(top_srcdir)/src/connect_rules.h \
-$(top_srcdir)/src/connect_spec.h \
-$(top_srcdir)/src/cuda_error.h \
-$(top_srcdir)/src/getRealTime.h \
-$(top_srcdir)/src/get_spike.h \
-$(top_srcdir)/src/multimeter.h \
-$(top_srcdir)/src/nested_loop.h \
-$(top_srcdir)/src/neuron_models.h \
-$(top_srcdir)/src/nestgpu.h \
-$(top_srcdir)/src/nestgpu_C.h \
-$(top_srcdir)/src/ngpu_exception.h \
-$(top_srcdir)/src/node_group.h \
-$(top_srcdir)/src/parrot_neuron.h \
-$(top_srcdir)/src/poiss_gen.h \
-$(top_srcdir)/src/poiss_gen_variables.h \
-$(top_srcdir)/src/prefix_scan.h \
-$(top_srcdir)/src/propagate_error.h \
-$(top_srcdir)/src/random.h \
-$(top_srcdir)/src/rev_spike.h \
-$(top_srcdir)/src/rk5.h \
-$(top_srcdir)/src/rk5_const.h \
-$(top_srcdir)/src/rk5_interface.h \
-$(top_srcdir)/src/send_spike.h \
-$(top_srcdir)/src/spike_buffer.h \
-$(top_srcdir)/src/spike_detector.h \
-$(top_srcdir)/src/spike_generator.h \
-$(top_srcdir)/src/spike_mpi.h \
-$(top_srcdir)/src/stdp.h \
-$(top_srcdir)/src/syn_model.h \
-$(top_srcdir)/src/test_syn_model.h \
-$(top_srcdir)/src/izhikevich_cond_beta.h \
-$(top_srcdir)/src/izhikevich_cond_beta_kernel.h \
-$(top_srcdir)/src/izhikevich_cond_beta_rk5.h \
-$(top_srcdir)/src/izhikevich.h \
-$(top_srcdir)/src/izhikevich_psc_exp.h \
-$(top_srcdir)/src/izhikevich_psc_exp_5s.h \
-$(top_srcdir)/src/izhikevich_psc_exp_2s.h \
-$(top_srcdir)/src/user_m1.h \
-$(top_srcdir)/src/user_m1_kernel.h \
-$(top_srcdir)/src/user_m1_rk5.h \
-$(top_srcdir)/src/user_m2.h \
-$(top_srcdir)/src/user_m2_kernel.h \
-$(top_srcdir)/src/user_m2_rk5.h
+HCUSRC=\
+utilities.h \
+distribution.h \
+copass_kernels.h \
+copass_sort.h \
+connect.h \
+iaf_psc_exp_g.h \
+iaf_psc_exp_hc_params.h \
+iaf_psc_exp_hc.h \
+iaf_psc_exp.h \
+ext_neuron.h \
+aeif_cond_alpha.h \
+aeif_cond_alpha_kernel.h \
+aeif_cond_alpha_rk5.h \
+aeif_cond_beta.h \
+aeif_cond_beta_kernel.h \
+aeif_cond_beta_rk5.h \
+aeif_psc_alpha.h \
+aeif_psc_alpha_kernel.h \
+aeif_psc_alpha_rk5.h \
+aeif_psc_delta.h \
+aeif_psc_delta_kernel.h \
+aeif_psc_delta_rk5.h \
+aeif_psc_exp.h \
+aeif_psc_exp_kernel.h \
+aeif_psc_exp_rk5.h \
+base_neuron.h \
+connect_rules.h \
+connect_spec.h \
+cuda_error.h \
+getRealTime.h \
+get_spike.h \
+multimeter.h \
+nested_loop.h \
+neuron_models.h \
+nestgpu.h \
+ngpu_exception.h \
+node_group.h \
+parrot_neuron.h \
+poiss_gen.h \
+poiss_gen_variables.h \
+prefix_scan.h \
+propagate_error.h \
+random.h \
+rev_spike.h \
+rk5.h \
+rk5_const.h \
+rk5_interface.h \
+send_spike.h \
+spike_buffer.h \
+spike_detector.h \
+spike_generator.h \
+spike_mpi.h \
+stdp.h \
+syn_model.h \
+test_syn_model.h \
+izhikevich_cond_beta.h \
+izhikevich_cond_beta_kernel.h \
+izhikevich_cond_beta_rk5.h \
+izhikevich.h \
+izhikevich_psc_exp.h \
+izhikevich_psc_exp_5s.h \
+izhikevich_psc_exp_2s.h \
+user_m1.h \
+user_m1_kernel.h \
+user_m1_rk5.h \
+user_m2.h \
+user_m2_kernel.h \
+user_m2_rk5.h
 
-ngpu_src_files=\
-$(top_srcdir)/src/utilities.cu \
-$(top_srcdir)/src/distribution.cu \
-$(top_srcdir)/src/copass_kernels.cu \
-$(top_srcdir)/src/copass_sort.cu \
-$(top_srcdir)/src/new_connect.cu \
-$(top_srcdir)/src/iaf_psc_exp_g.cu \
-$(top_srcdir)/src/iaf_psc_exp_hc.cu \
-$(top_srcdir)/src/iaf_psc_exp.cu \
-$(top_srcdir)/src/ext_neuron.cu \
-$(top_srcdir)/src/aeif_cond_alpha.cu \
-$(top_srcdir)/src/aeif_cond_beta.cu \
-$(top_srcdir)/src/aeif_psc_alpha.cu \
-$(top_srcdir)/src/aeif_psc_delta.cu \
-$(top_srcdir)/src/aeif_psc_exp.cu \
-$(top_srcdir)/src/base_neuron.cu \
-$(top_srcdir)/src/connect_rules.cu \
-$(top_srcdir)/src/dummyfile.cpp \
-$(top_srcdir)/src/getRealTime.cu \
-$(top_srcdir)/src/get_spike.cu \
-$(top_srcdir)/src/multimeter.cu \
-$(top_srcdir)/src/nested_loop.cu \
-$(top_srcdir)/src/neuron_models.cu \
-$(top_srcdir)/src/nestgpu.cu \
-$(top_srcdir)/src/nestgpu_C.cpp \
-$(top_srcdir)/src/node_group.cu \
-$(top_srcdir)/src/parrot_neuron.cu \
-$(top_srcdir)/src/poiss_gen.cu \
-$(top_srcdir)/src/prefix_scan.cu \
-$(top_srcdir)/src/random.cu \
-$(top_srcdir)/src/rev_spike.cu \
-$(top_srcdir)/src/rk5.cu \
-$(top_srcdir)/src/scan.cu \
-$(top_srcdir)/src/send_spike.cu \
-$(top_srcdir)/src/spike_buffer.cu \
-$(top_srcdir)/src/spike_detector.cu \
-$(top_srcdir)/src/spike_generator.cu \
-$(top_srcdir)/src/spike_mpi.cu \
-$(top_srcdir)/src/stdp.cu \
-$(top_srcdir)/src/syn_model.cu \
-$(top_srcdir)/src/test_syn_model.cu \
-$(top_srcdir)/src/izhikevich_cond_beta.cu \
-$(top_srcdir)/src/izhikevich.cu \
-$(top_srcdir)/src/izhikevich_psc_exp_5s.cu \
-$(top_srcdir)/src/izhikevich_psc_exp_2s.cu \
-$(top_srcdir)/src/izhikevich_psc_exp.cu \
-$(top_srcdir)/src/user_m1.cu \
-$(top_srcdir)/src/user_m2.cu
+CUSRC=\
+utilities.cu \
+distribution.cu \
+copass_kernels.cu \
+copass_sort.cu \
+connect.cu \
+iaf_psc_exp_g.cu \
+iaf_psc_exp_hc.cu \
+iaf_psc_exp.cu \
+ext_neuron.cu \
+aeif_cond_alpha.cu \
+aeif_cond_beta.cu \
+aeif_psc_alpha.cu \
+aeif_psc_delta.cu \
+aeif_psc_exp.cu \
+base_neuron.cu \
+connect_rules.cu \
+getRealTime.cu \
+get_spike.cu \
+multimeter.cu \
+nested_loop.cu \
+neuron_models.cu \
+nestgpu.cu \
+node_group.cu \
+parrot_neuron.cu \
+poiss_gen.cu \
+prefix_scan.cu \
+random.cu \
+rev_spike.cu \
+rk5.cu \
+scan.cu \
+send_spike.cu \
+spike_buffer.cu \
+spike_detector.cu \
+spike_generator.cu \
+spike_mpi.cu \
+stdp.cu \
+syn_model.cu \
+test_syn_model.cu \
+izhikevich_cond_beta.cu \
+izhikevich.cu \
+izhikevich_psc_exp_5s.cu \
+izhikevich_psc_exp_2s.cu \
+izhikevich_psc_exp.cu \
+user_m1.cu \
+user_m2.cu
+
+HCPPSRC=\
+nestgpu_C.h
+
+CPPSRC=\
+nestgpu_C.cpp
 
 COMPILER_FLAGS= -O3 -Wall -fPIC
 if OSX
@@ -143,23 +146,26 @@ CUDA_FLAGS= -arch $(GPU_ARCH) --ptxas-options=-v --maxrregcount=55 --relocatable
 CUDA_LIBS= -lm -lcurand -lcuda -lcudart
 #-lomp
 
-OBJS=$(ngpu_src_files:.cu=.cu.o)
-
-%.cu.o: %.cu
+CUOBJ=$(CUSRC:.cu=.cu.o)
+CPPOBJ=$(CPPSRC:.cpp=.cpp.o)
+OBJDIR=obj
+OBJS=$(addprefix $(OBJDIR)/, $(CUOBJ)) $(addprefix $(OBJDIR)/, $(CPPOBJ))
+$(OBJDIR)/%.cu.o: $(top_srcdir)/src/%.cu $(top_srcdir)/src/%.h
+	@mkdir -p obj
 	$(NVCC) -ccbin=$(MPICXX) --compiler-options  "$(COMPILER_FLAGS)" -I . $(CUDA_FLAGS) $< -c -o $@
+$(OBJDIR)/%.cpp.o: $(top_srcdir)/src/%.cpp $(top_srcdir)/src/%.h
+	@mkdir -p obj
+	$(MPICXX) $(COMPILER_FLAGS) -I . $< -c -o $@
 
 libnestgpu.la: $(OBJS)
 	$(NVCC) -ccbin=$(MPICXX) --compiler-options  "$(COMPILER_FLAGS)" -I . $(CUDA_FLAGS) --shared -o $@ $^ $(CUDA_LIBS)
-
-#libnestgpu.la: $(ngpu_src_files) $(ngpu_h_files)
-#	$(NVCC) -ccbin=$(MPICXX) --compiler-options  "$(COMPILER_FLAGS)" -I . $(CUDA_FLAGS) --shared -o $@ $(ngpu_src_files) $(CUDA_LIBS)
 
 lib_LTLIBRARIES = libnestgpu.la
 
 %.cu: 
 
 clean-local:
-	rm -f *.so src/*.cu.o
+	rm -f *.so obj/*.o
 
 install-exec-hook:
 if OSX

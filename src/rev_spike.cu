@@ -23,7 +23,7 @@
 #include "spike_buffer.h"
 #include "cuda_error.h"
 #include "syn_model.h"
-#include "new_connect.h"
+#include "connect.h"
 #include <cub/cub.cuh>
 
 #define SPIKE_TIME_DIFF_GUARD 15000 // must be less than 16384

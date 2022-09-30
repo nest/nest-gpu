@@ -4,7 +4,7 @@
 
 #include <config.h>
 #include <stdlib.h>
-#include "scan.cuh"
+#include "scan.h"
 
 #define checkCudaError(o, l) _checkCudaError(o, l, __func__)
 

@@ -349,6 +349,18 @@ extern "C" {
 
   float NESTGPU_GetNeuronGroupParam(int i_node, char *param_name);
 
+  int NESTGPU_GetNBoolParam();
+  
+  char **NESTGPU_GetBoolParamNames();
+  
+  int NESTGPU_IsBoolParam(char *param_name);
+  
+  int NESTGPU_GetBoolParamIdx(char *param_name);
+  
+  bool NESTGPU_GetBoolParam(char *param_name);
+  
+  int NESTGPU_SetBoolParam(char *param_name, bool val);
+
   int NESTGPU_GetNFloatParam();
   
   char **NESTGPU_GetFloatParamNames();

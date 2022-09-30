@@ -36,8 +36,8 @@
 #include "base_neuron.h"
 #include "connect_spec.h"
 //#include "connect.h"
-#include "syn_model.h"
-#include "distribution.h"
+//#include "syn_model.h"
+//#include "distribution.h"
 
 #ifdef HAVE_MPI
 class ConnectMpi;
@@ -49,6 +49,7 @@ struct curandGenerator_st;
 typedef struct curandGenerator_st* curandGenerator_t;
 class ConnSpec;
 class SynSpec;
+class SynModel;
 
 class Sequence
 {
@@ -109,7 +110,7 @@ class NESTGPU
   bool calibrate_flag_; // becomes true after calibration
   bool create_flag_; // becomes true just before creation of the first node
 
-  Distribution distribution_;
+  Distribution *distribution_;
   Multimeter *multimeter_;
   std::vector<BaseNeuron*> node_vect_; // -> node_group_vect
   std::vector<SynModel*> syn_group_vect_;
@@ -152,6 +153,7 @@ class NESTGPU
   int on_exception_;
 
   int verbosity_level_;
+  bool print_time_;
 
   int nested_loop_algo_;
 
@@ -289,10 +291,22 @@ class NESTGPU
 
   int SetNestedLoopAlgo(int nested_loop_algo);
 
+  inline int SetPrintTime(bool print_time) {
+    print_time_ = print_time;
+    return 0;
+  }
+
   int SetMaxSpikeBufferSize(int max_size);
   int GetMaxSpikeBufferSize();
   
   uint GetNNode();
+
+  int GetNBoolParam();
+  std::vector<std::string> GetBoolParamNames();
+  bool IsBoolParam(std::string param_name);
+  int GetBoolParamIdx(std::string param_name);
+  bool GetBoolParam(std::string param_name);
+  int SetBoolParam(std::string param_name, bool val);
 
   int GetNFloatParam();
   std::vector<std::string> GetFloatParamNames();

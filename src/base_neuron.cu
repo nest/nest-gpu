@@ -27,9 +27,10 @@
 #include "utilities.h"
 #include "ngpu_exception.h"
 #include "cuda_error.h"
+#include "distribution.h"
 #include "base_neuron.h"
 #include "spike_buffer.h"
-#include "scan.cuh"
+#include "scan.h"
 
 // set equally spaced (index i*step) elements of array arr to value val
 __global__ void BaseNeuronSetIntArray(int *arr, int n_elem, int step,
@@ -259,7 +260,8 @@ int BaseNeuron::SetScalParam(int *i_neuron, int n_neuron,
   }
   int *d_i_neuron;
   gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
-  gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
+  // Memcopy will be synchronized with BaseNeuronSetFloatPtArray kernel
+  gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   float *param_pt = GetParamPt(0, param_name);
   BaseNeuronSetFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -317,7 +319,8 @@ int BaseNeuron::SetPortParam(int *i_neuron, int n_neuron,
   }
   int *d_i_neuron;
   gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
-  gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
+  // Memcopy will be synchronized with BaseNeuronSetFloatPtArray kernel
+  gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
     float *param_pt = GetParamPt(0, param_name, i_vect);
@@ -402,7 +405,8 @@ int BaseNeuron::SetIntVar(int *i_neuron, int n_neuron,
   }
   int *d_i_neuron;
   gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
-  gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
+  // Memcopy will be synchronized with BaseNeuronSetIntPtArray kernel
+  gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   int *var_pt = GetIntVarPt(0, var_name);
   BaseNeuronSetIntPtArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -447,7 +451,8 @@ int BaseNeuron::SetScalVar(int *i_neuron, int n_neuron,
   }
   int *d_i_neuron;
   gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
-  gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
+  // Memcopy will be synchronized with BaseNeuronSetFloatPtArray kernel
+  gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   float *var_pt = GetVarPt(0, var_name);
   BaseNeuronSetFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -505,7 +510,8 @@ int BaseNeuron::SetPortVar(int *i_neuron, int n_neuron,
   }
   int *d_i_neuron;
   gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
-  gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
+  // Memcopy will be synchronized with BaseNeuronSetFloatPtArray kernel
+  gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
     float *var_pt = GetVarPt(0, var_name, i_vect);
@@ -553,7 +559,7 @@ int BaseNeuron::SetArrayVar(int *i_neuron, int n_neuron,
 // using distribution or array
 int BaseNeuron::SetScalParamDistr(int i_neuron, int n_neuron,
 				  std::string param_name,
-				  Distribution &distribution)
+				  Distribution *distribution)
 {
   if (!IsScalParam(param_name)) {
     throw ngpu_exception(std::string("Unrecognized scalar parameter ")
@@ -562,7 +568,7 @@ int BaseNeuron::SetScalParamDistr(int i_neuron, int n_neuron,
   CheckNeuronIdx(i_neuron);
   CheckNeuronIdx(i_neuron + n_neuron - 1);
   float *param_pt = GetParamPt(i_neuron, param_name);
-  float *d_arr = distribution.getArray(n_neuron);
+  float *d_arr = distribution->getArray(n_neuron);
   BaseNeuronCopyFloatArray<<<(n_neuron+1023)/1024, 1024>>>
     (param_pt, n_neuron, n_param_, d_arr);
   gpuErrchk( cudaPeekAtLastError() );
@@ -577,7 +583,7 @@ int BaseNeuron::SetScalParamDistr(int i_neuron, int n_neuron,
 // using distribution or array
 int BaseNeuron::SetScalParamDistr(int *i_neuron, int n_neuron,
 				  std::string param_name,
-				  Distribution &distribution)
+				  Distribution *distribution)
 {
   if (!IsScalParam(param_name)) {
     throw ngpu_exception(std::string("Unrecognized scalar parameter ")
@@ -588,7 +594,7 @@ int BaseNeuron::SetScalParamDistr(int *i_neuron, int n_neuron,
   gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   float *param_pt = GetParamPt(0, param_name);
-  float *d_arr = distribution.getArray(n_neuron);
+  float *d_arr = distribution->getArray(n_neuron);
   BaseNeuronCopyFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
     (param_pt, d_i_neuron, n_neuron, n_param_, d_arr);
   gpuErrchk( cudaPeekAtLastError() );
@@ -604,7 +610,7 @@ int BaseNeuron::SetScalParamDistr(int *i_neuron, int n_neuron,
 // using distribution or array
 int BaseNeuron::SetScalVarDistr(int i_neuron, int n_neuron,
 				  std::string var_name,
-				  Distribution &distribution)
+				  Distribution *distribution)
 {
   //printf("okk0\n");
   if (!IsScalVar(var_name)) {
@@ -615,7 +621,7 @@ int BaseNeuron::SetScalVarDistr(int i_neuron, int n_neuron,
   CheckNeuronIdx(i_neuron + n_neuron - 1);
   float *var_pt = GetVarPt(i_neuron, var_name);
   //printf("okk1\n");
-  float *d_arr = distribution.getArray(n_neuron);
+  float *d_arr = distribution->getArray(n_neuron);
   //printf("okk2\n");
   BaseNeuronCopyFloatArray<<<(n_neuron+1023)/1024, 1024>>>
     (var_pt, n_neuron, n_var_, d_arr);
@@ -633,7 +639,7 @@ int BaseNeuron::SetScalVarDistr(int i_neuron, int n_neuron,
 // using distribution or array
 int BaseNeuron::SetScalVarDistr(int *i_neuron, int n_neuron,
 				std::string var_name,
-				Distribution &distribution)
+				Distribution *distribution)
 {
   if (!IsScalVar(var_name)) {
     throw ngpu_exception(std::string("Unrecognized scalar variable ")
@@ -644,7 +650,7 @@ int BaseNeuron::SetScalVarDistr(int *i_neuron, int n_neuron,
   gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   float *var_pt = GetVarPt(0, var_name);
-  float *d_arr = distribution.getArray(n_neuron);
+  float *d_arr = distribution->getArray(n_neuron);
   BaseNeuronCopyFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
     (var_pt, d_i_neuron, n_neuron, n_var_, d_arr);
   gpuErrchk( cudaPeekAtLastError() );
@@ -660,7 +666,7 @@ int BaseNeuron::SetScalVarDistr(int *i_neuron, int n_neuron,
 // using distribution or array
 int BaseNeuron::SetPortParamDistr(int i_neuron, int n_neuron,
 				  std::string param_name,
-				  Distribution &distribution)
+				  Distribution *distribution)
 {
   if (!IsPortParam(param_name)) {
     throw ngpu_exception(std::string("Unrecognized port parameter ")
@@ -668,7 +674,7 @@ int BaseNeuron::SetPortParamDistr(int i_neuron, int n_neuron,
   }
   CheckNeuronIdx(i_neuron);
   CheckNeuronIdx(i_neuron + n_neuron - 1);
-  int vect_size = distribution.vectSize();
+  int vect_size = distribution->vectSize();
   if (vect_size != n_port_) {
     throw ngpu_exception("Distribution vector dimension must be "
 			 "equal to the number of ports.");
@@ -677,7 +683,7 @@ int BaseNeuron::SetPortParamDistr(int i_neuron, int n_neuron,
     
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
     param_pt = GetParamPt(i_neuron, param_name, i_vect);
-    float *d_arr = distribution.getArray(n_neuron, i_vect);
+    float *d_arr = distribution->getArray(n_neuron, i_vect);
     BaseNeuronCopyFloatArray<<<(n_neuron+1023)/1024, 1024>>>
       (param_pt, n_neuron, n_param_, d_arr);
     gpuErrchk( cudaPeekAtLastError() );
@@ -692,14 +698,14 @@ int BaseNeuron::SetPortParamDistr(int i_neuron, int n_neuron,
 // using distribution or array
 int BaseNeuron::SetPortParamDistr(int *i_neuron, int n_neuron,
 				  std::string param_name,
-				  Distribution &distribution)
+				  Distribution *distribution)
 			     
 {
   if (!IsPortParam(param_name)) {
     throw ngpu_exception(std::string("Unrecognized port parameter ")
 			 + param_name);
   }
-  int vect_size = distribution.vectSize();
+  int vect_size = distribution->vectSize();
   if (vect_size != n_port_) {
     throw ngpu_exception("Distribution vector dimension must be "
 			 "equal to the number of ports.");
@@ -710,7 +716,7 @@ int BaseNeuron::SetPortParamDistr(int *i_neuron, int n_neuron,
 		       cudaMemcpyHostToDevice));
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
     float *param_pt = GetParamPt(0, param_name, i_vect);
-    float *d_arr = distribution.getArray(n_neuron, i_vect);
+    float *d_arr = distribution->getArray(n_neuron, i_vect);
     BaseNeuronCopyFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
       (param_pt, d_i_neuron, n_neuron, n_param_, d_arr);
     gpuErrchk( cudaPeekAtLastError() );
@@ -727,7 +733,7 @@ int BaseNeuron::SetPortParamDistr(int *i_neuron, int n_neuron,
 // using distribution or array
 int BaseNeuron::SetPortVarDistr(int i_neuron, int n_neuron,
 				std::string var_name,
-				Distribution &distribution)
+				Distribution *distribution)
 {
   if (!IsPortVar(var_name)) {
     throw ngpu_exception(std::string("Unrecognized port variable ")
@@ -735,7 +741,7 @@ int BaseNeuron::SetPortVarDistr(int i_neuron, int n_neuron,
   }
   CheckNeuronIdx(i_neuron);
   CheckNeuronIdx(i_neuron + n_neuron - 1);
-  int vect_size = distribution.vectSize();
+  int vect_size = distribution->vectSize();
   if (vect_size != n_port_) {
     throw ngpu_exception("Distribution vector dimension must be "
 			 "equal to the number of ports.");
@@ -744,7 +750,7 @@ int BaseNeuron::SetPortVarDistr(int i_neuron, int n_neuron,
     
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
     var_pt = GetVarPt(i_neuron, var_name, i_vect);
-    float *d_arr = distribution.getArray(n_neuron, i_vect);
+    float *d_arr = distribution->getArray(n_neuron, i_vect);
     BaseNeuronCopyFloatArray<<<(n_neuron+1023)/1024, 1024>>>
       (var_pt, n_neuron, n_var_, d_arr);
     gpuErrchk( cudaPeekAtLastError() );
@@ -756,13 +762,13 @@ int BaseNeuron::SetPortVarDistr(int i_neuron, int n_neuron,
 
 int BaseNeuron::SetPortVarDistr(int *i_neuron, int n_neuron,
 				std::string var_name,
-				Distribution &distribution)
+				Distribution *distribution)
 {
   if (!IsPortVar(var_name)) {
     throw ngpu_exception(std::string("Unrecognized port variable ")
 			 + var_name);
   }
-  int vect_size = distribution.vectSize();
+  int vect_size = distribution->vectSize();
   if (vect_size != n_port_) {
     throw ngpu_exception("Distribution vector dimension must be "
 			 "equal to the number of ports.");
@@ -773,7 +779,7 @@ int BaseNeuron::SetPortVarDistr(int *i_neuron, int n_neuron,
 		       cudaMemcpyHostToDevice));
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
     float *var_pt = GetVarPt(0, var_name, i_vect);
-    float *d_arr = distribution.getArray(n_neuron, i_vect);
+    float *d_arr = distribution->getArray(n_neuron, i_vect);
     BaseNeuronCopyFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
       (var_pt, d_i_neuron, n_neuron, n_var_, d_arr);
     gpuErrchk( cudaPeekAtLastError() );
@@ -831,7 +837,8 @@ float *BaseNeuron::GetScalParam(int *i_neuron, int n_neuron,
   }
   int *d_i_neuron;
   gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
-  gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
+  // Memcopy will be synchronized with BaseNeuronGetFloatPtArray kernel
+  gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   float *param_pt = GetParamPt(0, param_name);
 
@@ -895,7 +902,8 @@ float *BaseNeuron::GetPortParam(int *i_neuron, int n_neuron,
   }
   int *d_i_neuron;
   gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
-  gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
+  // Memcopy will be synchronized with BaseNeuronGetFloatPtArray kernel
+  gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
 
   float *d_param_arr;
@@ -982,7 +990,8 @@ int *BaseNeuron::GetIntVar(int *i_neuron, int n_neuron,
   }
   int *d_i_neuron;
   gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
-  gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
+  // Memcopy will be synchronized with BaseNeuronGetIntPtArray kernel
+  gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   int *var_pt = GetIntVarPt(0, var_name);
 
@@ -1043,7 +1052,8 @@ float *BaseNeuron::GetScalVar(int *i_neuron, int n_neuron,
   }
   int *d_i_neuron;
   gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
-  gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
+  // Memcopy will be synchronized with BaseNeuronGetFloatPtArray kernel
+  gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   float *var_pt = GetVarPt(0, var_name);
 
@@ -1107,7 +1117,8 @@ float *BaseNeuron::GetPortVar(int *i_neuron, int n_neuron,
   }
   int *d_i_neuron;
   gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
-  gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
+  // Memcopy will be synchronized with BaseNeuronGetFloatPtArray kernel
+  gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
 
   float *d_var_arr;
@@ -1745,7 +1756,7 @@ int BaseNeuron::BufferRecSpikeTimes()
   prefix_scan(n_rec_spike_times_cumul_, n_rec_spike_times_,
 	      n_node_+1, true);
   int *h_n_rec_spike_times_cumul = new int[n_node_+1];
-  gpuErrchk(cudaMemcpyAsync(h_n_rec_spike_times_cumul,
+  gpuErrchk(cudaMemcpy(h_n_rec_spike_times_cumul,
 			    n_rec_spike_times_cumul_,
 			    (n_node_+1)*sizeof(int), cudaMemcpyDeviceToHost));
   // the last element of the cumulative sum is the total number of spikes

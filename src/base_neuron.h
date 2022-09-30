@@ -28,7 +28,9 @@
 #include <string>
 #include <vector>
 #include <stdint.h>
-#include "distribution.h"
+//#include "distribution.h"
+
+class Distribution;
 
 class NESTGPU;
 
@@ -177,31 +179,31 @@ class BaseNeuron
 
   virtual int SetScalParamDistr(int i_neuron, int n_node,
 				std::string param_name,
-				Distribution &distribution);
+				Distribution *distribution);
 
   virtual int SetScalParamDistr(int *i_neuron, int n_node,
 				std::string param_name,
-				Distribution &distribution);
+				Distribution *distribution);
 
   virtual int SetScalVarDistr(int i_neuron, int n_node, std::string var_name,
-			      Distribution &distribution);
+			      Distribution *distribution);
 
   virtual int SetScalVarDistr(int *i_neuron, int n_node, std::string var_name,
-				Distribution &distribution);
+				Distribution *distribution);
 
   virtual int SetPortParamDistr(int i_neuron, int n_node,
 				  std::string param_name,
-				  Distribution &distribution);
+				  Distribution *distribution);
 
   virtual int SetPortParamDistr(int *i_neuron, int n_node,
 				std::string param_name,
-				Distribution &distribution);
+				Distribution *distribution);
 
   virtual int SetPortVarDistr(int i_neuron, int n_node, std::string var_name,
-			      Distribution &distribution);
+			      Distribution *distribution);
 
   virtual int SetPortVarDistr(int *i_neuron, int n_node, std::string var_name,
-			      Distribution &distribution);
+			      Distribution *distribution);
 
   virtual float *GetScalParam(int i_neuron, int n_neuron,
 			      std::string param_name);

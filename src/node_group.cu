@@ -61,10 +61,11 @@ int NESTGPU::NodeGroupArrayInit()
     
     ngs_vect.push_back(ngs);
   }
-  gpuErrchk(cudaMemcpyToSymbol(NodeGroupArray, ngs_vect.data(),
+  gpuErrchk(cudaMemcpyToSymbolAsync(NodeGroupArray, ngs_vect.data(),
 			       ngs_vect.size()*sizeof(NodeGroupStruct)));
 
-  gpuErrchk(cudaMemcpy(d_node_group_map_, node_group_map_.data(),
+  // Memcopy will be synchronized with NodeGroupMapInit kernel
+  gpuErrchk(cudaMemcpyAsync(d_node_group_map_, node_group_map_.data(),
 		       node_group_map_.size()*sizeof(signed char),
 		       cudaMemcpyHostToDevice));
   // temporary

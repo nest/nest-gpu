@@ -23,7 +23,7 @@
 #define GETSPIKE_H
 #include "utilities.h"
 #include "send_spike.h"
-#include "new_connect.h"
+#include "connect.h"
 #include "node_group.h"
 #include "spike_buffer.h"
 

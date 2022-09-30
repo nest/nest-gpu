@@ -13,7 +13,7 @@
 #include "copass_kernels.h"
 #include "copass_sort.h"
 #include "distribution.h"
-#include "new_connect.h"
+#include "connect.h"
 #include "nestgpu.h"
 #include "utilities.h"
 

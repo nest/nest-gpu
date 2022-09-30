@@ -26,7 +26,7 @@
 #include "send_spike.h"
 #include "spike_buffer.h"
 #include "cuda_error.h"
-#include "new_connect.h"
+#include "connect.h"
 
 
 // improve using a grid
