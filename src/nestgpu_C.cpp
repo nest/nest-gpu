@@ -565,11 +565,11 @@ extern "C" {
   } END_ERR_PROP return ret; }
   
   int NESTGPU_Connect(int i_source_node, int i_target_node,
-			unsigned char port, unsigned char syn_group,
-			float weight, float delay)
+		      int port, unsigned char syn_group,
+		      float weight, float delay)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->Connect(i_source_node, i_target_node,
-				      port, syn_group, weight, delay);
+				    port, syn_group, weight, delay);
   } END_ERR_PROP return ret; }
 
   int NESTGPU_ConnSpecInit()
@@ -920,26 +920,15 @@ extern "C" {
 					     syn_group, n_conn);
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_GetConnectionStatus(int64_t i_conn, int *i_source,
-				  int *i_target, unsigned char *port,
+  int NESTGPU_GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
+				  int *i_source, int *i_target,
+				  int *port,
 				  unsigned char *syn_group, float *delay,
 				  float *weight)
   { int ret = 0; BEGIN_ERR_PROP {
-      /*
-      ConnectionId conn_id;
-      conn_id.i_source_ = i_source;
-      conn_id.i_group_ = i_group;
-      conn_id.i_conn_ = i_conn;
-      ConnectionStatus conn_stat
-	= NESTGPU_instance->GetConnectionStatus(conn_id);
-      *i_target = conn_stat.i_target;
-      *port = conn_stat.port;
-      *syn_group = conn_stat.syn_group;
-      *delay = conn_stat.delay;
-      *weight = conn_stat.weight;
-      
-      ret = 0;
-      */
+      ret = NESTGPU_instance->GetConnectionStatus
+	(conn_ids, n_conn, i_source, i_target, port, syn_group, delay,
+	 weight);
   } END_ERR_PROP return ret; }
 
 

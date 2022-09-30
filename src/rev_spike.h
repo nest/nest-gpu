@@ -63,6 +63,9 @@ __device__ __forceinline__ void NestedLoopFunction<1>
   int64_t i_block_conn = i_conn % ConnBlockSize;
   connection_struct conn = ConnectionArray[i_block][i_block_conn];
   unsigned char syn_group = conn.syn_group;
+  
+  // TO BE IMPROVED BY CHECKING IF THE SYNAPSE TYPE OF THE GROUP
+  // REQUIRES AN UPDATE BASED ON POST-PRE SPIKE TIME DIFFERENCE
   if (syn_group>0) {
     unsigned short spike_time_idx = ConnectionSpikeTime[i_conn];
     unsigned short time_idx = (unsigned short)(NESTGPUTimeIdx & 0xffff);

@@ -64,10 +64,12 @@ __global__ void CountRevConnectionsKernel
   uint i_block = (uint)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
   connection_struct conn = ConnectionArray[i_block][i_block_conn];
-  // TO BE IMPROVED WHEN ADDITIONAL SYN GROUP WILL BE IMPLEMENTED
+
+  // TO BE IMPROVED BY CHECKING IF THE SYNAPSE TYPE OF THE GROUP
+  // REQUIRES REVERSE CONNECTION
   // - Check syn_group of all connections.
-  // - If syn_group ==1 must create a reverse connection:
-  if (conn.syn_group == 1) {
+  // - If syn_group>0 must create a reverse connection:
+  if (conn.syn_group > 0) {
     // First get target node index
     uint target_port = conn.target_port;
     int i_target = target_port >> MaxPortNBits;
@@ -90,10 +92,12 @@ __global__ void SetRevConnectionsIndexKernel
   uint i_block = (uint)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
   connection_struct conn = ConnectionArray[i_block][i_block_conn];
-  // TO BE IMPROVED WHEN ADDITIONAL SYN GROUP WILL BE IMPLEMENTED
+
+  // TO BE IMPROVED BY CHECKING IF THE SYNAPSE TYPE OF THE GROUP
+  // REQUIRES REVERSE CONNECTION  
   // - Check syn_group of all connections.
-  // - If syn_group ==1 must create a reverse connection:
-  if (conn.syn_group == 1) {
+  // - If syn_group>0 must create a reverse connection:
+  if (conn.syn_group > 0) {
     // First get target node index
     uint target_port = conn.target_port;
     int i_target = target_port >> MaxPortNBits;

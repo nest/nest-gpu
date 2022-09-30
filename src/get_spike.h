@@ -70,6 +70,8 @@ __device__  __forceinline__ void NestedLoopFunction<0>(int i_spike, int i_syn)
   double d_val = (double)(height*weight);
 
   atomicAddDouble(&NodeGroupArray[i_group].get_spike_array_[i], d_val);
+  // TO BE IMPROVED BY CHECKING IF THE SYNAPSE TYPE OF THE GROUP
+  // REQUIRES AN UPDATE BASED ON POST-PRE SPIKE TIME DIFFERENCE
   if (syn_group>0) {
     //ConnectionGroupTargetSpikeTime[i_conn*NSpikeBuffer+i_source][i_syn]
     ConnectionSpikeTime[i_conn]

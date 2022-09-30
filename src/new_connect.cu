@@ -17,6 +17,8 @@
 #include "nestgpu.h"
 #include "utilities.h"
 
+extern __constant__ float NESTGPUTimeResolution;
+
 uint h_MaxNodeNBits;
 __device__ uint MaxNodeNBits;
 // maximum number of bits used to represent node index 
@@ -814,4 +816,96 @@ int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
   *n_conn = n_conn_ids;
   
   return h_conn_ids;
+}
+
+//////////////////////////////////////////////////////////////////////
+// CUDA Kernel that gets all parameters of an array of n_conn connections,
+// identified by the indexes conn_ids[i], and puts them in the arrays
+// i_source, i_target, port, syn_group, delay, weight
+//////////////////////////////////////////////////////////////////////
+__global__ void GetConnectionStatusKernel
+(int64_t *conn_ids, int64_t n_conn, int *i_source, int *i_target,
+ int *port, unsigned char *syn_group, float *delay, float *weight)
+{
+  int64_t i_arr = (int64_t)blockIdx.x * blockDim.x + threadIdx.x; 
+  if (i_arr >= n_conn) return;
+
+   // get connection index, connection block index and index within block
+  int64_t i_conn = conn_ids[i_arr];
+  uint i_block = (uint)(i_conn / ConnBlockSize);
+  int64_t i_block_conn = i_conn % ConnBlockSize;
+  // get connection structure
+  connection_struct conn = ConnectionArray[i_block][i_block_conn];
+  // Get joined target-port variable, then target index and port index
+  uint target_port = conn.target_port;
+  i_target[i_arr] = target_port >> MaxPortNBits;
+  port[i_arr] = target_port & PortMask;
+  // Get weight and synapse group
+  weight[i_arr] = conn.weight;
+  syn_group[i_arr] = conn.syn_group;
+  // Get joined source-delay variable, then source index and delay
+  uint source_delay = SourceDelayArray[i_block][i_block_conn];
+  i_source[i_arr] = source_delay >> MaxPortNBits;
+  int i_delay = source_delay & PortMask;
+  delay[i_arr] = NESTGPUTimeResolution * i_delay;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Get all parameters of an array of n_conn connections, identified by
+// the indexes conn_ids[i], and put them in the arrays
+// i_source, i_target, port, syn_group, delay, weight
+// NOTE: host arrays should be pre-allocated to store n_conn elements
+//////////////////////////////////////////////////////////////////////
+int NESTGPU::GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
+				 int *i_source, int *i_target, int *port,
+				 unsigned char *syn_group, float *delay,
+				 float *weight)
+{
+  if (n_conn > 0) {
+    // declare pointers to arrays in device memory
+    int64_t *d_conn_ids;
+    int *d_source;
+    int *d_target;
+    int *d_port;
+    unsigned char *d_syn_group;
+    float *d_delay;
+    float *d_weight;
+
+    // allocate array of connection ids in device memory
+    // and copy the ids from host to device array
+    gpuErrchk(cudaMalloc(&d_conn_ids, n_conn*sizeof(int64_t)));
+    gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn*sizeof(int64_t),
+			 cudaMemcpyHostToDevice));
+
+    // allocate arrays of connection parameters in device memory
+    gpuErrchk(cudaMalloc(&d_source, n_conn*sizeof(int)));
+    gpuErrchk(cudaMalloc(&d_target, n_conn*sizeof(int)));
+    gpuErrchk(cudaMalloc(&d_port, n_conn*sizeof(int)));
+    gpuErrchk(cudaMalloc(&d_syn_group, n_conn*sizeof(unsigned char)));
+    gpuErrchk(cudaMalloc(&d_delay, n_conn*sizeof(float)));
+    gpuErrchk(cudaMalloc(&d_weight, n_conn*sizeof(float)));
+    // host arrays
+    
+    // launch kernel to get connection parameters
+    GetConnectionStatusKernel<<<(n_conn+1023)/1024, 1024 >>>
+      (d_conn_ids, n_conn, d_source, d_target, d_port, d_syn_group,
+       d_delay, d_weight);
+
+    // copy connection parameters from device to host memory
+    gpuErrchk(cudaMemcpy(i_source, d_source, n_conn*sizeof(int),
+			 cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(i_target, d_target, n_conn*sizeof(int),
+			 cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(port, d_port, n_conn*sizeof(int),
+			 cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(syn_group, d_syn_group,
+			 n_conn*sizeof(unsigned char),
+			 cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(delay, d_delay, n_conn*sizeof(float),
+			 cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(weight, d_weight, n_conn*sizeof(float),
+			 cudaMemcpyDeviceToHost));
+  }
+  
+  return 0;
 }

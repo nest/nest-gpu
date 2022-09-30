@@ -553,11 +553,8 @@ class NESTGPU
   float *RandomNormalClipped(size_t n, float mean, float stddev, float vmin,
 			     float vmax, float vstep);  
 
-  int Connect
-    (
-     int i_source_node, int i_target_node, unsigned char port,
-     unsigned char syn_group, float weight, float delay
-     );
+  int Connect(int i_source_node, int i_target_node, int port,
+	      unsigned char syn_group, float weight, float delay);
 
   int Connect(int i_source, int n_source, int i_target, int n_target,
 	      ConnSpec &conn_spec, SynSpec &syn_spec);
@@ -648,12 +645,11 @@ class NESTGPU
   
   int GetNArrayVar(int i_node);
 
-  /*
-  ConnectionStatus GetConnectionStatus(ConnectionId conn_id);
-  
-  std::vector<ConnectionStatus> GetConnectionStatus(std::vector<ConnectionId>
-						    &conn_id_vect);
-  */
+  int GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
+			  int *i_source, int *i_target, int *port,
+			  unsigned char *syn_group, float *delay,
+			  float *weight);
+
   int64_t *GetConnections(int i_source, int n_source,
 			  int i_target, int n_target,
 			  int syn_group, int64_t *n_conn);

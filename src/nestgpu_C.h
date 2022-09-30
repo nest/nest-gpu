@@ -203,8 +203,8 @@ extern "C" {
 				       float vmin, float vmax, float vstep);
   
   int NESTGPU_Connect(int i_source_node, int i_target_node,
-			unsigned char port, unsigned char syn_group,
-			float weight, float delay);
+		      int port, unsigned char syn_group,
+		      float weight, float delay);
 
   int NESTGPU_ConnSpecInit();
 
@@ -302,8 +302,9 @@ extern "C" {
 					    int *i_target_pt, int n_target,
 					    int syn_group, int64_t *n_conn);
   
-  int NESTGPU_GetConnectionStatus(int64_t i_conn, int *i_source,
-				  int *i_target, unsigned char *port,
+  int NESTGPU_GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
+				  int *i_source, int *i_target,
+				  int *port,
 				  unsigned char *syn_group, float *delay,
 				  float *weight);
 

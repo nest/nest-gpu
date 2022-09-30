@@ -1430,37 +1430,6 @@ int NESTGPU::GetNArrayVar(int i_node)
   return node_vect_[i_group]->GetNArrayVar();
 }
 
-/*
-ConnectionStatus NESTGPU::GetConnectionStatus(ConnectionId conn_id) {
-
-  ConnectionStatus conn_stat = net_connection_->GetConnectionStatus(conn_id);
-  if (calibrate_flag_ == true) {
-    int i_source = conn_id.i_source_;
-    int i_group = conn_id.i_group_;
-    int i_conn = conn_id.i_conn_;
-    int n_spike_buffer = net_connection_->connection_.size();
-    conn_stat.weight = 0;
-    float *d_weight_pt
-      = h_ConnectionGroupTargetWeight[i_group*n_spike_buffer+i_source] + i_conn;
-    gpuErrchk(cudaMemcpy(&conn_stat.weight, d_weight_pt, sizeof(float),
-			 cudaMemcpyDeviceToHost));
-  }
-
-  return conn_stat;
-}
-
-std::vector<ConnectionStatus> NESTGPU::GetConnectionStatus(std::vector
-							     <ConnectionId>
-							     &conn_id_vect) {
-  std::vector<ConnectionStatus> conn_stat_vect;
-  for (unsigned int i=0; i<conn_id_vect.size(); i++) {
-    ConnectionStatus conn_stat = GetConnectionStatus(conn_id_vect[i]);
-    conn_stat_vect.push_back(conn_stat);
-  }
-  return conn_stat_vect;
-}
-*/
-
 int64_t *NESTGPU::GetConnections(int i_source, int n_source,
 				 int i_target, int n_target,
 				 int syn_group, int64_t *n_conn)

@@ -313,7 +313,7 @@ bool SynSpec::IsFloatPtParam(std::string param_name)
 
 
 int NESTGPU::Connect(int i_source_node, int i_target_node,
-		       unsigned char port, unsigned char syn_group,
+		       int port, unsigned char syn_group,
 		       float weight, float delay)
 {
   CheckUncalibrated("Connections cannot be created after calibration");

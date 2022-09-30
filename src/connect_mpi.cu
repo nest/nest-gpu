@@ -114,7 +114,7 @@ bool ConnectMpi::ProcMaster()
    // connection_size() should be aligned with node_group_map_.size()
 int ConnectMpi::RemoteConnect(int i_source_host, int i_source_node,
 			      int i_target_host, int i_target_node,
-			      unsigned char port, unsigned char syn_group,
+			      int port, unsigned char syn_group,
 			      float weight, float delay)
 {
   int i_remote_node;
