@@ -2200,8 +2200,8 @@ NESTGPU_GetConnectionStatus.argtypes = (c_int64_p, ctypes.c_int64,
                                          c_int_p, c_char_p,
                                          c_float_p, c_float_p)
 NESTGPU_GetConnectionStatus.restype = ctypes.c_int
-
 def GetConnectionStatus(conn):
+    "Get all parameters of connection list conn"
     if (type(conn)==ConnectionList):
         conn = conn.conn_list
     elif (type(conn)==int):
@@ -2236,6 +2236,94 @@ def GetConnectionStatus(conn):
         status_list.append(status_dict)
 
     return status_list
+
+NESTGPU_IsConnectionFloatParam = _nestgpu.NESTGPU_IsConnectionFloatParam
+NESTGPU_IsConnectionFloatParam.argtypes = (c_char_p,)
+NESTGPU_IsConnectionFloatParam.restype = ctypes.c_int
+def IsConnectionFloatParam(param_name):
+    "Check name of connection float parameter"
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    ret = (NESTGPU_IsConnectionFloatParam(c_param_name)!=0) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_IsConnectionIntParam = _nestgpu.NESTGPU_IsConnectionIntParam
+NESTGPU_IsConnectionIntParam.argtypes = (c_char_p,)
+NESTGPU_IsConnectionIntParam.restype = ctypes.c_int
+def IsConnectionIntParam(param_name):
+    "Check name of connection int parameter"
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    ret = (NESTGPU_IsConnectionIntParam(c_param_name)!=0) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_GetConnectionFloatParam = _nestgpu.NESTGPU_GetConnectionFloatParam
+NESTGPU_GetConnectionFloatParam.argtypes = (c_int64_p, ctypes.c_int64,
+                                            c_float_p, c_char_p) 
+NESTGPU_GetConnectionFloatParam.restype = ctypes.c_int
+def GetConnectionFloatParam(conn, param_name):
+    "Get the float parameter param_name from the connection list conn"
+    if (type(conn)==ConnectionList):
+        conn = conn.conn_list
+    elif (type(conn)==int):
+        conn = [conn]
+    if ((type(conn)!=list) and (type(conn)!=tuple)):
+        raise ValueError("GetConnectionFloatParam argument 1 type must be "
+                         "ConnectionList, int, list or tuple")
+    
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    n_conn = len(conn)
+    conn_arr = (ctypes.c_int64 * n_conn)(*conn)
+    param_arr = (ctypes.c_float * n_conn)()
+    
+    NESTGPU_GetConnectionFloatParam(conn_arr, n_conn, param_arr, c_param_name)
+    data_list = []
+    for i_conn in range(n_conn):
+        data_list.append(param_arr[i_conn])
+        
+    ret = data_list
+    
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+
+NESTGPU_GetConnectionIntParam = _nestgpu.NESTGPU_GetConnectionIntParam
+NESTGPU_GetConnectionIntParam.argtypes = (c_int64_p, ctypes.c_int64,
+                                            c_int_p, c_char_p) 
+NESTGPU_GetConnectionIntParam.restype = ctypes.c_int
+def GetConnectionIntParam(conn, param_name):
+    "Get the integer parameter param_name from the connection list conn"
+    if (type(conn)==ConnectionList):
+        conn = conn.conn_list
+    elif (type(conn)==int):
+        conn = [conn]
+    if ((type(conn)!=list) and (type(conn)!=tuple)):
+        raise ValueError("GetConnectionIntParam argument 1 type must be "
+                         "ConnectionList, int, list or tuple")
+    
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    n_conn = len(conn)
+    conn_arr = (ctypes.c_int64 * n_conn)(*conn)
+    param_arr = (ctypes.c_int * n_conn)()
+    
+    NESTGPU_GetConnectionIntParam(conn_arr, n_conn, param_arr, c_param_name)
+    data_list = []
+    for i_conn in range(n_conn):
+        data_list.append(param_arr[i_conn])
+        
+    ret = data_list
+    
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
 #########################################################
 
 def GetStatus(gen_object, var_key=None):

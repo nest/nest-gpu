@@ -931,7 +931,35 @@ extern "C" {
 	 weight);
   } END_ERR_PROP return ret; }
 
-
+  int NESTGPU_IsConnectionFloatParam(char *param_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+      std::string param_name_str = std::string(param_name);
+      ret = NESTGPU_instance->IsConnectionFloatParam(param_name_str);
+  } END_ERR_PROP return ret; }
+  
+  int NESTGPU_IsConnectionIntParam(char *param_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+      std::string param_name_str = std::string(param_name);
+      ret = NESTGPU_instance->IsConnectionIntParam(param_name_str);
+  } END_ERR_PROP return ret; }
+  
+  int NESTGPU_GetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+				      float *param_arr, char *param_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+      std::string param_name_str = std::string(param_name);
+      ret = NESTGPU_instance->GetConnectionFloatParam(conn_ids, n_conn,
+						      param_arr,
+						      param_name_str);
+  } END_ERR_PROP return ret; }
+  
+  int NESTGPU_GetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
+				    int *param_arr, char *param_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+      std::string param_name_str = std::string(param_name);
+      ret = NESTGPU_instance->GetConnectionIntParam(conn_ids, n_conn,
+						    param_arr,
+						    param_name_str);
+  } END_ERR_PROP return ret; }
 
   int NESTGPU_CreateSynGroup(char *model_name)
   { int ret = 0; BEGIN_ERR_PROP {
