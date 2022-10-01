@@ -28,6 +28,24 @@ c_int_pp = ctypes.POINTER(ctypes.POINTER(ctypes.c_int))
 c_float_pp = ctypes.POINTER(ctypes.POINTER(ctypes.c_float))
 c_float_ppp = ctypes.POINTER(ctypes.POINTER(ctypes.POINTER(ctypes.c_float)))
 
+class ConnectionList(object):
+    def __init__(self, conn_list):
+        if (type(conn_list)!=list) & (type(conn_list)!=tuple):
+            raise ValueError("ConnectionList object can be initialized only"
+                             " with a list or a tuple of connection indexes")
+        self.conn_list = conn_list
+    def __getitem__(self, i):
+        if type(i)==slice:
+            return ConnectionList(self.conn_list[i])
+        elif type(i)==int:
+            return ConnectionList([self.conn_list[i]])
+        else:
+            raise ValueError("ConnectionList index error")
+    def __len__(self):
+        return len(self.conn_list)
+    def ToList(self):
+        return self.conn_list
+
 class NodeSeq(object):
     def __init__(self, i0, n=1):
         if i0 == None:
@@ -66,10 +84,6 @@ class RemoteNodeSeq(object):
     def __init__(self, i_host=0, node_seq=NodeSeq(None)):
         self.i_host = i_host
         self.node_seq = node_seq
-
-class ConnectionId(object):
-    def __init__(self, i_conn):
-        self.i_conn = i_conn
 
 class SynGroup(object):
     def __init__(self, i_syn_group):
@@ -2172,10 +2186,8 @@ def GetConnections(source=None, target=None, syn_group=-1):
 
     conn_list = []
     for i_conn in range(n_conn.value):
-        conn_id = ConnectionId(conn_arr[i_conn])
-        conn_list.append(conn_id)
-        
-    ret = conn_list
+        conn_list.append(conn_arr[i_conn])        
+    ret = ConnectionList(conn_list)
 
     if GetErrorCode() != 0:
         raise ValueError(GetErrorMessage())
@@ -2183,39 +2195,48 @@ def GetConnections(source=None, target=None, syn_group=-1):
 
  
 NESTGPU_GetConnectionStatus = _nestgpu.NESTGPU_GetConnectionStatus
-NESTGPU_GetConnectionStatus.argtypes = (ctypes.c_int64, c_int_p, c_int_p,
-                                         c_char_p, c_char_p,
+NESTGPU_GetConnectionStatus.argtypes = (c_int64_p, ctypes.c_int64,
+                                        c_int_p, c_int_p,
+                                         c_int_p, c_char_p,
                                          c_float_p, c_float_p)
 NESTGPU_GetConnectionStatus.restype = ctypes.c_int
 
-def GetConnectionStatus(conn_id):
-    i_conn = conn_id.i_conn
+def GetConnectionStatus(conn):
+    if (type(conn)==ConnectionList):
+        conn = conn.conn_list
+    elif (type(conn)==int):
+        conn = [conn]
+    if ((type(conn)!=list) and (type(conn)!=tuple)):
+        raise ValueError("GetConnectionStatus argument type must be "
+                         "ConnectionList, int, list or tuple")
+    n_conn = len(conn)
+    conn_arr = (ctypes.c_int64 * n_conn)(*conn)
+    i_source = (ctypes.c_int * n_conn)()
+    i_target = (ctypes.c_int * n_conn)()
+    i_port = (ctypes.c_int * n_conn)()
+    i_syn_group = (ctypes.c_char * n_conn)()
+    delay = (ctypes.c_float * n_conn)()
+    weight = (ctypes.c_float * n_conn)()
+    
+    NESTGPU_GetConnectionStatus(conn_arr, n_conn, i_source,
+                                i_target, i_port, i_syn_group,
+                                delay, weight)
+        
+    status_list = []
+    for i in range(n_conn):
+        status_dict = {}
+        status_dict["index"] = conn_arr[i]
+        status_dict["source"] = i_source[i]
+        status_dict["target"] = i_target[i]
+        status_dict["port"] = i_port[i]
+        status_dict["syn_group"] = i_syn_group[i]
+        status_dict["delay"] = delay[i]
+        status_dict["weight"] = weight[i]
+        
+        status_list.append(status_dict)
 
-    i_source = ctypes.c_int(0)
-    i_target = ctypes.c_int(0)
-    i_port = ctypes.c_char()
-    i_syn = ctypes.c_char()
-    delay = ctypes.c_float(0.0)
-    weight = ctypes.c_float(0.0)
-
-    NESTGPU_GetConnectionStatus(i_conn,
-                                ctypes.byref(i_source),
-                                ctypes.byref(i_target),
-                                ctypes.byref(i_port),
-                                ctypes.byref(i_syn),
-                                ctypes.byref(delay),
-                                ctypes.byref(weight))
-    i_source = i_source.value
-    i_target = i_target.value
-    i_port = ord(i_port.value)
-    i_syn = ord(i_syn.value)
-    delay = delay.value
-    weight = weight.value
-    conn_status_dict = {"source":i_source, "target":i_target, "port":i_port,
-                        "syn":i_syn, "delay":delay, "weight":weight}
-
-    return conn_status_dict
-
+    return status_list
+#########################################################
 
 def GetStatus(gen_object, var_key=None):
     "Get neuron group, connection or synapse group status"
@@ -2237,7 +2258,7 @@ def GetStatus(gen_object, var_key=None):
             status_list.append(var_value)
         return status_list
     elif (var_key==None):
-        if (type(gen_object)==ConnectionId):
+        if (type(gen_object)==ConnectionList):
             status_dict = GetConnectionStatus(gen_object)
         elif (type(gen_object)==int):
             i_node = gen_object
@@ -2255,7 +2276,7 @@ def GetStatus(gen_object, var_key=None):
             raise ValueError("Unknown object type in GetStatus")
         return status_dict
     elif (type(var_key)==str) | (type(var_key)==bytes):
-        if (type(gen_object)==ConnectionId):
+        if (type(gen_object)==ConnectionList):
             status_dict = GetConnectionStatus(gen_object)
             return status_dict[var_key]
         elif (type(gen_object)==int):

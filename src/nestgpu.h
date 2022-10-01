@@ -659,6 +659,22 @@ class NESTGPU
   
   int GetNArrayVar(int i_node);
 
+  int GetConnectionFloatParamIndex(std::string param_name);
+  
+  int GetConnectionIntParamIndex(std::string param_name);
+  
+  int IsConnectionFloatParam(std::string param_name);
+  
+  int IsConnectionIntParam(std::string param_name);
+  
+  int GetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+			      float *h_param_arr,
+			      std::string param_name);
+  
+  int GetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
+			    int *h_param_arr,
+			    std::string param_name);
+
   int GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
 			  int *i_source, int *i_target, int *port,
 			  unsigned char *syn_group, float *delay,
