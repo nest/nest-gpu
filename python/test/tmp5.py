@@ -14,12 +14,14 @@ even_to_odd_delay = []
 even_to_odd_weight = []
 odd_to_even_delay = []
 odd_to_even_weight = []
-for itgt in range(N):
-    ite = 2*itgt
-    ito = 2*itgt + 1
-    for isrc in range(N):
-        ise = 2*isrc
-        iso = 2*isrc + 1
+
+for isrc in range(N):
+    ise = 2*isrc
+    iso = 2*isrc + 1
+    
+    for itgt in range(N):
+        ite = 2*itgt
+        ito = 2*itgt + 1
         even_to_odd_delay.append(2.0*N*ise + ito)
         even_to_odd_weight.append(100.0*(2.0*N*ise + ito))
         odd_to_even_delay.append(2.0*N*iso + ite)
