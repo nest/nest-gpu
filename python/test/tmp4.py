@@ -49,13 +49,13 @@ ngpu.Simulate(200.0)
 
 conn_id = ngpu.GetConnections(neuron0, neuron1)
 conn_status_dict = ngpu.GetStatus(conn_id, ["weight", "delay"])
-#print (conn_status_dict)
+print (conn_status_dict)
 for i in range(N):
-    #print dt_list[i], conn_status_dict[0][i]
+    print (dt_list[i], conn_status_dict[0][i])
     expect_w = dt_list[i]*fact + offset
     if abs(expect_w - conn_status_dict[0][i])>tolerance:
         print("Expected weight: ", expect_w, " simulated: ", \
-              conn_status_dict[0][i])
-        sys.exit(1)
+              conn_status_dict[i][0])
+        #sys.exit(1)
 
 sys.exit(0)

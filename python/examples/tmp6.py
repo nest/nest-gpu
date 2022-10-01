@@ -34,13 +34,12 @@ den_delay = 0.0
 syn_group = ngpu.CreateSynGroup \
             ("stdp", {"tau_plus":tau_plus, "tau_minus":tau_minus, \
                       "lambda":lambd, "alpha":alpha, "mu_plus":mu_plus, \
-                      "mu_minus":mu_minus,  "Wmax":Wmax})
-                      
+                      "mu_minus":mu_minus,  "Wmax":Wmax})                      
 
 sg = ngpu.Create("spike_generator")
 neuron0 = ngpu.Create("aeif_cond_beta")
 neuron1 = ngpu.Create("aeif_cond_beta", N)
-ngpu.SetStatus(neuron1, {"t_ref": 1000.0, "den_delay":den_delay}) 
+ngpu.SetStatus(neuron1, {"t_ref": 1000.0, "den_delay":den_delay})
 
 time_diff = 200.0
 dt_list = []
@@ -50,12 +49,11 @@ for i in range(N):
     delay_stdp_list.append(time_diff - dt_list[i])
 
 spike_times = [50.0]
-spike_heights = [1.0]
 n_spikes = 1
 
 
 # set spike times and height
-ngpu.SetStatus(sg, {"spike_times": spike_times, "spike_heights":spike_heights})
+ngpu.SetStatus(sg, {"spike_times": spike_times})
 delay0 = 1.0
 delay1 = delay0 + time_diff
 weight_sg = 17.9 # to make it spike immediately and only once
@@ -77,37 +75,47 @@ ngpu.Connect(neuron0, neuron1, conn_dict_full, syn_dict_stdp)
 
 ngpu.Simulate(1000.0)
 
-#conn_id = ngpu.GetConnections(neuron0, neuron1)
+conn_id = ngpu.GetConnections(neuron0, neuron1)
 dt = dt_list
-#w = ngpu.GetStatus(conn_id, "weight")
-
+#w0 = ngpu.GetStatus(conn_id, "weight")
+w0 = ngpu.GetStatus(conn_id, "weight")
+print(w0)
+tgt = ngpu.GetStatus(conn_id, "target")
+print(tgt)
+src_tgt_w = ngpu.GetStatus(conn_id, ["source", "target", "weight"])
+print(src_tgt_w)
+conn_status = ngpu.GetStatus(conn_id)
+print (conn_status)
 
 expect_w = []
 dw = []
 sim_w = []
 for i in range(N):
     conn_id = ngpu.GetConnections(neuron0, neuron1[i])
-    w = ngpu.GetStatus(conn_id, "weight")
-    w1 = STDPUpdate(weight_stdp, dt[i], tau_plus, tau_minus, Wmax*lambd, alpha, \
-                    mu_plus, mu_minus, Wmax)
+    #w = ngpu.GetStatus(conn_id, "weight")
+    conn_stat = ngpu.GetStatus(conn_id)
+    print(conn_stat)
+    w = conn_stat[0]["weight"] #w0[i] #conn_stat[0]["weight"]
+    w1 = STDPUpdate(weight_stdp, dt[i], tau_plus, tau_minus, lambd*Wmax, \
+                    alpha, mu_plus, mu_minus, Wmax)
     expect_w.append(w1)
-    sim_w.append(w[0])
-    dw.append(w1-w[0])
+    sim_w.append(w) #[0])
+    dw.append(w1-w) #[0])
     if abs(dw[i])>tolerance:
         print("Expected weight: ", w1, " simulated: ", w)
-        sys.exit(1)
+        #sys.exit(1)
 
-sys.exit(0)
+#sys.exit(0)
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
-#plt.figure(1)
-#plt.plot(dt, sim_w)
+plt.figure(1)
+plt.plot(dt, sim_w)
 
-#plt.figure(2)
-#plt.plot(dt, expect_w)
+plt.figure(2)
+plt.plot(dt, expect_w)
 
-#plt.draw()
-#plt.pause(1)
-#raw_input("<Hit Enter To Close>")
-#plt.close()
+plt.draw()
+plt.pause(1)
+ngpu.waitenter("<Hit Enter To Close>")
+plt.close()

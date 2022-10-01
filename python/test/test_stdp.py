@@ -48,7 +48,7 @@ for i in range(N):
 spike_time = [50.0]
 spike_height = [1.0]
 n_spikes = 1
-time_diff = 400.0
+time_diff = 200.0
 
 # set spike times and height
 ngpu.SetStatus(sg, {"spike_times": spike_time, "spike_heights":spike_height})

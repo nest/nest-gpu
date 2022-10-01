@@ -2330,8 +2330,7 @@ def GetStatus(gen_object, var_key=None):
     "Get neuron group, connection or synapse group status"
     if type(gen_object)==SynGroup:
         return GetSynGroupStatus(gen_object, var_key)
-    
-    if type(gen_object)==NodeSeq:
+    elif type(gen_object)==NodeSeq:
         gen_object = gen_object.ToList()
     if (type(gen_object)==list) | (type(gen_object)==tuple):
         status_list = []
@@ -2365,8 +2364,12 @@ def GetStatus(gen_object, var_key=None):
         return status_dict
     elif (type(var_key)==str) | (type(var_key)==bytes):
         if (type(gen_object)==ConnectionList):
-            status_dict = GetConnectionStatus(gen_object)
-            return status_dict[var_key]
+            if IsConnectionFloatParam(var_key):
+                return GetConnectionFloatParam(gen_object, var_key)
+            elif IsConnectionIntParam(var_key):
+                return GetConnectionIntParam(gen_object, var_key)
+            else:
+                raise ValueError("Unknown connection parameter in GetStatus")
         elif (type(gen_object)==int):
             i_node = gen_object
             return GetNeuronStatus([i_node], var_key)[0]
