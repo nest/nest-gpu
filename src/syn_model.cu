@@ -39,23 +39,6 @@ __device__ float **SynGroupParamMap;
 
 __device__ void TestSynModelUpdate(float *w, float Dt, float *param);
 
-__device__ void STDPUpdate(float *w, float Dt, float *param);
-
-__device__ void SynapseUpdate(int syn_group, float *w, float Dt)
-{
-  int syn_type = SynGroupTypeMap[syn_group-1];
-  float *param = SynGroupParamMap[syn_group-1];
-  switch(syn_type) {
-  case i_test_syn_model:
-    TestSynModelUpdate(w, Dt, param);
-    break;
-  case i_stdp_model:
-    STDPUpdate(w, Dt, param);
-    break;
-  }
-}
-
-
 __global__ void SynGroupInit(int *syn_group_type_map,
 			     float **syn_group_param_map)
 {

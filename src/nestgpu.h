@@ -35,20 +35,21 @@
 #include "node_group.h"
 #include "base_neuron.h"
 #include "connect_spec.h"
-#include "connect.h"
-#include "syn_model.h"
+//#include "connect.h"
+//#include "syn_model.h"
+//#include "distribution.h"
 
 #ifdef HAVE_MPI
 class ConnectMpi;
 #endif
 
-class PoissonGenerator;
 class Multimeter;
 class NetConnection;
 struct curandGenerator_st;
 typedef struct curandGenerator_st* curandGenerator_t;
 class ConnSpec;
 class SynSpec;
+class SynModel;
 
 class Sequence
 {
@@ -107,8 +108,9 @@ class NESTGPU
   curandGenerator_t *random_generator_;
   unsigned long long kernel_seed_;
   bool calibrate_flag_; // becomes true after calibration
+  bool create_flag_; // becomes true just before creation of the first node
 
-  PoissonGenerator *poiss_generator_;
+  Distribution *distribution_;
   Multimeter *multimeter_;
   std::vector<BaseNeuron*> node_vect_; // -> node_group_vect
   std::vector<SynModel*> syn_group_vect_;
@@ -153,7 +155,9 @@ class NESTGPU
   int verbosity_level_;
   bool print_time_;
 
-  std::vector<RemoteConnection> remote_connection_vect_;
+  int nested_loop_algo_;
+
+  //std::vector<RemoteConnection> remote_connection_vect_;
   std::vector<int> ext_neuron_input_spike_node_;
   std::vector<int> ext_neuron_input_spike_port_;
   std::vector<float> ext_neuron_input_spike_height_;
@@ -196,22 +200,20 @@ class NESTGPU
 
   template <class T1, class T2>
     int _ConnectFixedTotalNumber
-    (T1 source, int n_source, T2 target, int n_target, int n_conn,
+    (T1 source, int n_source, T2 target, int n_target, int total_num,
      SynSpec &syn_spec);
 
   template <class T1, class T2>
     int _ConnectFixedIndegree
     (
      T1 source, int n_source, T2 target, int n_target, int indegree,
-     SynSpec &syn_spec
-     );
+     SynSpec &syn_spec);
 
   template <class T1, class T2>
     int _ConnectFixedOutdegree
     (
      T1 source, int n_source, T2 target, int n_target, int outdegree,
-     SynSpec &syn_spec
-     );
+     SynSpec &syn_spec);
 
 #ifdef HAVE_MPI
   template <class T1, class T2>
@@ -287,14 +289,17 @@ class NESTGPU
     return 0;
   }
 
+  int SetNestedLoopAlgo(int nested_loop_algo);
+
   inline int SetPrintTime(bool print_time) {
     print_time_ = print_time;
     return 0;
   }
 
-
   int SetMaxSpikeBufferSize(int max_size);
   int GetMaxSpikeBufferSize();
+  
+  uint GetNNode();
 
   int GetNBoolParam();
   std::vector<std::string> GetBoolParamNames();
@@ -318,7 +323,7 @@ class NESTGPU
   int SetIntParam(std::string param_name, int val);
 
   NodeSeq Create(std::string model_name, int n_neuron=1, int n_port=1);
-  NodeSeq CreatePoissonGenerator(int n_node, float rate);
+
   RemoteNodeSeq RemoteCreate(int i_host, std::string model_name,
 			     int n_node=1, int n_port=1);
 
@@ -407,6 +412,45 @@ class NESTGPU
 			  array_size);
   }
 
+////////////////////////////////////////////////////////////////////////
+
+  int SetNeuronScalParamDistr(int i_node, int n_node,
+			      std::string param_name);
+  
+  int SetNeuronScalVarDistr(int i_node, int n_node,
+			    std::string var_name);
+  
+  int SetNeuronPortParamDistr(int i_node, int n_node,
+			      std::string param_name);
+  
+  int SetNeuronPortVarDistr(int i_node, int n_node,
+			    std::string var_name);
+  
+  int SetNeuronPtScalParamDistr(int *i_node, int n_node,
+				std::string param_name);
+  
+  int SetNeuronPtScalVarDistr(int *i_node, int n_node,
+			      std::string var_name);
+  
+  int SetNeuronPtPortParamDistr(int *i_node, int n_node,
+				std::string param_name);
+  
+  int SetNeuronPtPortVarDistr(int *i_node, int n_node,
+			      std::string var_name);
+  
+  int SetDistributionIntParam(std::string param_name, int val);
+  
+  int SetDistributionScalParam(std::string param_name, float val);
+
+  int SetDistributionVectParam(std::string param_name, float val, int i);
+
+  int SetDistributionFloatPtParam(std::string param_name,
+				  float *array_pt);
+
+  int IsDistributionFloatParam(std::string param_name);
+				  
+////////////////////////////////////////////////////////////////////////
+  
   int GetNeuronParamSize(int i_node, std::string param_name);
 
   int GetNeuronVarSize(int i_node, std::string var_name);
@@ -523,11 +567,8 @@ class NESTGPU
   float *RandomNormalClipped(size_t n, float mean, float stddev, float vmin,
 			     float vmax, float vstep);  
 
-  int Connect
-    (
-     int i_source_node, int i_target_node, unsigned char port,
-     unsigned char syn_group, float weight, float delay
-     );
+  int Connect(int i_source_node, int i_target_node, int port,
+	      unsigned char syn_group, float weight, float delay);
 
   int Connect(int i_source, int n_source, int i_target, int n_target,
 	      ConnSpec &conn_spec, SynSpec &syn_spec);
@@ -585,7 +626,6 @@ class NESTGPU
 		    int i_target_host, std::vector<int> target,
 		    ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int BuildDirectConnections();
 
   std::vector<std::string> GetScalVarNames(int i_node);
 
@@ -619,40 +659,54 @@ class NESTGPU
   
   int GetNArrayVar(int i_node);
 
-  ConnectionStatus GetConnectionStatus(ConnectionId conn_id);
+  int GetConnectionFloatParamIndex(std::string param_name);
   
-  std::vector<ConnectionStatus> GetConnectionStatus(std::vector<ConnectionId>
-						    &conn_id_vect);
+  int GetConnectionIntParamIndex(std::string param_name);
+  
+  int IsConnectionFloatParam(std::string param_name);
+  
+  int IsConnectionIntParam(std::string param_name);
+  
+  int GetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+			      float *h_param_arr,
+			      std::string param_name);
+  
+  int GetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
+			    int *h_param_arr,
+			    std::string param_name);
 
-  std::vector<ConnectionId> GetConnections(int i_source, int n_source,
-					   int i_target, int n_target,
-					   int syn_group=-1);
+  int GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
+			  int *i_source, int *i_target, int *port,
+			  unsigned char *syn_group, float *delay,
+			  float *weight);
 
-  std::vector<ConnectionId> GetConnections(int *i_source, int n_source,
-					   int i_target, int n_target,
-					   int syn_group=-1);
+  int64_t *GetConnections(int i_source, int n_source,
+			  int i_target, int n_target,
+			  int syn_group, int64_t *n_conn);
 
-  std::vector<ConnectionId> GetConnections(int i_source, int n_source,
-					   int *i_target, int n_target,
-					   int syn_group=-1);
+  int64_t *GetConnections(int *i_source_pt, int n_source,
+			  int i_target, int n_target,
+			  int syn_group, int64_t *n_conn);
 
-  std::vector<ConnectionId> GetConnections(int *i_source, int n_source,
-					   int *i_target, int n_target,
-					   int syn_group=-1);
+  int64_t *GetConnections(int i_source, int n_source,
+			  int *i_target_pt, int n_target,
+			  int syn_group, int64_t *n_conn);
+
+  int64_t *GetConnections(int *i_source_pt, int n_source,
+			  int *i_target_pt, int n_target,
+			  int syn_group, int64_t *n_conn);
     
-  std::vector<ConnectionId> GetConnections(NodeSeq source, NodeSeq target,
-					   int syn_group=-1);
+  int64_t *GetConnections(NodeSeq source, NodeSeq target,
+			  int syn_group, int64_t *n_conn);
 
-  std::vector<ConnectionId> GetConnections(std::vector<int> source,
-					   NodeSeq target, int syn_group=-1);
+  int64_t *GetConnections(std::vector<int> source, NodeSeq target,
+			  int syn_group, int64_t *n_conn);
 
-  std::vector<ConnectionId> GetConnections(NodeSeq source,
-					   std::vector<int> target,
-					   int syn_group=-1);
+  int64_t *GetConnections(NodeSeq source, std::vector<int> target,
+			  int syn_group, int64_t *n_conn);
 
-  std::vector<ConnectionId> GetConnections(std::vector<int> source,
-					   std::vector<int> target,
-					   int syn_group=-1);
+  int64_t *GetConnections(std::vector<int> source, std::vector<int> target,
+			  int syn_group, int64_t *n_conn);
 
   int CreateSynGroup(std::string model_name);
 
@@ -714,7 +768,6 @@ class NESTGPU
   float GetNeuronGroupParam(int i_node, std::string param_name);
 
 };
-
 
 
 #endif

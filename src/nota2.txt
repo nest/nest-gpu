@@ -8,7 +8,3 @@ l'indice della connessione all'interno di questo gruppo si chiama i_syn
 ->rinominare in?
 
 
-In GetConnectionStatus i_conn è l'indice della connessione all'interno del gruppo
--> rinominare in?
-i_group è l'indice del gruppo di connessioni che hanno lo stesso delay
-rinominare in i_conn_group

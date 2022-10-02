@@ -27,8 +27,10 @@
 
 #include <string>
 #include <vector>
-#include "dir_connect.h"
 #include <stdint.h>
+//#include "distribution.h"
+
+class Distribution;
 
 class NESTGPU;
 
@@ -73,8 +75,6 @@ class BaseNeuron
   std::vector<std::string> array_var_name_;
   std::vector<std::string> array_param_name_;
   
-  DirectConnection *d_dir_conn_array_;
-  uint64_t n_dir_conn_; // = 0;
   bool has_dir_conn_; // = false;
 
   int *spike_count_;
@@ -176,6 +176,35 @@ class BaseNeuron
 			   std::string var_name, float *array,
 			   int array_size);
 
+
+  virtual int SetScalParamDistr(int i_neuron, int n_node,
+				std::string param_name,
+				Distribution *distribution);
+
+  virtual int SetScalParamDistr(int *i_neuron, int n_node,
+				std::string param_name,
+				Distribution *distribution);
+
+  virtual int SetScalVarDistr(int i_neuron, int n_node, std::string var_name,
+			      Distribution *distribution);
+
+  virtual int SetScalVarDistr(int *i_neuron, int n_node, std::string var_name,
+				Distribution *distribution);
+
+  virtual int SetPortParamDistr(int i_neuron, int n_node,
+				  std::string param_name,
+				  Distribution *distribution);
+
+  virtual int SetPortParamDistr(int *i_neuron, int n_node,
+				std::string param_name,
+				Distribution *distribution);
+
+  virtual int SetPortVarDistr(int i_neuron, int n_node, std::string var_name,
+			      Distribution *distribution);
+
+  virtual int SetPortVarDistr(int *i_neuron, int n_node, std::string var_name,
+			      Distribution *distribution);
+
   virtual float *GetScalParam(int i_neuron, int n_neuron,
 			      std::string param_name);
 
@@ -262,7 +291,7 @@ class BaseNeuron
 			    int port=0);
   virtual float GetSpikeActivity(int i_neuron);
 
-  virtual int SendDirectSpikes(double t, float time_step) {return 0;}
+  virtual int SendDirectSpikes(long long time_idx) {return 0;}
 
   virtual std::vector<std::string> GetIntVarNames();
 

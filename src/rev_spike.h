@@ -18,29 +18,71 @@
  *
  */
 
-
-
-
-
 #ifndef REVSPIKE_H
 #define REVSPIKE_H
 
+//#include "connect.h"
+#include "spike_buffer.h"
+#include "syn_model.h"
+#include "get_spike.h"
+
+extern int64_t h_NRevConn;
 extern unsigned int *d_RevSpikeNum;
 extern unsigned int *d_RevSpikeTarget;
 extern int *d_RevSpikeNConn;
+extern __device__ unsigned int *RevSpikeTarget;
+extern __device__ int64_t **TargetRevConnection;
+extern __constant__ long long NESTGPUTimeIdx;
+extern __constant__ float NESTGPUTimeResolution;
 
 __global__ void RevSpikeReset();
 
 __global__ void RevSpikeBufferUpdate(unsigned int n_node);
 
-__global__ void SynapseUpdateKernel(int n_rev_spikes, int *RevSpikeNConn);
-
-int RevSpikeInit(NetConnection *net_connection);
+int RevSpikeInit(uint n_spike_buffers);
 
 int RevSpikeFree();
 
-int ResetConnectionSpikeTimeDown(NetConnection *net_connection);
+int ResetConnectionSpikeTimeDown();
 
-int ResetConnectionSpikeTimeUp(NetConnection *net_connection);
+int ResetConnectionSpikeTimeUp();
+
+template<int i_func>
+__device__  __forceinline__ void NestedLoopFunction(int i_spike, int i_syn);
+
+//////////////////////////////////////////////////////////////////////
+// This is the function called by the nested loop
+// that makes use of positive post-pre spike time difference
+template<>
+__device__ __forceinline__ void NestedLoopFunction<1>
+(int i_spike, int i_target_rev_conn)
+{
+  unsigned int target = RevSpikeTarget[i_spike];
+  int64_t i_conn = TargetRevConnection[target][i_target_rev_conn];
+  uint i_block = (uint)(i_conn / ConnBlockSize);
+  int64_t i_block_conn = i_conn % ConnBlockSize;
+  connection_struct conn = ConnectionArray[i_block][i_block_conn];
+  unsigned char syn_group = conn.syn_group;
+  
+  // TO BE IMPROVED BY CHECKING IF THE SYNAPSE TYPE OF THE GROUP
+  // REQUIRES AN UPDATE BASED ON POST-PRE SPIKE TIME DIFFERENCE
+  if (syn_group>0) {
+    unsigned short spike_time_idx = ConnectionSpikeTime[i_conn];
+    unsigned short time_idx = (unsigned short)(NESTGPUTimeIdx & 0xffff);
+    unsigned short Dt_int = time_idx - spike_time_idx;
+
+    //printf("rev spike target %d i_target_rev_conn %d "
+    //	   "i_conn %lld weight %f syn_group %d "
+    //	   "TimeIdx %lld CST %d Dt %d\n",
+    //	   target, i_target_rev_conn, i_conn, conn.weight, syn_group,
+    //	   NESTGPUTimeIdx, spike_time_idx, Dt_int);
+   
+    if (Dt_int<MAX_SYN_DT) {
+      SynapseUpdate(syn_group,
+		    &(ConnectionArray[i_block][i_block_conn].weight),
+		    NESTGPUTimeResolution*Dt_int);
+    }
+  }
+}
 
 #endif

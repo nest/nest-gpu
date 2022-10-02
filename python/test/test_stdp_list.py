@@ -42,7 +42,7 @@ neuron0 = ngpu.Create("aeif_cond_beta")
 neuron1 = ngpu.Create("aeif_cond_beta", N)
 ngpu.SetStatus(neuron1, {"t_ref": 1000.0, "den_delay":den_delay}) 
 
-time_diff = 400.0
+time_diff = 200.0
 dt_list = []
 delay_stdp_list = []
 for i in range(N):

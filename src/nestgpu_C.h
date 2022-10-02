@@ -49,10 +49,10 @@ extern "C" {
 
   int NESTGPU_SetVerbosityLevel(int verbosity_level);
 
+  int NESTGPU_SetNestedLoopAlgo(int nested_loop_algo);
+
   int NESTGPU_Create(char *model_name, int n_neuron, int n_port);
 
-  int NESTGPU_CreatePoissonGenerator(int n_node, float rate);
-  
   int NESTGPU_CreateRecord(char *file_name, char *var_name_arr[],
 			     int *i_node_arr, int *port_arr,
 			     int n_node);
@@ -103,6 +103,41 @@ extern "C" {
   int NESTGPU_SetNeuronPtArrayVar(int *i_node, int n_neuron,
 				      char *var_name, float *var,
 				      int array_size);
+  
+  int NESTGPU_SetNeuronScalParamDistr(int i_node, int n_neuron,
+				      char *param_name);
+
+  int NESTGPU_SetNeuronScalVarDistr(int i_node, int n_neuron,
+				    char *var_name);
+
+
+  int NESTGPU_SetNeuronPortParamDistr(int i_node, int n_neuron,
+				      char *param_name);
+
+  int NESTGPU_SetNeuronPortVarDistr(int i_node, int n_neuron,
+				    char *var_name);
+
+  int NESTGPU_SetNeuronPtScalParamDistr(int *i_node, int n_neuron,
+					char *param_name);
+
+  int NESTGPU_SetNeuronPtScalVarDistr(int *i_node, int n_neuron,
+				      char *var_name);
+
+  int NESTGPU_SetNeuronPtPortParamDistr(int *i_node, int n_neuron,
+					char *param_name);
+
+  int NESTGPU_SetNeuronPtPortVarDistr(int *i_node, int n_neuron,
+				      char *var_name);
+
+  int NESTGPU_SetDistributionIntParam(char *param_name, int val);
+
+  int NESTGPU_SetDistributionScalParam(char *param_name, float val);
+
+  int NESTGPU_SetDistributionVectParam(char *param_name, float val, int i);
+
+  int NESTGPU_SetDistributionFloatPtParam(char *param_name, float *array_pt);
+
+  int NESTGPU_IsDistributionFloatParam(char *param_name);
   
   int NESTGPU_IsNeuronIntVar(int i_node, char *var_name);
 
@@ -168,8 +203,8 @@ extern "C" {
 				       float vmin, float vmax, float vstep);
   
   int NESTGPU_Connect(int i_source_node, int i_target_node,
-			unsigned char port, unsigned char syn_group,
-			float weight, float delay);
+		      int port, unsigned char syn_group,
+		      float weight, float delay);
 
   int NESTGPU_ConnSpecInit();
 
@@ -251,24 +286,37 @@ extern "C" {
   
   int NESTGPU_GetNArrayVar(int i_node);
     
-  int *NESTGPU_GetSeqSeqConnections(int i_source, int n_source, int i_target,
-				      int n_target, int syn_group, int *n_conn);
-
-  int *NESTGPU_GetSeqGroupConnections(int i_source, int n_source,
-					int *i_target, int n_target,
-					int syn_group, int *n_conn);
-
-  int *NESTGPU_GetGroupSeqConnections(int *i_source, int n_source,
+  int64_t *NESTGPU_GetSeqSeqConnections(int i_source, int n_source,
 					int i_target, int n_target,
-					int syn_group, int *n_conn);
+					int syn_group, int64_t *n_conn);
 
-  int *NESTGPU_GetGroupGroupConnections(int *i_source, int n_source,
-					  int *i_target, int n_target,
-					  int syn_group, int *n_conn);
-  int NESTGPU_GetConnectionStatus(int i_source, int i_group, int i_conn,
-				    int *i_target, unsigned char *port,
-				    unsigned char *syn_group, float *delay,
-				    float *weight);
+  int64_t *NESTGPU_GetSeqGroupConnections(int i_source, int n_source,
+					  int *i_target_pt, int n_target,
+					  int syn_group, int64_t *n_conn);
+
+  int64_t *NESTGPU_GetGroupSeqConnections(int *i_source_pt, int n_source,
+					  int i_target, int n_target,
+					  int syn_group, int64_t *n_conn);
+
+  int64_t *NESTGPU_GetGroupGroupConnections(int *i_source_pt, int n_source,
+					    int *i_target_pt, int n_target,
+					    int syn_group, int64_t *n_conn);
+  
+  int NESTGPU_GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
+				  int *i_source, int *i_target,
+				  int *port,
+				  unsigned char *syn_group, float *delay,
+				  float *weight);
+  
+  int NESTGPU_IsConnectionFloatParam(char *param_name);
+  
+  int NESTGPU_IsConnectionIntParam(char *param_name);
+  
+  int NESTGPU_GetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+				      float *param_arr, char *param_name);
+  
+  int NESTGPU_GetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
+				    int *param_arr, char *param_name);
 
   int NESTGPU_CreateSynGroup(char *model_name);
   

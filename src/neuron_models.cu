@@ -28,6 +28,7 @@
 
 #include "ngpu_exception.h"
 #include "cuda_error.h"
+#include "getRealTime.h"
 #include "neuron_models.h"
 #include "nestgpu.h"
 #include "iaf_psc_exp.h"
@@ -54,6 +55,10 @@
 NodeSeq NESTGPU::Create(std::string model_name, int n_node /*=1*/,
 			  int n_port /*=1*/)
 {
+  if (!create_flag_) {
+    create_flag_ = true;
+    start_real_time_ = getRealTime();
+  }
   CheckUncalibrated("Nodes cannot be created after calibration");
   if (n_node <= 0) {
     throw ngpu_exception("Number of nodes must be greater than zero.");

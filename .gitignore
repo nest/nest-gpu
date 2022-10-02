@@ -37,3 +37,5 @@ libtool
 /.settings/
 doxygen
 python/test/log.txt
+python/Potjans_2014/data/
+python/Potjans_2014_tmp/data/

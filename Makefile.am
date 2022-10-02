@@ -12,6 +12,11 @@ CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
 HCUSRC=\
+utilities.h \
+distribution.h \
+copass_kernels.h \
+copass_sort.h \
+connect.h \
 iaf_psc_exp_g.h \
 iaf_psc_exp_hc_params.h \
 iaf_psc_exp_hc.h \
@@ -33,15 +38,13 @@ aeif_psc_exp.h \
 aeif_psc_exp_kernel.h \
 aeif_psc_exp_rk5.h \
 base_neuron.h \
-connect.h \
-connect_mpi.h \
+connect_rules.h \
 connect_spec.h \
 cuda_error.h \
-dir_connect.h \
 getRealTime.h \
 get_spike.h \
-locate.h \
 multimeter.h \
+nested_loop.h \
 neuron_models.h \
 nestgpu.h \
 ngpu_exception.h \
@@ -49,7 +52,6 @@ node_group.h \
 parrot_neuron.h \
 poiss_gen.h \
 poiss_gen_variables.h \
-poisson.h \
 prefix_scan.h \
 propagate_error.h \
 random.h \
@@ -57,7 +59,6 @@ rev_spike.h \
 rk5.h \
 rk5_const.h \
 rk5_interface.h \
-scan.h \
 send_spike.h \
 spike_buffer.h \
 spike_detector.h \
@@ -81,6 +82,11 @@ user_m2_kernel.h \
 user_m2_rk5.h
 
 CUSRC=\
+utilities.cu \
+distribution.cu \
+copass_kernels.cu \
+copass_sort.cu \
+connect.cu \
 iaf_psc_exp_g.cu \
 iaf_psc_exp_hc.cu \
 iaf_psc_exp.cu \
@@ -91,18 +97,16 @@ aeif_psc_alpha.cu \
 aeif_psc_delta.cu \
 aeif_psc_exp.cu \
 base_neuron.cu \
-connect.cu \
-connect_mpi.cu \
+connect_rules.cu \
 getRealTime.cu \
 get_spike.cu \
-locate.cu \
 multimeter.cu \
+nested_loop.cu \
 neuron_models.cu \
 nestgpu.cu \
 node_group.cu \
 parrot_neuron.cu \
 poiss_gen.cu \
-poisson.cu \
 prefix_scan.cu \
 random.cu \
 rev_spike.cu \
@@ -125,11 +129,9 @@ user_m1.cu \
 user_m2.cu
 
 HCPPSRC=\
-connect_rules.h \
 nestgpu_C.h
 
 CPPSRC=\
-connect_rules.cpp \
 nestgpu_C.cpp
 
 COMPILER_FLAGS= -O3 -Wall -fPIC

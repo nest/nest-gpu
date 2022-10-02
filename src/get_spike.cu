@@ -18,10 +18,6 @@
  *
  */
 
-
-
-
-
 #include <config.h>
 #include <stdio.h>
 
@@ -30,84 +26,8 @@
 #include "send_spike.h"
 #include "spike_buffer.h"
 #include "cuda_error.h"
+#include "connect.h"
 
-extern __constant__ long long NESTGPUTimeIdx;
-extern __constant__ float NESTGPUTimeResolution;
-extern __constant__ NodeGroupStruct NodeGroupArray[];
-extern __device__ signed char *NodeGroupMap;
-
-extern __device__ void SynapseUpdate(int syn_group, float *w, float Dt);
-
-__device__ double atomicAddDouble(double* address, double val)
-{
-    unsigned long long int* address_as_ull =
-                                          (unsigned long long int*)address;
-    unsigned long long int old = *address_as_ull, assumed;
-    do {
-        assumed = old;
-        old = atomicCAS(address_as_ull, assumed, 
-                        __double_as_longlong(val + 
-                        __longlong_as_double(assumed)));
-    } while (assumed != old);
-    return __longlong_as_double(old);
-}
-
-//////////////////////////////////////////////////////////////////////
-// This is the function called by the nested loop
-// that collects the spikes
-__device__ void CollectSpikeFunction(int i_spike, int i_syn)
-{
-  int i_source = SpikeSourceIdx[i_spike];
-  int i_conn = SpikeConnIdx[i_spike];
-  float height = SpikeHeight[i_spike];
-  unsigned int target_port
-    = ConnectionGroupTargetNode[i_conn*NSpikeBuffer + i_source][i_syn];
-  int i_target = target_port & PORT_MASK;
-  unsigned char port = (unsigned char)(target_port >> (PORT_N_SHIFT + 24));
-  unsigned char syn_group
-    = ConnectionGroupTargetSynGroup[i_conn*NSpikeBuffer + i_source][i_syn];
-  float weight = ConnectionGroupTargetWeight[i_conn*NSpikeBuffer+i_source]
-    [i_syn];
-  //printf("handles spike %d src %d conn %d syn %d target %d"
-  //" port %d weight %f\n",
-  //i_spike, i_source, i_conn, i_syn, i_target,
-  //port, weight);
-  
-  /////////////////////////////////////////////////////////////////
-  int i_group=NodeGroupMap[i_target];
-  int i = port*NodeGroupArray[i_group].n_node_ + i_target
-    - NodeGroupArray[i_group].i_node_0_;
-  double d_val = (double)(height*weight);
-
-  atomicAddDouble(&NodeGroupArray[i_group].get_spike_array_[i], d_val);
-  if (syn_group>0) {
-    ConnectionGroupTargetSpikeTime[i_conn*NSpikeBuffer+i_source][i_syn]
-      = (unsigned short)(NESTGPUTimeIdx & 0xffff);
-    
-    long long Dt_int = NESTGPUTimeIdx - LastRevSpikeTimeIdx[i_target];
-     if (Dt_int>0 && Dt_int<MAX_SYN_DT) {
-       SynapseUpdate(syn_group, &ConnectionGroupTargetWeight
-		    [i_conn*NSpikeBuffer+i_source][i_syn],
-		     -NESTGPUTimeResolution*Dt_int);
-    }
-  }
-  ////////////////////////////////////////////////////////////////
-}
-
-__global__ void CollectSpikeKernel(int n_spikes, int *SpikeTargetNum)
-{
-  const int i_spike = blockIdx.x;
-  if (i_spike<n_spikes) {
-    const int n_spike_targets = SpikeTargetNum[i_spike];
-    for (int i_syn = threadIdx.x; i_syn < n_spike_targets; i_syn += blockDim.x){
-      CollectSpikeFunction(i_spike, i_syn);
-    }
-  }
-}
-
-
-
-///////////////
 
 // improve using a grid
 /*

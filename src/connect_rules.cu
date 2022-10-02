@@ -26,9 +26,11 @@
 #include <config.h>
 #include <iostream>
 #include "ngpu_exception.h"
-#include "connect.h"
+//#include "connect.h"
 #include "nestgpu.h"
 #include "connect_rules.h"
+#include "connect.h"
+#include "distribution.h"
 
 int ConnSpec::Init()
 {
@@ -130,10 +132,10 @@ int SynSpec::Init()
   port_ = 0;
   weight_ = 0;
   delay_ = 0;
-  weight_distr_ = 0;
-  delay_distr_ = 0;
-  weight_array_ = NULL;
-  delay_array_ = NULL;
+  weight_distr_ = DISTR_TYPE_NONE;
+  delay_distr_ = DISTR_TYPE_NONE;
+  weight_h_array_pt_ = NULL;
+  delay_h_array_pt_ = NULL;
 
   return 0;
 }
@@ -183,22 +185,34 @@ int SynSpec::SetParam(std::string param_name, int value)
       throw ngpu_exception("Unknown synapse group");
     }
     syn_group_ = value;
-    return 0;
   }
   else if (param_name=="receptor") {
     if (value<0) {
       throw ngpu_exception("Port index must be >=0");
     }
     port_ = value;
-    return 0;
+  }
+  else if (param_name=="weight_distribution") {
+    weight_distr_ = value;
+    //printf("weight_distribution_ idx: %d\n", value);
+  }
+  else if (param_name=="delay_distribution") {
+    delay_distr_ = value;
+    //printf("delay_distribution_ idx: %d\n", value);
+  }
+  else  {
+    throw ngpu_exception("Unknown synapse int parameter");
   }
   
-  throw ngpu_exception("Unknown synapse int parameter");
+  return 0;
 }
 
 bool SynSpec::IsIntParam(std::string param_name)
 {
-  if (param_name=="synapse_group" || param_name=="receptor") {
+  if (param_name=="synapse_group" || param_name=="receptor"
+      || param_name=="weight_distribution"
+      || param_name=="delay_distribution"
+      ) {
     return true;
   }
   else {
@@ -217,6 +231,38 @@ int SynSpec::SetParam(std::string param_name, float value)
     }
     delay_ = value;
   }
+  else if (param_name=="weight_mu") {
+    weight_mu_ = value;
+    //printf("weight_mu_: %f\n", value);
+  }
+  else if (param_name=="weight_low") {
+    weight_low_ = value;
+    //printf("weight_low_: %f\n", value);
+  }
+  else if (param_name=="weight_high") {
+    weight_high_ = value;
+    //printf("weight_high_: %f\n", value);
+  }
+  else if (param_name=="weight_sigma") {
+    weight_sigma_ = value;
+    //printf("weight_sigma_: %f\n", value);
+  }
+  else if (param_name=="delay_mu") {
+    delay_mu_ = value;
+    //printf("delay_mu_: %f\n", value);
+  }
+  else if (param_name=="delay_low") {
+    delay_low_ = value;
+    //printf("delay_low_: %f\n", value);
+  }
+  else if (param_name=="delay_high") {
+    delay_high_ = value;
+    //printf("delay_high_: %f\n", value);
+  }
+  else if (param_name=="delay_sigma") {
+    delay_sigma_ = value;
+    //printf("delay_sigma_: %f\n", value);
+  }
   else {
     throw ngpu_exception("Unknown synapse float parameter");
   }
@@ -225,7 +271,12 @@ int SynSpec::SetParam(std::string param_name, float value)
 
 bool SynSpec::IsFloatParam(std::string param_name)
 {
-  if (param_name=="weight" || param_name=="delay") {
+  if (param_name=="weight" || param_name=="delay"
+      || param_name=="weight_mu" || param_name=="weight_low"
+      || param_name=="weight_high" || param_name=="weight_sigma"
+      || param_name=="delay_mu" || param_name=="delay_low"
+      || param_name=="delay_high" || param_name=="delay_sigma"
+      ) {
     return true;
   }
   else {
@@ -236,10 +287,12 @@ bool SynSpec::IsFloatParam(std::string param_name)
 int SynSpec::SetParam(std::string param_name, float *array_pt)
 {
   if (param_name=="weight_array") {
-    weight_array_ = array_pt;
+    weight_h_array_pt_ = array_pt;
+    weight_distr_ = DISTR_TYPE_ARRAY;
   }
   else if (param_name=="delay_array") {
-    delay_array_ = array_pt;
+    delay_h_array_pt_ = array_pt;
+    delay_distr_ = DISTR_TYPE_ARRAY;
   }
   else {
     throw ngpu_exception("Unknown synapse array parameter");
@@ -258,17 +311,21 @@ bool SynSpec::IsFloatPtParam(std::string param_name)
   }
 }
 
+
 int NESTGPU::Connect(int i_source_node, int i_target_node,
-		       unsigned char port, unsigned char syn_group,
+		       int port, unsigned char syn_group,
 		       float weight, float delay)
 {
   CheckUncalibrated("Connections cannot be created after calibration");
+/*
   net_connection_->Connect(i_source_node, i_target_node,
 			   port, syn_group, weight, delay);
 
+*/
   return 0;
 }
 
+/*
 template<>
 int NESTGPU::_SingleConnect<int, int>
 (int i_source0, int i_source, int i_target0,
@@ -347,6 +404,7 @@ int NESTGPU::_RemoteSingleConnect<int*>
     remote_connection_vect_.push_back(rc);
     return 0;
 }
+*/
 
 int NESTGPU::Connect(int i_source, int n_source, int i_target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
@@ -358,20 +416,46 @@ int NESTGPU::Connect(int i_source, int n_source, int i_target, int n_target,
 int NESTGPU::Connect(int i_source, int n_source, int* target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return _Connect<int, int*>(i_source, n_source, target, n_target,
-			     conn_spec, syn_spec);
+  int *d_target;
+  gpuErrchk(cudaMalloc(&d_target, n_target*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(int),
+		       cudaMemcpyHostToDevice));
+  int ret = _Connect<int, int*>(i_source, n_source, d_target, n_target,
+				conn_spec, syn_spec);
+  gpuErrchk(cudaFree(d_target));
+
+  return ret;
 }
 int NESTGPU::Connect(int* source, int n_source, int i_target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return _Connect<int*, int>(source, n_source, i_target, n_target,
-			     conn_spec, syn_spec);
+  int *d_source;
+  gpuErrchk(cudaMalloc(&d_source, n_source*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(int),
+		       cudaMemcpyHostToDevice));
+  int ret = _Connect<int*, int>(d_source, n_source, i_target, n_target,
+				conn_spec, syn_spec);
+  gpuErrchk(cudaFree(d_source));
+  
+  return ret;
 }
 int NESTGPU::Connect(int* source, int n_source, int* target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return _Connect<int*, int*>(source, n_source, target, n_target,
-			conn_spec, syn_spec);
+  int *d_source;
+  gpuErrchk(cudaMalloc(&d_source, n_source*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(int),
+		       cudaMemcpyHostToDevice));
+  int *d_target;
+  gpuErrchk(cudaMalloc(&d_target, n_target*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(int),
+		       cudaMemcpyHostToDevice));
+  int ret = _Connect<int*, int*>(d_source, n_source, d_target, n_target,
+				 conn_spec, syn_spec);
+  gpuErrchk(cudaFree(d_source));
+  gpuErrchk(cudaFree(d_target));
+
+  return ret;
 }
 
 int NESTGPU::Connect(NodeSeq source, NodeSeq target,
@@ -399,13 +483,15 @@ int NESTGPU::Connect(std::vector<int> source, std::vector<int> target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   return _Connect<int*, int*>(source.data(), source.size(), target.data(),
-			target.size(), conn_spec, syn_spec);
+			      target.size(), conn_spec, syn_spec);
 }
+
 
 int NESTGPU::RemoteConnect(int i_source_host, int i_source, int n_source,
 			     int i_target_host, int i_target, int n_target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int> rsource(i_source_host, i_source);
   RemoteNode<int> rtarget(i_target_host, i_target);
@@ -414,12 +500,15 @@ int NESTGPU::RemoteConnect(int i_source_host, int i_source, int n_source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 
 int NESTGPU::RemoteConnect(int i_source_host, int i_source, int n_source,
 			     int i_target_host, int* target, int n_target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int> rsource(i_source_host, i_source);
   RemoteNode<int*> rtarget(i_target_host, target);  
@@ -428,11 +517,14 @@ int NESTGPU::RemoteConnect(int i_source_host, int i_source, int n_source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
 			     int i_target_host, int i_target, int n_target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int*> rsource(i_source_host, source);
   RemoteNode<int> rtarget(i_target_host, i_target);
@@ -442,11 +534,14 @@ int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
 			     int i_target_host, int* target, int n_target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int*> rsource(i_source_host, source);
   RemoteNode<int*> rtarget(i_target_host, target);
@@ -456,12 +551,15 @@ int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 
 int NESTGPU::RemoteConnect(int i_source_host, NodeSeq source,
 			     int i_target_host, NodeSeq target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int> rsource(i_source_host, source.i0);
   RemoteNode<int> rtarget(i_target_host, target.i0);
@@ -471,12 +569,15 @@ int NESTGPU::RemoteConnect(int i_source_host, NodeSeq source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 
 int NESTGPU::RemoteConnect(int i_source_host, NodeSeq source,
 			     int i_target_host, std::vector<int> target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int> rsource(i_source_host, source.i0);
   RemoteNode<int*> rtarget(i_target_host, target.data());
@@ -485,12 +586,15 @@ int NESTGPU::RemoteConnect(int i_source_host, NodeSeq source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 
 int NESTGPU::RemoteConnect(int i_source_host, std::vector<int> source,
 			     int i_target_host, NodeSeq target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int*> rsource(i_source_host, source.data());
   RemoteNode<int> rtarget(i_target_host, target.i0);
@@ -499,12 +603,15 @@ int NESTGPU::RemoteConnect(int i_source_host, std::vector<int> source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
 
 int NESTGPU::RemoteConnect(int i_source_host, std::vector<int> source,
 			     int i_target_host, std::vector<int> target,
 			     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
+  /*
 #ifdef HAVE_MPI
   RemoteNode<int*> rsource(i_source_host, source.data());
   RemoteNode<int*> rtarget(i_target_host, target.data());
@@ -513,4 +620,7 @@ int NESTGPU::RemoteConnect(int i_source_host, std::vector<int> source,
 #else
   throw ngpu_exception("MPI is not available in your build");
 #endif
+  */
+  return 0;
 }
+

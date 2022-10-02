@@ -18,15 +18,13 @@
  *
  */
 
-
-
-
-
 #include <config.h>
 #include <stdio.h>
 #include "spike_buffer.h"
 #include "cuda_error.h"
 #include "syn_model.h"
+#include "connect.h"
+#include <cub/cub.cuh>
 
 #define SPIKE_TIME_DIFF_GUARD 15000 // must be less than 16384
 #define SPIKE_TIME_DIFF_THR 10000 // must be less than GUARD
@@ -44,35 +42,92 @@ __device__ unsigned int *RevSpikeNum;
 __device__ unsigned int *RevSpikeTarget;
 __device__ int *RevSpikeNConn;
 
+int64_t h_NRevConn; 
 
-//////////////////////////////////////////////////////////////////////
-// This is the function called by the nested loop
-// that makes use of positive post-pre spike time difference
-__device__ void SynapseUpdateFunction(int i_spike, int i_target_rev_conn)
+int64_t *d_RevConnections; //[i] i=0,..., n_rev_conn - 1;
+__device__ int64_t *RevConnections;
+
+int *d_TargetRevConnectionSize; //[i] i=0,..., n_neuron-1;
+__device__ int *TargetRevConnectionSize;
+
+int64_t **d_TargetRevConnection; //[i][j] j=0,...,RevConnectionSize[i]-1
+__device__ int64_t **TargetRevConnection;
+
+
+// Count number of reverse connections per target node
+__global__ void CountRevConnectionsKernel
+(int64_t n_conn, int64_t *target_rev_connection_size_64)
 {
-  unsigned int target = RevSpikeTarget[i_spike];
-  unsigned int i_conn = TargetRevConnection[target][i_target_rev_conn];
-  unsigned char syn_group = ConnectionSynGroup[i_conn];
-  if (syn_group>0) {
-    float *weight = &ConnectionWeight[i_conn];
-    unsigned short spike_time_idx = ConnectionSpikeTime[i_conn];
-    unsigned short time_idx = (unsigned short)(NESTGPUTimeIdx & 0xffff);
-    unsigned short Dt_int = time_idx - spike_time_idx;
-    if (Dt_int<MAX_SYN_DT) {
-      SynapseUpdate(syn_group, weight, NESTGPUTimeResolution*Dt_int);
-    }
+  int64_t i_conn = (int64_t)blockIdx.x * blockDim.x + threadIdx.x; 
+  if (i_conn >= n_conn) return;
+
+  uint i_block = (uint)(i_conn / ConnBlockSize);
+  int64_t i_block_conn = i_conn % ConnBlockSize;
+  connection_struct conn = ConnectionArray[i_block][i_block_conn];
+
+  // TO BE IMPROVED BY CHECKING IF THE SYNAPSE TYPE OF THE GROUP
+  // REQUIRES REVERSE CONNECTION
+  // - Check syn_group of all connections.
+  // - If syn_group>0 must create a reverse connection:
+  if (conn.syn_group > 0) {
+    // First get target node index
+    uint target_port = conn.target_port;
+    int i_target = target_port >> MaxPortNBits;
+    // (atomic)increase the number of reverse connections for target
+    atomicAdd((unsigned long long *)&target_rev_connection_size_64[i_target],
+	      1);
   }
 }
 
-__global__ void SynapseUpdateKernel(int n_rev_spikes, int *RevSpikeNConn)
+
+
+// Fill array of reverse connection indexes
+__global__ void SetRevConnectionsIndexKernel
+(int64_t n_conn, int *target_rev_connection_size,
+ int64_t **target_rev_connection)
 {
-  const int i_spike = blockIdx.x;
-  if (i_spike<n_rev_spikes) {
-    const int n_spike_targets = RevSpikeNConn[i_spike];
-    for (int i_target_rev = threadIdx.x; i_target_rev < n_spike_targets; i_target_rev += blockDim.x){
-      SynapseUpdateFunction(i_spike, i_target_rev);
-    }
+  int64_t i_conn = (int64_t)blockIdx.x * blockDim.x + threadIdx.x; 
+  if (i_conn >= n_conn) return;
+
+  uint i_block = (uint)(i_conn / ConnBlockSize);
+  int64_t i_block_conn = i_conn % ConnBlockSize;
+  connection_struct conn = ConnectionArray[i_block][i_block_conn];
+
+  // TO BE IMPROVED BY CHECKING IF THE SYNAPSE TYPE OF THE GROUP
+  // REQUIRES REVERSE CONNECTION  
+  // - Check syn_group of all connections.
+  // - If syn_group>0 must create a reverse connection:
+  if (conn.syn_group > 0) {
+    // First get target node index
+    uint target_port = conn.target_port;
+    int i_target = target_port >> MaxPortNBits;
+    // (atomic)increase the number of reverse connections for target
+    int pos = atomicAdd(&target_rev_connection_size[i_target], 1);
+    // Evaluate the pointer to the rev connection position in the
+    // array of reverse connection indexes
+    int64_t *rev_conn_pt = target_rev_connection[i_target] + pos;
+    // Fill it with the connection index
+    *rev_conn_pt = i_conn;
   }
+}
+
+__global__ void SetTargetRevConnectionsPtKernel
+    (int n_spike_buffer, int64_t *target_rev_connection_cumul,
+     int64_t **target_rev_connection, int64_t *rev_connections)
+{
+  int i_target = blockIdx.x * blockDim.x + threadIdx.x; 
+  if (i_target >= n_spike_buffer) return;
+  target_rev_connection[i_target] = rev_connections
+    + target_rev_connection_cumul[i_target];
+}
+
+__global__ void RevConnectionInitKernel(int64_t *rev_conn,
+					int *target_rev_conn_size,
+					int64_t **target_rev_conn)
+{
+  RevConnections = rev_conn;
+  TargetRevConnectionSize = target_rev_conn_size;
+  TargetRevConnection = target_rev_conn;
 }
 
 
@@ -145,52 +200,28 @@ __global__ void RevSpikeReset()
 }
   
 
-int ResetConnectionSpikeTimeUp(NetConnection *net_connection)
+int ResetConnectionSpikeTimeUp()
 {  
   ResetConnectionSpikeTimeUpKernel
-    <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
-    (net_connection->StoredNConnections());
+    <<<(NConn+1023)/1024, 1024>>>
+    (NConn);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
   return 0;
 }
 
-int ResetConnectionSpikeTimeDown(NetConnection *net_connection)
+int ResetConnectionSpikeTimeDown()
 {  
   ResetConnectionSpikeTimeDownKernel
-    <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
-    (net_connection->StoredNConnections());
+    <<<(NConn+1023)/1024, 1024>>>
+    (NConn);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
   return 0;
 }
 
-int RevSpikeInit(NetConnection *net_connection)
-{
-  int n_spike_buffers = net_connection->connection_.size();
-  
-  SetConnectionSpikeTime
-    <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
-    (net_connection->StoredNConnections(), 0x8000);
-  gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
-
-  gpuErrchk(cudaMalloc(&d_RevSpikeNum, sizeof(unsigned int)));
-  
-  gpuErrchk(cudaMalloc(&d_RevSpikeTarget,
-		       n_spike_buffers*sizeof(unsigned int)));
-  gpuErrchk(cudaMalloc(&d_RevSpikeNConn,
-		       n_spike_buffers*sizeof(int)));
-
-  DeviceRevSpikeInit<<<1,1>>>(d_RevSpikeNum, d_RevSpikeTarget,
-			      d_RevSpikeNConn);
-  gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
-
-  return 0;
-}
 
 
 int RevSpikeFree()
@@ -198,6 +229,98 @@ int RevSpikeFree()
   gpuErrchk(cudaFree(&d_RevSpikeNum));
   gpuErrchk(cudaFree(&d_RevSpikeTarget));
   gpuErrchk(cudaFree(&d_RevSpikeNConn));
+
+  return 0;
+}
+
+int RevSpikeInit(uint n_spike_buffers)
+{
+  //printf("n_spike_buffers: %d\n", n_spike_buffers);
+
+  //////////////////////////////////////////////////////////////////////
+  /////// Organize reverse connections (new version)
+  // CHECK THE GLOBAL VARIABLES THAT MUST BE CONVERTED TO 64 bit ARRAYS
+  //////////////////////////////////////////////////////////////////////  
+  // Alloc 64 bit array of number of reverse connections per target node
+  // and initialize it to 0
+  int64_t *d_target_rev_conn_size_64;
+  int64_t *d_target_rev_conn_cumul;
+  gpuErrchk(cudaMalloc(&d_target_rev_conn_size_64,
+		       (n_spike_buffers+1)*sizeof(int64_t)));
+  gpuErrchk(cudaMemset(d_target_rev_conn_size_64, 0,
+		       (n_spike_buffers+1)*sizeof(int64_t)));
+  // Count number of reverse connections per target node
+  CountRevConnectionsKernel<<<(NConn+1023)/1024, 1024>>>
+    (NConn, d_target_rev_conn_size_64);
+  // Evaluate exclusive sum of reverse connections per target node
+  // Allocate array for cumulative sum
+  gpuErrchk(cudaMalloc(&d_target_rev_conn_cumul,
+		       (n_spike_buffers+1)*sizeof(int64_t)));
+  // Determine temporary device storage requirements
+  void *d_temp_storage = NULL;
+  size_t temp_storage_bytes = 0;
+  cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
+				d_target_rev_conn_size_64,
+				d_target_rev_conn_cumul,
+				n_spike_buffers+1);
+  // Allocate temporary storage
+  gpuErrchk(cudaMalloc(&d_temp_storage, temp_storage_bytes));
+  // Run exclusive prefix sum
+  cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
+				d_target_rev_conn_size_64,
+				d_target_rev_conn_cumul,
+				n_spike_buffers+1);
+  // The last element is the total number of reverse connections
+  gpuErrchk(cudaMemcpy(&h_NRevConn, &d_target_rev_conn_cumul[n_spike_buffers],
+		       sizeof(int64_t), cudaMemcpyDeviceToHost));
+  if (h_NRevConn > 0) {
+    // Allocate array of reverse connection indexes
+    // CHECK THAT d_RevConnections is of type int64_t array
+    gpuErrchk(cudaMalloc(&d_RevConnections, h_NRevConn*sizeof(int64_t)));  
+    // For each target node evaluate the pointer
+    // to its first reverse connection using the exclusive sum
+    // CHECK THAT d_TargetRevConnection is of type int64_t* pointer
+    gpuErrchk(cudaMalloc(&d_TargetRevConnection, n_spike_buffers
+			 *sizeof(int64_t*)));
+    SetTargetRevConnectionsPtKernel<<<(n_spike_buffers+1023)/1024, 1024>>>
+      (n_spike_buffers, d_target_rev_conn_cumul,
+       d_TargetRevConnection, d_RevConnections);
+  
+    // alloc 32 bit array of number of reverse connections per target node
+    gpuErrchk(cudaMalloc(&d_TargetRevConnectionSize,
+			 n_spike_buffers*sizeof(int)));
+    // and initialize it to 0
+    gpuErrchk(cudaMemset(d_TargetRevConnectionSize, 0,
+			 n_spike_buffers*sizeof(int)));
+    // Fill array of reverse connection indexes
+    SetRevConnectionsIndexKernel<<<(NConn+1023)/1024, 1024>>>
+      (NConn, d_TargetRevConnectionSize, d_TargetRevConnection);
+
+    RevConnectionInitKernel<<<1,1>>>
+      (d_RevConnections, d_TargetRevConnectionSize, d_TargetRevConnection);
+
+    SetConnectionSpikeTime
+      <<<(NConn+1023)/1024, 1024>>>
+      (NConn, 0x8000);
+    gpuErrchk( cudaPeekAtLastError() );
+    gpuErrchk( cudaDeviceSynchronize() );
+
+    gpuErrchk(cudaMalloc(&d_RevSpikeNum, sizeof(unsigned int)));
+  
+    gpuErrchk(cudaMalloc(&d_RevSpikeTarget,
+			 n_spike_buffers*sizeof(unsigned int)));
+    gpuErrchk(cudaMalloc(&d_RevSpikeNConn,
+			 n_spike_buffers*sizeof(int)));
+
+    DeviceRevSpikeInit<<<1,1>>>(d_RevSpikeNum, d_RevSpikeTarget,
+				d_RevSpikeNConn);
+    gpuErrchk( cudaPeekAtLastError() );
+    gpuErrchk( cudaDeviceSynchronize() );
+  }
+  
+  gpuErrchk(cudaFree(d_temp_storage));
+  gpuErrchk(cudaFree(d_target_rev_conn_size_64));
+  gpuErrchk(cudaFree(d_target_rev_conn_cumul));
 
   return 0;
 }

@@ -74,15 +74,24 @@ public:
 
 class SynSpec
 {
-  unsigned char syn_group_;
-  unsigned char port_;
  public:
+  unsigned char syn_group_;
+  int port_;
   int weight_distr_;
-  float *weight_array_;
+  float *weight_h_array_pt_;
   float weight_;
   int delay_distr_;
-  float *delay_array_;
+  float *delay_h_array_pt_;
   float delay_;
+  float weight_mu_;
+  float weight_low_;
+  float weight_high_;
+  float weight_sigma_;
+  float delay_mu_;
+  float delay_low_;
+  float delay_high_;
+  float delay_sigma_;
+  
  public:
   SynSpec();
   SynSpec(float weight, float delay);

@@ -44,9 +44,20 @@ const std::string poiss_gen_scal_param_name[] = {
 };
 */
 
+namespace poiss_conn
+{
+  int OrganizeDirectConnections();
+};
+
 class poiss_gen : public BaseNeuron
 {
   curandState *d_curand_state_;
+  uint *d_poiss_key_array_;
+  int64_t i_conn0_;
+  int64_t n_conn_;
+  float *d_mu_arr_;
+  int max_delay_;
+  
  public:
   
   int Init(int i_node_0, int n_node, int n_port, int i_group,
@@ -55,9 +66,10 @@ class poiss_gen : public BaseNeuron
   int Calibrate(double, float);
 		
   int Update(long long it, double t1);
-  int SendDirectSpikes(double t, float time_step);
-
+  int SendDirectSpikes(long long time_idx);
+  int buildDirectConnections();
 };
+
 
 
 #endif

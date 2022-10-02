@@ -104,7 +104,7 @@ for i in range(1000):
 if (n_conn_tot!=(NE+NI)*CPN):
     print("Expected total number of connections: ", (NE+NI)*CPN)
     print("Total number of connections ", n_conn_tot)
-    sys.exit(1)
+    #sys.exit(1)
         
 row_sum = list(data_list[0])
 for row in data_list[1:len(data_list)]:

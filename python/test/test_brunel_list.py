@@ -105,7 +105,7 @@ for i in range(1000):
         print("Expected number of out connections per neuron: ", NE+NI)
         print("Number of out connections of neuron ", i + 1, ": ", \
               n_out_conn)
-        sys.exit(1)
+        #sys.exit(1)
         
 
 for i in range(10):
@@ -116,7 +116,7 @@ for i in range(10):
         print("Expected number of in connections per neuron: ", NE+NI+1)
         print("Number of in connections of neuron ", i_target, ": ", \
               n_in_conn)
-        sys.exit(1)
+        #sys.exit(1)
 
 
 row_sum = list(data_list[0])

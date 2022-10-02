@@ -18,20 +18,12 @@
  *
  */
 
-
-
-
-
-#ifndef DIRCONNECT_H
-#define DIRCONNECT_H
-
-struct DirectConnection
+int IntPow(int x, unsigned int p)
 {
-  int irel_source_;
-  int i_target_;
-  unsigned char port_;
-  float weight_;
-  float delay_;
-};
-
-#endif
+  if (p == 0) return 1;
+  if (p == 1) return x;
+  
+  int tmp = IntPow(x, p/2);
+  if (p%2 == 0) return tmp * tmp;
+  else return x * tmp * tmp;
+}
