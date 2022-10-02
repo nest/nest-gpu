@@ -436,25 +436,28 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
   timeval endTV;
   cudaDeviceSynchronize();
   gettimeofday(&startTV, NULL);
+
+  if (n_conn > 0) {
+    printf("Allocating auxiliary GPU memory...\n");
+    int64_t storage_bytes = 0;
+    void *d_storage = NULL;
+    copass_sort::sort<uint, connection_struct>(key_subarray.data(),
+					       conn_subarray.data(),
+					       n_conn, block_size, d_storage,
+					       storage_bytes);
+    printf("storage bytes: %ld\n", storage_bytes);
+    gpuErrchk(cudaMalloc(&d_storage, storage_bytes));
+    
+    printf("Sorting...\n");
+    copass_sort::sort<uint, connection_struct>(key_subarray.data(),
+					       conn_subarray.data(), n_conn,
+					       block_size, d_storage,
+					       storage_bytes);
   
-  printf("Allocating auxiliary GPU memory...\n");
-  int64_t storage_bytes = 0;
-  void *d_storage = NULL;
-  copass_sort::sort<uint, connection_struct>(key_subarray.data(),
-					conn_subarray.data(), n_conn,
-					block_size, d_storage, storage_bytes);
-  printf("storage bytes: %ld\n", storage_bytes);
-  gpuErrchk(cudaMalloc(&d_storage, storage_bytes));
-  
-  printf("Sorting...\n");
-  copass_sort::sort<uint, connection_struct>(key_subarray.data(),
-					conn_subarray.data(), n_conn,
-					block_size, d_storage, storage_bytes);
-  
-  // free temporarily allocated storage
-  gpuErrchk(cudaFree(d_storage));
-  storage_bytes = 0; 
-  
+    // free temporarily allocated storage
+    gpuErrchk(cudaFree(d_storage));
+    storage_bytes = 0; 
+  }
   printf("Indexing connection groups...\n");
   uint k = key_subarray.size();
 
@@ -496,72 +499,72 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
   
   
   //////////////////////////////////////////////////////////////////////
+  if (tot_conn_group_num > 0) {
+    int64_t *d_conn_group_iconn0_unsorted;
+    gpuErrchk(cudaMalloc(&d_conn_group_iconn0_unsorted,
+			 tot_conn_group_num*sizeof(int64_t)));
   
-  int64_t *d_conn_group_iconn0_unsorted;
-  gpuErrchk(cudaMalloc(&d_conn_group_iconn0_unsorted,
-		       tot_conn_group_num*sizeof(int64_t)));
+    uint *d_conn_group_key_unsorted;
+    gpuErrchk(cudaMalloc(&d_conn_group_key_unsorted,
+			 tot_conn_group_num*sizeof(uint)));
   
-  uint *d_conn_group_key_unsorted;
-  gpuErrchk(cudaMalloc(&d_conn_group_key_unsorted,
-		       tot_conn_group_num*sizeof(uint)));
+    gpuErrchk(cudaMemset(d_ConnGroupNum, 0, n_node*sizeof(uint)));
+    key_subarray_prev = NULL;
+    for (uint i=0; i<k; i++) {
+      uint n_block_conn = i<(k-1) ? block_size : n_conn - block_size*(k-1);
+      OrganizeConnectionGroups<<<(n_block_conn+1023)/1024, 1024>>>
+	(key_subarray[i], key_subarray_prev, n_block_conn,
+	 d_ConnGroupNum, block_size*i, d_ConnGroupIdx0,
+	 d_conn_group_iconn0_unsorted, d_conn_group_key_unsorted);
+      DBGCUDASYNC
+	key_subarray_prev = key_subarray[i] + block_size - 1;
+    }
+
+    gpuErrchk(cudaMalloc(&d_ConnGroupIConn0,
+			 tot_conn_group_num*sizeof(int64_t)));
+    uint *d_conn_group_key;
+    gpuErrchk(cudaMalloc(&d_conn_group_key,
+			 tot_conn_group_num*sizeof(uint)));
+    void *d_conn_group_storage = NULL;
+    size_t conn_group_storage_bytes = 0;
+
+    // Determine temporary storage requirements for sorting connection groups
+    cub::DeviceRadixSort::SortPairs(d_conn_group_storage,
+				    conn_group_storage_bytes,
+				    d_conn_group_key_unsorted,
+				    d_conn_group_key,
+				    d_conn_group_iconn0_unsorted,
+				    d_ConnGroupIConn0,
+				    tot_conn_group_num);
+    // Allocate temporary storage for sorting
+    gpuErrchk(cudaMalloc(&d_conn_group_storage, conn_group_storage_bytes));
+    // Run radix sort
+    cub::DeviceRadixSort::SortPairs(d_conn_group_storage,
+				    conn_group_storage_bytes,
+				    d_conn_group_key_unsorted,
+				    d_conn_group_key,
+				    d_conn_group_iconn0_unsorted,
+				    d_ConnGroupIConn0,
+				    tot_conn_group_num);
+    gpuErrchk(cudaFree(d_conn_group_storage));
+    gpuErrchk(cudaFree(d_conn_group_iconn0_unsorted));
+    gpuErrchk(cudaFree(d_conn_group_key_unsorted));
+
+    gpuErrchk(cudaMalloc(&d_ConnGroupNConn,
+			 tot_conn_group_num*sizeof(int64_t)));
   
-  gpuErrchk(cudaMemset(d_ConnGroupNum, 0, n_node*sizeof(uint)));
-  key_subarray_prev = NULL;
-  for (uint i=0; i<k; i++) {
-    uint n_block_conn = i<(k-1) ? block_size : n_conn - block_size*(k-1);
-    OrganizeConnectionGroups<<<(n_block_conn+1023)/1024, 1024>>>
-      (key_subarray[i], key_subarray_prev, n_block_conn,
-       d_ConnGroupNum, block_size*i, d_ConnGroupIdx0,
-       d_conn_group_iconn0_unsorted, d_conn_group_key_unsorted);
+    getConnGroupNConn<<<(tot_conn_group_num+1023)/1024, 1024>>>
+      (d_ConnGroupIConn0, d_ConnGroupNConn, tot_conn_group_num, n_conn);
     DBGCUDASYNC
-    key_subarray_prev = key_subarray[i] + block_size - 1;
-  }
-
-  gpuErrchk(cudaMalloc(&d_ConnGroupIConn0,
-		       tot_conn_group_num*sizeof(int64_t)));
-  uint *d_conn_group_key;
-  gpuErrchk(cudaMalloc(&d_conn_group_key,
-		       tot_conn_group_num*sizeof(uint)));
-  void *d_conn_group_storage = NULL;
-  size_t conn_group_storage_bytes = 0;
-
-  // Determine temporary storage requirements for sorting connection groups
-  cub::DeviceRadixSort::SortPairs(d_conn_group_storage,
-				  conn_group_storage_bytes,
-				  d_conn_group_key_unsorted,
-				  d_conn_group_key,
-				  d_conn_group_iconn0_unsorted,
-				  d_ConnGroupIConn0,
-				  tot_conn_group_num);
-  // Allocate temporary storage for sorting
-  gpuErrchk(cudaMalloc(&d_conn_group_storage, conn_group_storage_bytes));
-  // Run radix sort
-  cub::DeviceRadixSort::SortPairs(d_conn_group_storage,
-				  conn_group_storage_bytes,
-				  d_conn_group_key_unsorted,
-				  d_conn_group_key,
-				  d_conn_group_iconn0_unsorted,
-				  d_ConnGroupIConn0,
-				  tot_conn_group_num);
-  gpuErrchk(cudaFree(d_conn_group_storage));
-  gpuErrchk(cudaFree(d_conn_group_iconn0_unsorted));
-  gpuErrchk(cudaFree(d_conn_group_key_unsorted));
+    gpuErrchk(cudaMalloc(&d_ConnGroupDelay,
+			 tot_conn_group_num*sizeof(uint)));
   
-  gpuErrchk(cudaMalloc(&d_ConnGroupNConn,
-		       tot_conn_group_num*sizeof(int64_t)));
-  
-  getConnGroupNConn<<<(tot_conn_group_num+1023)/1024, 1024>>>
-    (d_ConnGroupIConn0, d_ConnGroupNConn, tot_conn_group_num, n_conn);
-  DBGCUDASYNC
-  gpuErrchk(cudaMalloc(&d_ConnGroupDelay,
-		       tot_conn_group_num*sizeof(uint)));
-  
-  getConnGroupDelay<<<(tot_conn_group_num+1023)/1024, 1024>>>
-    (d_conn_group_key, d_ConnGroupDelay, tot_conn_group_num);
-  DBGCUDASYNC
+    getConnGroupDelay<<<(tot_conn_group_num+1023)/1024, 1024>>>
+      (d_conn_group_key, d_ConnGroupDelay, tot_conn_group_num);
+    DBGCUDASYNC
     
-  gpuErrchk(cudaFree(d_conn_group_key));
-
+    gpuErrchk(cudaFree(d_conn_group_key));
+  }
   // find maxumum number of connection groups (delays) over all neurons
   uint *d_max_delay_num = NULL;  
   d_temp_storage = NULL;

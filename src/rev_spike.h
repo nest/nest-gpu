@@ -57,11 +57,6 @@ template<>
 __device__ __forceinline__ void NestedLoopFunction<1>
 (int i_spike, int i_target_rev_conn)
 {
-  for (int i=2; i<4; i++) {
-    for (int j=0; j<2; j++) {
-      printf("ok %lld\n", TargetRevConnection[i][j]);
-    }
-  }
   unsigned int target = RevSpikeTarget[i_spike];
   int64_t i_conn = TargetRevConnection[target][i_target_rev_conn];
   uint i_block = (uint)(i_conn / ConnBlockSize);
@@ -76,11 +71,11 @@ __device__ __forceinline__ void NestedLoopFunction<1>
     unsigned short time_idx = (unsigned short)(NESTGPUTimeIdx & 0xffff);
     unsigned short Dt_int = time_idx - spike_time_idx;
 
-    printf("rev spike target %d i_target_rev_conn %d "
-	   "i_conn %lld weight %f syn_group %d "
-    	   "TimeIdx %lld CST %d Dt %d\n",
-    	   target, i_target_rev_conn, i_conn, conn.weight, syn_group,
-    	   NESTGPUTimeIdx, spike_time_idx, Dt_int);
+    //printf("rev spike target %d i_target_rev_conn %d "
+    //	   "i_conn %lld weight %f syn_group %d "
+    //	   "TimeIdx %lld CST %d Dt %d\n",
+    //	   target, i_target_rev_conn, i_conn, conn.weight, syn_group,
+    //	   NESTGPUTimeIdx, spike_time_idx, Dt_int);
    
     if (Dt_int<MAX_SYN_DT) {
       SynapseUpdate(syn_group,

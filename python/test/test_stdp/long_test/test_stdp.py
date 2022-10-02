@@ -66,16 +66,20 @@ syn_group = ngpu.CreateSynGroup \
             ("stdp", {"tau_plus":tau_plus, "tau_minus":tau_minus, \
                       "lambda":lambd, "alpha":alpha, "mu_plus":mu_plus, \
                       "mu_minus":mu_minus,  "Wmax":Wmax})
-conn_dict={"rule": "one_to_one"}
+conn_dict={"rule": "all_to_all"}
 for j in range(N):
     delay_post = 0.1 + round(Dt_max*j/N,1)
     ngpu.SetStatus([neuron_post[j]], {"den_delay": delay_post})
-    for i in range(N):
-        delay_pre = 0.1 + round(Dt_max*i/N,1)
-        syn_dict_stdp={"weight":weight_stdp, "delay":delay_pre, \
-                       "synapse_group":syn_group, "receptor":1}
+
+delay_pre = []    
+for i in range(N):
+    for j in range(N):
+        delay_pre.append(0.1 + round(Dt_max*i/N,1))
         
-        ngpu.Connect([neuron_pre[i]], [neuron_post[j]], conn_dict, syn_dict_stdp)
+syn_dict_stdp={"weight":weight_stdp, "delay_array":delay_pre, \
+               "synapse_group":syn_group, "receptor":1}
+        
+ngpu.Connect(neuron_pre, neuron_post, conn_dict, syn_dict_stdp)
 
 ngpu.Simulate(sim_time)
 

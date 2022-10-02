@@ -304,29 +304,6 @@ int RevSpikeInit(uint n_spike_buffers)
       (NConn, 0x8000);
     gpuErrchk( cudaPeekAtLastError() );
     gpuErrchk( cudaDeviceSynchronize() );
-    
-    ///////////// TEMPORARY. REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    int64_t **h_TargetRevConnection = new int64_t*[n_spike_buffers];
-    gpuErrchk(cudaMemcpy(h_TargetRevConnection,
-			 d_TargetRevConnection,
-			 n_spike_buffers*sizeof(int64_t*),
-			 cudaMemcpyDeviceToHost));
-    int *h_TargetRevConnectionSize = new int[n_spike_buffers];
-    gpuErrchk(cudaMemcpy(h_TargetRevConnectionSize,
-			 d_TargetRevConnectionSize,
-			 n_spike_buffers*sizeof(int),
-			 cudaMemcpyDeviceToHost));
-    for (uint isb=0; isb<n_spike_buffers; isb++) {
-      int n_conn = h_TargetRevConnectionSize[isb];
-      int64_t *rev_conn = new int64_t[n_conn];
-      gpuErrchk(cudaMemcpy(rev_conn,
-			   h_TargetRevConnection[isb], n_conn*sizeof(int64_t),
-			   cudaMemcpyDeviceToHost));
-      for (int i=0; i<n_conn; i++) {
-	printf ("tgt: %d\ti: %d\trev_conn: %ld\n", isb, i, rev_conn[i]);
-      }
-    }
-    //////////////////////////////////////////////////////////////////////
 
     gpuErrchk(cudaMalloc(&d_RevSpikeNum, sizeof(unsigned int)));
   
