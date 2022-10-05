@@ -102,7 +102,7 @@ bool Distribution::isArray(int distr_idx)
 
 void Distribution::checkDistributionInitialized()
 {
-  if (distr_idx_<=DISTR_TYPE_ARRAY || distr_idx_>=N_DISTR_TYPE) {
+  if (distr_idx_<DISTR_TYPE_ARRAY || distr_idx_>=N_DISTR_TYPE) {
     throw ngpu_exception("Distribution was not initialized");
   }
 }

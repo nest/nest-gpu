@@ -871,14 +871,14 @@ __global__ void GetConnectionStatusKernel
   int64_t i_block_conn = i_conn % ConnBlockSize;
   // get connection structure
   connection_struct conn = ConnectionArray[i_block][i_block_conn];
-  // Get joined target-port variable, then target index and port index
+  // Get joined target-port parameter, then target index and port index
   uint target_port = conn.target_port;
   i_target[i_arr] = target_port >> MaxPortNBits;
   port[i_arr] = target_port & PortMask;
   // Get weight and synapse group
   weight[i_arr] = conn.weight;
   syn_group[i_arr] = conn.syn_group;
-  // Get joined source-delay variable, then source index and delay
+  // Get joined source-delay parameter, then source index and delay
   uint source_delay = SourceDelayArray[i_block][i_block_conn];
   i_source[i_arr] = source_delay >> MaxPortNBits;
   int i_delay = source_delay & PortMask;
@@ -908,7 +908,7 @@ __global__ void GetConnectionFloatParamKernel
     break;
   }
   case i_delay_param: {
-    // Get joined source-delay variable, then delay
+    // Get joined source-delay parameter, then delay
     uint source_delay = SourceDelayArray[i_block][i_block_conn];
     int i_delay = source_delay & PortMask;
     param_arr[i_arr] = NESTGPUTimeResolution * i_delay;
@@ -936,18 +936,18 @@ __global__ void GetConnectionIntParamKernel
   connection_struct conn = ConnectionArray[i_block][i_block_conn];
   switch (i_param) {
   case i_source_param: {
-    // Get joined source-delay variable, then source index and delay
+    // Get joined source-delay parameter, then source index and delay
     uint source_delay = SourceDelayArray[i_block][i_block_conn];
     param_arr[i_arr] = source_delay >> MaxPortNBits;
     break;
   }
   case i_target_param: {
-    // Get joined target-port variable, then target index
+    // Get joined target-port parameter, then target index
     param_arr[i_arr] = conn.target_port >> MaxPortNBits;
     break;
   }
   case i_port_param: {
-    // Get joined target-port variable, then port index
+    // Get joined target-port parameter, then port index
     param_arr[i_arr] = conn.target_port & PortMask;
     break;
   }
@@ -958,6 +958,135 @@ __global__ void GetConnectionIntParamKernel
   }
   }
 }
+
+//////////////////////////////////////////////////////////////////////
+// CUDA Kernel that sets a float parameter of an array of n_conn connections,
+// identified by the indexes conn_ids[i], using values from the array
+// param_arr
+//////////////////////////////////////////////////////////////////////
+__global__ void SetConnectionFloatParamKernel
+(int64_t *conn_ids, int64_t n_conn, float *param_arr, int i_param)
+{
+  int64_t i_arr = (int64_t)blockIdx.x * blockDim.x + threadIdx.x; 
+  if (i_arr >= n_conn) return;
+
+   // get connection index, connection block index and index within block
+  int64_t i_conn = conn_ids[i_arr];
+  uint i_block = (uint)(i_conn / ConnBlockSize);
+  int64_t i_block_conn = i_conn % ConnBlockSize;
+  // get connection structure
+  connection_struct *conn = &ConnectionArray[i_block][i_block_conn];
+  switch (i_param) {
+  case i_weight_param: {
+    conn->weight = param_arr[i_arr]; 
+    break;
+  }
+  }
+}
+
+//////////////////////////////////////////////////////////////////////
+// CUDA Kernel that sets a float parameter of an array of n_conn connections,
+// identified by the indexes conn_ids[i], to the value val
+//////////////////////////////////////////////////////////////////////
+__global__ void SetConnectionFloatParamKernel
+(int64_t *conn_ids, int64_t n_conn, float val, int i_param)
+{
+  int64_t i_arr = (int64_t)blockIdx.x * blockDim.x + threadIdx.x; 
+  if (i_arr >= n_conn) return;
+
+   // get connection index, connection block index and index within block
+  int64_t i_conn = conn_ids[i_arr];
+  uint i_block = (uint)(i_conn / ConnBlockSize);
+  int64_t i_block_conn = i_conn % ConnBlockSize;
+  // get connection structure
+  connection_struct *conn = &ConnectionArray[i_block][i_block_conn];
+  switch (i_param) {
+  case i_weight_param: {
+    conn->weight = val; 
+    break;
+  }
+  }
+}
+
+//////////////////////////////////////////////////////////////////////
+// CUDA Kernel that sets an integer parameter of an array of n_conn connections,
+// identified by the indexes conn_ids[i], using values from the array
+// param_arr
+//////////////////////////////////////////////////////////////////////
+__global__ void SetConnectionIntParamKernel
+(int64_t *conn_ids, int64_t n_conn, int *param_arr, int i_param)
+{
+  int64_t i_arr = (int64_t)blockIdx.x * blockDim.x + threadIdx.x; 
+  if (i_arr >= n_conn) return;
+
+   // get connection index, connection block index and index within block
+  int64_t i_conn = conn_ids[i_arr];
+  uint i_block = (uint)(i_conn / ConnBlockSize);
+  int64_t i_block_conn = i_conn % ConnBlockSize;
+  // get connection structure
+  connection_struct *conn = &ConnectionArray[i_block][i_block_conn];
+  switch (i_param) {
+  case i_target_param: {
+    // Get port index from joined target-port parameter
+    int i_port = conn->target_port & PortMask;
+    // Set joined target-port parameter
+    conn->target_port = (param_arr[i_arr] << MaxPortNBits) | i_port;
+    break;
+  }
+  case i_port_param: {
+    // Get target index from joined target-port parameter
+    int i_target = conn->target_port >> MaxPortNBits;
+    // Set joined target-port parameter
+    conn->target_port = (i_target << MaxPortNBits) | param_arr[i_arr];
+    break;
+  }
+  case i_syn_group_param: {
+    // Set synapse group
+    conn->syn_group = param_arr[i_arr]; 
+    break;
+  }
+  }
+}
+
+//////////////////////////////////////////////////////////////////////
+// CUDA Kernel that sets an integer parameter of an array of n_conn connections,
+// identified by the indexes conn_ids[i], to the value val
+//////////////////////////////////////////////////////////////////////
+__global__ void SetConnectionIntParamKernel
+(int64_t *conn_ids, int64_t n_conn, int val, int i_param)
+{
+  int64_t i_arr = (int64_t)blockIdx.x * blockDim.x + threadIdx.x; 
+  if (i_arr >= n_conn) return;
+
+   // get connection index, connection block index and index within block
+  int64_t i_conn = conn_ids[i_arr];
+  uint i_block = (uint)(i_conn / ConnBlockSize);
+  int64_t i_block_conn = i_conn % ConnBlockSize;
+  // get connection structure
+  connection_struct *conn = &ConnectionArray[i_block][i_block_conn];
+  switch (i_param) {
+  case i_target_param: {
+    // Get port index from joined target-port parameter
+    int i_port = conn->target_port & PortMask;
+    // Set joined target-port parameter
+    conn->target_port = (val << MaxPortNBits) | i_port;
+    break;
+  }
+  case i_port_param: {
+    // Get target index from joined target-port parameter
+    int i_target = conn->target_port >> MaxPortNBits;
+    // Set joined target-port parameter
+    conn->target_port = (i_target << MaxPortNBits) | val;
+    break;
+  }
+  case i_syn_group_param: {
+    // Set synapse group
+    conn->syn_group = val; 
+    break;
+  }
+  }
+}
+
 
 //////////////////////////////////////////////////////////////////////
 // Get all parameters of an array of n_conn connections, identified by
@@ -1104,6 +1233,9 @@ int NESTGPU::GetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
     // copy connection parameter array from device to host memory
     gpuErrchk(cudaMemcpy(h_param_arr, d_arr, n_conn*sizeof(float),
 			 cudaMemcpyDeviceToHost));
+    // free allocated device memory
+    gpuErrchk(cudaFree(d_conn_ids));
+    gpuErrchk(cudaFree(d_arr));
   }
   
   return 0;
@@ -1145,9 +1277,175 @@ int NESTGPU::GetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
     // copy connection parameter array from device to host memory
     gpuErrchk(cudaMemcpy(h_param_arr, d_arr, n_conn*sizeof(int),
 			 cudaMemcpyDeviceToHost));
+    // free allocated device memory
+    gpuErrchk(cudaFree(d_conn_ids));
+    gpuErrchk(cudaFree(d_arr));
   }
   
   return 0;
 }
 
- 
+
+//////////////////////////////////////////////////////////////////////
+// Set the float parameter param_name of an array of n_conn connections,
+// identified by the indexes conn_ids[i], using values from a distribution
+// or from an array
+//////////////////////////////////////////////////////////////////////
+int NESTGPU::SetConnectionFloatParamDistr(int64_t *conn_ids, int64_t n_conn,
+					  std::string param_name)
+{
+  // Check if param_name is a connection float parameter
+  int i_param = GetConnectionFloatParamIndex(param_name);
+  if (i_param < 0) {
+    throw ngpu_exception(std::string("Unrecognized connection float parameter ")
+			 + param_name);
+  }
+  if (i_param == i_delay_param) {
+    throw ngpu_exception("Connection delay cannot be modified");
+  }
+
+  if (n_conn > 0) {
+    // declare pointers to arrays in device memory
+    int64_t *d_conn_ids;
+    // allocate array of connection ids in device memory
+    // and copy the ids from host to device array
+    gpuErrchk(cudaMalloc(&d_conn_ids, n_conn*sizeof(int64_t)));
+    gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn*sizeof(int64_t),
+			 cudaMemcpyHostToDevice));
+    
+    // get values from array or distribution
+    float *d_arr = distribution_->getArray(n_conn);
+    
+    // launch kernel to set connection parameters
+    SetConnectionFloatParamKernel<<<(n_conn+1023)/1024, 1024 >>>
+      (d_conn_ids, n_conn, d_arr, i_param);
+    // free allocated device memory
+    gpuErrchk(cudaFree(d_conn_ids));
+    gpuErrchk(cudaFree(d_arr));
+  }
+  
+  return 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Set the float parameter param_name of an array of n_conn connections,
+// identified by the indexes conn_ids[i], to the value val
+//////////////////////////////////////////////////////////////////////
+int NESTGPU::SetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+				     float val,
+				     std::string param_name)
+{
+  // Check if param_name is a connection float parameter
+  int i_param = GetConnectionFloatParamIndex(param_name);
+  if (i_param < 0) {
+    throw ngpu_exception(std::string("Unrecognized connection float parameter ")
+			 + param_name);
+  }
+  if (i_param == i_delay_param) {
+        throw ngpu_exception("Connection delay cannot be modified");
+  }
+
+  if (n_conn > 0) {
+    // declare pointers to arrays in device memory
+    int64_t *d_conn_ids;
+    // allocate array of connection ids in device memory
+    // and copy the ids from host to device array
+    gpuErrchk(cudaMalloc(&d_conn_ids, n_conn*sizeof(int64_t)));
+    gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn*sizeof(int64_t),
+			 cudaMemcpyHostToDevice));
+        
+    // launch kernel to set connection parameters
+    SetConnectionFloatParamKernel<<<(n_conn+1023)/1024, 1024 >>>
+      (d_conn_ids, n_conn, val, i_param);
+    // free allocated device memory
+    gpuErrchk(cudaFree(d_conn_ids));    
+  }
+  
+  return 0;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// Set the integer parameter param_name of an array of n_conn connections,
+// identified by the indexes conn_ids[i], using the values from the array
+// h_param_arr
+//////////////////////////////////////////////////////////////////////
+int NESTGPU::SetConnectionIntParamArr(int64_t *conn_ids, int64_t n_conn,
+				      int *h_param_arr,
+				      std::string param_name)
+{
+  // Check if param_name is a connection int parameter
+  int i_param = GetConnectionIntParamIndex(param_name);
+  if (i_param < 0) {
+    throw ngpu_exception(std::string("Unrecognized connection int parameter ")
+			 + param_name);
+  }
+  if (i_param == i_source_param) {
+    throw ngpu_exception("Connection source node cannot be modified");
+  }
+
+  if (n_conn > 0) {
+    // declare pointers to arrays in device memory
+    int64_t *d_conn_ids;
+    int *d_arr;
+    // allocate array of connection ids in device memory
+    // and copy the ids from host to device array
+    gpuErrchk(cudaMalloc(&d_conn_ids, n_conn*sizeof(int64_t)));
+    gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn*sizeof(int64_t),
+			 cudaMemcpyHostToDevice));
+    
+    // allocate connection parameter array in device memory
+    gpuErrchk(cudaMalloc(&d_arr, n_conn*sizeof(int)));
+
+    // copy connection parameter array from host to device memory
+    gpuErrchk(cudaMemcpy(d_arr, h_param_arr, n_conn*sizeof(int),
+			 cudaMemcpyHostToDevice));
+    
+    // launch kernel to set connection parameters
+    SetConnectionIntParamKernel<<<(n_conn+1023)/1024, 1024 >>>
+      (d_conn_ids, n_conn, d_arr, i_param);
+    // free allocated device memory
+    gpuErrchk(cudaFree(d_conn_ids));
+    gpuErrchk(cudaFree(d_arr));
+
+  }
+  
+  return 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+// Set the int parameter param_name of an array of n_conn connections,
+// identified by the indexes conn_ids[i], to the value val
+//////////////////////////////////////////////////////////////////////
+int NESTGPU::SetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
+				   int val, std::string param_name)
+{
+  // Check if param_name is a connection float parameter
+  int i_param = GetConnectionIntParamIndex(param_name);
+  if (i_param < 0) {
+    throw ngpu_exception(std::string("Unrecognized connection int parameter ")
+			 + param_name);
+  }
+  if (i_param == i_source_param) {
+    throw ngpu_exception("Connection source node cannot be modified");
+  }
+
+  if (n_conn > 0) {
+    // declare pointers to arrays in device memory
+    int64_t *d_conn_ids;
+    // allocate array of connection ids in device memory
+    // and copy the ids from host to device array
+    gpuErrchk(cudaMalloc(&d_conn_ids, n_conn*sizeof(int64_t)));
+    gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn*sizeof(int64_t),
+			 cudaMemcpyHostToDevice));
+        
+    // launch kernel to set connection parameters
+    SetConnectionIntParamKernel<<<(n_conn+1023)/1024, 1024 >>>
+      (d_conn_ids, n_conn, val, i_param);
+    // free allocated device memory
+    gpuErrchk(cudaFree(d_conn_ids));
+  }
+  
+  return 0;
+}
+

@@ -675,6 +675,19 @@ class NESTGPU
 			    int *h_param_arr,
 			    std::string param_name);
 
+  int SetConnectionFloatParamDistr(int64_t *conn_ids, int64_t n_conn,
+				   std::string param_name);
+
+  int SetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+			      float val, std::string param_name);
+
+  int SetConnectionIntParamArr(int64_t *conn_ids, int64_t n_conn,
+			       int *h_param_arr,
+			       std::string param_name);
+
+  int SetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
+			    int val, std::string param_name);
+
   int GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
 			  int *i_source, int *i_target, int *port,
 			  unsigned char *syn_group, float *delay,

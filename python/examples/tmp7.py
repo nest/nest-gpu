@@ -1,0 +1,169 @@
+import sys
+import math
+import nestgpu as ngpu
+
+def STDPUpdate(w, Dt, tau_plus, tau_minus, Wplus, alpha, mu_plus, mu_minus, \
+               Wmax):
+    if (Dt>=0):
+        fact = Wplus*math.exp(-Dt/tau_plus)
+        w1 = w + fact*math.pow(1.0 - w/Wmax, mu_plus)
+        if w1>Wmax:
+            w1 = Wmax
+        
+    else:
+        fact = -alpha*Wplus*math.exp(Dt/tau_minus)
+        w1 = w + fact*math.pow(w/Wmax, mu_minus)
+        if w1<0.0:
+            w1 = 0.0
+    return w1
+
+
+tolerance = 1.0e-5
+dt_step = 5.0
+N = 50
+
+tau_plus = 20.0
+tau_minus = 20.0
+lambd = 1.0
+alpha = 1.0
+mu_plus = 1.0
+mu_minus = 1.0
+Wmax = 0.001
+den_delay = 0.0
+
+syn_group = ngpu.CreateSynGroup \
+            ("stdp", {"tau_plus":tau_plus, "tau_minus":tau_minus, \
+                      "lambda":lambd, "alpha":alpha, "mu_plus":mu_plus, \
+                      "mu_minus":mu_minus,  "Wmax":Wmax})                      
+
+sg = ngpu.Create("spike_generator")
+neuron0 = ngpu.Create("aeif_cond_beta")
+neuron1 = ngpu.Create("aeif_cond_beta", N)
+ngpu.SetStatus(neuron1, {"t_ref": 1000.0, "den_delay":den_delay})
+
+time_diff = 200.0
+dt_list = []
+delay_stdp_list = []
+for i in range(N):
+    dt_list.append(dt_step*(-0.5*(N-1) + i))
+    delay_stdp_list.append(time_diff - dt_list[i])
+
+spike_times = [50.0]
+n_spikes = 1
+
+
+# set spike times and height
+ngpu.SetStatus(sg, {"spike_times": spike_times})
+delay0 = 1.0
+delay1 = delay0 + time_diff
+weight_sg = 17.9 # to make it spike immediately and only once
+weight_stdp = Wmax/2
+
+conn_dict={"rule": "one_to_one"}
+conn_dict_full={"rule": "all_to_all"}
+syn_dict0={"weight":weight_sg, "delay":delay0}
+syn_dict1={"weight":weight_sg, "delay":delay1}
+
+ngpu.Connect(sg, neuron0, conn_dict, syn_dict0)
+ngpu.Connect(sg, neuron1, conn_dict_full, syn_dict1)
+
+
+syn_dict_stdp={"weight":weight_stdp, "delay_array":delay_stdp_list, \
+               "synapse_group":syn_group}
+
+ngpu.Connect(neuron0, neuron1, conn_dict_full, syn_dict_stdp)
+
+ngpu.Simulate(1000.0)
+
+conn_id = ngpu.GetConnections(neuron0, neuron1)
+dt = dt_list
+wl = ngpu.GetStatus(conn_id, "weight")
+wl1 = [w*2.0 for w in wl]
+iw = [int (w*1000000.0) for w in wl]
+#ngpu.SetConnectionStatus(conn_id, "weight", 3.0)
+#ngpu.SetStatus(conn_id, "weight", 3.0)
+#ngpu.SetConnectionStatus(conn_id, "weight", {"array": wl1})
+#ngpu.SetConnectionStatus(conn_id, "weight", {"array": wl1})
+#ngpu.SetStatus(conn_id, "weight", {"array": wl1})
+#ngpu.SetConnectionStatus(conn_id, "weight", {"distribution":"normal_clipped",
+#                                             "mu":3, "low":2,
+#                                             "high":4,
+#                                             "sigma":0.5})
+#ngpu.SetStatus(conn_id, "weight", {"distribution":"normal_clipped",
+#                                   "mu":3, "low":2,
+#                                   "high":4,
+#                                   "sigma":0.5})
+#ngpu.SetStatus(conn_id, "delay", {"distribution":"normal_clipped",
+#                                  "mu":3, "low":2,
+#                                  "high":4,
+#                                  "sigma":0.5})
+#ngpu.SetConnectionStatus(conn_id, "source", {"distribution":"normal_clipped",
+#                                             "mu":3, "low":2,
+#                                             "high":4,
+#                                             "sigma":0.5})
+#ngpu.SetStatus(conn_id, "source", {"distribution":"normal_clipped",
+#                                   "mu":3, "low":2,
+#                                   "high":4,
+#                                   "sigma":0.5})
+
+l=len(iw)
+print(l)
+print(iw[0], iw[1], iw[l-1])
+#ngpu.SetConnectionStatus(conn_id, "port", {"array": iw})
+ngpu.SetStatus(conn_id, "port", {"array": iw})
+#ngpu.SetStatus(conn_id, "source", {"array": iw})
+#ngpu.SetStatus(conn_id, "source", 17)
+#ngpu.SetStatus(conn_id, "port", 17)
+conn_dict = ngpu.GetStatus(conn_id)
+print(conn_dict[0])
+print(conn_dict[1])
+print(conn_dict[l-1])
+port = ngpu.GetStatus(conn_id, "port")
+print(port[0])
+print(port[1])
+print(port[l-1])
+
+conn_index = ngpu.GetStatus(conn_id, "index")
+print(conn_index[0])
+print(conn_index[1])
+print(conn_index[l-1])
+
+V = [10.0*i for i in range(l)]
+ngpu.SetStatus(neuron1, "V_m", {"array": V})
+neur_dict = ngpu.GetStatus(neuron1)
+l=len(neur_dict)
+print (l)
+print(neur_dict[0])
+print(neur_dict[1])
+print(neur_dict[l-1])
+
+expect_w = []
+dw = []
+sim_w = []
+for i in range(N):
+    conn_id = ngpu.GetConnections(neuron0, neuron1[i])
+    #ngpu.SetConnectionStatus(conn_id, "weight", 3.0)
+    w = ngpu.GetStatus(conn_id, "weight")
+    w1 = STDPUpdate(weight_stdp, dt[i], tau_plus, tau_minus, lambd*Wmax, \
+                    alpha, mu_plus, mu_minus, Wmax)
+    expect_w.append(w1)
+    sim_w.append(w[0])
+    dw.append(w1-w[0])
+    if abs(dw[i])>tolerance:
+        print("Expected weight: ", w1, " simulated: ", w)
+        #sys.exit(1)
+
+#sys.exit(0)
+
+import matplotlib.pyplot as plt
+
+plt.figure(1)
+plt.plot(dt, sim_w)
+
+plt.figure(2)
+plt.plot(dt, expect_w)
+
+plt.draw()
+plt.pause(1)
+ngpu.waitenter("<Hit Enter To Close>")
+plt.close()
