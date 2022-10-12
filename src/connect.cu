@@ -66,7 +66,7 @@ __device__ uint *ConnGroupDelay;
 
 int64_t NConn; // total number of connections in the whole network
 
-int64_t h_ConnBlockSize = 20000000; //50000000;
+int64_t h_ConnBlockSize = 20000000; // 160000000; //50000000;
 __device__ int64_t ConnBlockSize;
 // size (i.e. number of connections) of connection blocks 
 
