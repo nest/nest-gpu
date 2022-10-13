@@ -609,14 +609,14 @@ __device__ void search_block_up(ArrayT array, position_t size, KeyT val,
     }
     else if (tid < n_steps) {
       pos = left + step*tid;
-      if ((right-pos) > 1) {
+      if ((right-pos) >= 1) {
 	shared_array[tid] = getKey(array, pos);
 	//printf("bid:%d tid:%ld sa:%ld pos:%ld arr:%ld\n", blockIdx.x, tid,
 	//           shared_array[tid], pos, array[pos]);
       }
     }
     __syncthreads();
-    if ((tid < n_steps) && ((right-pos) > 1)
+    if ((tid < n_steps) && ((right-pos) >= 1)
 	&& (shared_array[tid] <= val)
 	&& (shared_array[tid+1] > val)) {
       left = pos;
@@ -702,14 +702,14 @@ __device__ void search_block_down(ArrayT array, position_t size, KeyT val,
     }
     else if (tid < n_steps) {
       pos = left + step*tid;
-      if ((right-pos) > 1) {
+      if ((right-pos) >= 1) {
 	shared_array[tid] = getKey(array, pos);
 	//printf("bid:%d tid:%ld sa:%ld pos:%ld arr:%ld\n", blockIdx.x, tid,
 	//	     shared_array[tid], pos, array[pos]);
       }
     }
     __syncthreads();
-    if ((tid < n_steps) && ((right-pos) > 1)
+    if ((tid < n_steps) && ((right-pos) >= 1)
 	&& (shared_array[tid] < val)
 	&& (shared_array[tid+1] >= val)) {
       left = pos;
