@@ -110,6 +110,8 @@ class NESTGPU
   bool calibrate_flag_; // becomes true after calibration
   bool create_flag_; // becomes true just before creation of the first node
 
+  bool rev_conn_flag_; // flag for reverse connections
+  
   Distribution *distribution_;
   Multimeter *multimeter_;
   std::vector<BaseNeuron*> node_vect_; // -> node_group_vect
@@ -674,6 +676,19 @@ class NESTGPU
   int GetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
 			    int *h_param_arr,
 			    std::string param_name);
+
+  int SetConnectionFloatParamDistr(int64_t *conn_ids, int64_t n_conn,
+				   std::string param_name);
+
+  int SetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+			      float val, std::string param_name);
+
+  int SetConnectionIntParamArr(int64_t *conn_ids, int64_t n_conn,
+			       int *h_param_arr,
+			       std::string param_name);
+
+  int SetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
+			    int val, std::string param_name);
 
   int GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
 			  int *i_source, int *i_target, int *port,

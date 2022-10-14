@@ -63,7 +63,7 @@ public:
 };
 
 enum DistributionType {
-  DISTR_TYPE_NONE,
+  DISTR_TYPE_NONE=0,
   DISTR_TYPE_ARRAY,
   DISTR_TYPE_NORMAL,
   DISTR_TYPE_NORMAL_CLIPPED,

@@ -317,6 +317,18 @@ extern "C" {
   
   int NESTGPU_GetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
 				    int *param_arr, char *param_name);
+  
+  int NESTGPU_SetConnectionFloatParamDistr(int64_t *conn_ids, int64_t n_conn,
+					   char *param_name);
+  
+  int NESTGPU_SetConnectionIntParamArr(int64_t *conn_ids, int64_t n_conn,
+				       int *param_arr, char *param_name);
+  
+  int NESTGPU_SetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+				      float val, char *param_name);
+  
+  int NESTGPU_SetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
+				    int val, char *param_name);
 
   int NESTGPU_CreateSynGroup(char *model_name);
   

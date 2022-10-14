@@ -961,6 +961,39 @@ extern "C" {
 						    param_name_str);
   } END_ERR_PROP return ret; }
 
+  int NESTGPU_SetConnectionFloatParamDistr(int64_t *conn_ids, int64_t n_conn,
+					   char *param_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+      std::string param_name_str = std::string(param_name);
+      ret = NESTGPU_instance->SetConnectionFloatParamDistr(conn_ids, n_conn,
+							   param_name_str);
+    } END_ERR_PROP return ret; }
+  
+  int NESTGPU_SetConnectionIntParamArr(int64_t *conn_ids, int64_t n_conn,
+				       int *param_arr, char *param_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+      std::string param_name_str = std::string(param_name);
+      ret = NESTGPU_instance->SetConnectionIntParamArr(conn_ids, n_conn,
+						       param_arr,
+						       param_name_str);
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_SetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+				      float val, char *param_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+      std::string param_name_str = std::string(param_name);
+      ret = NESTGPU_instance->SetConnectionFloatParam(conn_ids, n_conn,
+						      val, param_name_str);
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_SetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
+				    int val, char *param_name)
+  { int ret = 0; BEGIN_ERR_PROP {
+      std::string param_name_str = std::string(param_name);
+      ret = NESTGPU_instance->SetConnectionIntParam(conn_ids, n_conn,
+						    val, param_name_str);
+  } END_ERR_PROP return ret; }
+  
   int NESTGPU_CreateSynGroup(char *model_name)
   { int ret = 0; BEGIN_ERR_PROP {
     std::string model_name_str = std::string(model_name);

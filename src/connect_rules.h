@@ -65,7 +65,8 @@ int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
   ////////////////////////
     //TEMPORARY, TO BE IMPROVED
   if (syn_spec.syn_group_>=1) {
-    ConnectionSpikeTimeFlag=true;
+    ConnectionSpikeTimeFlag = true;
+    rev_conn_flag_ = true;
   }
 
   switch (conn_spec.rule_) {

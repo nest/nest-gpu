@@ -1411,7 +1411,7 @@ def SetNeuronStatus(nodes, var_name, val):
                 pval = val[dict_param_name]
                 # print("pok2 ", dict_param_name, pval) 
                 if dict_param_name=="array":
-                    arr = pval
+                    arr = (ctypes.c_float * len(pval))(*pval)
                     array_pt = ctypes.cast(arr, ctypes.c_void_p)
                     SetDistributionFloatPtParam("array_pt", array_pt)
                     distr_idx = distribution_dict["array"]
@@ -1509,6 +1509,60 @@ def SetNeuronStatus(nodes, var_name, val):
             SetNeuronPtArrayVar(nodes, var_name, val)
         else:
             raise ValueError("Unknown neuron variable or parameter")
+
+#############################################################
+def SetConnectionStatus(conn, param_name, val):
+    "Set connection integer or float parameter"
+    if (type(conn)==ConnectionList):
+        conn = conn.conn_list
+    elif (type(conn)==int):
+        conn = [conn]
+    if ((type(conn)!=list) and (type(conn)!=tuple)):
+        raise ValueError("SetConnectionStatus argument 1 type must be "
+                         "ConnectionList, int, list or tuple")
+    if ((not IsConnectionFloatParam(param_name)) and
+        (not IsConnectionIntParam(param_name))):
+        raise ValueError("Unknown connection parameter in SetConnectionStatus")
+
+    if (type(val)==dict):
+        gc.disable()
+        for dict_param_name in val:
+            pval = val[dict_param_name]
+            if dict_param_name=="array":
+                distr_idx = distribution_dict["array"]
+                SetDistributionIntParam("distr_idx", distr_idx)
+                SetDistributionIntParam("vect_size", 1)
+                if IsConnectionFloatParam(param_name):
+                    arr = (ctypes.c_float * len(pval))(*pval)
+                else:
+                    arr = (ctypes.c_int * len(pval))(*pval)
+                array_pt = ctypes.cast(arr, ctypes.c_void_p)
+                SetDistributionFloatPtParam("array_pt", array_pt)
+            elif dict_param_name=="distribution":
+                if ((not IsConnectionFloatParam(param_name))):
+                    raise ValueError("Only float connection parameters can be"
+                                     " assigned using distributions")
+                distr_idx = distribution_dict[pval]
+                SetDistributionIntParam("distr_idx", distr_idx)
+                SetDistributionIntParam("vect_size", 1)
+            elif IsDistributionFloatParam(dict_param_name):
+                SetDistributionScalParam(dict_param_name, pval)
+            else:
+                print("Parameter name: ", dict_param_name)
+                raise ValueError("Unknown distribution parameter")
+        # set values from array or from distribution
+        if IsConnectionFloatParam(param_name):
+            SetConnectionFloatParamDistr(conn, param_name)
+        else:
+            SetConnectionIntParamArr(conn, param_name, arr)
+        gc.enable()   
+    elif IsConnectionFloatParam(param_name):
+        SetConnectionFloatParam(conn, param_name, val)
+    else:
+        SetConnectionIntParam(conn, param_name, val)
+
+######################################################################
+
 
 
 NESTGPU_Calibrate = _nestgpu.NESTGPU_Calibrate
@@ -2078,8 +2132,14 @@ def RemoteConnect(i_source_host, source, i_target_host, target,
 
 
 def SetStatus(gen_object, params, val=None):
-    "Set neuron or synapse group parameters or variables using dictionaries"
-
+    "Set neuron, connections or synapse group parameters or variables"
+    " using dictionaries"
+    
+    if (type(gen_object)!=list) and (type(gen_object)!=tuple) \
+       and (type(gen_object)!=NodeSeq) and (type(gen_object)!=RemoteNodeSeq) \
+       and (type(gen_object)!=ConnectionList) and (type(gen_object)!=SynGroup):
+        raise ValueError("Unrecognized type for first argument of SetStatus")
+    
     if type(gen_object)==RemoteNodeSeq:
         if gen_object.i_host==MpiId():
             SetStatus(gen_object.node_seq, params, val)
@@ -2090,20 +2150,31 @@ def SetStatus(gen_object, params, val=None):
         ret = SetSynGroupStatus(gen_object, params, val)
         gc.enable()
         return ret
-    nodes = gen_object    
     if val != None:
-         SetNeuronStatus(nodes, params, val)
+        if type(gen_object)==ConnectionList:
+            SetConnectionStatus(gen_object, params, val)
+        else:
+            SetNeuronStatus(gen_object, params, val)
     elif type(params)==dict:
         for param_name in params:
-            SetNeuronStatus(nodes, param_name, params[param_name])
+            if type(gen_object)==ConnectionList:
+                SetConnectionStatus(gen_object, param_name, params[param_name])
+            else:
+                SetNeuronStatus(gen_object, param_name, params[param_name])
     elif (type(params)==list)  | (type(params) is tuple):
-        if len(params) != len(nodes):
-            raise ValueError("List should have the same size as nodes")
+        if len(params) != len(gen_object):
+            raise ValueError("List should have the same size as "
+                             "the first argument of SetStatus")
         for param_dict in params:
             if type(param_dict)!=dict:
                 raise ValueError("Type of list elements should be dict")
             for param_name in param_dict:
-                SetNeuronStatus(nodes, param_name, param_dict[param_name])
+                if type(gen_object)==ConnectionList:
+                    SetConnectionStatus(gen_object, param_name,
+                                        param_dict[param_name])
+                else:
+                    SetNeuronStatus(gen_object, param_name,
+                                    param_dict[param_name])
     else:
         raise ValueError("Wrong argument in SetStatus")
     if GetErrorCode() != 0:
@@ -2254,6 +2325,8 @@ NESTGPU_IsConnectionIntParam.argtypes = (c_char_p,)
 NESTGPU_IsConnectionIntParam.restype = ctypes.c_int
 def IsConnectionIntParam(param_name):
     "Check name of connection int parameter"
+    if param_name=="index":
+        return 1
     c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
                                                len(param_name)+1)
     ret = (NESTGPU_IsConnectionIntParam(c_param_name)!=0) 
@@ -2306,6 +2379,9 @@ def GetConnectionIntParam(conn, param_name):
     if ((type(conn)!=list) and (type(conn)!=tuple)):
         raise ValueError("GetConnectionIntParam argument 1 type must be "
                          "ConnectionList, int, list or tuple")
+
+    if param_name=="index":
+        return conn
     
     c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
                                                len(param_name)+1)
@@ -2323,6 +2399,117 @@ def GetConnectionIntParam(conn, param_name):
     if GetErrorCode() != 0:
         raise ValueError(GetErrorMessage())
     return ret
+
+NESTGPU_SetConnectionFloatParamDistr = \
+    _nestgpu.NESTGPU_SetConnectionFloatParamDistr
+NESTGPU_SetConnectionFloatParamDistr.argtypes = (c_int64_p, ctypes.c_int64,
+                                                 c_char_p) 
+NESTGPU_SetConnectionFloatParamDistr.restype = ctypes.c_int
+def SetConnectionFloatParamDistr(conn, param_name):
+    "Set the float parameter param_name of the connection list conn "
+    "using values from a distribution of from an array"
+    if (type(conn)==ConnectionList):
+        conn = conn.conn_list
+    elif (type(conn)==int):
+        conn = [conn]
+    if ((type(conn)!=list) and (type(conn)!=tuple)):
+        raise ValueError("SetConnectionFloatParamDistr argument 1 type must be"
+                         " ConnectionList, int, list or tuple")
+    
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    n_conn = len(conn)
+    conn_arr = (ctypes.c_int64 * n_conn)(*conn)
+    
+    ret = NESTGPU_SetConnectionFloatParamDistr(conn_arr, n_conn, c_param_name)
+    
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_SetConnectionFloatParam = _nestgpu.NESTGPU_SetConnectionFloatParam
+NESTGPU_SetConnectionFloatParam.argtypes = (c_int64_p, ctypes.c_int64,
+                                            ctypes.c_float, c_char_p) 
+NESTGPU_SetConnectionFloatParam.restype = ctypes.c_int
+
+def SetConnectionFloatParam(conn, param_name, val):
+    "Set the float parameter param_name of the connection list conn "
+    "to the value val"
+    if (type(conn)==ConnectionList):
+        conn = conn.conn_list
+    elif (type(conn)==int):
+        conn = [conn]
+    if ((type(conn)!=list) and (type(conn)!=tuple)):
+        raise ValueError("SetConnectionFloatParam argument 1 type must be "
+                         "ConnectionList, int, list or tuple")
+    
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    n_conn = len(conn)
+    conn_arr = (ctypes.c_int64 * n_conn)(*conn)
+    
+    ret = NESTGPU_SetConnectionFloatParam(conn_arr, n_conn,
+                                          ctypes.c_float(val), c_param_name)
+    
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_SetConnectionIntParamArr = _nestgpu.NESTGPU_SetConnectionIntParamArr
+NESTGPU_SetConnectionIntParamArr.argtypes = (c_int64_p, ctypes.c_int64,
+                                             c_int_p, c_char_p) 
+NESTGPU_SetConnectionIntParamArr.restype = ctypes.c_int
+def SetConnectionIntParamArr(conn, param_name, param_arr):
+    "Set the integer parameter param_name from the connection list conn"
+    "using values from the array param_arr"
+    if (type(conn)==ConnectionList):
+        conn = conn.conn_list
+    elif (type(conn)==int):
+        conn = [conn]
+    if ((type(conn)!=list) and (type(conn)!=tuple)):
+        raise ValueError("SetConnectionIntParamArr argument 1 type must be "
+                         "ConnectionList, int, list or tuple")
+    
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    n_conn = len(conn)
+    conn_arr = (ctypes.c_int64 * n_conn)(*conn)
+    #c_param_arr = (ctypes.c_int * n_conn)(param_arr)
+    
+    ret = NESTGPU_SetConnectionIntParamArr(conn_arr, n_conn, c_int_p(param_arr),
+                                           c_param_name)
+    
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_SetConnectionIntParam = _nestgpu.NESTGPU_SetConnectionIntParam
+NESTGPU_SetConnectionIntParam.argtypes = (c_int64_p, ctypes.c_int64,
+                                          ctypes.c_int, c_char_p) 
+NESTGPU_SetConnectionIntParam.restype = ctypes.c_int
+def SetConnectionIntParam(conn, param_name, val):
+    "Set the integer parameter param_name from the connection list conn"
+    "to the value val"
+    if (type(conn)==ConnectionList):
+        conn = conn.conn_list
+    elif (type(conn)==int):
+        conn = [conn]
+    if ((type(conn)!=list) and (type(conn)!=tuple)):
+        raise ValueError("SetConnectionIntParam argument 1 type must be "
+                         "ConnectionList, int, list or tuple")
+    
+    c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
+                                               len(param_name)+1)
+    n_conn = len(conn)
+    conn_arr = (ctypes.c_int64 * n_conn)(*conn)
+    
+    ret = NESTGPU_SetConnectionIntParam(conn_arr, n_conn, val,
+                                        c_param_name)
+    
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
 
 #########################################################
 
