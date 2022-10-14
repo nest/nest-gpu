@@ -51,7 +51,7 @@ namespace copass_sort
 		position_t *local_d_sum_m_d,
 		position_t local_h_sum_m_d,
 		position_t tot_part_size,
-		uint k, uint k_next_pow_2,
+		uint k, uint kp_next_pow_2,
 		position_t *d_part_size, position_t *d_diff,
 		position_t *d_diff_cumul, position_t *h_diff,
 		position_t *h_diff_cumul, position_t *d_num_down);
@@ -238,6 +238,7 @@ int copass_sort::sort_template(KeyArrayT key_array, ArrayT *h_subarray,
   KeyT *d_t_tilde;
 
   uint k_next_pow_2;
+  uint kp_next_pow_2;
 
   KeyT *d_extra_elem;
   KeyT *h_extra_elem;
@@ -280,9 +281,11 @@ int copass_sort::sort_template(KeyArrayT key_array, ArrayT *h_subarray,
   h_mu_u = new position_t[k];
   h_mu_d = new position_t[k];
 
-  cudaReusableAlloc(d_storage, st_bytes, &d_diff, k, sizeof(position_t));
-  cudaReusableAlloc(d_storage, st_bytes, &d_diff_cumul,
-		    (k + 1), sizeof(position_t));
+  // use one more element (k+1) to avoid illegal memory access of
+  // subsequent use of the arrays in prefix scan
+  cudaReusableAlloc(d_storage, st_bytes, &d_diff, k + 1, sizeof(position_t));
+  cudaReusableAlloc(d_storage, st_bytes, &d_diff_cumul, k + 1,
+		    sizeof(position_t));
 
   h_diff = new position_t[k];
   h_diff_cumul = new position_t[k+1];
@@ -295,6 +298,7 @@ int copass_sort::sort_template(KeyArrayT key_array, ArrayT *h_subarray,
   cudaReusableAlloc(d_storage, st_bytes, &d_t_tilde, 1, sizeof(KeyT));
 
   k_next_pow_2 = nextPowerOf2(k);
+  kp_next_pow_2 = nextPowerOf2(k+1);
 
   cudaReusableAlloc(d_storage, st_bytes, &d_extra_elem, k, sizeof(KeyT));
   h_extra_elem = new KeyT[k];  
@@ -382,7 +386,7 @@ int copass_sort::sort_template(KeyArrayT key_array, ArrayT *h_subarray,
 	printf("\n");
       }
       last_step(d_m_u, d_mu_u, d_sum_m_u, h_sum_m_u,
-		tot_part_size, k, k_next_pow_2, d_part_size, d_diff,
+		tot_part_size, k, kp_next_pow_2, d_part_size, d_diff,
 		d_diff_cumul, h_diff, h_diff_cumul, d_num_down);
       if (print_gpu_cpu_vrb) {
 	CUDASYNC
@@ -415,7 +419,7 @@ int copass_sort::sort_template(KeyArrayT key_array, ArrayT *h_subarray,
 	printf("\n");
       }
       last_step(d_mu_d, d_m_d, d_sum_mu_d, h_sum_mu_d,
-		tot_part_size, k, k_next_pow_2, d_part_size, d_diff,
+		tot_part_size, k, kp_next_pow_2, d_part_size, d_diff,
 		d_diff_cumul, h_diff, h_diff_cumul, d_num_down);
       if (print_gpu_cpu_vrb) {
 	CUDASYNC
@@ -475,7 +479,7 @@ int copass_sort::sort_template(KeyArrayT key_array, ArrayT *h_subarray,
 	}
 	else { // sum_mu_d <= tot_part_size <= sum_mu_u
 	  last_step(d_mu_d, d_mu_u, d_sum_mu_d, h_sum_mu_d,
-		    tot_part_size, k, k_next_pow_2, d_part_size,
+		    tot_part_size, k, kp_next_pow_2, d_part_size,
 		    d_diff, d_diff_cumul, h_diff, h_diff_cumul,
 		    d_num_down);
 	  if (print_gpu_cpu_vrb) {

@@ -41,7 +41,7 @@ int copass_sort::last_step(position_t *local_d_m_d, position_t *local_d_m_u,
 			   position_t *local_d_sum_m_d,
 			   position_t local_h_sum_m_d,
 			   position_t tot_part_size,
-			   uint k, uint k_next_pow_2,
+			   uint k, uint kp_next_pow_2,
 			   position_t *d_part_size, position_t *d_diff,
 			   position_t *d_diff_cumul, position_t *h_diff,
 			   position_t *h_diff_cumul, position_t *d_num_down)
@@ -49,7 +49,7 @@ int copass_sort::last_step(position_t *local_d_m_d, position_t *local_d_m_u,
     diffKernel<<<1, k>>>(d_diff, local_d_m_u, local_d_m_d, k);
     DBGCUDASYNC
     prefix_scan<position_t, 1024><<<1, 512>>>
-      (d_diff, d_diff_cumul, k, k_next_pow_2);
+      (d_diff, d_diff_cumul, k+1, kp_next_pow_2);
     DBGCUDASYNC
 
     gpuErrchk(cudaMemcpyAsync(h_diff, d_diff, k*sizeof(position_t),
