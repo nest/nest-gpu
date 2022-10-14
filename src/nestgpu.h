@@ -110,6 +110,8 @@ class NESTGPU
   bool calibrate_flag_; // becomes true after calibration
   bool create_flag_; // becomes true just before creation of the first node
 
+  bool rev_conn_flag_; // flag for reverse connections
+  
   Distribution *distribution_;
   Multimeter *multimeter_;
   std::vector<BaseNeuron*> node_vect_; // -> node_group_vect
