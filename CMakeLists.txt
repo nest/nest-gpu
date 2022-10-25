@@ -54,6 +54,7 @@ set( with-mpi ON CACHE STRING "Build with MPI parallelization [default=ON]." )
 set( with-openmp ON CACHE BOOL "Build with OpenMP multi-threading [default=ON]. Optionally set OMP compiler flags." )
 
 # generic build configuration
+option( static-libraries "Build static executable and libraries [default=OFF]" OFF )
 #set( with-optimize ON CACHE STRING "Enable user defined optimizations [default=ON (uses '-O2')]. When OFF, no '-O' flag is passed to the compiler. Explicit compiler flags can be given; separate multiple flags by ';'." )
 #set( with-warning ON CACHE STRING "Enable user defined warnings [default=ON (uses '-Wall')]. Separate  multiple flags by ';'." )
 #set( with-debug OFF CACHE STRING "Enable user defined debug flags [default=OFF]. When ON, '-g' is used. Separate  multiple flags by ';'." )
@@ -104,6 +105,7 @@ get_host_triple( NEST_HOST_TRIPLE NEST_HOST_ARCH NEST_HOST_VENDOR NEST_HOST_OS )
 get_target_triple( NEST_TARGET_TRIPLE NEST_TARGET_ARCH NEST_TARGET_VENDOR NEST_TARGET_OS )
 
 include( GNUInstallDirs )
+nest_process_static_libraries()
 nest_post_process_with_python()
 nest_process_with_openmp()
 nest_process_with_mpi()

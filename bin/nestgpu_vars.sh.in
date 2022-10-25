@@ -4,4 +4,4 @@
 export PYTHONPATH="@CMAKE_INSTALL_PREFIX@/@PYEXECDIR@${PYTHONPATH:+:$PYTHONPATH}"
 
 # Make NEST executables available by prepending their path to PATH.
-export NESTGPU_LIB="@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@/nestgpu/libnestgpukernel.a"
+export NESTGPU_LIB="@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@/nestgpu/libnestgpukernel.so"
