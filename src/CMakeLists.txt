@@ -151,9 +151,7 @@ target_include_directories( nestgpukernel PRIVATE
     )
 
 set_target_properties(nestgpukernel PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-if ( position_independent_code )
-  set_target_properties(nestgpukernel PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif ()
+set_target_properties(nestgpukernel PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 
 install( TARGETS nestgpukernel

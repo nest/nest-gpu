@@ -42,7 +42,9 @@ else ()
 endif ()
 
 find_package( CUDAToolkit REQUIRED )
+link_libraries( cuda )
 link_libraries( CUDA::cudart )
+link_libraries( CUDA::curand )
 
 # Localize the Python interpreter and ABI
 find_package( Python 3.8 QUIET COMPONENTS Interpreter Development.Module )
