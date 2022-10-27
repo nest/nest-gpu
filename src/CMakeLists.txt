@@ -94,8 +94,7 @@ set ( nestgpu_sources
     aeif_psc_delta.cu 
     aeif_psc_exp.cu 
     base_neuron.cu 
-    connect.cu 
-    connect_mpi.cu 
+    connect.cu
     getRealTime.cu 
     get_spike.cu 
     locate.cu 
