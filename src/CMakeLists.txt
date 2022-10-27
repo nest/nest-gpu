@@ -41,6 +41,7 @@ set ( nestgpu_sources
     base_neuron.h 
     connect.h 
     connect_spec.h 
+    connect_rules.h
     cuda_error.h 
     dir_connect.h 
     getRealTime.h 
@@ -49,6 +50,7 @@ set ( nestgpu_sources
     multimeter.h 
     neuron_models.h 
     nestgpu.h 
+    nestgpu_C.h
     ngpu_exception.h 
     node_group.h 
     parrot_neuron.h 
@@ -84,7 +86,7 @@ set ( nestgpu_sources
     user_m2.h 
     user_m2_kernel.h 
     user_m2_rk5.h
-      iaf_psc_exp_g.cu
+    iaf_psc_exp_g.cu
     iaf_psc_exp_hc.cu 
     iaf_psc_exp.cu 
     ext_neuron.cu 
@@ -95,12 +97,14 @@ set ( nestgpu_sources
     aeif_psc_exp.cu 
     base_neuron.cu 
     connect.cu
+    connect_rules.cpp
     getRealTime.cu 
     get_spike.cu 
     locate.cu 
     multimeter.cu 
     neuron_models.cu 
     nestgpu.cu 
+    nestgpu_C.cpp
     node_group.cu 
     parrot_neuron.cu 
     poiss_gen.cu 
@@ -135,13 +139,11 @@ if ( HAVE_MPI )
 endif ()
 
 add_library( nestgpukernel ${nestgpu_sources} )
+target_link_libraries( nestgpukernel ${MPI_CXX_LIBRARIES} )
 set_target_properties( nestgpukernel
     PROPERTIES
     VERSION ${NEST_VERSION}
     SOVERSION 1
-    )
-target_link_libraries( nestgpukernel
-    ${MPI_CXX_LIBRARIES}
     )
 
 target_include_directories( nestgpukernel PRIVATE
