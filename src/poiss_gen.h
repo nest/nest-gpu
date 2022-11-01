@@ -44,6 +44,37 @@ const std::string poiss_gen_scal_param_name[] = {
 };
 */
 
+/* BeginUserDocs: device, generator
+
+Short description
++++++++++++++++++
+
+Generate spikes with Poisson process statistics
+
+Description
++++++++++++
+
+The poisson_generator simulates a neuron that is firing with Poisson
+statistics, i.e. exponentially distributed interspike intervals. It will
+generate a `unique` spike train for each of it's targets. If you do not want
+this behavior and need the same spike train for all targets, you have to use a
+``parrot_neuron`` between the poisson generator and the targets.
+
+Parameters
+++++++++++
+
+The following parameters can be set in the status dictionary.
+
+======== ======= =======================================
+ rate    Hz      Mean firing rate
+ origin  ms      Reference time for start and stop
+ start   ms      Activation time, relative to origin
+ stop    ms      Deactivation time, relative to origin
+======== ======= =======================================
+
+
+EndUserDocs */
+
 class poiss_gen : public BaseNeuron
 {
   curandState *d_curand_state_;
