@@ -30,9 +30,17 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+import json
+from pathlib import Path
+sys.path.insert(0, os.path.abspath('.'))
+
+source_dir = Path(__file__).resolve().parent.resolve()
+doc_build_dir = source_dir / "models"
+
+print("doc_build_dir", str(doc_build_dir))
+print("source_dir", str(source_dir))
 
 
 # -- Project information -----------------------------------------------------
@@ -43,7 +51,6 @@ author = u'nest-simulator'
 
 # The full version, including alpha/beta/rc tags
 release = '1'
-
 
 source_suffix = '.rst'
 master_doc = 'contents'
@@ -86,6 +93,22 @@ intersphinx_mapping = {
 }
 
 
+# Extract documentation from header files in src/
+
+from extractor_userdocs import relative_glob, ExtractUserDocs
+
+def config_inited_handler(app, config):
+    ExtractUserDocs(
+        listoffiles=relative_glob("../src/*.h", basedir=source_dir),
+        basedir=source_dir,
+        outdir=str(doc_build_dir)
+    )
+
+def setup(app):
+    # for events see
+    # https://www.sphinx-doc.org/en/master/extdev/appapi.html#sphinx-core-events
+    app.connect('config-inited', config_inited_handler)
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -109,6 +132,7 @@ html_logo =  'logo/nestgpu-logo.png'
 html_theme_options = {'logo_only': True,
                       'display_version': True}
 
-#def setup(app):
+def setup(app):
+    app.connect('config-inited', config_inited_handler)
 #    app.add_css_file('css/custom.css')
 #    app.add_css_file('css/pygments.css')
