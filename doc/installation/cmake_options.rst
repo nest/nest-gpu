@@ -11,8 +11,8 @@ should build and install NEST GPU to ``nestgpu_install_dir``, which should be an
 path.
 
 
-Options for configuring NEST
-----------------------------
+Options for configuring NEST GPU
+--------------------------------
 
 NEST GPU allows for several configuration options for custom builds:
 
