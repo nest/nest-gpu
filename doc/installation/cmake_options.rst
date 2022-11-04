@@ -11,8 +11,8 @@ should build and install NEST GPU to ``nestgpu_install_dir``, which should be an
 path.
 
 
-Options for configuring NEST
-----------------------------
+Options for configuring NEST GPU
+--------------------------------
 
 NEST GPU allows for several configuration options for custom builds:
 
@@ -22,7 +22,6 @@ Use Python to build:
 | ``-Dwith-python=[OFF|ON]``                    | Build with Python. [default=ON]                                |
 +-----------------------------------------------+----------------------------------------------------------------+
                             
-
 Set GPU architecture (see `here <https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/>`_
 to choose the best NVIDIA GPU architecture for your GPU card):
 
