@@ -122,7 +122,7 @@ The following variables are set in ``nestgpu_vars.sh``:
      - Search path for binaries. Will be newly set or prepended to the already existing variable if it is already set.
 
 If Python does not find the ``nestgpu`` module, your path variables may not be set correctly.
-This may also be the case if Python cannot load the ``nestgpu`` module due to missing or
+This may also be the case if Python cannot load the ``nest`` module due to missing or
 incompatible libraries.
 
 
