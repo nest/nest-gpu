@@ -139,11 +139,15 @@ if ( HAVE_MPI )
 endif ()
 
 add_library( nestgpukernel ${nestgpu_sources} )
-target_link_libraries( nestgpukernel ${MPI_CXX_LIBRARIES} )
 set_target_properties( nestgpukernel
     PROPERTIES
     VERSION ${NEST_VERSION}
     SOVERSION 1
+    )
+
+target_link_libraries( nestgpukernel
+    ${LTDL_LIBRARIES}
+    ${MPI_CXX_LIBRARIES}
     )
 
 target_include_directories( nestgpukernel PRIVATE

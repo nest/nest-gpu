@@ -19,6 +19,7 @@
 
 # Here all user defined options will be processed.
 
+
 function( NEST_PROCESS_WITH_OPENMP )
   # Find OPENMP
   if ( with-openmp )
@@ -51,6 +52,7 @@ function( NEST_PROCESS_WITH_OPENMP )
   endif()
 
 endfunction()
+
 
 function( NEST_PROCESS_WITH_MPI )
   # Find MPI
@@ -88,6 +90,7 @@ function( NEST_PROCESS_WITH_MPI )
   endif ()
 endfunction()
 
+
 function( NEST_PROCESS_WITH_MPI4PY )
   if ( HAVE_MPI AND HAVE_PYTHON )
     include( FindPythonModule )
@@ -100,9 +103,36 @@ function( NEST_PROCESS_WITH_MPI4PY )
   endif ()
 endfunction ()
 
+
 function( NESTGPU_PROCESS_CUDA_ARCH )
   set( CMAKE_CUDA_ARCHITECTURES ${with-gpu-arch} PARENT_SCOPE )
 endfunction ()
+
+
+function( NEST_PROCESS_WITH_LIBLTDL )
+  # Only find libLTDL if we link dynamically
+  set( HAVE_LIBLTDL OFF PARENT_SCOPE )
+  if ( with-ltdl AND NOT static-libraries )
+    if ( NOT ${with-ltdl} STREQUAL "ON" )
+      # a path is set
+      set( LTDL_ROOT_DIR "${with-ltdl}" )
+    endif ()
+
+    find_package( LTDL )
+    if ( LTDL_FOUND )
+      set( HAVE_LIBLTDL ON PARENT_SCOPE )
+      # export found variables to parent scope
+      set( LTDL_FOUND ON PARENT_SCOPE )
+      set( LTDL_LIBRARIES "${LTDL_LIBRARIES}" PARENT_SCOPE )
+      set( LTDL_INCLUDE_DIRS "${LTDL_INCLUDE_DIRS}" PARENT_SCOPE )
+      set( LTDL_VERSION "${LTDL_VERSION}" PARENT_SCOPE )
+
+      include_directories( ${LTDL_INCLUDE_DIRS} )
+      # is linked in nestkernel/CMakeLists.txt
+    endif ()
+  endif ()
+endfunction()
+
 
 function( NEST_PROCESS_WITH_STD )
   if ( with-cpp-std )
@@ -111,15 +141,18 @@ function( NEST_PROCESS_WITH_STD )
   endif ()
 endfunction()
 
+
 function( NESTGPU_PROCESS_WITH_MAX_RREG_COUNT )
   set( CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --maxrregcount=${with-max-rreg-count}" PARENT_SCOPE )
 endfunction()
+
 
 function( NESTGPU_PROCESS_WITH_PTXAS_OPTIONS )
   if ( with-ptxas-options )
     set( CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --ptxas-options=${with-ptxas-options}" PARENT_SCOPE )
   endif ()
 endfunction()
+
 
 function( NEST_PROCESS_WITH_LIBRARIES )
   if ( with-libraries )
@@ -136,6 +169,7 @@ function( NEST_PROCESS_WITH_LIBRARIES )
   endif ()
 endfunction()
 
+
 function( NEST_PROCESS_WITH_INCLUDES )
   if ( with-includes )
     if ( with-includes STREQUAL "ON" )
@@ -150,6 +184,7 @@ function( NEST_PROCESS_WITH_INCLUDES )
     endforeach ()
   endif ()
 endfunction()
+
 
 function( NEST_PROCESS_WITH_DEFINES )
   if ( with-defines )
@@ -166,9 +201,11 @@ function( NEST_PROCESS_WITH_DEFINES )
   endif ()
 endfunction()
 
+
 function( NESTGPU_PRE_PROCESS_COMPILE_FLAGS )
   set( _CUDA_COMPILE_FLAGS "" PARENT_SCOPE )
 endfunction()
+
 
 function( NEST_PROCESS_WITH_OPTIMIZE )
   if ( with-optimize )
@@ -183,6 +220,7 @@ function( NEST_PROCESS_WITH_OPTIMIZE )
   endif ()
 endfunction()
 
+
 function( NEST_PROCESS_WITH_DEBUG )
   if ( with-debug )
     if ( with-debug STREQUAL "ON" )
@@ -195,6 +233,7 @@ function( NEST_PROCESS_WITH_DEBUG )
     endforeach ()
   endif ()
 endfunction()
+
 
 function( NEST_PROCESS_WITH_WARNING )
   if ( with-warning )
@@ -209,9 +248,11 @@ function( NEST_PROCESS_WITH_WARNING )
   endif ()
 endfunction()
 
+
 function( NESTGPU_POST_PROCESS_COMPILE_FLAGS )
   set( CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS}  --compiler-options='${_CUDA_COMPILE_FLAGS}'" PARENT_SCOPE )
 endfunction()
+
 
 function( NEST_PROCESS_VERSION_SUFFIX )
   if ( with-version-suffix )

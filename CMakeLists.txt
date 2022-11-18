@@ -46,6 +46,7 @@ endif()
 
 # use Python to build PyNEST
 set( with-python ON )
+# Cython enabled by default to prepare for the upcoming cython interface. However not yet needed.
 option( cythonize-pynest "Use Cython to cythonize pynestkernel.pyx [default=ON]. If OFF, PyNEST has to be build from a pre-cythonized pynestkernel.pyx." ON )
 
 # select parallelization scheme
@@ -53,17 +54,25 @@ set( with-gpu-arch "70" CACHE STRING "Specify the GPU compute architecture [defa
 set( with-mpi ON CACHE STRING "Build with MPI parallelization [default=ON]." )
 set( with-openmp ON CACHE BOOL "Build with OpenMP multi-threading [default=ON]. Optionally set OMP compiler flags." )
 
-# generic build configuration
-set( with-optimize ON CACHE STRING "Enable user defined optimizations [default=ON (uses '-O3')]. When OFF, no '-O' flag is passed to the compiler. Explicit compiler flags can be given; separate multiple flags by ';'." )
+# external libraries
+# libltdl not yet needed but will be useful for 
+set( with-ltdl OFF CACHE STRING "Build with ltdl library [default=OFF]. To set a specific ltdl, give the  install path. NEST GPU uses ltdl for dynamic loading of external user modules." )
+
+# compiler options; explicit compiler flags can be given.
+set( with-optimize ON CACHE STRING "Enable user defined optimizations [default=ON (uses '-O3')]. When OFF, no '-O' flag is passed to the compiler. Separate multiple flags by ';'." )
 set( with-warning ON CACHE STRING "Enable user defined warnings [default=ON (uses '-Wall')]. Separate  multiple flags by ';'." )
 set( with-debug OFF CACHE STRING "Enable user defined debug flags [default=OFF]. When ON, '-g' is used. Separate  multiple flags by ';'." )
+
+# CUDA options
 set( with-cpp-std OFF CACHE STRING "C++ standard to use for compilation [default=OFF]." )
 set( with-libraries OFF CACHE STRING "Link additional libraries [default=OFF]. Give full path. Separate multiple libraries by ';'." )
 set( with-includes OFF CACHE STRING "Add additional include paths [default=OFF]. Give full path without '-I'. Separate multiple include paths by ';'." )
 set( with-defines OFF CACHE STRING "Additional defines, e.g. '-DXYZ=1' [default=OFF]. Separate multiple defines by ';'." )
-set( with-version-suffix OFF CACHE STRING "Set a user defined version suffix [default='']." )
 set( with-max-rreg-count "55" CACHE STRING "Set a maximum amount of register used when compiling [default=55]. Separate multiple flags by ';'." )
 set( with-ptxas-options OFF CACHE STRING "Options for ptxas compiling [default='-v']. Separate multiple flags by ';'." )
+
+# generic build configuration
+set( with-version-suffix OFF CACHE STRING "Set a user defined version suffix [default='']." )
 
 ################################################################################
 ##################      Project Directory variables           ##################
@@ -106,21 +115,27 @@ get_target_triple( NEST_TARGET_TRIPLE NEST_TARGET_ARCH NEST_TARGET_VENDOR NEST_T
 
 include( GNUInstallDirs )
 nest_post_process_with_python()
+
 nest_process_with_openmp()
 nest_process_with_mpi()
 nest_process_with_mpi4py()
 nestgpu_process_cuda_arch()
-nest_process_with_std()
-nestgpu_process_with_max_rreg_count()
-nestgpu_process_with_ptxas_options()
-nest_process_with_libraries()
-nest_process_with_includes()
-nest_process_with_defines()
+
+nest_process_with_libltdl()
+
 nestgpu_pre_process_compile_flags()
 nest_process_with_optimize()
 nest_process_with_debug()
 nest_process_with_warning()
 nestgpu_post_process_compile_flags()
+
+nest_process_with_std()
+nest_process_with_libraries()
+nest_process_with_includes()
+nest_process_with_defines()
+nestgpu_process_with_max_rreg_count()
+nestgpu_process_with_ptxas_options()
+
 nest_process_version_suffix()
 
 ################################################################################
