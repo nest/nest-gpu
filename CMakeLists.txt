@@ -106,7 +106,7 @@ include( CheckIncludesSymbols )
 
 # These includes publish function names.
 include( ProcessOptions )
-#include( ConfigureSummary )
+include( ConfigureSummary )
 include( GetTriple )
 
 # get triples arch-vendor-os
@@ -186,60 +186,72 @@ add_subdirectory( pythonlib )
 # used in nest-config
 
 # all compiler flags
-#if ( NOT CMAKE_BUILD_TYPE OR "${CMAKE_BUILD_TYPE}" STREQUAL "None" )
-#  set( ALL_CFLAGS "${CMAKE_C_FLAGS}" )
-#  set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS}" )
-#elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "Debug" )
-#  set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_DEBUG}" )
-#  set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}" )
-#elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "Release" )
-#  set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_RELEASE}" )
-#  set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}" )
-#elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo" )
-#  set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_RELWITHDEBINFO}" )
-#  set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
-#elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "MinSizeRel" )
-#  set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_MINSIZEREL}" )
-#  set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_MINSIZEREL}" )
-#else ()
-#  printError( "Unknown build type: '${CMAKE_BUILD_TYPE}'" )
-#endif ()
-#if ( with-defines )
-#  foreach ( def ${with-defines} )
-#    set( ALL_CFLAGS "${def} ${ALL_CFLAGS}" )
-#    set( ALL_CXXFLAGS "${def} ${ALL_CXXFLAGS}" )
-#  endforeach ()
-#endif ()
+if ( NOT CMAKE_BUILD_TYPE OR "${CMAKE_BUILD_TYPE}" STREQUAL "None" )
+  set( ALL_CFLAGS "${CMAKE_C_FLAGS}" )
+  set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS}" )
+  set( ALL_CUDA_FLAGS "${CMAKE_CUDA_FLAGS}" )
+elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "Debug" )
+  set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_DEBUG}" )
+  set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}" )
+  set( ALL_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} ${CMAKE_CUDA_FLAGS_DEBUG}" )
+elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "Release" )
+  set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_RELEASE}" )
+  set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}" )
+  set( ALL_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} ${CMAKE_CUDA_FLAGS_RELEASE}" )
+elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo" )
+  set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_RELWITHDEBINFO}" )
+  set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}" )
+  set( ALL_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} ${CMAKE_CUDA_FLAGS_RELWITHDEBINFO}" )
+elseif ( ${CMAKE_BUILD_TYPE} STREQUAL "MinSizeRel" )
+  set( ALL_CFLAGS "${CMAKE_C_FLAGS}   ${CMAKE_C_FLAGS_MINSIZEREL}" )
+  set( ALL_CXXFLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_MINSIZEREL}" )
+  set( ALL_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} ${CMAKE_CUDA_FLAGS_MINSIZEREL}" )
+else ()
+  printError( "Unknown build type: '${CMAKE_BUILD_TYPE}'" )
+endif ()
+if ( with-defines )
+  foreach ( def ${with-defines} )
+    set( ALL_CFLAGS "${def} ${ALL_CFLAGS}" )
+    set( ALL_CXXFLAGS "${def} ${ALL_CXXFLAGS}" )
+    set( ALL_CUDA_FLAGS "${def} ${ALL_CUDA_FLAGS}" )
+  endforeach ()
+endif ()
 
 # libraries required to link extension modules
-#set( MODULE_LINK_LIBS
-#  "-lnestutil"
-#  "-lnestgpukernel"
-#  "${OpenMP_CXX_FLAGS}"
-#  "${MPI_CXX_LIBRARIES}" )
-#
-#if ( with-libraries )
-#  set( MODULE_LINK_LIBS "${MODULE_LINK_LIBS};${with-libraries}" )
-#endif ()
-#string( REPLACE ";" " " MODULE_LINK_LIBS "${MODULE_LINK_LIBS}" )
+set( MODULE_LINK_LIBS
+  "-lnestutil"
+  "-lsrc" # to be renamed to -lnestgpukernel
+  "-lcuda"
+  "-lcudart"
+  "-lcurand"
+  "${OpenMP_CXX_FLAGS}"
+  "${MPI_CXX_LIBRARIES}"
+  "${LTDL_LIBRARIES}" )
+
+if ( with-libraries )
+  set( MODULE_LINK_LIBS "${MODULE_LINK_LIBS};${with-libraries}" )
+endif ()
+string( REPLACE ";" " " MODULE_LINK_LIBS "${MODULE_LINK_LIBS}" )
 
 # libraries requied to link NEST
-#set( ALL_LIBS
-#  "-lnest"
-#  ${MODULE_LINK_LIBS} )
+set( ALL_LIBS
+  # "-lnestgpu"  # main function is inside src folder, in the future we will separate files following NEST structure
+  ${MODULE_LINK_LIBS} )
 
 
 # all includes
-#set( ALL_INCLUDES_tmp
-#  "${CMAKE_INSTALL_FULL_INCLUDEDIR}/nest"
-#  "${MPI_CXX_INCLUDE_PATH}" )
-#set( ALL_INCLUDES "" )
-#foreach ( INC ${ALL_INCLUDES_tmp} ${with-includes} )
-#  if ( INC AND NOT INC STREQUAL "" )
-#    set( ALL_INCLUDES "${ALL_INCLUDES} -I${INC}" )
-#  endif ()
-#endforeach ()
-#set( ALL_INCLUDES "${ALL_INCLUDES} )
+set( ALL_INCLUDES_tmp
+  "${CMAKE_INSTALL_FULL_INCLUDEDIR}/nestgpu"
+  "${CUDAToolkit_LIBRARY_DIR}"
+  "${MPI_CXX_INCLUDE_PATH}"
+  "${LTDL_INCLUDE_DIRS}" )
+set( ALL_INCLUDES "" )
+foreach ( INC ${ALL_INCLUDES_tmp} ${with-includes} )
+  if ( INC AND NOT INC STREQUAL "" )
+    set( ALL_INCLUDES "${ALL_INCLUDES} -I${INC}" )
+  endif ()
+endforeach ()
+set( ALL_INCLUDES "${ALL_INCLUDES}" )
 
 ################################################################################
 ##################           File generation here             ##################
@@ -267,4 +279,4 @@ install( FILES LICENSE README.md
 #  COMMAND $(MAKE) NEST_INSTALL_NODOC=true install
 #)
 
-#nest_print_config_summary()
+nest_print_config_summary()
