@@ -43,7 +43,7 @@ Description
 The ``spike_detector`` collects and records all spikes it receives
 from neurons that are connected to it.
 
-Any node from which spikes have to be recorded must be connected to
+Any neuron from which spikes have to be recorded must be connected to
 the spike recorder using the standard ``Connect`` command. 
 
 .. warning::
@@ -52,7 +52,7 @@ the spike recorder using the standard ``Connect`` command.
   taken into account by the spike recorder. This device will be modified
   in the future in order to have a device more similar to the one of NEST.
 
-To record and retrieve the spikes emitted by a neuron, a new record has
+To record and retrieve the spikes emitted by a neuron, a new recorder has
 to be created using the command ``CreateRecord``. For more details about
 the continuous recording of variables see the :doc:`multimeter <multimeter>`
 documentation.
@@ -65,7 +65,7 @@ Here follows an example:
   spike_det = nestgpu.Create("spike_detector")
   nestgpu.Connect([neuron[0]], spike_det, {"rule": "one_to_one"}, {"weight": 1.0, "delay": 1.0, "receptor":0})
 
-  record = nestgpu.CreateRecord("", ["spike_height"], [spike_det[0]], [0])
+  recorder = nestgpu.CreateRecord("", ["spike_height"], [spike_det[0]], [0])
 
   nestgpu.Simulate()
    

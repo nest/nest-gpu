@@ -37,7 +37,7 @@
 Short description
 +++++++++++++++++
 
-Generate spikes from an array with spike-times
+Generate spikes from an array of spike-times
 
 Description
 +++++++++++
@@ -57,15 +57,16 @@ The following parameters can be set in the status dictionary.
 Spike times are given in milliseconds, and must be sorted with the
 earliest spike first. All spike times must be strictly in the future. 
 
-Spike times may not coincide with a time step, i.e., are not a multiple
-of the simulation resolution. In that case, spike times will be rounded
-to the nearest simulation steps (i.e. multiples of the resolution).
+It is possible that spike times do not coincide with a time step,
+i.e., are not a multiple of the simulation resolution.
+In that case, spike times will be rounded to the nearest
+simulation steps (i.e. multiples of the resolution).
 
-Multiple occurrences of the same time return an error, however the 
-spike height can be regulated to have the possibility of having
-multiple spikes in the same simulation time step. The spike are thus
-delivered with a weight indicated by the spike heights multiplied
-with the weight of the connection.
+Sending multiple occurrences at same time step is not possible,
+however the spike height can be regulated to be the equivalent of
+having multiple spikes at once.
+The spikes are thus delivered with the weight indicated by
+the spike height multiplied with the weight of the connection.
 
 
 See also

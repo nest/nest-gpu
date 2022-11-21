@@ -42,19 +42,19 @@ Description
 
 The ``multimeter`` allows to record analog values from neurons.
 Differently from NEST, a multimeter can be created using the command
-``CreateRecord`` and takes in input the following parameters:
+``CreateRecord`` and takes as input the following parameters:
 
 * a string representing the label of the record
-* a list of str with the name of the parameter to be recorded
+* a list of strings with the name of the parameter to be recorded
 * a list of node ids from the nodes to be recorded
-* a list of ints indicating the node port to be recorded
+* a list of integers indicating the node port to be recorded
 
-Thus, the recording of the membrane potential for a  single neuron can be
+Thus, the recording of the membrane potential for a single neuron can be
 done as follows:
 
 ::
 
-   record = nestgpu.CreateRecord('label', ['V_m'], [neuron[0]], [0]})
+   recorder = nestgpu.CreateRecord('label', ['V_m'], [neuron[0]], [0]})
 
 The lenght of the lists should be the same for all the three list
 entries of ``CreateRecord``.
@@ -62,7 +62,7 @@ entries of ``CreateRecord``.
 The sampling interval for recordings is the same one as the simulation
 resolution (default 0.1 ms) and cannot be changed.
 
-Differently from the NEST multimeter, the record should not be connected
+Differently from the NEST multimeter, the recorder should not be connected
 with the nodes through a Connect routine since the nodes connected
 to the record are specified in the ``CreateRecord`` routine.
 
@@ -77,9 +77,9 @@ can also be retreived through the commands ``GetRecordDataRows`` and
 
 ::
 
-   rows = nestgpu.GetRecordDataRows(record)
-   columns = nestgpu.GetRecordDataColumns(record)
-   print("record has {} rows and {} columns".format(rows, columns))
+   rows = nestgpu.GetRecordDataRows(recorder)
+   columns = nestgpu.GetRecordDataColumns(recorder)
+   print("recorder has {} rows and {} columns".format(rows, columns))
 
    recorded_data = nestgpu.GetRecordData(record)
    
