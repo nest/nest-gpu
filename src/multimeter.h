@@ -69,7 +69,7 @@ to the record are specified in the ``CreateRecord`` routine.
 The command ``GetRecordData`` returns, after the simulation, an
 array containing the values of the parameters recorded for every node
 specified in the ``CreateRecord`` routine. In particular the array
-has dimensions ``simulated_time/resolution * n_nodes+1`` in which the
+has a dimension of ``simulated_time/resolution * n_nodes+1``, where the
 first column shows the time simulated and the other columns shows the value of
 the parameter recorded for every node. The number of rows and columns
 can also be retreived through the commands ``GetRecordDataRows`` and
