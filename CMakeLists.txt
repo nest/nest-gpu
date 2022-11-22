@@ -44,9 +44,8 @@ endif()
 ##################         All User Defined options           ##################
 ################################################################################
 
-# use Python to build PyNEST
-set( with-python ON )
-# Cython enabled by default to prepare for the upcoming cython interface. However not yet needed.
+# Cython enabled by default to prepare for the upcoming cython interface.
+# Not yet needed, however in the future it will be a requirement.
 option( cythonize-pynest "Use Cython to cythonize pynestkernel.pyx [default=ON]. If OFF, PyNEST has to be build from a pre-cythonized pynestkernel.pyx." ON )
 
 # select parallelization scheme
