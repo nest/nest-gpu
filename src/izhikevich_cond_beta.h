@@ -65,7 +65,7 @@ This implementation uses the standard technique for forward Euler integration.
 This model is multisynapse, so it allows an arbitrary number of synaptic 
 rise time and decay time constants. The number of receptor ports must be specified 
 at neuron creation (default value is 1) and the receptor index starts from 0 
-(and not to 1 as in NEST multisynapse models).
+(and not from 1 as in NEST multisynapse models).
 The time constants are supplied by by two arrays, ``tau_rise`` and ``tau_decay`` for
 the synaptic rise time and decay time, respectively. The synaptic
 reversal potentials are supplied by the array ``E_rev``. Port numbers

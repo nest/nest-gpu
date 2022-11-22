@@ -56,20 +56,19 @@ This model enables only the change of parameters for the whole
 population of neurons created within a single Create command.
 For having the possibility of changing the parameters for single
 neurons belonging to a neuron population please chose the
-iaf_psc_exp neuron model, which is the same model but for this
-difference. 
+iaf_psc_exp neuron model.
 
 The threshold crossing is followed by an absolute refractory period (t_ref)
 during which the membrane potential is clamped to the resting potential
 and spiking is prohibited.
 
 The linear subthreshold dynamics is integrated by the Exact
-Integration scheme [3]_. The neuron dynamics is solved on the time
-grid given by the computation step size. Incoming as well as emitted
-spikes are forced to that grid.
+Integration scheme [3]_. The neuron dynamics are solved on the time
+grid given by the computational step size. Incoming as well as emitted
+spikes are forced into that grid.
 
 An additional state variable and the corresponding differential
-equation represents a piecewise constant external current.
+equation represent a piecewise constant external current.
 
 For conversion between postsynaptic potentials (PSPs) and PSCs,
 please refer to the ``postsynaptic_potential_to_current`` function in
@@ -86,7 +85,7 @@ The following parameters can be set in the status dictionary.
  I_syn_ex      pA      Excitatory synaptic current
  I_syn_in      pA      Inhibitory synaptic current
  tau_m         ms      Membrane time constant
- C_m           pF      Capacity of the membran
+ C_m           pF      Capacity of the membrane
  E_L           mV      Resting membrane potential
  I_e           pA      Constant input current
  Theta_rel     mV      Spike threshold in mV (relative to resting potential)

@@ -83,10 +83,10 @@ When the neuron fires a spike, the adaptation current :math:`w <- w + b`.
   As mentioned in the `Differences between NEST GPU and NEST <../guides/differences_nest-gpu_nest.rst>`_,
   all the aeif neuron models in NEST GPU are multisynapse models.
   The number of receptor ports must be specified at neuron creation (default value is 1) and
-  the receptor index starts from 0 (and not to 1 as in NEST multisynapse models).
+  the receptor index starts from 0 (and not from 1 as in NEST multisynapse models).
   The time constants are supplied by an array, ``tau_syn``, and the pertaining
   synaptic reversal potentials are supplied by the array ``E_rev``. Port numbers
-  are automatically assigned in the range from 0 to ``n_receptors-1``.
+  are automatically assigned in the range 0 to ``n_receptors-1``.
   During connection, the ports are selected with the synapse property ``receptor``.
 
 Parameters
