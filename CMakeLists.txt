@@ -68,7 +68,7 @@ set( with-libraries OFF CACHE STRING "Link additional libraries [default=OFF]. G
 set( with-includes OFF CACHE STRING "Add additional include paths [default=OFF]. Give full path without '-I'. Separate multiple include paths by ';'." )
 set( with-defines OFF CACHE STRING "Additional defines, e.g. '-DXYZ=1' [default=OFF]. Separate multiple defines by ';'." )
 set( with-max-rreg-count "55" CACHE STRING "Set a maximum amount of register used when compiling [default=55]. Separate multiple flags by ';'." )
-set( with-ptxas-options OFF CACHE STRING "Options for ptxas compiling [default='-v']. Separate multiple flags by ';'." )
+set( with-ptxas-options OFF CACHE STRING "Options for ptxas compiling [default=OFF]. Separate multiple flags by ';'." )
 
 # generic build configuration
 set( with-version-suffix OFF CACHE STRING "Set a user defined version suffix [default='']." )
