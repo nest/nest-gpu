@@ -44,9 +44,8 @@ endif()
 ##################         All User Defined options           ##################
 ################################################################################
 
-# use Python to build PyNEST
-set( with-python ON )
-# Cython enabled by default to prepare for the upcoming cython interface. However not yet needed.
+# Cython enabled by default to prepare for the upcoming cython interface.
+# Not yet needed, however in the future it will be a requirement.
 option( cythonize-pynest "Use Cython to cythonize pynestkernel.pyx [default=ON]. If OFF, PyNEST has to be build from a pre-cythonized pynestkernel.pyx." ON )
 
 # select parallelization scheme
@@ -55,7 +54,7 @@ set( with-mpi ON CACHE STRING "Build with MPI parallelization [default=ON]." )
 set( with-openmp ON CACHE BOOL "Build with OpenMP multi-threading [default=ON]. Optionally set OMP compiler flags." )
 
 # external libraries
-# libltdl not yet needed but will be useful for 
+# libltdl not yet needed but will be useful for NESTML
 set( with-ltdl OFF CACHE STRING "Build with ltdl library [default=OFF]. To set a specific ltdl, give the  install path. NEST GPU uses ltdl for dynamic loading of external user modules." )
 
 # compiler options; explicit compiler flags can be given.
@@ -69,7 +68,7 @@ set( with-libraries OFF CACHE STRING "Link additional libraries [default=OFF]. G
 set( with-includes OFF CACHE STRING "Add additional include paths [default=OFF]. Give full path without '-I'. Separate multiple include paths by ';'." )
 set( with-defines OFF CACHE STRING "Additional defines, e.g. '-DXYZ=1' [default=OFF]. Separate multiple defines by ';'." )
 set( with-max-rreg-count "55" CACHE STRING "Set a maximum amount of register used when compiling [default=55]. Separate multiple flags by ';'." )
-set( with-ptxas-options OFF CACHE STRING "Options for ptxas compiling [default='-v']. Separate multiple flags by ';'." )
+set( with-ptxas-options OFF CACHE STRING "Options for ptxas compiling [default=OFF]. Separate multiple flags by ';'." )
 
 # generic build configuration
 set( with-version-suffix OFF CACHE STRING "Set a user defined version suffix [default='']." )
