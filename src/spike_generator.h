@@ -55,7 +55,8 @@ The following parameters can be set in the status dictionary.
 ============== ======= =======================================
 
 Spike times are given in milliseconds, and must be sorted with the
-earliest spike first. All spike times must be strictly in the future. 
+earliest spike first. All spike times must be strictly in the future
+(i.e. greater than the current time step). 
 
 Spike times may not coincide with a time step, i.e., are not a multiple
 of the simulation resolution. In that case, spike times will be rounded

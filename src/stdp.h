@@ -50,7 +50,7 @@ Parameters
  tau_plus  ms       Time constant of STDP window, potentiation
  tau_minus ms       Time constant of STDP window, depression
  lambda    real     Step size
- alpha     real     Asymmetry parameter (scales depressing increments as
+ alpha     real     Asymmetry parameter (scales depression increments as
                     alpha*lambda)
  mu_plus   real     Weight dependence exponent, potentiation
  mu_minus  real     Weight dependence exponent, depression
