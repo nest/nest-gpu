@@ -13,7 +13,9 @@ path.
 
 Options for configuring NEST GPU
 --------------------------------
-                            
+
+NEST GPU allows for several configuration options for custom builds:
+
 Set GPU architecture (see `here <https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/>`_
 to choose the best NVIDIA GPU architecture for your GPU card):
 
