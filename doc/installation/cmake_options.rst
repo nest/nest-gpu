@@ -1,7 +1,7 @@
 CMake Options for NEST GPU
 ==========================
 
-NEST GPU is installed with ``cmake`` (at least v3.12). In the simplest case, the commands::
+NEST GPU is installed with ``cmake`` (at least v3.17). In the simplest case, the commands::
 
     cmake -DCMAKE_INSTALL_PREFIX:PATH=<nestgpu_install_dir> <nestgpu_source_dir>
     make
@@ -13,14 +13,6 @@ path.
 
 Options for configuring NEST GPU
 --------------------------------
-
-NEST GPU allows for several configuration options for custom builds:
-
-Use Python to build:
-    
-+-----------------------------------------------+----------------------------------------------------------------+
-| ``-Dwith-python=[OFF|ON]``                    | Build with Python. [default=ON]                                |
-+-----------------------------------------------+----------------------------------------------------------------+
                             
 Set GPU architecture (see `here <https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/>`_
 to choose the best NVIDIA GPU architecture for your GPU card):
@@ -73,6 +65,6 @@ Change compilation behavior:
 |                                               | [default=55]                                                   |
 +-----------------------------------------------+----------------------------------------------------------------+
 | ``-Dwith-ptxas-options=[<list;of;flags>]``    | Options for ptxas compiling.                                   |
-|                                               | Separate multiple flags by ';'. [default='-v']                 |
+|                                               | Separate multiple flags by ';'. [default=OFF]                 |
 +-----------------------------------------------+----------------------------------------------------------------+
 
