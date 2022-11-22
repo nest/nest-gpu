@@ -54,7 +54,7 @@ set( with-mpi ON CACHE STRING "Build with MPI parallelization [default=ON]." )
 set( with-openmp ON CACHE BOOL "Build with OpenMP multi-threading [default=ON]. Optionally set OMP compiler flags." )
 
 # external libraries
-# libltdl not yet needed but will be useful for 
+# libltdl not yet needed but will be useful for NESTML
 set( with-ltdl OFF CACHE STRING "Build with ltdl library [default=OFF]. To set a specific ltdl, give the  install path. NEST GPU uses ltdl for dynamic loading of external user modules." )
 
 # compiler options; explicit compiler flags can be given.
