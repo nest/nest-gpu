@@ -84,7 +84,7 @@ set( with-version-suffix OFF CACHE STRING "Set a user defined version suffix [de
 set( CMAKE_INSTALL_DATADIR "share/${PROJECT_NAME}" CACHE STRING "Relative directory, where NEST GPU installs its data (share/nest)" )
 
 ################################################################################
-##################           Find utility programs            ##################
+##################  Find utility programs (#TODO adapt for later PR)  #########
 ################################################################################
 
 # needed for pynest test suite
@@ -146,7 +146,7 @@ get_version_info()
 printInfo("-- NEST GPU version: ${NEST_VERSION_STRING}")
 
 ################################################################################
-##################         Enable Testing Targets             ##################
+##################  Enable Testing Targets  (#TODO adapt for later PR) #########
 ################################################################################
 #enable_testing()
 #set( TEST_OPTS "--with-python=${PYTHON}" )
@@ -274,6 +274,7 @@ install( FILES LICENSE README.md
     DESTINATION ${CMAKE_INSTALL_DOCDIR}
     )
 
+(#TODO adapt for later PR)
 #add_custom_target( install-nodoc
 #  COMMAND $(MAKE) NEST_INSTALL_NODOC=true install
 #)
