@@ -274,7 +274,7 @@ install( FILES LICENSE README.md
     DESTINATION ${CMAKE_INSTALL_DOCDIR}
     )
 
-(#TODO adapt for later PR)
+#TODO adapt for later PR
 #add_custom_target( install-nodoc
 #  COMMAND $(MAKE) NEST_INSTALL_NODOC=true install
 #)
