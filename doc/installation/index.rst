@@ -3,19 +3,18 @@ Install NEST GPU
 
 Requirements
 ------------
-To build NEST GPU you need `CMake <https://cmake.org/install>`_ (version 3.12 or 
-higher) and `autotools <https://www.gnu.org/software/automake/faq/autotools-faq.html>`_.
+To build NEST GPU you need `CMake <https://cmake.org/install>`_ (version 3.17 or higher).
 You also need the `NVIDIA drivers <https://www.nvidia.com/Download/index.aspx?lang=en-us>`_
 for the GPU card installed in your machine and the 
 `NVIDIA CUDA development toolkit <https://developer.nvidia.com/cuda-toolkit>`_.
-
-We also recommend to install the `OpenMP <https://www.openmp.org/>`_ binary and development package, which are needed for using MPI.
-
 To use the NEST GPU Python interface you need `Python 3 <https://www.python.org/>`_,
 `Numpy <https://numpy.org/>`_, `Scipy <https://scipy.org/>`_,
 `Matplotlib <https://matplotlib.org/>`_
 and `mpi4py <https://mpi4py.readthedocs.io/en/stable/intro.html#>`_
 for using MPI from Python.
+
+We also recommend to install the `OpenMP <https://www.openmp.org/>`_ binary and development
+packages, which are needed for using MPI.
 
 .. note::
 
@@ -35,7 +34,6 @@ from source code. To adjust settings please see :doc:`CMake Options <cmake_optio
    sudo apt update
 
    sudo apt install -y \
-   autotools-dev \
    nvidia-cuda-toolkit \
    openmpi-bin \
    libopenmpi-dev \
