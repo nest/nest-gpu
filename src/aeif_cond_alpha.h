@@ -39,7 +39,7 @@
 Short description
 +++++++++++++++++
 
-Conductance based adaptive exponential integrate-and-fire neuron model
+Conductance-based adaptive exponential integrate-and-fire neuron model
 
 Description
 +++++++++++

@@ -38,7 +38,7 @@
 Short description
 +++++++++++++++++
 
-Conductance based Izhikevich neuron model
+Conductance-based Izhikevich neuron model
 
 Description
 +++++++++++
