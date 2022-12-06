@@ -49,7 +49,7 @@
 #cmakedefine HAVE_UNISTD_H 1
 
 /* Version number of package */
-#define VERSION @NEST_VERSION_STRING@
+#define VERSION @NEST_GPU_VERSION_STRING@
 
 #ifndef HAVE_SYS_TYPES_H
 /* Define to `unsigned int' if <sys/types.h> is not defined. */
