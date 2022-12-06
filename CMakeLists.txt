@@ -118,18 +118,21 @@ nestgpu_process_cuda_arch()
 
 nest_process_with_libltdl()
 
-nestgpu_pre_process_compile_flags()
-nest_process_with_optimize()
-nest_process_with_debug()
-nest_process_with_warning()
-nestgpu_post_process_compile_flags()
-
 nest_process_with_std()
 nest_process_with_libraries()
 nest_process_with_includes()
 nest_process_with_defines()
 nestgpu_process_with_max_rreg_count()
 nestgpu_process_with_ptxas_options()
+
+# IMPORTANT: Please try to keep these two function calls to be the last functions to call in this Process step.
+#            Adding wrong keywords to the "-Dwith-optmize" flag might cause wrong errors, and therefore to avoid that
+#            the step for processing the optmization phase and the debug phase must be the last steps.
+nestgpu_pre_process_compile_flags()
+nest_process_with_optimize()
+nest_process_with_debug()
+nest_process_with_warning()
+nestgpu_post_process_compile_flags()
 
 nest_process_version_suffix()
 
