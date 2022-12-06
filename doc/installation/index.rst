@@ -128,7 +128,7 @@ Installation tests
 ------------------
 
 To check the correctness of NEST GPU installation you can find some tests in the directory
-``<nestgpu_source_dir>/python/test``, where the ``src/path`` is the install path given
+``<nestgpu_source_dir>/python/test``, where the ``<nestgpu_source_dir>`` is the install path given
 to ``cmake``. Each Python script tests a specific feature of the library, and to perform
 all the tests you can run the bash scripts `test_all.sh` (which runs all the MPI tests that do
 not employ MPI) and `test_mpi.sh`.
