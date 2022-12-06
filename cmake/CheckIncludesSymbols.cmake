@@ -54,7 +54,7 @@ if ( NOT Python_FOUND )
   string( CONCAT PYABI_WARN "Could not locate Python ABI"
     ", using shared libraries and header file instead."
     " Please clear your CMake cache and build folder and verify that CMake"
-    " is up-to-date (3.18+)."
+    " is up-to-date (3.17+)."
   )
   printWarning("${PYABI_WARN}")
 else()
@@ -99,41 +99,6 @@ endfunction()
 
 # Enable dynamic library compiling with run-time search PATH
 set( BUILD_SHARED_LIBS ON )
-
-# set RPATH stuff
-set( CMAKE_SKIP_RPATH FALSE )
-# use, i.e. don't skip the full RPATH for the build tree
-set( CMAKE_SKIP_BUILD_RPATH FALSE )
-
-# when building, don't use the install RPATH already
-# (but later on when installing)
-set( CMAKE_BUILD_WITH_INSTALL_RPATH FALSE )
-
-# set run-time search path (RPATH) so that dynamic libraries in ``lib/nest`` can be located
-
-# Note: "$ORIGIN" (on Linux) and "@loader_path" (on MacOS) are not CMake variables, but special keywords for the
-# Linux resp. the macOS dynamic loader. They refer to the path in which the object is located, e.g.
-# ``${CMAKE_INSTALL_PREFIX}/bin`` for the nest and sli executables, ``${CMAKE_INSTALL_PREFIX}/lib/nest`` for all
-# dynamic libraries except PyNEST (libnestkernel.so, etc.), and  something like
-# ``${CMAKE_INSTALL_PREFIX}/lib/python3.x/site-packages/nest`` for ``pynestkernel.so``. The RPATH is relative to
-# this origin, so the binary ``bin/nest`` can find the files in the relative location ``../lib/nest``, and
-# similarly for PyNEST and the other libraries. For simplicity, we set all the possibilities on all generated
-# objects.
-
-# PyNEST can only act as an entry point; it does not need to be included in the other objects' RPATH itself.
-
-set( CMAKE_INSTALL_RPATH
-      # for binaries
-      "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}/nestgpu"
-      # for libraries (except pynestkernel)
-      "\$ORIGIN/../../${CMAKE_INSTALL_LIBDIR}/nestgpu"
-      # for pynestkernel: origin at <prefix>/lib/python3.x/site-packages/nestgpu
-      "\$ORIGIN/../../../nestgpu"
-      )
-
-# add the automatically determined parts of the RPATH
-# which point to directories outside the build tree to the install RPATH
-set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 # reverse the search order for lib extensions
 set( CMAKE_FIND_LIBRARY_SUFFIXES ".so;.dylib;.a;.lib" )
