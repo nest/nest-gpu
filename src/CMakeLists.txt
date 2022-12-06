@@ -141,7 +141,7 @@ endif ()
 add_library( nestgpukernel ${nestgpu_sources} )
 set_target_properties( nestgpukernel
     PROPERTIES
-    VERSION ${NEST_VERSION}
+    VERSION ${NEST_GPU_VERSION}
     SOVERSION 1
     )
 

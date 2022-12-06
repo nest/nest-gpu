@@ -137,9 +137,9 @@ nest_process_version_suffix()
 ##################           Create version string            ##################
 ################################################################################
 
-include( NestVersionInfo )
+include( VersionInfo )
 get_version_info()
-printInfo("-- NEST GPU version: ${NEST_VERSION_STRING}")
+printInfo("-- NEST GPU version: ${NEST_GPU_VERSION_STRING}")
 
 ################################################################################
 ##################  Enable Testing Targets  (#TODO adapt for later PR) #########
