@@ -142,8 +142,7 @@ function( NEST_PRINT_CONFIG_SUMMARY )
   message( "" )
 
   message( "If you experience problems with the installation or the use of NEST GPU," )
-  message( "please see https://www.nest-simulator.org/frequently_asked_questions" )
-  message( "or go to https://www.nest-simulator.org/community to find out how to" )
+  message( "go to https://nest-gpu.readthedocs.io/en/latest/community.html to find out how to" )
   message( "join the user mailing list." )
 
   # reset output color
