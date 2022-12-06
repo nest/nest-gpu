@@ -87,17 +87,6 @@ if ( Python_FOUND )
   set( Python_VERSION_MINOR ${Python_VERSION_MINOR} )
   set( Python_INCLUDE_DIRS "${Python_INCLUDE_DIRS}" )
   set( Python_LIBRARIES "${Python_LIBRARIES}" )
-
-  if ( cythonize-pynest )
-    # Need updated Cython because of a change in the C api in Python 3.7
-    find_package( Cython 0.28.3 REQUIRED )
-    if ( CYTHON_FOUND )
-      # export found variables to parent scope
-      set( CYTHON_FOUND "${CYTHON_FOUND}" )
-      set( CYTHON_EXECUTABLE "${CYTHON_EXECUTABLE}" )
-      set( CYTHON_VERSION "${CYTHON_VERSION}" )
-    endif ()
-  endif ()
 endif ()
 
 # define python excecution path

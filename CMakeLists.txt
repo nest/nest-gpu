@@ -44,10 +44,6 @@ endif()
 ##################         All User Defined options           ##################
 ################################################################################
 
-# Cython enabled by default to prepare for the upcoming cython interface.
-# Not yet needed, however in the future it will be a requirement.
-option( cythonize-pynest "Use Cython to cythonize pynestkernel.pyx [default=ON]. If OFF, PyNEST has to be build from a pre-cythonized pynestkernel.pyx." ON )
-
 # select parallelization scheme
 set( with-gpu-arch "70" CACHE STRING "Specify the GPU compute architecture [default=70]." )
 set( with-mpi ON CACHE STRING "Build with MPI parallelization [default=ON]." )
