@@ -1,3 +1,5 @@
-sphinx_rtd_theme
 nbsphinx
+numpy
+sphinx_rtd_theme
 sphinx-tabs
+tqdm

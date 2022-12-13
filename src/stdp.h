@@ -27,6 +27,49 @@
 
 #include "syn_model.h"
 
+/* BeginUserDocs: synapse, spike-timing-dependent plasticity
+
+Short description
++++++++++++++++++
+
+Synapse type for spike-timing dependent plasticity
+
+Description
++++++++++++
+
+The STDP class is a type of synapse model used to create
+synapses that enable spike timing dependent plasticity
+(as defined in [1]_). 
+Here the weight dependence exponent can be set separately
+for potentiation and depression.
+
+
+Parameters
+++++++++++
+
+========== =======  ======================================================
+ tau_plus  ms       Time constant of STDP window, potentiation
+ tau_minus ms       Time constant of STDP window, depression
+ lambda    real     Step size
+ alpha     real     Asymmetry parameter (scales depression increments as
+                    alpha*lambda)
+ mu_plus   real     Weight dependence exponent, potentiation
+ mu_minus  real     Weight dependence exponent, depression
+ Wmax      real     Maximum allowed weight
+========== =======  ======================================================
+
+
+References
+++++++++++
+
+.. [1] Guetig et al. (2003). Learning input correlations through nonlinear
+       temporally asymmetric hebbian plasticity. Journal of Neuroscience,
+       23:3697-3714 DOI: https://doi.org/10.1523/JNEUROSCI.23-09-03697.2003
+
+
+EndUserDocs */
+
+
 class STDP : public SynModel
 {
  public:
