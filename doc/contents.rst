@@ -13,6 +13,7 @@ Table of Contents
    Install <installation/installation>
    Guides <guides/index>
    Examples <examples/index>
+   Model Directory <models/index>
    
 
 .. toctree::
