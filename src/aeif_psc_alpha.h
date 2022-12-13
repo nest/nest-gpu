@@ -33,6 +33,114 @@
 #include "base_neuron.h"
 #include "neuron_models.h"
 
+/* BeginUserDocs: neuron, adaptive threshold, integrate-and-fire, current-based
+
+Short description
++++++++++++++++++
+
+Current-based exponential integrate-and-fire neuron model
+
+Description
++++++++++++
+
+``aeif_psc_alpha`` is the adaptive exponential integrate and fire neuron according
+to [1]_. Synaptic currents are modeled as alpha functions.
+
+This implementation uses the 5th order Runge-Kutta solver with
+adaptive step size to integrate the differential equation.
+
+The membrane potential is given by the following differential equation:
+
+.. math::
+
+  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
+  + I_{syn}(V, t)- w + I_e
+
+where ``I_syn (V,t)`` is the sum of excitatory and inhibitory synaptic currents
+modeled as alpha functions.
+
+The differential equation for the spike-adaptation current `w` is:
+
+.. math::
+
+ \tau_w dw/dt= a(V-E_L) - w
+
+.. note::
+
+  As mentioned in the `Differences between NEST GPU and NEST <../guides/differences_nest-gpu_nest.rst>`_,
+  all the aeif neuron models in NEST GPU are multisynapse models.
+  The number of receptor ports must be specified at neuron creation (default value is 1) and
+  the receptor index starts from 0 (and not from 1 as in NEST multisynapse models).
+  The time constants are supplied by an array, ``tau_syn``. Port numbers
+  are automatically assigned in the range 0 to ``n_receptors-1``.
+  During connection, the ports are selected with the synapse property ``receptor``.
+
+Parameters
+++++++++++
+
+The following parameters can be set in the status dictionary.
+
+========== ======= =======================================
+**Dynamic state variables:**
+----------------------------------------------------------
+ V_m       mV      Membrane potential
+ I_syn     pA      Total synaptic current
+ w         pA      Spike-adaptation current
+========== ======= =======================================
+
+========== ======= =======================================
+**Membrane Parameters**
+----------------------------------------------------------
+ V_th      mV      Spike initiation threshold
+ Delta_T   mV      Slope factor
+ g_L       nS      Leak conductance
+ E_L       mV      Leak reversal potential
+ C_m       pF      Capacity of the membrane
+ I_e       pA      Constant external input current
+ V_peak    mV      Spike detection threshold
+ V_reset   mV      Reset value for V_m after a spike
+ t_ref     ms      Duration of refractory period
+ den_delay ms      Dendritic delay
+========== ======= =======================================
+
+======== ======= ==================================
+**Spike adaptation parameters**
+---------------------------------------------------
+ a       ns      Subthreshold adaptation
+ b       pA      Spike-triggered adaptation
+ tau_w   ms      Adaptation time constant
+======== ======= ==================================
+
+=========== ======= ===========================================================
+**Synaptic parameters**
+-------------------------------------------------------------------------------
+ tau_syn    ms      Time constant of synaptic conductance
+=========== ======= ===========================================================
+
+============= ======= =========================================================
+**Integration parameters**
+-------------------------------------------------------------------------------
+h0_rel        real    Starting step in ODE integration relative to time 
+                      resolution
+h_min_rel     real    Minimum step in ODE integration relative to time 
+                      resolution
+============= ======= =========================================================
+
+References
+++++++++++
+
+.. [1] Brette R and Gerstner W (2005). Adaptive Exponential
+       Integrate-and-Fire Model as an Effective Description of Neuronal
+       Activity. J Neurophysiol 94:3637-3642.
+       DOI: https://doi.org/10.1152/jn.00686.2005
+
+See also
+++++++++
+
+iaf_psc_alpha, aeif_cond_alpha
+
+EndUserDocs */
+
 #define MAX_PORT_NUM 20
 
 struct aeif_psc_alpha_rk5

@@ -32,6 +32,52 @@
 #include "base_neuron.h"
 #include "neuron_models.h"
 
+/* BeginUserDocs: device, generator
+
+Short description
++++++++++++++++++
+
+Generate spikes from an array of spike-times
+
+Description
++++++++++++
+
+A spike generator can be used to generate spikes at specific times
+which are given to the spike generator as an array.
+
+The following parameters can be set in the status dictionary.
+
+============== ======= =======================================
+**Parameters:**
+--------------------------------------------------------------
+ spike_times   list    Times in which spikes are emitted
+ spike_heights list    Weight of the spikes emitted
+============== ======= =======================================
+
+Spike times are given in milliseconds, and must be sorted with the
+earliest spike first. All spike times must be strictly in the future
+(i.e. greater than the current time step). 
+
+It is possible that spike times do not coincide with a time step,
+i.e., are not a multiple of the simulation resolution.
+In that case, spike times will be rounded to the nearest
+simulation steps (i.e. multiples of the resolution).
+
+Sending multiple occurrences at same time step is not possible,
+however the spike height can be regulated to be the equivalent of
+having multiple spikes at once.
+The spikes are thus delivered with the weight indicated by
+the spike height multiplied with the weight of the connection.
+
+
+See also
+++++++++
+
+poisson_generator
+
+EndUserDocs
+*/
+
 class spike_generator : public BaseNeuron
 {
   int *d_n_spikes_;
