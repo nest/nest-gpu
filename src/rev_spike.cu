@@ -151,7 +151,7 @@ int ResetConnectionSpikeTimeUp(NetConnection *net_connection)
     <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
     (net_connection->StoredNConnections());
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
+  //gpuErrchk( cudaDeviceSynchronize() );
 
   return 0;
 }
