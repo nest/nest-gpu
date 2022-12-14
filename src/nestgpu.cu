@@ -540,7 +540,9 @@ int NESTGPU::SimulationStep()
     
   int n_spikes;
   time_mark = getRealTime();
-  gpuErrchk(cudaMemcpy(&n_spikes, d_SpikeNum, sizeof(int),
+  // Call will get delayed until ClearGetSpikesArrays()
+  // afterwards the value of n_spikes will be available
+  gpuErrchk(cudaMemcpyAsync(&n_spikes, d_SpikeNum, sizeof(int),
 		       cudaMemcpyDeviceToHost));
 
   ClearGetSpikeArrays();    
