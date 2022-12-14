@@ -591,7 +591,7 @@ int NESTGPU::SimulationStep()
   time_mark = getRealTime();
   SpikeReset<<<1, 1>>>();
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
+  //gpuErrchk( cudaDeviceSynchronize() );
   SpikeReset_time_ += (getRealTime() - time_mark);
 
 #ifdef HAVE_MPI
