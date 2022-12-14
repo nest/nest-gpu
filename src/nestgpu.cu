@@ -599,7 +599,7 @@ int NESTGPU::SimulationStep()
     time_mark = getRealTime();
     ExternalSpikeReset<<<1, 1>>>();
     gpuErrchk( cudaPeekAtLastError() );
-    gpuErrchk( cudaDeviceSynchronize() );
+    //gpuErrchk( cudaDeviceSynchronize() );
     ExternalSpikeReset_time_ += (getRealTime() - time_mark);
   }
 #endif
