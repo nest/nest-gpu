@@ -37,36 +37,52 @@ __device__ int locate(int val, int *data, int n);
 
 // Simple kernel for pushing remote spikes in local spike buffers
 // Version with spike multiplicity array (spike_height) 
-__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id,
-           float *spike_height)
-{
-  int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
-  if (i_spike<n_spikes) {
-    int isb = spike_buffer_id[i_spike];
-    float height = spike_height[i_spike];
-    PushSpike(isb, height);
-  }
-}
+//__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id,
+//           float *spike_height)
+//{
+//  int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
+//  if (i_spike<n_spikes) {
+//    int isb = spike_buffer_id[i_spike];
+//    float height = spike_height[i_spike];
+//    PushSpike(isb, height);
+//  }
+//}
 
 // Simple kernel for pushing remote spikes in local spike buffers
 // Version without spike multiplicity array (spike_height) 
-__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id)
-{
-  int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
-  if (i_spike<n_spikes) {
-    int isb = spike_buffer_id[i_spike];
-    PushSpike(isb, 1.0);
-  }
-}
+//__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id)
+//{
+//  int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
+//  if (i_spike<n_spikes) {
+//    int isb = spike_buffer_id[i_spike];
+//    PushSpike(isb, 1.0);
+//  }
+//}
 
 // convert node group indexes to spike buffer indexes
 // by adding the index of the first node of the node group  
-__global__ void AddOffset(int n_spikes, int *spike_buffer_id,
-			  int i_remote_node_0)
+//__global__ void AddOffset(int n_spikes, int *spike_buffer_id,
+//			  int i_remote_node_0)
+//{
+//  int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
+//  if (i_spike<n_spikes) {
+//    spike_buffer_id[i_spike] += i_remote_node_0;
+//  }
+//}
+
+// Combined function of PushedSpikeFromRemote with
+// AddOffset using default values for arguments
+__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id,
+           float *spike_height, int offset)
 {
   int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_spike<n_spikes) {
-    spike_buffer_id[i_spike] += i_remote_node_0;
+    int isb = spike_buffer_id[i_spike] + offset;
+    float height = 1.0;
+    if (spike_height != NULL) {
+      height = spike_height[i_spike];
+    }
+    PushSpike(isb, height);
   }
 }
 
@@ -428,15 +444,15 @@ int ConnectMpi::CopySpikeFromRemote(int n_hosts, int max_spike_per_host,
     RecvSpikeFromRemote_CUDAcp_time_ += (getRealTime() - time_mark);
     // convert node group indexes to spike buffer indexes
     // by adding the index of the first node of the node group  
-    AddOffset<<<(n_spike_tot+1023)/1024, 1024>>>
-      (n_spike_tot, d_ExternalSourceSpikeNodeId, i_remote_node_0);
-    gpuErrchk( cudaPeekAtLastError() );
-    cudaDeviceSynchronize();
+    //AddOffset<<<(n_spike_tot+1023)/1024, 1024>>>
+    //  (n_spike_tot, d_ExternalSourceSpikeNodeId, i_remote_node_0);
+    //gpuErrchk( cudaPeekAtLastError() );
+    //cudaDeviceSynchronize();
     // push remote spikes in local spike buffers
     PushSpikeFromRemote<<<(n_spike_tot+1023)/1024, 1024>>>
-      (n_spike_tot, d_ExternalSourceSpikeNodeId);
+      (n_spike_tot, d_ExternalSourceSpikeNodeId, NULL, i_remote_node_0);
     gpuErrchk( cudaPeekAtLastError() );
-    cudaDeviceSynchronize();
+    //cudaDeviceSynchronize();
   }
   
   return n_spike_tot;
