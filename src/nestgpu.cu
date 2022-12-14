@@ -608,7 +608,7 @@ int NESTGPU::SimulationStep()
     //time_mark = getRealTime();
     RevSpikeReset<<<1, 1>>>();
     gpuErrchk( cudaPeekAtLastError() );
-    gpuErrchk( cudaDeviceSynchronize() );
+    //gpuErrchk( cudaDeviceSynchronize() );
     RevSpikeBufferUpdate<<<(net_connection_->connection_.size()+1023)/1024,
       1024>>>(net_connection_->connection_.size());
     gpuErrchk( cudaPeekAtLastError() );
