@@ -516,7 +516,7 @@ int NESTGPU::SimulationStep()
       time_mark = getRealTime();
       SendExternalSpike<<<(n_ext_spike+1023)/1024, 1024>>>();
       gpuErrchk( cudaPeekAtLastError() );
-      gpuErrchk( cudaDeviceSynchronize() );
+      //gpuErrchk( cudaDeviceSynchronize() );
       SendExternalSpike_time_ += (getRealTime() - time_mark);
     }
     //for (int ih=0; ih<connect_mpi_->mpi_np_; ih++) {
