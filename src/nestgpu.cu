@@ -584,7 +584,7 @@ int NESTGPU::SimulationStep()
     }
   }
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
+  //gpuErrchk( cudaDeviceSynchronize() );
 
   GetSpike_time_ += (getRealTime() - time_mark);
 
