@@ -619,7 +619,7 @@ int NESTGPU::SimulationStep()
     if (n_rev_spikes > 0) {
       SynapseUpdateKernel<<<n_rev_spikes, 1024>>>(n_rev_spikes, d_RevSpikeNConn);
       gpuErrchk(cudaPeekAtLastError());
-      gpuErrchk(cudaDeviceSynchronize());
+      //gpuErrchk(cudaDeviceSynchronize());
 
     }      
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
