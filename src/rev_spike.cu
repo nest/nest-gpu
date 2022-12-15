@@ -175,7 +175,7 @@ int RevSpikeInit(NetConnection *net_connection)
     <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
     (net_connection->StoredNConnections(), 0x8000);
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
+  //gpuErrchk( cudaDeviceSynchronize() );
 
   gpuErrchk(cudaMalloc(&d_RevSpikeNum, sizeof(unsigned int)));
   
