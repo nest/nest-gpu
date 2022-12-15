@@ -187,7 +187,7 @@ int RevSpikeInit(NetConnection *net_connection)
   DeviceRevSpikeInit<<<1,1>>>(d_RevSpikeNum, d_RevSpikeTarget,
 			      d_RevSpikeNConn);
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
+  //gpuErrchk( cudaDeviceSynchronize() );
 
   return 0;
 }
