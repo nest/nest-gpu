@@ -545,7 +545,8 @@ int NESTGPU::SimulationStep()
   gpuErrchk(cudaMemcpyAsync(&n_spikes, d_SpikeNum, sizeof(int),
 		       cudaMemcpyDeviceToHost));
 
-  ClearGetSpikeArrays();    
+  ClearGetSpikeArrays(); 
+  gpuErrchk( cudaDeviceSynchronize() );   
   if (n_spikes > 0) {
     time_mark = getRealTime();
     CollectSpikeKernel<<<n_spikes, 1024>>>(n_spikes, d_SpikeTargetNum);
@@ -631,8 +632,8 @@ int NESTGPU::SimulationStep()
       // and if buffering is activated every n_step time steps...
       int n_step = node_vect_[i]->rec_spike_times_step_;
       if (n_step>0 && (time_idx%n_step == n_step-1)) {
-	// extract recorded spike times and put them in buffers
-	node_vect_[i]->BufferRecSpikeTimes();
+        // extract recorded spike times and put them in buffers
+        node_vect_[i]->BufferRecSpikeTimes();
       }
     }
   }
