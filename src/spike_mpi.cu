@@ -251,7 +251,7 @@ int ConnectMpi::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_hos
          target_host_arr[ith] = conn->at(ith).target_host_id;
          node_id_arr[ith] = conn->at(ith).remote_node_id;
        }
-       cudaMemcpy(h_ExternalNodeTargetHostId[i_source], target_host_arr,
+       cudaMemcpyAsync(h_ExternalNodeTargetHostId[i_source], target_host_arr,
    	       Nth*sizeof(int), cudaMemcpyHostToDevice);
        cudaMemcpy(h_ExternalNodeId[i_source], node_id_arr,
    	       Nth*sizeof(int), cudaMemcpyHostToDevice);
@@ -259,11 +259,11 @@ int ConnectMpi::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_hos
        delete[] node_id_arr;
      }
   }
-  cudaMemcpy(d_NExternalNodeTargetHost, h_NExternalNodeTargetHost,
+  cudaMemcpyAsync(d_NExternalNodeTargetHost, h_NExternalNodeTargetHost,
 	     n_node*sizeof(int), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_ExternalNodeTargetHostId, h_ExternalNodeTargetHostId,
+  cudaMemcpyAsync(d_ExternalNodeTargetHostId, h_ExternalNodeTargetHostId,
 	     n_node*sizeof(int*), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_ExternalNodeId, h_ExternalNodeId,
+  cudaMemcpyAsync(d_ExternalNodeId, h_ExternalNodeId,
 	     n_node*sizeof(int*), cudaMemcpyHostToDevice);
 
   DeviceExternalSpikeInit<<<1,1>>>(n_hosts, max_spike_per_host,
@@ -277,6 +277,9 @@ int ConnectMpi::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_hos
 				   d_ExternalNodeTargetHostId,
 				   d_ExternalNodeId
 				   );
+  gpuErrchk( cudaPeekAtLastError() );
+  gpuErrchk( cudaDeviceSynchronize() );
+
   delete[] h_NExternalNodeTargetHost;
   delete[] h_ExternalNodeTargetHostId;
   delete[] h_ExternalNodeId;
