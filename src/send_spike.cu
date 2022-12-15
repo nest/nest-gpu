@@ -83,7 +83,7 @@ void SpikeInit(int max_spike_num)
   DeviceSpikeInit<<<1,1>>>(d_SpikeNum, d_SpikeSourceIdx, d_SpikeConnIdx,
 			   d_SpikeHeight, d_SpikeTargetNum, max_spike_num);
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
+  //gpuErrchk( cudaDeviceSynchronize() );
 }
 
 __global__ void SpikeReset()
