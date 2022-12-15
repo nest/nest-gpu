@@ -473,8 +473,12 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
 	     cudaMemcpyHostToDevice);
     cudaMemcpyAsync(d_TargetRevConnectionSize, h_target_rev_conn_size,
 	       n_spike_buffers*sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpyAsync(d_TargetRevConnection, h_target_rev_conn,
+    cudaMemcpy(d_TargetRevConnection, h_target_rev_conn,
 	       n_spike_buffers*sizeof(unsigned int*), cudaMemcpyHostToDevice);
+
+    delete[] h_rev_conn;
+    delete[] h_target_rev_conn_size;
+    delete[] h_target_rev_conn;
   }
   
   cudaMemcpyAsync(d_ConnectionGroupSize, h_ConnectionGroupSize,
@@ -534,12 +538,6 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
 
   delete[] h_conn_target;
   delete[] h_conn_syn_group;
-
-  if (n_rev_conn>0) {
-    delete[] h_rev_conn;
-    delete[] h_target_rev_conn_size;
-    delete[] h_target_rev_conn;
-  }
 
   delete[] h_ConnectionGroupSize;
   delete[] h_ConnectionGroupDelay;
