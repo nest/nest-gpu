@@ -324,8 +324,7 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
 int ConnectMpi::SendSpikeToRemote(int n_hosts, int max_spike_per_host)
 {
   MPI_Request request;
-  int mpi_id, tag = 1;  // id is already in the class, can be removed
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_id);
+  int tag = 1;
 
   double time_mark = getRealTime();
   gpuErrchk(cudaMemcpy(h_ExternalTargetSpikeNum, d_ExternalTargetSpikeNum,
@@ -346,7 +345,7 @@ int ConnectMpi::SendSpikeToRemote(int n_hosts, int max_spike_per_host)
 
   // loop on remote MPI proc
   for (int ih=0; ih<n_hosts; ih++) {
-    if (ih == mpi_id) { // skip self MPI proc
+    if (ih == mpi_id_) { // skip self MPI proc
       continue;
     }
     // get index and size of spike packet that must be sent to MPI proc ih
@@ -373,19 +372,14 @@ int ConnectMpi::SendSpikeToRemote(int n_hosts, int max_spike_per_host)
 int ConnectMpi::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
 				    
 {
-  std::list<int> recv_list;
-  std::list<int>::iterator list_it;
-  
-  MPI_Status Stat;
-  int mpi_id, tag = 1; // id is already in the class, can be removed
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_id);
+  int tag = 1;
 
   double time_mark = getRealTime();
 
   // loop on remote MPI proc
   for (int i_host=0; i_host<n_hosts; i_host++) {
-    if (i_host == mpi_id) continue; // skip self MPI proc
-    recv_list.push_back(i_host); // insert MPI proc in list
+    if (i_host == mpi_id_) continue; // skip self MPI proc
+    //recv_list.push_back(i_host); // insert MPI proc in list
     // start nonblocking MPI receive from MPI proc i_host
     MPI_Irecv(&h_ExternalSourceSpikeNodeId[i_host*max_spike_per_host],
 	      max_spike_per_host, MPI_INT, i_host, tag, MPI_COMM_WORLD,
@@ -394,25 +388,51 @@ int ConnectMpi::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
 
   // loop until list is empty, i.e. until receive is complete
   // from all MPI proc
-  while (recv_list.size()>0) {
-    // loop on all hosts in the list
-    for (list_it=recv_list.begin(); list_it!=recv_list.end(); ++list_it) {
-      int i_host = *list_it;
-      int flag;
-      // check if receive is complete
-      MPI_Test(&recv_mpi_request[i_host], &flag, &Stat);
-      if (flag) {
-	int count;
-	// get spike count
-	MPI_Get_count(&Stat, MPI_INT, &count);
-	h_ExternalSourceSpikeNum[i_host] = count;
-	// when receive is complete remove MPI proc from list
-	recv_list.erase(list_it);
-	break;
-      }
+  //while (recv_list.size()>0) {
+  //  // loop on all hosts in the list
+  //  for (list_it=recv_list.begin(); list_it!=recv_list.end(); ++list_it) {
+  //    int i_host = *list_it;
+  //    int flag;
+  //    // check if receive is complete
+  //    MPI_Test(&recv_mpi_request[i_host], &flag, &Stat);
+  //    if (flag) {
+  //      int count;
+  //      // get spike count
+  //      MPI_Get_count(&Stat, MPI_INT, &count);
+  //      h_ExternalSourceSpikeNum[i_host] = count;
+  //      // when receive is complete remove MPI proc from list
+  //      recv_list.erase(list_it);
+  //      break;
+  //    }
+  //  }
+  //} 
+  //h_ExternalSourceSpikeNum[mpi_id] = 0;
+
+  MPI_Status statuses[n_hosts];
+  recv_mpi_request[mpi_id_] = MPI_REQUEST_NULL;
+  MPI_Waitall(n_hosts, recv_mpi_request, statuses);
+
+  for (int i_host=0; i_host<n_hosts; i_host++) {
+    if (i_host == mpi_id_) {
+      h_ExternalSourceSpikeNum[i_host] = 0;
+      continue;
     }
-  }  
-  h_ExternalSourceSpikeNum[mpi_id] = 0;
+    int count;
+    MPI_Get_count(&statuses[i_host], MPI_INT, &count);
+    h_ExternalSourceSpikeNum[i_host] = count;
+
+    // check of number of received spikes
+    //int check_n_spike = h_ExternalSourceSpikeNodeId[i_host*max_spike_per_host];
+    ////h_ExternalSourceSpikeNum[i_host] = check_n_spike; // temporary
+    //if (check_n_spike != count) {
+    //  printf("Error on host %d: n_spike from host %d \n"
+    //         "read from packet first integer: %d\n"
+    //         "received: %d\n", mpi_id_, i_host,
+    //         check_n_spike, count);
+    //  exit(0);
+    //}
+  }
+
   RecvSpikeFromRemote_MPI_time_ += (getRealTime() - time_mark);
   
   return 0;
