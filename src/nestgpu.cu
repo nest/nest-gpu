@@ -546,6 +546,7 @@ int NESTGPU::SimulationStep()
 		       cudaMemcpyDeviceToHost));
 
   ClearGetSpikeArrays();    
+  gpuErrchk( cudaDeviceSynchronize() );   
   if (n_spikes > 0) {
     time_mark = getRealTime();
     CollectSpikeKernel<<<n_spikes, 1024>>>(n_spikes, d_SpikeTargetNum);
