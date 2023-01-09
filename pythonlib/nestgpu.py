@@ -14,9 +14,7 @@ print(' Homepage: https://github.com/nest/nest-gpu')
 print()
 
 
-lib_dir=os.environ["NEST_GPU"]
-lib_path=lib_dir + "/lib/libnestgpu.so"
-#lib_path="/usr/local/lib/libnestgpu.so"
+lib_path=os.environ["NESTGPU_LIB"]
 _nestgpu=ctypes.CDLL(lib_path)
 
 c_float_p = ctypes.POINTER(ctypes.c_float)
