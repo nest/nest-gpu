@@ -34,11 +34,11 @@ import helpers
 
 
 class Network:
-    """ Provides functions to setup NESTGPU, to create and connect all nodes
+    """ Provides functions to setup NEST GPU, to create and connect all nodes
     of the network, to simulate, and to evaluate the resulting spike data.
 
     Instantiating a Network object derives dependent parameters and already
-    initializes NESTGPU.
+    initializes NEST GPU.
 
     Parameters
     ---------
@@ -76,7 +76,7 @@ class Network:
         # derive parameters based on input dictionaries
         self.__derive_parameters()
 
-        # initialize NESTGPU
+        # initialize NEST GPU
         self.__setup_ngpu()
 
     def create(self):
@@ -279,7 +279,7 @@ class Network:
             print(message)
 
     def __setup_ngpu(self):
-        """ Initializes NESTGPU.
+        """ Initializes NEST GPU.
 
         """
 

@@ -54,7 +54,7 @@ sys.exit(0)
 
 #fig1 = plt.figure(1)
 #plt.plot(t, V_m)
-#fig1.suptitle("NESTGPU")
+#fig1.suptitle("NEST GPU")
 #fig2 = plt.figure(2)
 #plt.plot(t1, V_m1)
 #fig2.suptitle("NEST")

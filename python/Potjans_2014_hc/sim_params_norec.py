@@ -45,7 +45,7 @@ sim_dict = {
     'rec_dev': [],
     # path to save the output data
     'data_path': os.path.join(os.getcwd(), 'data/'),
-    # masterseed for NESTGPU and NumPy
+    # masterseed for NEST GPU and NumPy
     'master_seed': 12349, #55,
     # number of threads per MPI process
     'local_num_threads': 1,
