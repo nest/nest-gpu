@@ -27,7 +27,7 @@ To start using it, have a look at the examples in the `python/examples <https://
 and `c++/examples <https://github.com/nest/nest-gpu/tree/main/c%2B%2B/examples>`_ folders.
 
 * :doc:`Download NEST GPU <download/download>`
-* :doc:`Install NEST GPU <installation/installation>`
+* :doc:`Install NEST GPU <installation/index>`
 * :doc:`User guide <guides/index>`
 
 .. toctree::
