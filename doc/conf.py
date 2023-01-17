@@ -1,5 +1,5 @@
 #
-# conf.py
+#  conf.py
 #
 # This file is part of NEST GPU.
 #
