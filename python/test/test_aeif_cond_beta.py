@@ -2,11 +2,13 @@ import sys
 import nestgpu as ngpu
 import numpy as np
 tolerance = 0.00005
-neuron = ngpu.Create('aeif_cond_alpha', 1)
-ngpu.SetStatus(neuron, {"V_peak": 0.0, "a": 4.0, "b":80.5, "E_L":-70.6,
-                        "g_L":300.0, 'E_rev_ex':20.0, 'E_rev_in': -85.0,
-                        'tau_syn_ex':40.0, 'tau_syn_in': 20.0})
-
+neuron = ngpu.Create('aeif_cond_beta', 1)
+ngpu.SetStatus(neuron, {"V_peak": 0.0, "a": 4.0, "b":80.5, "E_L":-70.6, "g_L":300.0,
+                        'E_rev_ex': 20.0, 'E_rev_in': -85.0,
+                        'tau_decay_ex': 40.0,
+                        'tau_decay_in': 20.0,
+                        'tau_rise_ex': 20.0,
+                        'tau_rise_in': 5.0})
 spike = ngpu.Create("spike_generator")
 spike_times = [10.0, 400.0]
 n_spikes = 2
@@ -17,10 +19,9 @@ delay = [1.0, 100.0]
 weight = [0.1, 0.2]
 
 conn_spec={"rule": "all_to_all"}
-syn_spec_ex={'receptor':0, 'weight': weight[0], 'delay': delay[0]}
-syn_spec_in={'receptor':1, 'weight': weight[1], 'delay': delay[1]}
-ngpu.Connect(spike, neuron, conn_spec, syn_spec_ex)
-ngpu.Connect(spike, neuron, conn_spec, syn_spec_in)
+for syn in range(2):
+    syn_spec={'receptor': syn, 'weight': weight[syn], 'delay': delay[syn]}
+    ngpu.Connect(spike, neuron, conn_spec, syn_spec)
 
 record = ngpu.CreateRecord("", ["V_m"], [neuron[0]], [0])
 
@@ -30,7 +31,7 @@ data_list = ngpu.GetRecordData(record)
 t=[row[0] for row in data_list]
 V_m=[row[1] for row in data_list]
 
-data = np.loadtxt('test_aeif_cond_alpha_nest.txt', delimiter="\t")
+data = np.loadtxt('test_aeif_cond_beta_nest.txt', delimiter="\t")
 t1=[x[0] for x in data ]
 V_m1=[x[1] for x in data ]
 print (len(t))
@@ -39,13 +40,12 @@ print (len(t1))
 """
 import matplotlib.pyplot as plt
 plt.figure()
-plt.plot(t, V_m, "r--")
-plt.plot(t1, V_m1, "b--")
+plt.plot(t,V_m, "r--")
+plt.plot(t1,V_m1, "b--")
 plt.show()
 """
 
 dV=[V_m[i*10+20]-V_m1[i] for i in range(len(t1))]
-#print(dV)
 rmse =np.std(dV)/abs(np.mean(V_m))
 print("rmse : ", rmse, " tolerance: ", tolerance)
 if rmse>tolerance:

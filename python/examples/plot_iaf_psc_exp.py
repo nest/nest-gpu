@@ -52,11 +52,9 @@ V_m1=[x[1] for x in data ]
 import matplotlib.pyplot as plt
 
 fig1 = plt.figure(1)
-plt.plot(t, V_m)
-fig1.suptitle("NESTGPU")
-fig2 = plt.figure(2)
-plt.plot(t1, V_m1)
-fig2.suptitle("NEST")
+plt.plot(t, V_m, "r-", label="NEST GPU")
+plt.plot(t1, V_m1, "b--", label="NEST")
+plt.legend()
 plt.draw()
 plt.pause(1)
 ngpu.waitenter("<Hit Enter To Close>")
