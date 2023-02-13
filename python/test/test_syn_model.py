@@ -12,7 +12,7 @@ ngpu.SetSynGroupParam(syn_group, "fact", fact)
 ngpu.SetSynGroupParam(syn_group, "offset", offset)
 
 sg = ngpu.Create("spike_generator", N)
-neuron = ngpu.Create("aeif_cond_beta", 2*N)
+neuron = ngpu.Create("aeif_cond_beta_multisynapse", 2*N)
 ngpu.SetStatus(neuron, {"t_ref": 10.0})
 neuron0 = neuron[0:N]
 neuron1 = neuron[N:2*N]

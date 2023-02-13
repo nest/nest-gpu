@@ -3,7 +3,7 @@ import nestgpu as ngpu
 
 N = 5
 
-neuron = ngpu.Create("aeif_cond_beta", 2*N)
+neuron = ngpu.Create("aeif_cond_beta_multisynapse", 2*N)
 neuron_even = []
 neuron_odd = []
 for i in range(N):

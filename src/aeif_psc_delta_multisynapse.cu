@@ -1,5 +1,5 @@
 /*
- *  aeif_psc_delta.cu
+ *  aeif_psc_delta_multisynapse.cu
  *
  *  This file is part of NEST GPU.
  *
@@ -27,16 +27,16 @@
 #include <config.h>
 #include <cmath>
 #include <iostream>
-#include "aeif_psc_delta_kernel.h"
+#include "aeif_psc_delta_multisynapse_kernel.h"
 #include "rk5.h"
-#include "aeif_psc_delta.h"
+#include "aeif_psc_delta_multisynapse.h"
 
-namespace aeif_psc_delta_ns
+namespace aeif_psc_delta_multisynapse_ns
 {
 
 __device__
 void NodeInit(int n_var, int n_param, double x, float *y, float *param,
-	      aeif_psc_delta_rk5 data_struct)
+	      aeif_psc_delta_multisynapse_rk5 data_struct)
 {
   //int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -61,7 +61,7 @@ void NodeInit(int n_var, int n_param, double x, float *y, float *param,
 
 __device__
 void NodeCalibrate(int n_var, int n_param, double x, float *y,
-		       float *param, aeif_psc_delta_rk5 data_struct)
+		       float *param, aeif_psc_delta_multisynapse_rk5 data_struct)
 {
   //int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
   //int n_port = (n_var-N_SCAL_VAR)/N_PORT_VAR;
@@ -77,25 +77,25 @@ void NodeCalibrate(int n_var, int n_param, double x, float *y,
 
 __device__
 void NodeInit(int n_var, int n_param, double x, float *y,
-	     float *param, aeif_psc_delta_rk5 data_struct)
+	     float *param, aeif_psc_delta_multisynapse_rk5 data_struct)
 {
-    aeif_psc_delta_ns::NodeInit(n_var, n_param, x, y, param, data_struct);
+    aeif_psc_delta_multisynapse_ns::NodeInit(n_var, n_param, x, y, param, data_struct);
 }
 
 __device__
 void NodeCalibrate(int n_var, int n_param, double x, float *y,
-		  float *param, aeif_psc_delta_rk5 data_struct)
+		  float *param, aeif_psc_delta_multisynapse_rk5 data_struct)
 
 {
-    aeif_psc_delta_ns::NodeCalibrate(n_var, n_param, x, y, param, data_struct);
+    aeif_psc_delta_multisynapse_ns::NodeCalibrate(n_var, n_param, x, y, param, data_struct);
 }
 
-using namespace aeif_psc_delta_ns;
+using namespace aeif_psc_delta_multisynapse_ns;
 
-int aeif_psc_delta::Init(int i_node_0, int n_node, int n_port,
+int aeif_psc_delta_multisynapse::Init(int i_node_0, int n_node, int n_port,
 			 int i_group, unsigned long long *seed) {
   BaseNeuron::Init(i_node_0, n_node, n_port, i_group, seed);
-  node_type_ = i_aeif_psc_delta_model;
+  node_type_ = i_aeif_psc_delta_multisynapse_model;
   n_scal_var_ = N_SCAL_VAR;
   n_scal_param_ = N_SCAL_PARAM;
   n_group_param_ = N_GROUP_PARAM;
@@ -105,10 +105,10 @@ int aeif_psc_delta::Init(int i_node_0, int n_node, int n_port,
 
   group_param_ = new float[N_GROUP_PARAM];
   
-  scal_var_name_ = aeif_psc_delta_scal_var_name;
-  scal_param_name_ = aeif_psc_delta_scal_param_name;
-  group_param_name_ = aeif_psc_delta_group_param_name;
-  //rk5_data_struct_.node_type_ = i_aeif_psc_delta_model;
+  scal_var_name_ = aeif_psc_delta_multisynapse_scal_var_name;
+  scal_param_name_ = aeif_psc_delta_multisynapse_scal_param_name;
+  group_param_name_ = aeif_psc_delta_multisynapse_group_param_name;
+  //rk5_data_struct_.node_type_ = i_aeif_psc_delta_multisynapse_model;
   rk5_data_struct_.i_node_0_ = i_node_0_;
 
   SetGroupParam("h_min_rel", 1.0e-3);
@@ -135,7 +135,7 @@ int aeif_psc_delta::Init(int i_node_0, int n_node, int n_port,
   return 0;
 }
 
-int aeif_psc_delta::Calibrate(double time_min, float time_resolution)
+int aeif_psc_delta_multisynapse::Calibrate(double time_min, float time_resolution)
 {
   h_min_ = h_min_rel_* time_resolution;
   h_ = h0_rel_* time_resolution;
@@ -144,7 +144,7 @@ int aeif_psc_delta::Calibrate(double time_min, float time_resolution)
   return 0;
 }
 
-int aeif_psc_delta::Update(long long it, double t1)
+int aeif_psc_delta_multisynapse::Update(long long it, double t1)
 {
   rk5_.Update<N_SCAL_VAR, N_SCAL_PARAM>(t1, h_min_, rk5_data_struct_);
  

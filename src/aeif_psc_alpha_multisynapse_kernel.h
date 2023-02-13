@@ -1,5 +1,5 @@
 /*
- *  aeif_psc_alpha_kernel.h
+ *  aeif_psc_alpha_multisynapse_kernel.h
  *
  *  This file is part of NEST GPU.
  *
@@ -24,20 +24,20 @@
 
 
 
-#ifndef AEIFPSCALPHAKERNEL_H
-#define AEIFPSCALPHAKERNEL_H
+#ifndef AEIFPSCALPHAMULTISYNAPSEKERNEL_H
+#define AEIFPSCALPHAMULTISYNAPSEKERNEL_H
 
 #include <string>
 #include <cmath>
 #include "spike_buffer.h"
 #include "node_group.h"
-#include "aeif_psc_alpha.h"
+#include "aeif_psc_alpha_multisynapse.h"
 
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
 extern __constant__ float NESTGPUTimeResolution;
 
-namespace aeif_psc_alpha_ns
+namespace aeif_psc_alpha_multisynapse_ns
 {
 enum ScalVarIndexes {
   i_V_m = 0,
@@ -82,17 +82,17 @@ enum GroupParamIndexes {
 };
 
 
-const std::string aeif_psc_alpha_scal_var_name[N_SCAL_VAR] = {
+const std::string aeif_psc_alpha_multisynapse_scal_var_name[N_SCAL_VAR] = {
   "V_m",
   "w"
 };
 
-const std::string aeif_psc_alpha_port_var_name[N_PORT_VAR] = {
+const std::string aeif_psc_alpha_multisynapse_port_var_name[N_PORT_VAR] = {
   "I_syn",
   "I1_syn"
 };
 
-const std::string aeif_psc_alpha_scal_param_name[N_SCAL_PARAM] = {
+const std::string aeif_psc_alpha_multisynapse_scal_param_name[N_SCAL_PARAM] = {
   "V_th",
   "Delta_T",
   "g_L",
@@ -109,12 +109,12 @@ const std::string aeif_psc_alpha_scal_param_name[N_SCAL_PARAM] = {
   "den_delay"
 };
 
-const std::string aeif_psc_alpha_port_param_name[N_PORT_PARAM] = {
+const std::string aeif_psc_alpha_multisynapse_port_param_name[N_PORT_PARAM] = {
   "tau_syn",
   "I0"
 };
 
-const std::string aeif_psc_alpha_group_param_name[N_GROUP_PARAM] = {
+const std::string aeif_psc_alpha_multisynapse_group_param_name[N_GROUP_PARAM] = {
   "h_min_rel",
   "h0_rel"
 };
@@ -159,7 +159,7 @@ const std::string aeif_psc_alpha_group_param_name[N_GROUP_PARAM] = {
  template<int NVAR, int NPARAM> //, class DataStruct>
 __device__
     void Derivatives(double x, float *y, float *dydx, float *param,
-		     aeif_psc_alpha_rk5 data_struct)
+		     aeif_psc_alpha_multisynapse_rk5 data_struct)
 {
   enum { n_port = (NVAR-N_SCAL_VAR)/N_PORT_VAR };
   float I_syn_tot = 0.0;
@@ -186,7 +186,7 @@ __device__
 __device__
     void ExternalUpdate
     (double x, float *y, float *param, bool end_time_step,
-			aeif_psc_alpha_rk5 data_struct)
+			aeif_psc_alpha_multisynapse_rk5 data_struct)
 {
   if ( V_m < -1.0e3) { // numerical instability
     printf("V_m out of lower bound\n");
@@ -224,16 +224,16 @@ __device__
 };
 
 template <>
-int aeif_psc_alpha::UpdateNR<0>(long long it, double t1);
+int aeif_psc_alpha_multisynapse::UpdateNR<0>(long long it, double t1);
 
 template<int N_PORT>
-int aeif_psc_alpha::UpdateNR(long long it, double t1)
+int aeif_psc_alpha_multisynapse::UpdateNR(long long it, double t1)
 {
   if (N_PORT == n_port_) {
-    const int NVAR = aeif_psc_alpha_ns::N_SCAL_VAR
-      + aeif_psc_alpha_ns::N_PORT_VAR*N_PORT;
-    const int NPARAM = aeif_psc_alpha_ns::N_SCAL_PARAM
-      + aeif_psc_alpha_ns::N_PORT_PARAM*N_PORT;
+    const int NVAR = aeif_psc_alpha_multisynapse_ns::N_SCAL_VAR
+      + aeif_psc_alpha_multisynapse_ns::N_PORT_VAR*N_PORT;
+    const int NPARAM = aeif_psc_alpha_multisynapse_ns::N_SCAL_PARAM
+      + aeif_psc_alpha_multisynapse_ns::N_PORT_PARAM*N_PORT;
 
     rk5_.Update<NVAR, NPARAM>(t1, h_min_, rk5_data_struct_);
   }
@@ -247,18 +247,18 @@ int aeif_psc_alpha::UpdateNR(long long it, double t1)
 template<int NVAR, int NPARAM>
 __device__
 void Derivatives(double x, float *y, float *dydx, float *param,
-		 aeif_psc_alpha_rk5 data_struct)
+		 aeif_psc_alpha_multisynapse_rk5 data_struct)
 {
-    aeif_psc_alpha_ns::Derivatives<NVAR, NPARAM>(x, y, dydx, param,
+    aeif_psc_alpha_multisynapse_ns::Derivatives<NVAR, NPARAM>(x, y, dydx, param,
 						 data_struct);
 }
 
 template<int NVAR, int NPARAM>
 __device__
 void ExternalUpdate(double x, float *y, float *param, bool end_time_step,
-		    aeif_psc_alpha_rk5 data_struct)
+		    aeif_psc_alpha_multisynapse_rk5 data_struct)
 {
-    aeif_psc_alpha_ns::ExternalUpdate<NVAR, NPARAM>(x, y, param,
+    aeif_psc_alpha_multisynapse_ns::ExternalUpdate<NVAR, NPARAM>(x, y, param,
 						    end_time_step,
 						    data_struct);
 }

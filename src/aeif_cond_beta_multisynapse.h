@@ -1,5 +1,5 @@
 /*
- *  aeif_psc_delta.h
+ *  aeif_cond_beta_multisynapse.h
  *
  *  This file is part of NEST GPU.
  *
@@ -24,8 +24,8 @@
 
 
 
-#ifndef AEIFPSCDELTA_H
-#define AEIFPSCDELTA_H
+#ifndef AEIFCONDBETAMULTISYNAPSE_H
+#define AEIFCONDBETAMULTISYNAPSE_H
 
 #include <iostream>
 #include <string>
@@ -36,50 +36,57 @@
 #include "neuron_models.h"
 
 
-/* BeginUserDocs: neuron, adaptive threshold, integrate-and-fire, current-based
+/* BeginUserDocs: neuron, adaptive threshold, integrate-and-fire, conductance-based
 
 Short description
 +++++++++++++++++
 
-Current-based adaptive exponential integrate-and-fire neuron model with delta synapse
+Conductance-based adaptive exponential integrate-and-fire neuron model
 
 Description
 +++++++++++
 
-aeif_psc_delta is the adaptive exponential integrate and fire neuron
-according to [1]_, with postsynaptic currents in the form of delta spikes.
+``aeif_cond_beta_multisynapse`` is a conductance-based adaptive exponential 
+integrate-and-fire neuron model according to [1]_ with
+multiple synaptic rise time and decay time constants, and synaptic conductance
+modeled by a beta function.
 
-This implementation uses the embedded 5th order Runge-Kutta
-solver with adaptive stepsize to integrate the differential equation.
+This implementation uses the 5th order Runge-Kutta solver with
+adaptive step size to integrate the differential equation.
+
+It allows an arbitrary number of synaptic rise time and decay time constants.
+Synaptic conductance is modeled by a beta function, as described in [2]_.
 
 The membrane potential is given by the following differential equation:
 
 .. math::
 
   C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
-    + I(t)- w + I_e
+  + I_{syn_{tot}}(V, t)- w + I_e
 
-and
-
-.. math::
-
-  \tau_w dw/dt= a(V-E_L) -w
+where:
 
 .. math::
 
-  I(t) = J \sum_k \delta(t - t^k).
+ I_{syn_{tot}}(V,t) = \sum_i g_i(t) (V - E_{rev,i}) ,
 
-Here delta is the Dirac delta function and k indexes incoming
-spikes. This is implemented such that V_m will be incremented/decremented by
-the value of J after a spike.
+the synapse `i` is excitatory or inhibitory depending on the value of
+:math:`E_{rev,i}` and the differential equation for the
+spike-adaptation current `w` is
+
+.. math::
+
+ \tau_w dw/dt = a(V - E_L) - w
+
+When the neuron fires a spike, the adaptation current `w <- w + b`.
 
 .. note::
 
-  As mentioned in the `Differences between NEST GPU and NEST <../guides/differences_nest-gpu_nest.rst>`_,
-  all the aeif neuron models in NEST GPU are multisynapse models.
   The number of receptor ports must be specified at neuron creation (default value is 1) and
   the receptor index starts from 0 (and not from 1 as in NEST multisynapse models).
-  The time constants are supplied by an array, ``tau_syn``. Port numbers
+  The time constants are supplied by by two arrays, ``tau_rise`` and ``tau_decay`` for
+  the synaptic rise time and decay time, respectively. The synaptic
+  reversal potentials are supplied by the array ``E_rev``. Port numbers
   are automatically assigned in the range 0 to ``n_receptors-1``.
   During connection, the ports are selected with the synapse property ``receptor``.
 
@@ -89,7 +96,7 @@ Parameters
 The following parameters can be set in the status dictionary.
 
 ======== ======= =======================================
-**Dynamic state variables**
+**Dynamic state variables:**
 --------------------------------------------------------
  V_m     mV      Membrane potential
  w       pA      Spike-adaptation current
@@ -118,45 +125,57 @@ The following parameters can be set in the status dictionary.
  tau_w   ms      Adaptation time constant
 ======== ======= ==================================
 
-============= ======= =========================================================
+========= ============= ===================================================
+**Synaptic parameters**
+---------------------------------------------------------------------------
+E_rev     list of mV    Reversal potential
+tau_rise  list of ms    Rise time constant of synaptic conductance
+tau_decay list of ms    Decay time constant of synaptic conductance
+========= ============= ===================================================
+
+========= ======= =========================================================
 **Integration parameters**
--------------------------------------------------------------------------------
-h0_rel        real    Starting step in ODE integration relative to time 
-                      resolution
-h_min_rel     real    Minimum step in ODE integration relative to time 
-                      resolution
-============= ======= =========================================================
+---------------------------------------------------------------------------
+h0_rel    real    Starting step in ODE integration relative to time 
+                  resolution
+h_min_rel real    Minimum step in ODE integration relative to time 
+                  resolution
+========= ======= =========================================================
 
 References
 ++++++++++
 
-.. [1] Brette R and Gerstner W (2005). Adaptive Exponential
-       Integrate-and-Fire Model as an Effective Description of Neuronal
-       Activity. J Neurophysiol 94:3637-3642.
+.. [1] Brette R and Gerstner W (2005). Adaptive exponential
+       integrate-and-fire model as an effective description of neuronal
+       activity. Journal of Neurophysiology. 943637-3642
        DOI: https://doi.org/10.1152/jn.00686.2005
+
+.. [2] A. Roth and M. C. W. van Rossum, Computational Modeling Methods
+       for Neuroscientists, MIT Press 2013, Chapter 6.
+       DOI: https://doi.org/10.7551/mitpress/9780262013277.003.0007
 
 See also
 ++++++++
 
-aeif_psc_exp
+aeif_cond_alpha_multisynapse
 
 EndUserDocs */
 
 
 #define MAX_PORT_NUM 20
 
-struct aeif_psc_delta_rk5
+struct aeif_cond_beta_multisynapse_rk5
 {
   int i_node_0_;
 };
 
-class aeif_psc_delta : public BaseNeuron
+class aeif_cond_beta_multisynapse : public BaseNeuron
 {
  public:
-  RungeKutta5<aeif_psc_delta_rk5> rk5_;
+  RungeKutta5<aeif_cond_beta_multisynapse_rk5> rk5_;
   float h_min_;
   float h_;
-  aeif_psc_delta_rk5 rk5_data_struct_;
+  aeif_cond_beta_multisynapse_rk5 rk5_data_struct_;
     
   int Init(int i_node_0, int n_neuron, int n_port, int i_group,
 	   unsigned long long *seed);
@@ -173,6 +192,9 @@ class aeif_psc_delta : public BaseNeuron
     return rk5_.GetY(i_var, i_neuron, n_node, y);
   }
   
+  template<int N_PORT>
+    int UpdateNR(long long it, double t1);
+
 };
 
 #endif

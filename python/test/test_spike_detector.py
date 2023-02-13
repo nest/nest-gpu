@@ -3,7 +3,7 @@ import nestgpu as ngpu
 
 tolerance = 1.0e-6
 
-neuron = ngpu.Create("aeif_cond_beta", 3)
+neuron = ngpu.Create("aeif_cond_beta_multisynapse", 3)
 
 ngpu.SetStatus(neuron, {"I_e":1000.0})
 

@@ -2,9 +2,9 @@ import sys
 import nestgpu as ngpu
 import numpy as np
 tolerance = 0.0005
-neuron = ngpu.Create('aeif_psc_delta')
+neuron = ngpu.Create('aeif_psc_alpha_multisynapse', 1, 2)
 ngpu.SetStatus(neuron, {"V_peak": 0.0, "a": 4.0, "b":80.5, "E_L":-70.6, \
-                        "g_L":300.0, "C_m":20000.0})
+                        "g_L":300.0,  "tau_syn":[40.0, 20.0]})
 spike = ngpu.Create("spike_generator")
 spike_times = [10.0, 400.0]
 n_spikes = 2
@@ -17,8 +17,8 @@ weight = [1.0, -2.0]
 conn_spec={"rule": "all_to_all"}
 
 
-syn_spec_ex={'weight': weight[0], 'delay': delay[0]}
-syn_spec_in={'weight': weight[1], 'delay': delay[1]}
+syn_spec_ex={'receptor':0, 'weight': weight[0], 'delay': delay[0]}
+syn_spec_in={'receptor':1, 'weight': weight[1], 'delay': delay[1]}
 ngpu.Connect(spike, neuron, conn_spec, syn_spec_ex)
 ngpu.Connect(spike, neuron, conn_spec, syn_spec_in)
 
@@ -34,11 +34,11 @@ V_m=[row[1] for row in data_list]
 #dmm = nest.GetStatus(voltmeter)[0]
 #V_m = dmm["events"]["V_m"]
 #t = dmm["events"]["times"]
-#with open('test_aeif_psc_delta_nest.txt', 'w') as f:
+#with open('test_aeif_psc_alpha_nest.txt', 'w') as f:
 #    for i in range(len(t)):
 #        f.write("%s\t%s\n" % (t[i], V_m[i]))
 
-data = np.loadtxt('../test/test_aeif_psc_delta_nest.txt', delimiter="\t")
+data = np.loadtxt('test_aeif_psc_alpha_multisynapse_nest.txt', delimiter="\t")
 t1=[x[0] for x in data ]
 V_m1=[x[1] for x in data ]
 print (len(t))
@@ -47,19 +47,7 @@ print (len(t1))
 dV=[V_m[i*10+20]-V_m1[i] for i in range(len(t1))]
 rmse =np.std(dV)/abs(np.mean(V_m))
 print("rmse : ", rmse, " tolerance: ", tolerance)
-#if rmse>tolerance:
-#    sys.exit(1)
+if rmse>tolerance:
+    sys.exit(1)
 
-#sys.exit(0)
-import matplotlib.pyplot as plt
-
-fig1 = plt.figure(1)
-plt.plot(t, V_m)
-fig1.suptitle("NESTGPU")
-fig2 = plt.figure(2)
-plt.plot(t1, V_m1)
-fig2.suptitle("NEST")
-plt.draw()
-plt.pause(1)
-ngpu.waitenter("<Hit Enter To Close>")
-plt.close()
+sys.exit(0)

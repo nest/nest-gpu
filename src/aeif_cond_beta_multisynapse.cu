@@ -1,5 +1,5 @@
 /*
- *  aeif_cond_alpha.cu
+ *  aeif_cond_beta_multisynapse.cu
  *
  *  This file is part of NEST GPU.
  *
@@ -27,16 +27,16 @@
 #include <config.h>
 #include <cmath>
 #include <iostream>
-#include "aeif_cond_alpha_kernel.h"
+#include "aeif_cond_beta_multisynapse_kernel.h"
 #include "rk5.h"
-#include "aeif_cond_alpha.h"
+#include "aeif_cond_beta_multisynapse.h"
 
-namespace aeif_cond_alpha_ns
+namespace aeif_cond_beta_multisynapse_ns
 {
 
 __device__
 void NodeInit(int n_var, int n_param, double x, float *y, float *param,
-	      aeif_cond_alpha_rk5 data_struct)
+	      aeif_cond_beta_multisynapse_rk5 data_struct)
 {
   //int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
   int n_port = (n_var-N_SCAL_VAR)/N_PORT_VAR;
@@ -62,21 +62,39 @@ void NodeInit(int n_var, int n_param, double x, float *y, float *param,
     g(i) = 0;
     g1(i) = 0;
     E_rev(i) = 0.0;
-    tau_syn(i) = 2.0;
+    tau_decay(i) = 20.0;
+    tau_rise(i) = 2.0;
   }
 }
 
 __device__
 void NodeCalibrate(int n_var, int n_param, double x, float *y,
-		       float *param, aeif_cond_alpha_rk5 data_struct)
+		       float *param, aeif_cond_beta_multisynapse_rk5 data_struct)
 {
   //int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
   int n_port = (n_var-N_SCAL_VAR)/N_PORT_VAR;
 
   refractory_step = 0;
   for (int i = 0; i<n_port; i++) {
-    // use normalization for alpha function
-    g0(i) = M_E / tau_syn(i);
+    // denominator is computed here to check that it is != 0
+    float denom1 = tau_decay(i) - tau_rise(i);
+    float denom2 = 0;
+    if (denom1 != 0) {
+      // peak time
+      float t_p = tau_decay(i)*tau_rise(i)
+	*log(tau_decay(i)/tau_rise(i)) / denom1;
+      // another denominator is computed here to check that it is != 0
+      denom2 = exp(-t_p / tau_decay(i))
+	- exp(-t_p / tau_rise(i));
+    }
+    if (denom2 == 0) { // if rise time == decay time use alpha function
+      // use normalization for alpha function in this case
+      g0(i) = M_E / tau_decay(i);
+    }
+    else { // if rise time != decay time use beta function
+      g0(i) // normalization factor for conductance
+	= ( 1. / tau_rise(i) - 1. / tau_decay(i) ) / denom2;
+    }
   }
 }
 
@@ -84,25 +102,25 @@ void NodeCalibrate(int n_var, int n_param, double x, float *y,
 			    
 __device__
 void NodeInit(int n_var, int n_param, double x, float *y,
-	     float *param, aeif_cond_alpha_rk5 data_struct)
+	     float *param, aeif_cond_beta_multisynapse_rk5 data_struct)
 {
-    aeif_cond_alpha_ns::NodeInit(n_var, n_param, x, y, param, data_struct);
+    aeif_cond_beta_multisynapse_ns::NodeInit(n_var, n_param, x, y, param, data_struct);
 }
 
 __device__
 void NodeCalibrate(int n_var, int n_param, double x, float *y,
-		  float *param, aeif_cond_alpha_rk5 data_struct)
+		  float *param, aeif_cond_beta_multisynapse_rk5 data_struct)
 
 {
-    aeif_cond_alpha_ns::NodeCalibrate(n_var, n_param, x, y, param, data_struct);
+    aeif_cond_beta_multisynapse_ns::NodeCalibrate(n_var, n_param, x, y, param, data_struct);
 }
 
-using namespace aeif_cond_alpha_ns;
+using namespace aeif_cond_beta_multisynapse_ns;
 
-int aeif_cond_alpha::Init(int i_node_0, int n_node, int n_port,
+int aeif_cond_beta_multisynapse::Init(int i_node_0, int n_node, int n_port,
 			 int i_group, unsigned long long *seed) {
   BaseNeuron::Init(i_node_0, n_node, n_port, i_group, seed);
-  node_type_ = i_aeif_cond_alpha_model;
+  node_type_ = i_aeif_cond_beta_multisynapse_model;
   n_scal_var_ = N_SCAL_VAR;
   n_port_var_ = N_PORT_VAR;
   n_scal_param_ = N_SCAL_PARAM;
@@ -113,13 +131,13 @@ int aeif_cond_alpha::Init(int i_node_0, int n_node, int n_port,
   n_param_ = n_scal_param_ + n_port_param_*n_port;
 
   group_param_ = new float[N_GROUP_PARAM];
-  
-  scal_var_name_ = aeif_cond_alpha_scal_var_name;
-  port_var_name_= aeif_cond_alpha_port_var_name;
-  scal_param_name_ = aeif_cond_alpha_scal_param_name;
-  port_param_name_ = aeif_cond_alpha_port_param_name;
-  group_param_name_ = aeif_cond_alpha_group_param_name;
-  //rk5_data_struct_.node_type_ = i_aeif_cond_alpha_model;
+
+  scal_var_name_ = aeif_cond_beta_multisynapse_scal_var_name;
+  port_var_name_= aeif_cond_beta_multisynapse_port_var_name;
+  scal_param_name_ = aeif_cond_beta_multisynapse_scal_param_name;
+  port_param_name_ = aeif_cond_beta_multisynapse_port_param_name;
+  group_param_name_ = aeif_cond_beta_multisynapse_group_param_name;
+  //rk5_data_struct_.node_type_ = i_aeif_cond_beta_multisynapse_model;
   rk5_data_struct_.i_node_0_ = i_node_0_;
 
   SetGroupParam("h_min_rel", 1.0e-3);
@@ -144,7 +162,7 @@ int aeif_cond_alpha::Init(int i_node_0, int n_node, int n_port,
   return 0;
 }
 
-int aeif_cond_alpha::Calibrate(double time_min, float time_resolution)
+int aeif_cond_beta_multisynapse::Calibrate(double time_min, float time_resolution)
 {
   h_min_ = h_min_rel_* time_resolution;
   h_ = h0_rel_* time_resolution;
@@ -154,12 +172,12 @@ int aeif_cond_alpha::Calibrate(double time_min, float time_resolution)
 }
 
 template <>
-int aeif_cond_alpha::UpdateNR<0>(long long it, double t1)
+int aeif_cond_beta_multisynapse::UpdateNR<0>(long long it, double t1)
 {
   return 0;
 }
 
-int aeif_cond_alpha::Update(long long it, double t1) {
+int aeif_cond_beta_multisynapse::Update(long long it, double t1) {
   UpdateNR<MAX_PORT_NUM>(it, t1);
 
   return 0;

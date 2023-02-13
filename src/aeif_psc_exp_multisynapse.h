@@ -1,5 +1,5 @@
 /*
- *  aeif_psc_exp.h
+ *  aeif_psc_exp_multisynapse.h
  *
  *  This file is part of NEST GPU.
  *
@@ -24,8 +24,8 @@
 
 
 
-#ifndef AEIFPSCEXP_H
-#define AEIFPSCEXP_H
+#ifndef AEIFPSCEXPMULTISYNAPSE_H
+#define AEIFPSCEXPMULTISYNAPSE_H
 
 #include <iostream>
 #include <string>
@@ -46,7 +46,7 @@ Current-based exponential integrate-and-fire neuron model
 Description
 +++++++++++
 
-aeif_psc_exp is the adaptive exponential integrate and fire neuron
+aeif_psc_exp_multisynapse is the adaptive exponential integrate and fire neuron
 according to [1]_, with postsynaptic currents in the form of 
 truncated exponentials.
 
@@ -71,8 +71,6 @@ The differential equation for the spike-adaptation current `w` is:
 
 .. note::
 
-  As mentioned in the `Differences between NEST GPU and NEST <../guides/differences_nest-gpu_nest.rst>`_,
-  all the aeif neuron models in NEST GPU are multisynapse models.
   The number of receptor ports must be specified at neuron creation (default value is 1) and
   the receptor index starts from 0 (and not from 1 as in NEST multisynapse models).
   The time constants are supplied by an array, ``tau_syn``. Port numbers
@@ -149,18 +147,18 @@ EndUserDocs */
 
 #define MAX_PORT_NUM 20
 
-struct aeif_psc_exp_rk5
+struct aeif_psc_exp_multisynapse_rk5
 {
   int i_node_0_;
 };
 
-class aeif_psc_exp : public BaseNeuron
+class aeif_psc_exp_multisynapse : public BaseNeuron
 {
  public:
-  RungeKutta5<aeif_psc_exp_rk5> rk5_;
+  RungeKutta5<aeif_psc_exp_multisynapse_rk5> rk5_;
   float h_min_;
   float h_;
-  aeif_psc_exp_rk5 rk5_data_struct_;
+  aeif_psc_exp_multisynapse_rk5 rk5_data_struct_;
     
   int Init(int i_node_0, int n_neuron, int n_port, int i_group,
 	   unsigned long long *seed);

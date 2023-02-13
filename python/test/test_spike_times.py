@@ -20,7 +20,7 @@ pg = ngpu.Create("poisson_generator")
 ngpu.SetStatus(pg, "rate", poiss_rate)
 
 # Create n_neurons neurons
-neuron = ngpu.Create("aeif_cond_beta", n_neurons)
+neuron = ngpu.Create("aeif_cond_beta_multisynapse", n_neurons)
 ngpu.ActivateSpikeCount(neuron)
 ngpu.ActivateRecSpikeTimes(neuron, 500)
 ngpu.SetRecSpikeTimesStep(neuron, 5)

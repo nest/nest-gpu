@@ -4,7 +4,7 @@ import nestgpu as ngpu
 n_neurons = 6
 
 # create n_neurons neurons with 2 receptor ports
-neuron = ngpu.Create('aeif_cond_beta', n_neurons, 2)
+neuron = ngpu.Create('aeif_cond_beta_multisynapse', n_neurons, 2)
 neuron_even = [neuron[0], neuron[2], neuron[4]]
 neuron_odd = [neuron[3], neuron[5], neuron[1]]
 ngpu.SetStatus(neuron_even, {'tau_decay':[80.0, 40.0],
