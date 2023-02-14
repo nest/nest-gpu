@@ -25,6 +25,8 @@ aeif_psc_alpha.h \
 aeif_psc_alpha_kernel.h \
 aeif_psc_delta.h \
 aeif_psc_delta_kernel.h \
+aeif_psc_exp.h \
+aeif_psc_exp_kernel.h \
 aeif_cond_alpha_multisynapse.h \
 aeif_cond_alpha_multisynapse_kernel.h \
 aeif_cond_alpha_multisynapse_rk5.h \
@@ -95,6 +97,7 @@ aeif_cond_alpha.cu \
 aeif_cond_beta.cu \
 aeif_psc_alpha.cu \
 aeif_psc_delta.cu \
+aeif_psc_exp.cu \
 aeif_cond_alpha_multisynapse.cu \
 aeif_cond_beta_multisynapse.cu \
 aeif_psc_alpha_multisynapse.cu \

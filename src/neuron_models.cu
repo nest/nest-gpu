@@ -40,6 +40,7 @@
 #include "aeif_cond_beta.h"
 #include "aeif_psc_alpha.h"
 #include "aeif_psc_delta.h"
+#include "aeif_psc_exp.h"
 #include "aeif_cond_beta_multisynapse.h"
 #include "aeif_cond_alpha_multisynapse.h"
 #include "aeif_psc_alpha_multisynapse.h"
@@ -104,6 +105,11 @@ NodeSeq NESTGPU::Create(std::string model_name, int n_node /*=1*/,
     n_port = 1;
     aeif_psc_delta *aeif_psc_delta_group = new aeif_psc_delta;
     node_vect_.push_back(aeif_psc_delta_group);
+  }
+  else if (model_name == neuron_model_name[i_aeif_psc_exp_model]) {
+    n_port = 2;
+    aeif_psc_exp *aeif_psc_exp_group = new aeif_psc_exp;
+    node_vect_.push_back(aeif_psc_exp_group);
   }
   else if (model_name == neuron_model_name[i_aeif_cond_beta_multisynapse_model]) {
     aeif_cond_beta_multisynapse *aeif_cond_beta_multisynapse_group = new aeif_cond_beta_multisynapse;
