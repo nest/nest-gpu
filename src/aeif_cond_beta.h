@@ -58,7 +58,7 @@ The membrane potential is given by the following differential equation:
 .. math::
 
   C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
-  + g_{ex}(t) (V - E_{rev\_\text{ex},i}) + g_{in}(t) (V - E_{rev\_\text{in},i}) - w + I_e
+  + g_{ex}(t) (V - E_{rev\_ ex,i}) + g_{in}(t) (V - E_{rev\_ in,i}) - w + I_e
 
 The differential equation for the spike-adaptation current `w` is
 
@@ -70,7 +70,7 @@ When the neuron fires a spike, the adaptation current `w <- w + b`.
 
 .. note::
 
-  Although the aeif_cond_beta model is not multisynapse, the port (excitatory or inhibitory)
+  Although this model is not multisynapse, the port (excitatory or inhibitory)
   to be chosen must be specified using the synapse property ``receptor``.
   The excitatory port has index 0, whereas the inhibitory one has index 1. Differently from
   NEST, the connection weights related to the inhibitory port must be positive.
@@ -147,7 +147,7 @@ References
 See also
 ++++++++
 
-aeif_cond_alpha
+aeif_cond_beta_multisynapse, aeif_cond_alpha
 
 EndUserDocs */
 

@@ -57,7 +57,7 @@ The membrane potential is given by the following differential equation:
 .. math::
 
   C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
-  + g_{ex}(t) (V - E_{rev\_\text{ex},i}) + g_{in}(t) (V - E_{rev\_\text{in},i}) - w + I_e
+  + g_{ex}(t) (V - E_{rev\_ ex,i}) + g_{in}(t) (V - E_{rev\_ in,i}) - w + I_e
 
 The differential equation for the spike-adaptation current `w` is
 
@@ -69,7 +69,7 @@ When the neuron fires a spike, the adaptation current :math:`w <- w + b`.
 
 .. note::
 
-  Although the aeif_cond_alpha model is not multisynapse, the port (excitatory or inhibitory)
+  Although this is not multisynapse, the port (excitatory or inhibitory)
   to be chosen must be specified using the synapse property ``receptor``.
   The excitatory port has index 0, whereas the inhibitory one has index 1. Differently from
   NEST, the connection weights related to the inhibitory port must be positive.
@@ -115,8 +115,8 @@ The following parameters can be set in the status dictionary.
 **Synaptic parameters**
 ----------------------------------------------------------------------------------
 E_rev_ex    mV            Excitatory reversal potential
-tau_syn_ex  ms            Time constant of excitatory synaptic conductance
 E_rev_in    mV            Inhibitory reversal potential
+tau_syn_ex  ms            Time constant of excitatory synaptic conductance
 tau_syn_in  ms            Time constant of inhibitory synaptic conductance
 =========== ============= ========================================================
 
@@ -144,7 +144,7 @@ References
 See also
 +++++++
 
-aeif_cond_beta_multisynapse
+aeif_cond_alpha_multisynapse, aeif_cond_beta
 
 EndUserDocs */
 

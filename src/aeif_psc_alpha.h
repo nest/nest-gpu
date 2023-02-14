@@ -58,7 +58,7 @@ The membrane potential is given by the following differential equation:
   C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
   + I_{syn\_ ex}(V, t) - I_{syn\_ in}(V, t) - w + I_e
 
-where ``I_syn_ex`` and ``I_syn_in`` are the excitatory and inhibitory synaptic currents
+where `I_syn_ex` and `I_syn_in` are the excitatory and inhibitory synaptic currents
 modeled as alpha functions.
 
 The differential equation for the spike-adaptation current `w` is:
@@ -69,7 +69,7 @@ The differential equation for the spike-adaptation current `w` is:
 
 .. note::
 
-  Although the aeif_psc_alpha model is not multisynapse, the port (excitatory or inhibitory)
+  Although this model is not multisynapse, the port (excitatory or inhibitory)
   to be chosen must be specified using the synapse property ``receptor``.
   The excitatory port has index 0, whereas the inhibitory one has index 1. Differently from
   NEST, the connection weights related to the inhibitory port must be positive.
@@ -83,7 +83,8 @@ The following parameters can be set in the status dictionary.
 **Dynamic state variables:**
 ----------------------------------------------------------
  V_m       mV      Membrane potential
- I_syn     pA      Total synaptic current
+ I_syn_ex  pA      Excitatory synaptic current
+ I_syn_in  pA      Inhibitory synaptic current
  w         pA      Spike-adaptation current
 ========== ======= =======================================
 
@@ -113,7 +114,8 @@ The following parameters can be set in the status dictionary.
 =========== ======= ===========================================================
 **Synaptic parameters**
 -------------------------------------------------------------------------------
- tau_syn    ms      Time constant of synaptic conductance
+ tau_syn_ex ms      Time constant of excitatory synaptic conductance
+ tau_syn_ex ms      Time constant of inhibitory synaptic conductance
 =========== ======= ===========================================================
 
 ============= ======= =========================================================
@@ -136,11 +138,11 @@ References
 See also
 ++++++++
 
-iaf_psc_alpha, aeif_cond_alpha
+aeif_psc_alpha_multisynapse, iaf_psc_alpha, aeif_cond_alpha
 
 EndUserDocs */
 
-#define MAX_PORT_NUM 20
+//#define MAX_PORT_NUM 20
 
 struct aeif_psc_alpha_rk5
 {

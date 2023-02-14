@@ -142,7 +142,7 @@ References
 See also
 ++++++++
 
-iaf_psc_exp
+aeif_psc_exp_multisynapse, iaf_psc_exp, aeif_psc_alpha
 
 EndUserDocs */
 
