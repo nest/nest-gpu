@@ -1,5 +1,5 @@
 /*
- *  aeif_cond_alpha.h
+ *  aeif_psc_alpha.h
  *
  *  This file is part of NEST GPU.
  *
@@ -24,8 +24,8 @@
 
 
 
-#ifndef AEIFCONDALPHA_H
-#define AEIFCONDALPHA_H
+#ifndef AEIFPSCALPHA_H
+#define AEIFPSCALPHA_H
 
 #include <iostream>
 #include <string>
@@ -35,19 +35,18 @@
 #include "base_neuron.h"
 #include "neuron_models.h"
 
-/* BeginUserDocs: neuron, integrate-and-fire, adaptive threshold, conductance-based
+/* BeginUserDocs: neuron, adaptive threshold, integrate-and-fire, current-based
 
 Short description
 +++++++++++++++++
 
-Conductance-based adaptive exponential integrate-and-fire neuron model
+Current-based exponential integrate-and-fire neuron model
 
 Description
 +++++++++++
 
-``aeif_cond_alpha`` is a conductance-based adaptive exponential 
-integrate-and-fire neuron model according to [1]_ with synaptic
-conductance modeled by an alpha function, as described in [2]_
+``aeif_psc_alpha`` is the adaptive exponential integrate and fire neuron according
+to [1]_. Synaptic currents are modeled as alpha functions.
 
 This implementation uses the 5th order Runge-Kutta solver with
 adaptive step size to integrate the differential equation.
@@ -57,19 +56,20 @@ The membrane potential is given by the following differential equation:
 .. math::
 
   C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
-  + g_{ex}(t) (V - E_{rev\_\text{ex},i}) + g_{in}(t) (V - E_{rev\_\text{in},i}) - w + I_e
+  + I_{syn\_ ex}(V, t) - I_{syn\_ in}(V, t) - w + I_e
 
-The differential equation for the spike-adaptation current `w` is
+where ``I_syn_ex`` and ``I_syn_in`` are the excitatory and inhibitory synaptic currents
+modeled as alpha functions.
+
+The differential equation for the spike-adaptation current `w` is:
 
 .. math::
 
-  \tau_w dw/dt = a(V - E_L) - w
-
-When the neuron fires a spike, the adaptation current :math:`w <- w + b`.
+ \tau_w dw/dt= a(V-E_L) - w
 
 .. note::
 
-  Although the aeif_cond_alpha model is not multisynapse, the port (excitatory or inhibitory)
+  Although the aeif_psc_alpha model is not multisynapse, the port (excitatory or inhibitory)
   to be chosen must be specified using the synapse property ``receptor``.
   The excitatory port has index 0, whereas the inhibitory one has index 1. Differently from
   NEST, the connection weights related to the inhibitory port must be positive.
@@ -79,14 +79,13 @@ Parameters
 
 The following parameters can be set in the status dictionary.
 
-======== ======= =======================================
+========== ======= =======================================
 **Dynamic state variables:**
---------------------------------------------------------
- V_m     mV      Membrane potential
- g_ex    nS      Excitatory synaptic conductance
- g_in    nS      Inhibitory synaptic conductance
- w       pA      Spike-adaptation current
-======== ======= =======================================
+----------------------------------------------------------
+ V_m       mV      Membrane potential
+ I_syn     pA      Total synaptic current
+ w         pA      Spike-adaptation current
+========== ======= =======================================
 
 ========== ======= =======================================
 **Membrane Parameters**
@@ -111,14 +110,11 @@ The following parameters can be set in the status dictionary.
  tau_w   ms      Adaptation time constant
 ======== ======= ==================================
 
-=========== ============= ========================================================
+=========== ======= ===========================================================
 **Synaptic parameters**
-----------------------------------------------------------------------------------
-E_rev_ex    mV            Excitatory reversal potential
-tau_syn_ex  ms            Time constant of excitatory synaptic conductance
-E_rev_in    mV            Inhibitory reversal potential
-tau_syn_in  ms            Time constant of inhibitory synaptic conductance
-=========== ============= ========================================================
+-------------------------------------------------------------------------------
+ tau_syn    ms      Time constant of synaptic conductance
+=========== ======= ===========================================================
 
 ============= ======= =========================================================
 **Integration parameters**
@@ -132,36 +128,32 @@ h_min_rel     real    Minimum step in ODE integration relative to time
 References
 ++++++++++
 
-.. [1] Brette R and Gerstner W (2005). Adaptive exponential
-       integrate-and-fire model as an effective description of neuronal
-       activity. Journal of Neurophysiology. 943637-3642
+.. [1] Brette R and Gerstner W (2005). Adaptive Exponential
+       Integrate-and-Fire Model as an Effective Description of Neuronal
+       Activity. J Neurophysiol 94:3637-3642.
        DOI: https://doi.org/10.1152/jn.00686.2005
 
-.. [2] A. Roth and M. C. W. van Rossum, Computational Modeling Methods
-       for Neuroscientists, MIT Press 2013, Chapter 6.
-       DOI: https://doi.org/10.7551/mitpress/9780262013277.003.0007
-
 See also
-+++++++
+++++++++
 
-aeif_cond_beta_multisynapse
+iaf_psc_alpha, aeif_cond_alpha
 
 EndUserDocs */
 
-//#define MAX_PORT_NUM 20
+#define MAX_PORT_NUM 20
 
-struct aeif_cond_alpha_rk5
+struct aeif_psc_alpha_rk5
 {
   int i_node_0_;
 };
 
-class aeif_cond_alpha : public BaseNeuron
+class aeif_psc_alpha : public BaseNeuron
 {
  public:
-  RungeKutta5<aeif_cond_alpha_rk5> rk5_;
+  RungeKutta5<aeif_psc_alpha_rk5> rk5_;
   float h_min_;
   float h_;
-  aeif_cond_alpha_rk5 rk5_data_struct_;
+  aeif_psc_alpha_rk5 rk5_data_struct_;
     
   int Init(int i_node_0, int n_neuron, int n_port, int i_group,
 	   unsigned long long *seed);

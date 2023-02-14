@@ -21,6 +21,8 @@ aeif_cond_alpha.h \
 aeif_cond_alpha_kernel.h \
 aeif_cond_beta.h \
 aeif_cond_beta_kernel.h \
+aeif_psc_alpha.h \
+aeif_psc_alpha_kernel.h \
 aeif_cond_alpha_multisynapse.h \
 aeif_cond_alpha_multisynapse_kernel.h \
 aeif_cond_alpha_multisynapse_rk5.h \
@@ -91,6 +93,7 @@ iaf_psc_exp.cu \
 ext_neuron.cu \
 aeif_cond_alpha.cu \
 aeif_cond_beta.cu \
+aeif_psc_alpha.cu \
 aeif_cond_alpha_multisynapse.cu \
 aeif_cond_beta_multisynapse.cu \
 aeif_psc_alpha_multisynapse.cu \

@@ -58,7 +58,7 @@ The membrane potential is given by the following differential equation:
 .. math::
 
   C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
-  + g_ex(t) (V - E_{rev\_ex,i}) + g_in(t) (V - E_{rev_\in,i}) - w + I_e
+  + g_{ex}(t) (V - E_{rev\_\text{ex},i}) + g_{in}(t) (V - E_{rev\_\text{in},i}) - w + I_e
 
 The differential equation for the spike-adaptation current `w` is
 
@@ -84,6 +84,8 @@ The following parameters can be set in the status dictionary.
 **Dynamic state variables:**
 --------------------------------------------------------
  V_m     mV      Membrane potential
+ g_ex    nS      Excitatory synaptic conductance
+ g_in    nS      Inhibitory synaptic conductance
  w       pA      Spike-adaptation current
 ======== ======= =======================================
 
@@ -110,13 +112,16 @@ The following parameters can be set in the status dictionary.
  tau_w   ms      Adaptation time constant
 ======== ======= ==================================
 
-========= ============= ===================================================
+============ ============= ======================================================
 **Synaptic parameters**
----------------------------------------------------------------------------
-E_rev     list of mV    Reversal potential
-tau_rise  list of ms    Rise time constant of synaptic conductance
-tau_decay list of ms    Decay time constant of synaptic conductance
-========= ============= ===================================================
+---------------------------------------------------------------------------------
+E_rev_ex     mV            Excitatory reversal potential
+E_rev_in     mV            Inhibitory reversal potential
+tau_rise_ex  ms            Rise time constant of excitatory synaptic conductance
+tau_rise_in  ms            Rise time constant of inhibitory synaptic conductance
+tau_decay_ex ms            Decay time constant of excitatory synaptic conductance
+tau_decay_in ms            Decay time constant of inhibitory synaptic conductance
+============ ============= ======================================================
 
 ========= ======= =========================================================
 **Integration parameters**
