@@ -37,41 +37,6 @@
 
 __device__ int locate(int val, int *data, int n);
 
-// Simple kernel for pushing remote spikes in local spike buffers
-// Version with spike multiplicity array (spike_height) 
-//__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id,
-//           float *spike_height)
-//{
-//  int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
-//  if (i_spike<n_spikes) {
-//    int isb = spike_buffer_id[i_spike];
-//    float height = spike_height[i_spike];
-//    PushSpike(isb, height);
-//  }
-//}
-
-// Simple kernel for pushing remote spikes in local spike buffers
-// Version without spike multiplicity array (spike_height) 
-//__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id)
-//{
-//  int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
-//  if (i_spike<n_spikes) {
-//    int isb = spike_buffer_id[i_spike];
-//    PushSpike(isb, 1.0);
-//  }
-//}
-
-// convert node group indexes to spike buffer indexes
-// by adding the index of the first node of the node group  
-//__global__ void AddOffset(int n_spikes, int *spike_buffer_id,
-//			  int i_remote_node_0)
-//{
-//  int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
-//  if (i_spike<n_spikes) {
-//    spike_buffer_id[i_spike] += i_remote_node_0;
-//  }
-//}
-
 // Combined function of PushedSpikeFromRemote with
 // AddOffset using default values for arguments
 __global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id,
@@ -381,34 +346,11 @@ int ConnectMpi::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
   // loop on remote MPI proc
   for (int i_host=0; i_host<n_hosts; i_host++) {
     if (i_host == mpi_id_) continue; // skip self MPI proc
-    //recv_list.push_back(i_host); // insert MPI proc in list
     // start nonblocking MPI receive from MPI proc i_host
     MPI_Irecv(&h_ExternalSourceSpikeNodeId[i_host*max_spike_per_host],
 	      max_spike_per_host, MPI_INT, i_host, tag, MPI_COMM_WORLD,
 	      &recv_mpi_request[i_host]);
   }
-
-  // loop until list is empty, i.e. until receive is complete
-  // from all MPI proc
-  //while (recv_list.size()>0) {
-  //  // loop on all hosts in the list
-  //  for (list_it=recv_list.begin(); list_it!=recv_list.end(); ++list_it) {
-  //    int i_host = *list_it;
-  //    int flag;
-  //    // check if receive is complete
-  //    MPI_Test(&recv_mpi_request[i_host], &flag, &Stat);
-  //    if (flag) {
-  //      int count;
-  //      // get spike count
-  //      MPI_Get_count(&Stat, MPI_INT, &count);
-  //      h_ExternalSourceSpikeNum[i_host] = count;
-  //      // when receive is complete remove MPI proc from list
-  //      recv_list.erase(list_it);
-  //      break;
-  //    }
-  //  }
-  //} 
-  //h_ExternalSourceSpikeNum[mpi_id] = 0;
 
   MPI_Status statuses[n_hosts];
   recv_mpi_request[mpi_id_] = MPI_REQUEST_NULL;
@@ -422,17 +364,6 @@ int ConnectMpi::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
     int count;
     MPI_Get_count(&statuses[i_host], MPI_INT, &count);
     h_ExternalSourceSpikeNum[i_host] = count;
-
-    // check of number of received spikes
-    //int check_n_spike = h_ExternalSourceSpikeNodeId[i_host*max_spike_per_host];
-    ////h_ExternalSourceSpikeNum[i_host] = check_n_spike; // temporary
-    //if (check_n_spike != count) {
-    //  printf("Error on host %d: n_spike from host %d \n"
-    //         "read from packet first integer: %d\n"
-    //         "received: %d\n", mpi_id_, i_host,
-    //         check_n_spike, count);
-    //  exit(0);
-    //}
   }
 
   RecvSpikeFromRemote_MPI_time_ += (getRealTime() - time_mark);

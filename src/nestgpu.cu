@@ -475,7 +475,6 @@ int NESTGPU::SimulationStep()
   SpikeBufferUpdate<<<(net_connection_->connection_.size()+1023)/1024,
     1024>>>();
   gpuErrchk( cudaPeekAtLastError() );
-  //gpuErrchk( cudaDeviceSynchronize() );
   SpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   time_mark = getRealTime();
   if (n_poiss_node_>0) {
@@ -501,7 +500,6 @@ int NESTGPU::SimulationStep()
     node_vect_[i]->Update(it_, neural_time_);
   }
   gpuErrchk( cudaPeekAtLastError() );
-  //gpuErrchk( cudaDeviceSynchronize() );
   
   neuron_Update_time_ += (getRealTime() - time_mark);
   multimeter_->WriteRecords(neural_time_);
@@ -518,7 +516,6 @@ int NESTGPU::SimulationStep()
       time_mark = getRealTime();
       SendExternalSpike<<<(n_ext_spike+1023)/1024, 1024>>>();
       gpuErrchk( cudaPeekAtLastError() );
-      //gpuErrchk( cudaDeviceSynchronize() );
       SendExternalSpike_time_ += (getRealTime() - time_mark);
     }
     //for (int ih=0; ih<connect_mpi_->mpi_np_; ih++) {
@@ -535,7 +532,6 @@ int NESTGPU::SimulationStep()
     connect_mpi_->CopySpikeFromRemote(connect_mpi_->mpi_np_,
 				      max_spike_per_host_,
 				      i_remote_node_0_);
-    //gpuErrchk( cudaDeviceSynchronize() );
     MPI_Barrier(MPI_COMM_WORLD);
   }
 #endif
@@ -582,19 +578,15 @@ int NESTGPU::SimulationStep()
 	 node_vect_[i]->port_input_arr_,
 	 node_vect_[i]->port_input_arr_step_,
 	 node_vect_[i]->port_input_port_step_);
-      // gpuErrchk( cudaPeekAtLastError() );
-      // gpuErrchk( cudaDeviceSynchronize() );
     }
   }
   gpuErrchk( cudaPeekAtLastError() );
-  //gpuErrchk( cudaDeviceSynchronize() );
 
   GetSpike_time_ += (getRealTime() - time_mark);
 
   time_mark = getRealTime();
   SpikeReset<<<1, 1>>>();
   gpuErrchk( cudaPeekAtLastError() );
-  //gpuErrchk( cudaDeviceSynchronize() );
   SpikeReset_time_ += (getRealTime() - time_mark);
 
 #ifdef HAVE_MPI
@@ -602,7 +594,6 @@ int NESTGPU::SimulationStep()
     time_mark = getRealTime();
     ExternalSpikeReset<<<1, 1>>>();
     gpuErrchk( cudaPeekAtLastError() );
-    //gpuErrchk( cudaDeviceSynchronize() );
     ExternalSpikeReset_time_ += (getRealTime() - time_mark);
   }
 #endif
@@ -611,19 +602,15 @@ int NESTGPU::SimulationStep()
     //time_mark = getRealTime();
     RevSpikeReset<<<1, 1>>>();
     gpuErrchk( cudaPeekAtLastError() );
-    //gpuErrchk( cudaDeviceSynchronize() );
     RevSpikeBufferUpdate<<<(net_connection_->connection_.size()+1023)/1024,
       1024>>>(net_connection_->connection_.size());
     gpuErrchk( cudaPeekAtLastError() );
-    //gpuErrchk( cudaDeviceSynchronize() );
     unsigned int n_rev_spikes;
     gpuErrchk(cudaMemcpy(&n_rev_spikes, d_RevSpikeNum, sizeof(unsigned int),
 			 cudaMemcpyDeviceToHost));
     if (n_rev_spikes > 0) {
       SynapseUpdateKernel<<<n_rev_spikes, 1024>>>(n_rev_spikes, d_RevSpikeNConn);
       gpuErrchk(cudaPeekAtLastError());
-      //gpuErrchk(cudaDeviceSynchronize());
-
     }      
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   }

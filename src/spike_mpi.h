@@ -42,9 +42,6 @@ Args:
 __global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id,
                                     float *spike_height = NULL, int offset = 0);
 
-//__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id);
-
-
 #ifdef HAVE_MPI
 
 extern __constant__ bool NESTGPUMpiFlag;

@@ -526,7 +526,6 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
 			   d_TargetRevConnection, d_LastRevSpikeTimeIdx
 				 );
   gpuErrchk( cudaPeekAtLastError() );
-  //gpuErrchk( cudaDeviceSynchronize() );
   
   InitLastSpikeTimeIdx
     <<<(n_spike_buffers+1023)/1024, 1024>>>
