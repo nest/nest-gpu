@@ -23,6 +23,8 @@ aeif_cond_beta.h \
 aeif_cond_beta_kernel.h \
 aeif_psc_alpha.h \
 aeif_psc_alpha_kernel.h \
+aeif_psc_delta.h \
+aeif_psc_delta_kernel.h \
 aeif_cond_alpha_multisynapse.h \
 aeif_cond_alpha_multisynapse_kernel.h \
 aeif_cond_alpha_multisynapse_rk5.h \
@@ -32,8 +34,6 @@ aeif_cond_beta_multisynapse_rk5.h \
 aeif_psc_alpha_multisynapse.h \
 aeif_psc_alpha_multisynapse_kernel.h \
 aeif_psc_alpha_multisynapse_rk5.h \
-aeif_psc_delta_multisynapse.h \
-aeif_psc_delta_multisynapse_kernel.h \
 aeif_psc_delta_multisynapse_rk5.h \
 aeif_psc_exp_multisynapse.h \
 aeif_psc_exp_multisynapse_kernel.h \
@@ -94,10 +94,10 @@ ext_neuron.cu \
 aeif_cond_alpha.cu \
 aeif_cond_beta.cu \
 aeif_psc_alpha.cu \
+aeif_psc_delta.cu \
 aeif_cond_alpha_multisynapse.cu \
 aeif_cond_beta_multisynapse.cu \
 aeif_psc_alpha_multisynapse.cu \
-aeif_psc_delta_multisynapse.cu \
 aeif_psc_exp_multisynapse.cu \
 base_neuron.cu \
 connect.cu \
