@@ -28,7 +28,7 @@ build and simulate the network.
 
 import os
 import numpy as np
-import NEST GPU as ngpu
+import nestgpu as ngpu
 import helpers
 
 

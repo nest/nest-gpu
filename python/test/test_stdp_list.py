@@ -38,8 +38,8 @@ syn_group = ngpu.CreateSynGroup \
                       
 
 sg = ngpu.Create("spike_generator")
-neuron0 = ngpu.Create("aeif_cond_beta")
-neuron1 = ngpu.Create("aeif_cond_beta", N)
+neuron0 = ngpu.Create("aeif_cond_beta_multisynapse")
+neuron1 = ngpu.Create("aeif_cond_beta_multisynapse", N)
 ngpu.SetStatus(neuron1, {"t_ref": 1000.0, "den_delay":den_delay}) 
 
 time_diff = 400.0

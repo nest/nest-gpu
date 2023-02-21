@@ -9,5 +9,5 @@ for fn in test_brunel_mpi.py test_brunel_outdegree_mpi.py; do
     if [ "$res" -ne "0" ]; then
         res=1
     fi
-    echo ${mpi_pass_str[$res]}
+    echo $fn : ${mpi_pass_str[$res]}
 done

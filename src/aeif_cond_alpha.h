@@ -35,7 +35,6 @@
 #include "base_neuron.h"
 #include "neuron_models.h"
 
-
 /* BeginUserDocs: neuron, integrate-and-fire, adaptive threshold, conductance-based
 
 Short description
@@ -47,32 +46,20 @@ Description
 +++++++++++
 
 ``aeif_cond_alpha`` is a conductance-based adaptive exponential 
-integrate-and-fire neuron model according to [1]_ with multiple
-synaptic time constants, and synaptic conductance modeled by an
-alpha function.
+integrate-and-fire neuron model according to [1]_ with synaptic
+conductance modeled by an alpha function, as described in [2]_
 
 This implementation uses the 5th order Runge-Kutta solver with
 adaptive step size to integrate the differential equation.
-
-It allows an arbitrary number of synaptic time constants. Synaptic
-conductance is modeled by an alpha function, as described in [2]_.
 
 The membrane potential is given by the following differential equation:
 
 .. math::
 
   C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
-  + I_{syn_{tot}}(V, t)- w + I_e
+  + g_{ex}(t) (V - E_{rev\_ ex,i}) + g_{in}(t) (V - E_{rev\_ in,i}) - w + I_e
 
-where
-
-.. math::
-
-  I_{syn_{tot}}(V,t) = \sum_i g_i(t) (V - E_{rev,i}) ,
-
-the synapse `i` is excitatory or inhibitory depending on the value of
-:math:`E_{rev,i}` and the differential equation for the
-spike-adaptation current `w` is
+The differential equation for the spike-adaptation current `w` is
 
 .. math::
 
@@ -82,14 +69,10 @@ When the neuron fires a spike, the adaptation current :math:`w <- w + b`.
 
 .. note::
 
-  As mentioned in the `Differences between NEST GPU and NEST <../guides/differences_nest-gpu_nest.rst>`_,
-  all the aeif neuron models in NEST GPU are multisynapse models.
-  The number of receptor ports must be specified at neuron creation (default value is 1) and
-  the receptor index starts from 0 (and not from 1 as in NEST multisynapse models).
-  The time constants are supplied by an array, ``tau_syn``, and the pertaining
-  synaptic reversal potentials are supplied by the array ``E_rev``. Port numbers
-  are automatically assigned in the range 0 to ``n_receptors-1``.
-  During connection, the ports are selected with the synapse property ``receptor``.
+  Although this is not multisynapse, the port (excitatory or inhibitory)
+  to be chosen must be specified using the synapse property ``receptor``.
+  The excitatory port has index 0, whereas the inhibitory one has index 1. Differently from
+  NEST, the connection weights related to the inhibitory port must be positive.
 
 Parameters
 ++++++++++
@@ -100,6 +83,8 @@ The following parameters can be set in the status dictionary.
 **Dynamic state variables:**
 --------------------------------------------------------
  V_m     mV      Membrane potential
+ g_ex    nS      Excitatory synaptic conductance
+ g_in    nS      Inhibitory synaptic conductance
  w       pA      Spike-adaptation current
 ======== ======= =======================================
 
@@ -126,12 +111,14 @@ The following parameters can be set in the status dictionary.
  tau_w   ms      Adaptation time constant
 ======== ======= ==================================
 
-======== ============= ========================================================
+=========== ============= ========================================================
 **Synaptic parameters**
--------------------------------------------------------------------------------
-E_rev    list of mV    Reversal potential
-tau_syn  list of ms    Time constant of synaptic conductance
-======== ============= ========================================================
+----------------------------------------------------------------------------------
+E_rev_ex    mV            Excitatory reversal potential
+E_rev_in    mV            Inhibitory reversal potential
+tau_syn_ex  ms            Time constant of excitatory synaptic conductance
+tau_syn_in  ms            Time constant of inhibitory synaptic conductance
+=========== ============= ========================================================
 
 ============= ======= =========================================================
 **Integration parameters**
@@ -157,12 +144,11 @@ References
 See also
 +++++++
 
-aeif_cond_beta
+aeif_cond_alpha_multisynapse, aeif_cond_beta
 
 EndUserDocs */
 
-
-#define MAX_PORT_NUM 20
+//#define MAX_PORT_NUM 20
 
 struct aeif_cond_alpha_rk5
 {

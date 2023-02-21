@@ -58,10 +58,10 @@ The membrane potential is given by the following differential equation:
 .. math::
 
  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
-    + I_{syn}(t)- w + I_e
+    + I_{syn\_ex}(t) - I_{syn\_in}(t) - w + I_e
 
-where ``I_syn (t)`` is the sum of the synaptic currents modeled as truncated exponentials
-with time constant ``tau_syn``.
+where ``I_syn_ex`` and ``I_syn_in`` are the synaptic currents modeled as truncated exponentials
+with time constants ``tau_syn_ex`` and ``tau_syn_in`` respectively.
 
 The differential equation for the spike-adaptation current `w` is:
 
@@ -71,26 +71,24 @@ The differential equation for the spike-adaptation current `w` is:
 
 .. note::
 
-  As mentioned in the `Differences between NEST GPU and NEST <../guides/differences_nest-gpu_nest.rst>`_,
-  all the aeif neuron models in NEST GPU are multisynapse models.
-  The number of receptor ports must be specified at neuron creation (default value is 1) and
-  the receptor index starts from 0 (and not from 1 as in NEST multisynapse models).
-  The time constants are supplied by an array, ``tau_syn``. Port numbers
-  are automatically assigned in the range 0 to ``n_receptors-1``.
-  During connection, the ports are selected with the synapse property ``receptor``.
+  Although this model is not multisynapse, the port (excitatory or inhibitory)
+  to be chosen must be specified using the synapse property ``receptor``.
+  The excitatory port has index 0, whereas the inhibitory one has index 1. Differently from
+  NEST, the connection weights related to the inhibitory port must be positive.
 
 Parameters
 ++++++++++
 
 The following parameters can be set in the status dictionary.
 
-======== ======= =======================================
+========= ======= =======================================
 **Dynamic state variables:**
---------------------------------------------------------
- V_m     mV      Membrane potential
- I_syn   pA      Synaptic current
- w       pA      Spike-adaptation current
-======== ======= =======================================
+---------------------------------------------------------
+ V_m      mV      Membrane potential
+ I_syn_ex pA      Excitatory synaptic current
+ I_syn_in pA      Inhibitory synaptic current
+ w        pA      Spike-adaptation current
+========= ======= =======================================
 
 ========== ======= =======================================
 **Membrane Parameters**
@@ -118,7 +116,9 @@ The following parameters can be set in the status dictionary.
 =========== ======= ===========================================================
 **Synaptic parameters**
 -------------------------------------------------------------------------------
- tau_syn    ms      Exponential decay time constant of synaptic
+ tau_syn_ex ms      Exponential decay time constant of excitatory synaptic
+                    current
+ tau_syn_in ms      Exponential decay time constant of inhibitory synaptic
                     current
 =========== ======= ===========================================================
 
@@ -142,12 +142,12 @@ References
 See also
 ++++++++
 
-iaf_psc_exp
+aeif_psc_exp_multisynapse, iaf_psc_exp, aeif_psc_alpha
 
 EndUserDocs */
 
 
-#define MAX_PORT_NUM 20
+//#define MAX_PORT_NUM 20
 
 struct aeif_psc_exp_rk5
 {

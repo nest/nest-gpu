@@ -1,7 +1,7 @@
 import nestgpu as ngpu
 import numpy as np
 
-neuron = ngpu.Create("aeif_cond_beta",100000)
+neuron = ngpu.Create("aeif_cond_beta_multisynapse",100000)
 
 ngpu.SetStatus(neuron, {"V_m": {"distribution":"normal_clipped",
                                        "mu":-70.0, "low":-90.0,
