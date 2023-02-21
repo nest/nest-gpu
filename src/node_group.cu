@@ -71,6 +71,7 @@ int NESTGPU::NodeGroupArrayInit()
 		       node_group_map_.size()*sizeof(signed char),
 		       cudaMemcpyHostToDevice));
   NodeGroupMapInit<<<1, 1>>>(d_node_group_map_);
+  gpuErrchk( cudaPeekAtLastError() );
 
   return 0;
 }

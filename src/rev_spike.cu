@@ -153,7 +153,6 @@ int ResetConnectionSpikeTimeUp(NetConnection *net_connection)
     <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
     (net_connection->StoredNConnections());
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
 
   return 0;
 }
@@ -164,7 +163,6 @@ int ResetConnectionSpikeTimeDown(NetConnection *net_connection)
     <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
     (net_connection->StoredNConnections());
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
 
   return 0;
 }
@@ -177,7 +175,6 @@ int RevSpikeInit(NetConnection *net_connection)
     <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
     (net_connection->StoredNConnections(), 0x8000);
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
 
   gpuErrchk(cudaMalloc(&d_RevSpikeNum, sizeof(unsigned int)));
   
@@ -189,7 +186,6 @@ int RevSpikeInit(NetConnection *net_connection)
   DeviceRevSpikeInit<<<1,1>>>(d_RevSpikeNum, d_RevSpikeTarget,
 			      d_RevSpikeNConn);
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
 
   return 0;
 }
