@@ -25,8 +25,6 @@
 #define STDP_H
 #include <cmath>
 
-#include "syn_model.h"
-
 /* BeginUserDocs: synapse, spike-timing-dependent plasticity
 
 Short description
@@ -68,14 +66,6 @@ References
 
 
 EndUserDocs */
-
-
-class STDP : public SynModel
-{
- public:
-  STDP() {Init();}
-  int Init();
-};
 
 namespace stdp_ns
 {
