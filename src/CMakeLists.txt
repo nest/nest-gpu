@@ -144,6 +144,7 @@ spike_mpi.cu
 stdp.cu
 syn_model.cu
 test_syn_model.cu
+tmp.cu
 user_m1.cu
 user_m2.cu
 utilities.cu
