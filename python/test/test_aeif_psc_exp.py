@@ -1,10 +1,13 @@
 import sys
 import nestgpu as ngpu
 import numpy as np
-tolerance = 0.0005
-neuron = ngpu.Create('aeif_psc_exp', 1, 2)
-ngpu.SetStatus(neuron, {"V_peak": 0.0, "a": 4.0, "b":80.5, "E_L":-70.6, \
-                        "g_L":300.0,  "tau_syn":[40.0, 20.0]})
+tolerance = 5e-6
+neuron = ngpu.Create('aeif_psc_exp', 1)
+ngpu.SetStatus(neuron, {"V_peak": 0.0, "a": 4.0, "b":80.5,
+                        "E_L":-70.6,
+                        "g_L":300.0, 
+                        "tau_syn_ex": 40.0,
+                        "tau_syn_in": 20.0})
 spike = ngpu.Create("spike_generator")
 spike_times = [10.0, 400.0]
 n_spikes = 2
@@ -12,7 +15,7 @@ n_spikes = 2
 # set spike times and height
 ngpu.SetStatus(spike, {"spike_times": spike_times})
 delay = [1.0, 100.0]
-weight = [1.0, -2.0]
+weight = [1.0, 2.0]
 
 conn_spec={"rule": "all_to_all"}
 

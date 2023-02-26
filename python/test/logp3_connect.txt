@@ -1,7 +1,7 @@
 
               -- NEST GPU --
 
-  Copyright (C) 2004 The NEST Initiative
+  Copyright (C) 2021 The NEST Initiative
 
  This program is provided AS IS and comes with
  NO WARRANTY. See the file LICENSE for details.

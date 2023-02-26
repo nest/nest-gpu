@@ -10,9 +10,10 @@ Table of Contents
    :caption: User Documentation
 
    Download <download/download>
-   Install <installation/installation>
+   Install <installation/index>
    Guides <guides/index>
    Examples <examples/index>
+   Model Directory <models/index>
    
 
 .. toctree::

@@ -16,3 +16,6 @@ NEST GPU is an open source software licensed under the [GNU General Public Lince
 
 ## Installing NEST GPU
 To install NEST GPU see the [NEST GPU Installation Intructions](https://nest-gpu.readthedocs.io/en/latest/installation/installation.html) on our Documentation.
+
+## Citing NEST GPU
+If you use NEST GPU in your work, please cite the publications in our [publication list](https://nest-gpu.readthedocs.io/en/latest/publications.html).

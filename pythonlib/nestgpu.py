@@ -7,7 +7,7 @@ import gc
 
 
 print('\n              -- NEST GPU --\n')
-print('  Copyright (C) 2004 The NEST Initiative\n')
+print('  Copyright (C) 2021 The NEST Initiative\n')
 print(' This program is provided AS IS and comes with')
 print(' NO WARRANTY. See the file LICENSE for details.\n')
 print(' Homepage: https://github.com/nest/nest-gpu')
