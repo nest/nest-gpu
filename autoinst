@@ -6,6 +6,7 @@ if [ $# -eq 0 ]; then
 No source given
 Usage: autoinst [--gpu-arch] source [destination]
 Example: autoinst --gpu-arch=80 my_repo/ my_build/
+Try autoinst -h or --help for additional information.
 EOT
         exit 1
 elif [ $# -gt 3 ]; then
@@ -13,6 +14,7 @@ elif [ $# -gt 3 ]; then
 Given too many arguments
 Usage: autoinst [--gpu-arch] source [destination]
 Example: autoinst --gpu-arch=80 my_repo/ my_build/
+Try autoinst -h or --help for additional information.
 EOT
         exit 1
 fi
@@ -22,6 +24,7 @@ arch_arg=
 source_arg=
 dest_arg=
 option_pattern="^-+.*"
+help_pattern="-h|--help"
 arch_any_pattern="--gpu-arch=.*"
 arch_int_pattern="--gpu-arch=[0-9]+"
 arch_sed_pattern="--gpu-arch=\([0-9]\+\)"
@@ -29,23 +32,39 @@ arch_sed_pattern="--gpu-arch=\([0-9]\+\)"
 # Parse arguments
 for arg in $*; do
 	if [[ $arg =~ $option_pattern ]]; then
-		if [[ ! $arg =~ $arch_int_pattern ]]; then
-			if [[ ! $arg =~ $arch_any_pattern ]]; then
-				cat << EOT
-Unknown option $arg
-Usage: autoinst [--gpu-arch] source [destination]
-Example: autoinst --gpu-arch=80 my_repo/ my_build/
-EOT
-			else
+		if [[ $arg =~ $arch_int_pattern ]]; then
+			arch=$( echo $arg | sed "s/$arch_sed_pattern/\1/" )
+		else
+			if [[ $arg =~ $arch_any_pattern ]]; then
 				cat << EOT
 Incorrect value for gpu arch: $arg
 Usage: autoinst [--gpu-arch] source [destination]
 Example: autoinst --gpu-arch=80 my_repo/ my_build/
+Try autoinst -h or --help for additional information.
 EOT
+			else
+				if [[ $arg =~ $help_pattern  ]]; then
+					cat << EOT
+Usage: autoinst [--gpu-arch=] source [destination]
+Install NEST GPU from a source repository in a destination directory using a given GPU architecture.
+Example: autoinst --gpu-arch=80 my_repo/ my_build/
+
+Arguments:
+	-h, --help: Print this message.
+	--gpu-arch= [Optional]: Specify the GPU compute architecture. Value must be an integer [default=70].
+	source: Path to NEST GPU repository. Can be relative.
+	destination [Optional]: Path to installation directory. Can be relative, [default='.'].
+EOT
+				else
+					cat << EOT
+Unknown option: $arg
+Usage: autoinst [--gpu-arch] source [destination]
+Example: autoinst --gpu-arch=80 my_repo/ my_build/
+Try autoinst -h or --help for additional information.
+EOT
+				fi
 			fi
 			exit 1
-		else
-			arch=$( echo $arg | sed "s/$arch_sed_pattern/\1/" )
 		fi
 	else
 		if [ -z $source_arg ]; then
@@ -58,7 +77,7 @@ done
 
 # Set default values
 if [ -z $arch ]; then
-	arch=80
+	arch=70
 fi
 
 if [ -z $dest_arg ]; then
