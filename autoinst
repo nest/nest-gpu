@@ -1,0 +1,128 @@
+#!/bin/bash
+
+# Test for arguments
+if [ $# -eq 0 ]; then
+        cat << EOT
+No source given
+Usage: autoinst [--gpu-arch] source [destination]
+Example: autoinst --gpu-arch=80 my_repo/ my_build/
+EOT
+        exit 1
+elif [ $# -gt 3 ]; then
+        cat << EOT
+Given too many arguments
+Usage: autoinst [--gpu-arch] source [destination]
+Example: autoinst --gpu-arch=80 my_repo/ my_build/
+EOT
+        exit 1
+fi
+
+# Initialize arguments
+arch_arg=
+source_arg=
+dest_arg=
+option_pattern="^-+.*"
+arch_any_pattern="--gpu-arch=.*"
+arch_int_pattern="--gpu-arch=[0-9]+"
+arch_sed_pattern="--gpu-arch=\([0-9]\+\)"
+
+# Parse arguments
+for arg in $*; do
+	if [[ $arg =~ $option_pattern ]]; then
+		if [[ ! $arg =~ $arch_int_pattern ]]; then
+			if [[ ! $arg =~ $arch_any_pattern ]]; then
+				cat << EOT
+Unknown option $arg
+Usage: autoinst [--gpu-arch] source [destination]
+Example: autoinst --gpu-arch=80 my_repo/ my_build/
+EOT
+			else
+				cat << EOT
+Incorrect value for gpu arch: $arg
+Usage: autoinst [--gpu-arch] source [destination]
+Example: autoinst --gpu-arch=80 my_repo/ my_build/
+EOT
+			fi
+			exit 1
+		else
+			arch=$( echo $arg | sed "s/$arch_sed_pattern/\1/" )
+		fi
+	else
+		if [ -z $source_arg ]; then
+			source_arg=$arg
+		else
+			dest_arg=$arg
+		fi
+	fi
+done
+
+# Set default values
+if [ -z $arch ]; then
+	arch=80
+fi
+
+if [ -z $dest_arg ]; then
+	dest_arg=.
+fi
+
+# Get absolute path of source i.e where autotools files are found
+SRC=$(readlink -f $source_arg)
+
+# Get absolute path of current path or given target path
+DST=$(readlink -f $dest_arg)
+if [ ! -d $DST ]; then
+	mkdir $DST
+fi
+
+# Move to source and execute autoreconf in source
+cd $SRC
+autoreconf -i
+
+# Create (if needed) and move to compile dir
+cd $DST
+{
+	mkdir $DST/compile &&
+	cd compile
+} || {
+	if [ ! -d "$DST/compile" ]; then
+		echo "Could not create compile directory"
+		exit 1
+	else
+		cd compile
+	fi
+}
+
+# Execute configure from source in compile dir
+$SRC/configure --prefix=$DST --exec-prefix=$DST --with-gpu-arch=sm_$arch > config.out
+cat config.out
+
+# Run makefile in compile dir
+make -j > make.out
+cat make.out
+
+make install -j > make_install.out
+cat make_install.out
+
+# Create (if needed) install dir and create empty nestgpu vars bash file 
+{
+	mkdir -p $DST/install/bin &&
+	:>$DST/install/bin/nestgpu_vars.sh
+} || {
+	if [ ! -d "$DST/install/bin" ]; then
+		echo "Could not create install directory"
+		exit 1
+	else
+		:>$DST/install/bin/nestgpu_vars.sh
+	fi
+}
+
+# Populate nestgpu vars file
+cat > $DST/install/bin/nestgpu_vars.sh << EOT
+#!/bin/sh
+
+# Make Python interface available by prepending its path to PYTHONPATH in a safe way.
+export PYTHONPATH="$DST/lib/python3.8/site-packages\${PYTHONPATH:+:\$PYTHONPATH}"
+
+# Make NEST GPU library available by creating an environment variable.
+export NESTGPU_LIB=$DST/lib/libnestgpu.so
+EOT
