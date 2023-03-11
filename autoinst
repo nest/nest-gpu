@@ -90,7 +90,7 @@ SRC=$(readlink -f $source_arg)
 # Get absolute path of current path or given target path
 DST=$(readlink -f $dest_arg)
 if [ -z $( readlink -e $DST ) ]; then
-	mkdir $DST
+	mkdir -p $DST
 elif [ ! -d $DST ]; then
 	echo "Could not create destination directory"
 	exit 1
@@ -121,7 +121,7 @@ cat make.out
 make install -j &> make_install.out
 cat make_install.out
 
-# Move to destination dir and get path to python packages
+# Move to destination dir and get path to python package directory
 cd $DST
 py_pack=$( find lib -name "site-packages" -type d )
 
