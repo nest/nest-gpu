@@ -89,8 +89,11 @@ SRC=$(readlink -f $source_arg)
 
 # Get absolute path of current path or given target path
 DST=$(readlink -f $dest_arg)
-if [ ! -d $DST ]; then
+if [ -z $( readlink -e $DST ) ]; then
 	mkdir $DST
+elif [ ! -d $DST ]; then
+	echo "Could not create destination directory"
+	exit 1
 fi
 
 # Move to source and execute autoreconf in source
@@ -99,48 +102,44 @@ autoreconf -i
 
 # Create (if needed) and move to compile dir
 cd $DST
-{
-	mkdir $DST/compile &&
-	cd compile
-} || {
-	if [ ! -d "$DST/compile" ]; then
-		echo "Could not create compile directory"
-		exit 1
-	else
-		cd compile
-	fi
-}
+if [ -z $( readlink -e $DST/compile ) ]; then
+	mkdir $DST/compile
+elif [ ! -d $DST/compile ]; then
+	echo "Could not create compile directory"
+	exit 1
+fi
+cd compile
 
 # Execute configure from source in compile dir
-$SRC/configure --prefix=$DST --exec-prefix=$DST --with-gpu-arch=sm_$arch > config.out
+$SRC/configure --prefix=$DST --exec-prefix=$DST --with-gpu-arch=sm_$arch &> config.out
 cat config.out
 
 # Run makefile in compile dir
-make -j > make.out
+make -j &> make.out
 cat make.out
 
-make install -j > make_install.out
+make install -j &> make_install.out
 cat make_install.out
 
+# Move to destination dir and get path to python packages
+cd $DST
+py_pack=$( find lib -name "site-packages" -type d )
+
 # Create (if needed) install dir and create empty nestgpu vars bash file 
-{
-	mkdir -p $DST/install/bin &&
-	:>$DST/install/bin/nestgpu_vars.sh
-} || {
-	if [ ! -d "$DST/install/bin" ]; then
-		echo "Could not create install directory"
-		exit 1
-	else
-		:>$DST/install/bin/nestgpu_vars.sh
-	fi
-}
+if [ -z $( readlink -e $DST/install/bin ) ]; then
+	mkdir -p $DST/install/bin
+elif [ ! -d $DST/install/bin ]; then
+	echo "Could not create install directory"
+	exit 1
+fi
+:>$DST/install/bin/nestgpu_vars.sh
 
 # Populate nestgpu vars file
 cat > $DST/install/bin/nestgpu_vars.sh << EOT
 #!/bin/sh
 
 # Make Python interface available by prepending its path to PYTHONPATH in a safe way.
-export PYTHONPATH="$DST/lib/python3.8/site-packages\${PYTHONPATH:+:\$PYTHONPATH}"
+export PYTHONPATH="$DST/$py_pack\${PYTHONPATH:+:\$PYTHONPATH}"
 
 # Make NEST GPU library available by creating an environment variable.
 export NESTGPU_LIB=$DST/lib/libnestgpu.so
