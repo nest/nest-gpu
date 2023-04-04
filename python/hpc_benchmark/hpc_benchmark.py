@@ -23,7 +23,6 @@
 """
 Random balanced network HPC benchmark
 -------------------------------------
-
 This script produces a balanced random network of `scale*11250` neurons in
 which the excitatory-excitatory neurons exhibit STDP with
 multiplicative depression and power-law potentiation. A mutual
@@ -31,17 +30,13 @@ equilibrium is obtained between the activity dynamics (low rate in
 asynchronous irregular regime) and the synaptic weight distribution
 (unimodal). The number of incoming connections per neuron is fixed
 and independent of network size (indegree=11250).
-
 This is the standard network investigated in [1]_, [2]_, [3]_.
-
 A note on connectivity
 ~~~~~~~~~~~~~~~~~~~~~~
-
 .. image:: ../examples/hpc_benchmark_connectivity.svg
    :width: 50 %
    :alt: HPC Benchmark network architecture
    :align: right
-
 Each neuron receives :math:`K_{in,{\\tau} E}` excitatory connections randomly
 drawn from population E and :math:`K_{in,\\tau I}` inhibitory connections from
 population I. Autapses are prohibited (denoted by the crossed out A next to
@@ -49,16 +44,13 @@ the connections) while multapses are allowed (denoted by the M). Each neuron
 receives additional input from an external stimulation device. All delays are
 constant, all weights but excitatory onto excitatory are constant. Excitatory
 onto excitatory weights are time dependent. Figure taken from [4]_.
-
 A note on scaling
 ~~~~~~~~~~~~~~~~~
-
 This benchmark was originally developed for very large-scale simulations on
 supercomputers with more than 1 million neurons in the network and
 11.250 incoming synapses per neuron. For such large networks, synaptic input
 to a single neuron will be little correlated across inputs and network
 activity will remain stable over long periods of time.
-
 The original network size corresponds to a scale parameter of 100 or more.
 In order to make it possible to test this benchmark script on desktop
 computers, the scale parameter is set to 1 below, while the number of
@@ -67,18 +59,14 @@ in input to neurons are large and will lead to increasing synaptic weights.
 Over time, network dynamics will therefore become unstable and all neurons
 in the network will fire in synchrony, leading to extremely slow simulation
 speeds.
-
 Therefore, the presimulation time is reduced to 50 ms below and the
 simulation time to 250 ms, while we usually use 100 ms presimulation and
 1000 ms simulation time.
-
 For meaningful use of this benchmark, you should use a scale > 10 and check
 that the firing rate reported at the end of the benchmark is below 10 spikes
 per second.
-
 References
 ~~~~~~~~~~
-
 .. [1] Morrison A, Aertsen A, Diesmann M (2007). Spike-timing-dependent
        plasticity in balanced random networks. Neural Comput 19(6):1437-67
 .. [2] Helias et al (2012). Supercomputers ready for use as discovery machines
@@ -87,7 +75,6 @@ References
        computers. Front. Neuroinform. 8:78
 .. [4] Senk et al (2021). Connectivity Concepts in Neuronal Network Modeling.
        arXiv. 2110.02883
-
 """
 
 import numpy as np
@@ -133,10 +120,8 @@ params = {
 def convert_synapse_weight(tau_m, tau_syn, C_m):
     """
     Computes conversion factor for synapse weight from mV to pA
-
     This function is specific to the leaky integrate-and-fire neuron
     model with alpha-shaped postsynaptic currents.
-
     """
 
     # compute time to maximum of V_m after spike input
@@ -220,9 +205,7 @@ brunel_params = {
 def build_network(logger):
     """Builds the network including setting of simulation and neuron
     parameters, creation of neurons and connections
-
     Requires an instance of Logger as argument
-
     """
 
     tic = perf_counter_ns()  # start timer on construction
@@ -242,13 +225,15 @@ def build_network(logger):
     #nest.message(M_INFO, 'build_network', 'Creating excitatory population.')
 
     #E_neurons = nest.Create('iaf_psc_alpha', NE, params=model_params)
+
+    print('Creating excitatory population.')
     E_neurons = ngpu.Create('iaf_psc_alpha', NE)
-    ngpu.SetStatus(E_neurons, model_params)
 
     #nest.message(M_INFO, 'build_network', 'Creating inhibitory population.')
     print('Creating inhibitory population.')
     #I_neurons = nest.Create('iaf_psc_alpha', NI, params=model_params)
     I_neurons = ngpu.Create('iaf_psc_alpha', NI)
+    ngpu.SetStatus(E_neurons, model_params)
     ngpu.SetStatus(I_neurons, model_params)
 
     if brunel_params['randomize_Vm']:
@@ -360,36 +345,46 @@ def build_network(logger):
     if mpi_np>1:
         print('Creating remote connections.')
         for i in range(mpi_np):
-            for j in range(mpi_np):
-                if j!=i:
-                    print('Connecting excitatory {} -> excitatory {} population.'.format(i, j))
+            if(i==ngpu.Rank()):
+                for j in range(mpi_np):
+                    if j!=i:
+                        
+                        E_i = ngpu.NodeSeq(i*NE+i*NI, i*NE+i*NI+NE)
+                        I_i = ngpu.NodeSeq(i*NE+i*NI+NE, i*NE+i*NI+NE+NI)
+                        E_j = ngpu.NodeSeq(j*NE+j*NI, j*NE+j*NI+NE)
+                        I_j = ngpu.NodeSeq(j*NE+j*NI+NE, j*NE+j*NI+NE+NI)
 
-                    ngpu.RemoteConnect(i, E_neurons, j, E_neurons,
-                                {'rule': 'fixed_indegree', 'indegree': CE_distrib},
-                                #'allow_autapses': False, 'allow_multapses': True},
-                                syn_dict_ex)
-                                #syn_dict_stdp)
+                        print('Connecting excitatory {} -> excitatory {} population.'.format(i, j))
 
-                    print('Connecting inhibitory {} -> excitatory {} population.'.format(i, j))
+                        ngpu.RemoteConnect(i, E_i, j, E_j,
+                                    {'rule': 'fixed_indegree', 'indegree': CE_distrib},
+                                    #'allow_autapses': False, 'allow_multapses': True},
+                                    syn_dict_ex)
+                                    #syn_dict_stdp)
 
-                    ngpu.RemoteConnect(i, I_neurons, j, E_neurons,
-                                {'rule': 'fixed_indegree', 'indegree': CI_distrib},
-                                #'allow_autapses': False, 'allow_multapses': True},
-                                syn_dict_in)
+                        import sys
+                        sys.exit()
 
-                    print('Connecting excitatory {} -> inhibitory {} population.'.format(i, j))
+                        print('Connecting inhibitory {} -> excitatory {} population.'.format(i, j))
 
-                    ngpu.RemoteConnect(i, E_neurons, j, I_neurons,
-                                {'rule': 'fixed_indegree', 'indegree': CE_distrib},
-                                #'allow_autapses': False, 'allow_multapses': True},
-                                syn_dict_ex)
+                        ngpu.RemoteConnect(i, I_i, j, E_j,
+                                    {'rule': 'fixed_indegree', 'indegree': CI_distrib},
+                                    #'allow_autapses': False, 'allow_multapses': True},
+                                    syn_dict_in)
 
-                    print('Connecting inhibitory {} -> inhibitory {} population.'.format(i, j))
+                        print('Connecting excitatory {} -> inhibitory {} population.'.format(i, j))
 
-                    ngpu.RemoteConnect(i, I_neurons, j, I_neurons,
-                                {'rule': 'fixed_indegree', 'indegree': CI_distrib},
-                                #'allow_autapses': False, 'allow_multapses': True},
-                                syn_dict_in)
+                        ngpu.RemoteConnect(i, E_i, j, I_j,
+                                    {'rule': 'fixed_indegree', 'indegree': CE_distrib},
+                                    #'allow_autapses': False, 'allow_multapses': True},
+                                    syn_dict_ex)
+
+                        print('Connecting inhibitory {} -> inhibitory {} population.'.format(i, j))
+
+                        ngpu.RemoteConnect(i, I_i, j, I_j,
+                                    {'rule': 'fixed_indegree', 'indegree': CI_distrib},
+                                    #'allow_autapses': False, 'allow_multapses': True},
+                                    syn_dict_in)
 
     #if params['record_spikes']:
         #if params['nvp'] != 1:
@@ -475,11 +470,9 @@ def run_simulation():
 
 def compute_rate(spike_times_exc, spike_times_inh):
     """Compute local approximation of average firing rate
-
     This approximation is based on the number of local nodes, number
     of local spikes and total time. Since this also considers devices,
     the actual firing rate is usually underestimated.
-
     """
     
     #n_local_spikes = sr.n_events
@@ -509,7 +502,6 @@ def lambertwm1(x):
 class Logger:
     """Logger context manager used to properly log memory and timing
     information from network simulations.
-
     """
 
     def __init__(self, file_name):
@@ -551,16 +543,3 @@ class Logger:
 
 if __name__ == '__main__':
     run_simulation()
-
-
-
-
-
-
-
-
-
-
-
-
-
