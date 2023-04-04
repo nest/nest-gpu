@@ -97,11 +97,18 @@ from time import perf_counter_ns
 import scipy.special as sp
 
 import nestgpu as ngpu
-import nest
-import nest.raster_plot
+#import nest
+#import nest.raster_plot
 
 M_INFO = 10
 M_ERROR = 30
+
+ngpu.ConnectMpiInit()
+mpi_np = ngpu.MpiNp()
+
+print("Simulation with {} MPI processes".format(mpi_np))
+
+mpi_id = ngpu.MpiId()
 
 
 ###############################################################################
@@ -110,7 +117,7 @@ M_ERROR = 30
 
 
 params = {
-    'nvp': 1,               # total number of virtual processes
+    #'nvp': 1,               # total number of virtual processes
     'scale': 1.,            # scaling factor of the network size
                             # total network size = scale*11250 neurons
     'simtime': 250.,        # total simulation time in ms
@@ -238,7 +245,6 @@ def build_network(logger):
     E_neurons = ngpu.Create('iaf_psc_alpha', NE)
     ngpu.SetStatus(E_neurons, model_params)
 
-
     #nest.message(M_INFO, 'build_network', 'Creating inhibitory population.')
     print('Creating inhibitory population.')
     #I_neurons = nest.Create('iaf_psc_alpha', NI, params=model_params)
@@ -257,10 +263,16 @@ def build_network(logger):
         ngpu.SetStatus(E_neurons, {"V_m_rel": {"distribution": "normal", "mu": brunel_params['mean_potential'], "sigma": brunel_params['sigma_potential']}})
         ngpu.SetStatus(I_neurons, {"V_m_rel": {"distribution": "normal", "mu": brunel_params['mean_potential'], "sigma": brunel_params['sigma_potential']}})
 
-    # number of incoming excitatory connections
+    # total number of incoming excitatory connections
     CE = int(1. * NE / params['scale'])
-    # number of incomining inhibitory connections
+    # total number of incomining inhibitory connections
     CI = int(1. * NI / params['scale'])
+
+    # number of indegrees from each MPI process
+    # here the indegrees are equally distributed among the
+    # neuron populations in all the MPI processes
+    CE_distrib = int(1.0 * CE / mpi_np) 
+    CI_distrib = int(1.0 * CI / mpi_np)
 
     #nest.message(M_INFO, 'build_network', 'Creating excitatory stimulus generator.')
     print('Creating excitatory stimulus generator.')
@@ -315,10 +327,11 @@ def build_network(logger):
     ngpu.Connect(E_stimulus, E_neurons, {'rule': 'all_to_all'}, syn_dict_ex)
     ngpu.Connect(E_stimulus, I_neurons, {'rule': 'all_to_all'}, syn_dict_ex)
 
+    print('Creating local connections.')
     print('Connecting excitatory -> excitatory population.')
 
     ngpu.Connect(E_neurons, E_neurons,
-                 {'rule': 'fixed_indegree', 'indegree': CE},
+                 {'rule': 'fixed_indegree', 'indegree': CE_distrib},
                   #'allow_autapses': False, 'allow_multapses': True},
                  syn_dict_ex)
                  #syn_dict_stdp)
@@ -326,25 +339,57 @@ def build_network(logger):
     print('Connecting inhibitory -> excitatory population.')
 
     ngpu.Connect(I_neurons, E_neurons,
-                 {'rule': 'fixed_indegree', 'indegree': CI},
+                 {'rule': 'fixed_indegree', 'indegree': CI_distrib},
                   #'allow_autapses': False, 'allow_multapses': True},
                  syn_dict_in)
 
     print('Connecting excitatory -> inhibitory population.')
 
     ngpu.Connect(E_neurons, I_neurons,
-                 {'rule': 'fixed_indegree', 'indegree': CE},
+                 {'rule': 'fixed_indegree', 'indegree': CE_distrib},
                   #'allow_autapses': False, 'allow_multapses': True},
                  syn_dict_ex)
 
     print('Connecting inhibitory -> inhibitory population.')
 
     ngpu.Connect(I_neurons, I_neurons,
-                 {'rule': 'fixed_indegree', 'indegree': CI},
+                 {'rule': 'fixed_indegree', 'indegree': CI_distrib},
                   #'allow_autapses': False, 'allow_multapses': True},
                  syn_dict_in)
 
-    # riprendere da qui!
+    if mpi_np>1:
+        print('Creating remote connections.')
+        for i in range(mpi_np):
+            for j in range(mpi_np):
+                if j!=i:
+                    print('Connecting excitatory {} -> excitatory {} population.'.format(i, j))
+
+                    ngpu.RemoteConnect(i, E_neurons, j, E_neurons,
+                                {'rule': 'fixed_indegree', 'indegree': CE_distrib},
+                                #'allow_autapses': False, 'allow_multapses': True},
+                                syn_dict_ex)
+                                #syn_dict_stdp)
+
+                    print('Connecting inhibitory {} -> excitatory {} population.'.format(i, j))
+
+                    ngpu.RemoteConnect(i, I_neurons, j, E_neurons,
+                                {'rule': 'fixed_indegree', 'indegree': CI_distrib},
+                                #'allow_autapses': False, 'allow_multapses': True},
+                                syn_dict_in)
+
+                    print('Connecting excitatory {} -> inhibitory {} population.'.format(i, j))
+
+                    ngpu.RemoteConnect(i, E_neurons, j, I_neurons,
+                                {'rule': 'fixed_indegree', 'indegree': CE_distrib},
+                                #'allow_autapses': False, 'allow_multapses': True},
+                                syn_dict_ex)
+
+                    print('Connecting inhibitory {} -> inhibitory {} population.'.format(i, j))
+
+                    ngpu.RemoteConnect(i, I_neurons, j, I_neurons,
+                                {'rule': 'fixed_indegree', 'indegree': CI_distrib},
+                                #'allow_autapses': False, 'allow_multapses': True},
+                                syn_dict_in)
 
     #if params['record_spikes']:
         #if params['nvp'] != 1:
@@ -390,6 +435,15 @@ def run_simulation():
         #logger.log(str(memory_thisjob()) + ' # virt_mem_0')
 
         E_neurons, I_neurons = build_network(logger)
+
+        tic = perf_counter_ns()
+
+        ngpu.Calibrate()
+
+        CalibrationTime = perf_counter_ns() - tic
+
+        #logger.log(str(memory_thisjob()) + ' # virt_mem_after_presim')
+        logger.log(str(CalibrationTime) + ' # calib_time')
 
         tic = perf_counter_ns()
 
@@ -473,7 +527,7 @@ class Logger:
             # numbers equally wide for all ranks
             rank = '{:0' + str(len(str(self.max_rank_log))) + '}'
             fn = '{fn}_{rank}.dat'.format(
-                fn=self.file_name, rank=rank.format(nest.Rank()))
+                fn=self.file_name, rank=rank.format(ngpu.Rank()))
 
             self.f = open(fn, 'w')
 
