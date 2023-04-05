@@ -33,26 +33,19 @@ data_list = ngpu.GetRecordData(record)
 t=[row[0] for row in data_list]
 V_m=[-70.0+row[1] for row in data_list]
 
-
-
-#dmm = nest.GetStatus(voltmeter)[0]
-#V_m = dmm["events"]["V_m"]
-#t = dmm["events"]["times"]
-#with open('test_iaf_psc_alpha_nest.txt', 'w') as f:
-#    for i in range(len(t)):
-#        f.write("%s\t%s\n" % (t[i], V_m[i]))
-
-data = np.loadtxt('test_iaf_psc_alpha_nest.txt', delimiter="\t")
-t1=[x[0] for x in data ]
+data = np.loadtxt('../test/test_iaf_psc_alpha_nest.txt', delimiter="\t")
+t1=[x[0]+0.1 for x in data ]
 V_m1=[x[1] for x in data ]
 print (len(t))
 print (len(t1))
 
-dV=[V_m[i*10+10]-V_m1[i] for i in range(len(t1))]
-rmse =np.std(dV)/abs(np.mean(V_m))
-print("rmse : ", rmse, " tolerance: ", tolerance)
+import matplotlib.pyplot as plt
 
-if rmse>tolerance:
-    sys.exit(1)
-
-sys.exit(0)
+fig1 = plt.figure(1)
+plt.plot(t, V_m, "r-", label="NEST GPU")
+plt.plot(t1, V_m1, "b--", label="NEST")
+plt.legend()
+plt.draw()
+plt.pause(1)
+ngpu.waitenter("<Hit Enter To Close>")
+plt.close()
