@@ -87,7 +87,7 @@ __global__ void iaf_psc_alpha_Calibrate(int n_node, float *param_arr,
     P33 = exp( -h / tau_m );
     expm1_tau_m = expm1( -h / tau_m );
 
-    P30 = tau_m / C_m * expm1( -h / tau_m );
+    P30 = -tau_m / C_m * expm1( -h / tau_m );
     P21ex = h * P11ex;
     P21in = h * P11in;
 
@@ -98,6 +98,7 @@ __global__ void iaf_psc_alpha_Calibrate(int n_node, float *param_arr,
 
     EPSCInitialValue = M_E / tau_ex;
     IPSCInitialValue = M_E / tau_in;
+
   }
 }
 
@@ -109,22 +110,23 @@ __global__ void iaf_psc_alpha_Update(int n_node, int i_node_0, float *var_arr,
   if (i_neuron<n_node) {
     float *var = var_arr + n_var*i_neuron;
     float *param = param_arr + n_param*i_neuron;
-    
+
     if ( refractory_step > 0.0 ) {
       // neuron is absolute refractory
       refractory_step -= 1.0;
     }
     else { // neuron is not refractory, so evolve V
-      V_m_rel = P30 * (V_m_rel + I_e) + P31ex * dI_ex + P32ex * I_ex
+      V_m_rel = P30 * I_e + P31ex * dI_ex + P32ex * I_ex
                + P31in * dI_in + P32in * I_in + expm1_tau_m * V_m_rel + V_m_rel;
     }
+  
     // alpha shape PSCs
     I_ex = P21ex * dI_ex + P22ex * I_ex;
     dI_ex *= P11ex;
 
     I_in = P21in * dI_in + P22in * I_in;
     dI_in *= P11in;
-    
+
     if (V_m_rel >= Theta_rel ) { // threshold crossing
       PushSpike(i_node_0 + i_neuron, 1.0);
       V_m_rel = V_reset_rel;
