@@ -82,6 +82,7 @@ import os
 import sys
 from time import perf_counter_ns
 import scipy.special as sp
+from mpi4py import MPI
 
 import nestgpu as ngpu
 #import nest
@@ -95,7 +96,9 @@ mpi_np = ngpu.MpiNp()
 
 print("Simulation with {} MPI processes".format(mpi_np))
 
-mpi_id = ngpu.MpiId()
+mpI_popsd = ngpu.MpiId()
+
+comm = MPI.COMM_WORLD
 
 
 ###############################################################################
@@ -149,8 +152,6 @@ tau_syn = 0.32582722403722841
 brunel_params = {
     'NE': int(9000 * params['scale']),  # number of excitatory neurons
     'NI': int(2250 * params['scale']),  # number of inhibitory neurons
-
-    #'Nrec': 1000,  # number of neurons to record spikes from
     
     # Todo change parameter names!!!
     'model_params': {  # Set variables for iaf_psc_alpha
@@ -178,7 +179,7 @@ brunel_params = {
     'mean_potential': 5.7,
     'sigma_potential': 7.2,
 
-    'delay': 1.5,  # synaptic delay, all connections(ms)
+    'delay': 1.5,  # synaptic delay, all alphaonnections(ms)
 
     # synaptic weight
     'JE': 0.14,  # peak of EPSP
@@ -190,7 +191,11 @@ brunel_params = {
         'alpha': 0.0513,
         'lambda': 0.1,  # STDP step size
         'mu_plus': 0.4,  # STDP weight dependence exponent(potentiation)
+        # added
+        'mu_minus': 0.4,  # STDP weight dependence exponent(depression)
         'tau_plus': 15.0,  # time constant for potentiation
+        # added
+        'tau_minus': 15.0,  # time constant for depression
     },
     'stdp_delay': 1.5,
 
@@ -216,37 +221,37 @@ def build_network(logger):
     model_params = brunel_params['model_params']
     stdp_params = brunel_params['stdp_params']
 
-    # set global kernel parameters
-    #nest.total_num_virtual_procs = params['nvp']
-    #nest.resolution = params['dt']
     ngpu.SetKernelStatus({"time_resolution": params['dt']})
-    #nest.overwrite_files = True
 
-    #nest.message(M_INFO, 'build_network', 'Creating excitatory population.')
+    print('Creating neuron populations.')
 
-    #E_neurons = nest.Create('iaf_psc_alpha', NE, params=model_params)
+    #E_pops = np.empty(mpi_np, dtype=ngpu.NodeSeq)
+    #I_pops = np.empty(mpi_np, dtype=ngpu.NodeSeq)
+    #Egids = np.empty(mpi_np, dtype=tuple)
+    #Igids = np.empty(mpi_np, dtype=tuple)
 
-    print('Creating excitatory population.')
-    E_neurons = ngpu.Create('iaf_psc_alpha', NE)
+    #E_pops[mpI_popsd] = ngpu.RemoteCreate(mpI_popsd, 'iaf_psc_alpha', NE, 1, model_params)
+    #I_pops[mpI_popsd] = ngpu.RemoteCreate(mpI_popsd, 'iaf_psc_alpha', NI, 1, model_params)
 
-    #nest.message(M_INFO, 'build_network', 'Creating inhibitory population.')
-    print('Creating inhibitory population.')
-    #I_neurons = nest.Create('iaf_psc_alpha', NI, params=model_params)
-    I_neurons = ngpu.Create('iaf_psc_alpha', NI)
-    ngpu.SetStatus(E_neurons, model_params)
-    ngpu.SetStatus(I_neurons, model_params)
+    #for i in range(mpi_np):
+    #    E_pops[i] = ngpu.RemoteCreate(i, 'iaf_psc_alpha', NE, 1, model_params).node_seq
+    #    I_pops[i] = ngpu.RemoteCreate(i, 'iaf_psc_alpha', NI, 1, model_params).node_seq
+
+    E_pops = ngpu.RemoteCreate(mpI_popsd, 'iaf_psc_alpha', NE, 1, model_params).node_seq
+    I_pops = ngpu.RemoteCreate(mpI_popsd, 'iaf_psc_alpha', NI, 1, model_params).node_seq
+
 
     if brunel_params['randomize_Vm']:
-        #nest.message(M_INFO, 'build_network',
-        #             'Randomizing membrane potentials.')
         print('Randomizing membrane potentials.')
+        ngpu.SetStatus(E_pops, {"V_m_rel": {"distribution": "normal", "mu": brunel_params['mean_potential'], "sigma": brunel_params['sigma_potential']}})
+        ngpu.SetStatus(I_pops, {"V_m_rel": {"distribution": "normal", "mu": brunel_params['mean_potential'], "sigma": brunel_params['sigma_potential']}})
 
-        #random_vm = nest.random.normal(brunel_params['mean_potential'],
-        #                               brunel_params['sigma_potential'])
-        #nest.GetLocalNodeCollection(E_neurons).V_m = random_vm
-        #nest.GetLocalNodeCollection(I_neurons).V_m = random_vm
-        ngpu.SetStatus(E_neurons, {"V_m_rel": {"distribution": "normal", "mu": brunel_params['mean_potential'], "sigma": brunel_params['sigma_potential']}})
-        ngpu.SetStatus(I_neurons, {"V_m_rel": {"distribution": "normal", "mu": brunel_params['mean_potential'], "sigma": brunel_params['sigma_potential']}})
+    #Egids[mpI_popsd] = (E_pops[mpI_popsd].node_seq[0], E_pops[mpI_popsd].node_seq[-1])
+    #Igids[mpI_popsd] = (I_pops[mpI_popsd].node_seq[0], I_pops[mpI_popsd].node_seq[-1])
+
+    # local neurons
+    #E_neurons = E_pops[mpI_popsd].node_seq
+    #I_neurons = I_pops[mpI_popsd].node_seq
 
     # total number of incoming excitatory connections
     CE = int(1. * NE / params['scale'])
@@ -256,10 +261,10 @@ def build_network(logger):
     # number of indegrees from each MPI process
     # here the indegrees are equally distributed among the
     # neuron populations in all the MPI processes
-    CE_distrib = int(1.0 * CE / mpi_np) 
+
+    CE_distrib = int(1.0 * CE / mpi_np)
     CI_distrib = int(1.0 * CI / mpi_np)
 
-    #nest.message(M_INFO, 'build_network', 'Creating excitatory stimulus generator.')
     print('Creating excitatory stimulus generator.')
 
     # Convert synapse weight from mV to pA
@@ -269,18 +274,13 @@ def build_network(logger):
     nu_thresh = model_params['Theta_rel'] / ( CE * model_params['tau_m'] / model_params['C_m'] * JE_pA * np.exp(1.) * tau_syn)
     nu_ext = nu_thresh * brunel_params['eta']
 
-    #E_stimulus = nest.Create('poisson_generator', 1, {'rate': nu_ext * CE * 1000.})
-    E_stimulus = ngpu.Create('poisson_generator')
-    ngpu.SetStatus(E_stimulus, {'rate': nu_ext * CE * 1000.})
+    E_stim= ngpu.Create('poisson_generator', 1, 1, {'rate': nu_ext * CE * 1000.})
 
-    #nest.message(M_INFO, 'build_network', 'Creating excitatory spike recorder.')
     print('Creating excitatory spike recorder.')
 
     if params['record_spikes']:
         recorder_label = os.path.join(brunel_params['filestem'], 'alpha_' + str(stdp_params['alpha']) + '_spikes')
-        ngpu.ActivateRecSpikeTimes(E_neurons, 1000)
-        ngpu.ActivateRecSpikeTimes(I_neurons, 1000)
-        #E_recorder = nest.Create('spike_recorder', params={'record_to': 'ascii', 'label': recorder_label})
+        ngpu.ActivateRecSpikeTimes(E_pops, 1000)
 
     BuildNodeTime = perf_counter_ns() - tic
 
@@ -289,124 +289,88 @@ def build_network(logger):
 
     tic = perf_counter_ns()
 
-    #nest.SetDefaults('static_synapse_hpc', {'delay': brunel_params['delay']})
-    #nest.CopyModel('static_synapse_hpc', 'syn_ex',
-    #               {'weight': JE_pA})
-    #nest.CopyModel('static_synapse_hpc', 'syn_in',
-    #               {'weight': brunel_params['g'] * JE_pA})
-
     syn_dict_ex = {'weight': JE_pA, 'delay': brunel_params['delay']}
     syn_dict_in = {'weight': brunel_params['g'] * JE_pA, 'delay': brunel_params['delay']}
     
-
-    #stdp_params['weight'] = JE_pA
-    #nest.SetDefaults('stdp_pl_synapse_hom_hpc', stdp_params)
     syn_group_stdp = ngpu.CreateSynGroup('stdp', stdp_params)
-    syn_dict_stdp = {"weight": JE_pA, "delay_array": brunel_params['stdp_delay'], "synapse_group": syn_group_stdp}
+    syn_dict_stdp = {"weight": JE_pA, "delay": brunel_params['stdp_delay'], "synapse_group": syn_group_stdp}
 
-    #nest.message(M_INFO, 'build_network', 'Connecting stimulus generators.')
     print('Connecting stimulus generators.')
 
     # Connect Poisson generator to neuron
+    ngpu.Connect(E_stim, E_pops, {'rule': 'all_to_all'}, syn_dict_ex)
+    ngpu.Connect(E_stim, I_pops, {'rule': 'all_to_all'}, syn_dict_ex)
 
-    ngpu.Connect(E_stimulus, E_neurons, {'rule': 'all_to_all'}, syn_dict_ex)
-    ngpu.Connect(E_stimulus, I_neurons, {'rule': 'all_to_all'}, syn_dict_ex)
-
+    """
     print('Creating local connections.')
     print('Connecting excitatory -> excitatory population.')
 
-    ngpu.Connect(E_neurons, E_neurons,
-                 {'rule': 'fixed_indegree', 'indegree': CE_distrib},
+    ngpu.Connect(E_pops[mpI_popsd].node_seq, E_pops[mpI_popsd].node_seq,
+                 {'rule': 'fixed_indegree', 'indegree': CE_distrib}, syn_dict_ex)
                   #'allow_autapses': False, 'allow_multapses': True},
-                 syn_dict_ex)
+                 #syn_dict_ex)
                  #syn_dict_stdp)
 
     print('Connecting inhibitory -> excitatory population.')
 
-    ngpu.Connect(I_neurons, E_neurons,
+    ngpu.Connect(I_pops[mpI_popsd].node_seq, E_pops[mpI_popsd].node_seq,
                  {'rule': 'fixed_indegree', 'indegree': CI_distrib},
                   #'allow_autapses': False, 'allow_multapses': True},
                  syn_dict_in)
 
     print('Connecting excitatory -> inhibitory population.')
 
-    ngpu.Connect(E_neurons, I_neurons,
+    ngpu.Connect(E_pops[mpI_popsd].node_seq, I_pops[mpI_popsd].node_seq,
                  {'rule': 'fixed_indegree', 'indegree': CE_distrib},
                   #'allow_autapses': False, 'allow_multapses': True},
                  syn_dict_ex)
 
     print('Connecting inhibitory -> inhibitory population.')
 
-    ngpu.Connect(I_neurons, I_neurons,
+    ngpu.Connect(I_pops[mpI_popsd].node_seq, I_pops[mpI_popsd].node_seq,
                  {'rule': 'fixed_indegree', 'indegree': CI_distrib},
                   #'allow_autapses': False, 'allow_multapses': True},
                  syn_dict_in)
+    """
 
-    if mpi_np>1:
-        print('Creating remote connections.')
-        for i in range(mpi_np):
-            if(i==ngpu.Rank()):
-                for j in range(mpi_np):
-                    if j!=i:
-                        
-                        E_i = ngpu.NodeSeq(i*NE+i*NI, i*NE+i*NI+NE)
-                        I_i = ngpu.NodeSeq(i*NE+i*NI+NE, i*NE+i*NI+NE+NI)
-                        E_j = ngpu.NodeSeq(j*NE+j*NI, j*NE+j*NI+NE)
-                        I_j = ngpu.NodeSeq(j*NE+j*NI+NE, j*NE+j*NI+NE+NI)
+    print('Creating local and remote connections.')
+    for i in range(mpi_np):
+        for j in range(mpi_np):
 
-                        print('Connecting excitatory {} -> excitatory {} population.'.format(i, j))
+            print('Connecting excitatory {} -> excitatory {} population.'.format(i, j))
 
-                        ngpu.RemoteConnect(i, E_i, j, E_j,
-                                    {'rule': 'fixed_indegree', 'indegree': CE_distrib},
-                                    #'allow_autapses': False, 'allow_multapses': True},
-                                    syn_dict_ex)
-                                    #syn_dict_stdp)
+            ngpu.RemoteConnect(i, E_pops, j, E_pops,
+                        {'rule': 'fixed_indegree', 'indegree': CE_distrib},
+                        #'allow_autapses': False, 'allow_multapses': True},
+                        syn_dict_ex)
+                        #syn_dict_stdp)
 
-                        import sys
-                        sys.exit()
+            comm.Barrier()
 
-                        print('Connecting inhibitory {} -> excitatory {} population.'.format(i, j))
+            print('Connecting inhibitory {} -> excitatory {} population.'.format(i, j))
 
-                        ngpu.RemoteConnect(i, I_i, j, E_j,
-                                    {'rule': 'fixed_indegree', 'indegree': CI_distrib},
-                                    #'allow_autapses': False, 'allow_multapses': True},
-                                    syn_dict_in)
+            ngpu.RemoteConnect(i, I_pops, j, E_pops,
+                        {'rule': 'fixed_indegree', 'indegree': CI_distrib},
+                        #'allow_autapses': False, 'allow_multapses': True},
+                        syn_dict_in)
 
-                        print('Connecting excitatory {} -> inhibitory {} population.'.format(i, j))
+            comm.Barrier()
+            print('Connecting excitatory {} -> inhibitory {} population.'.format(i, j))
 
-                        ngpu.RemoteConnect(i, E_i, j, I_j,
-                                    {'rule': 'fixed_indegree', 'indegree': CE_distrib},
-                                    #'allow_autapses': False, 'allow_multapses': True},
-                                    syn_dict_ex)
+            ngpu.RemoteConnect(i, E_pops, j, I_pops,
+                        {'rule': 'fixed_indegree', 'indegree': CE_distrib},
+                        #'allow_autapses': False, 'allow_multapses': True},
+                        syn_dict_ex)
 
-                        print('Connecting inhibitory {} -> inhibitory {} population.'.format(i, j))
+            comm.Barrier()
+            print('Connecting inhibitory {} -> inhibitory {} population.'.format(mpI_popsd, j))
 
-                        ngpu.RemoteConnect(i, I_i, j, I_j,
-                                    {'rule': 'fixed_indegree', 'indegree': CI_distrib},
-                                    #'allow_autapses': False, 'allow_multapses': True},
-                                    syn_dict_in)
-
-    #if params['record_spikes']:
-        #if params['nvp'] != 1:
-        #   local_neurons = nest.GetLocalNodeCollection(E_neurons)
-            # GetLocalNodeCollection returns a stepped composite NodeCollection, which
-            # cannot be sliced. In order to allow slicing it later on, we're creating a
-            # new regular NodeCollection from the plain node IDs.
-        #    local_neurons = nest.NodeCollection(local_neurons.tolist())
-        #else:
-        #    local_neurons = E_neurons
-
-        #if len(local_neurons) < brunel_params['Nrec']:
-        #    nest.message(
-        #        M_ERROR, 'build_network',
-        #        """Spikes can only be recorded from local neurons, but the
-        #        number of local neurons is smaller than the number of neurons
-        #        spikes should be recorded from. Aborting the simulation!""")
-        #    exit(1)
-
-        #nest.message(M_INFO, 'build_network', 'Connecting spike recorders.')
-        #nest.Connect(local_neurons[:brunel_params['Nrec']], E_recorder,
-        #             'all_to_all', 'static_synapse_hpc')
+            ngpu.RemoteConnect(i, I_pops, j, I_pops,
+                        {'rule': 'fixed_indegree', 'indegree': CI_distrib},
+                        #'allow_autapses': False, 'allow_multapses': True},
+                        syn_dict_in)
+            
+            comm.Barrier()
 
     # read out time used for building
     BuildEdgeTime = perf_counter_ns() - tic
@@ -414,7 +378,7 @@ def build_network(logger):
     logger.log(str(BuildEdgeTime) + ' # build_edge_time')
     #logger.log(str(memory_thisjob()) + ' # virt_mem_after_edges')
 
-    return E_neurons, I_neurons if params['record_spikes'] else None
+    return E_pops, I_pops if params['record_spikes'] else None
 
 
 def run_simulation():
@@ -423,8 +387,6 @@ def run_simulation():
     # open log file
     with Logger(params['log_file']) as logger:
 
-        #nest.ResetKernel()
-        #nest.set_verbosity(M_INFO)
         ngpu.SetKernelStatus({"verbosity_level": 4})
 
         #logger.log(str(memory_thisjob()) + ' # virt_mem_0')
@@ -459,16 +421,14 @@ def run_simulation():
         logger.log(str(SimGPUTime) + ' # sim_time')
 
         if params['record_spikes']:
-            spike_times_exc = ngpu.GetRecSpikeTimes(E_neurons)
-            spike_times_inh = ngpu.GetRecSpikeTimes(I_neurons)
-            rate_E, rate_I = compute_rate(spike_times_exc, spike_times_inh)
-            logger.log(str(rate_E) + ' # average exc rate')
-            logger.log(str(rate_I) + ' # average inh rate')
+            spike_times = ngpu.GetRecSpikeTimes(E_neurons)
+            rate = compute_rate(spike_times)
+            logger.log(str(rate) + ' # average rate')
 
         print(ngpu.GetKernelStatus())
 
 
-def compute_rate(spike_times_exc, spike_times_inh):
+def compute_rate(spike_times):
     """Compute local approximation of average firing rate
     This approximation is based on the number of local nodes, number
     of local spikes and total time. Since this also considers devices,
@@ -476,15 +436,13 @@ def compute_rate(spike_times_exc, spike_times_inh):
     """
     
     #n_local_spikes = sr.n_events
-    n_local_neurons_E = brunel_params['NE']
-    n_local_neurons_I = brunel_params['NI']
+    n_local_neurons = brunel_params['NE'] + brunel_params['NI']
 
     # discard spikes during presimtime
-    n_spikes_E = sum(sum(i>params['presimtime'] for i in j) for j in spike_times_exc)
-    n_spikes_I = sum(sum(i>params['presimtime'] for i in j) for j in spike_times_inh)
+    n_spikes = sum(sum(i>params['presimtime'] for i in j) for j in spike_times)
 
     simtime = params['simtime']
-    return (1. * n_spikes_E / (n_local_neurons_E * simtime) * 1e3, 1. * n_spikes_I / (n_local_neurons_I * simtime) * 1e3)
+    return (1. * n_spikes / (n_local_neurons * simtime) * 1e3)
 
 
 #def memory_thisjob():
