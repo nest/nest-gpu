@@ -96,7 +96,7 @@ mpi_np = ngpu.MpiNp()
 
 print("Simulation with {} MPI processes".format(mpi_np))
 
-mpI_popsd = ngpu.MpiId()
+mpi_id = ngpu.MpiId()
 
 comm = MPI.COMM_WORLD
 
@@ -107,9 +107,10 @@ comm = MPI.COMM_WORLD
 
 
 params = {
-    #'nvp': 1,               # total number of virtual processes
+    #'nvp': 1,              # total number of virtual processes
     'scale': 1.,            # scaling factor of the network size
                             # total network size = scale*11250 neurons
+    'seed': 12345,          # seed for random number generation
     'simtime': 250.,        # total simulation time in ms
     'presimtime': 50.,      # simulation time until reaching equilibrium
     'dt': 0.1,              # simulation step
@@ -206,7 +207,6 @@ brunel_params = {
 ###############################################################################
 # Function Section
 
-
 def build_network(logger):
     """Builds the network including setting of simulation and neuron
     parameters, creation of neurons and connections
@@ -225,33 +225,16 @@ def build_network(logger):
 
     print('Creating neuron populations.')
 
-    #E_pops = np.empty(mpi_np, dtype=ngpu.NodeSeq)
-    #I_pops = np.empty(mpi_np, dtype=ngpu.NodeSeq)
-    #Egids = np.empty(mpi_np, dtype=tuple)
-    #Igids = np.empty(mpi_np, dtype=tuple)
+    neuron = []; E_pops = []; I_pops = []
 
-    #E_pops[mpI_popsd] = ngpu.RemoteCreate(mpI_popsd, 'iaf_psc_alpha', NE, 1, model_params)
-    #I_pops[mpI_popsd] = ngpu.RemoteCreate(mpI_popsd, 'iaf_psc_alpha', NI, 1, model_params)
-
-    #for i in range(mpi_np):
-    #    E_pops[i] = ngpu.RemoteCreate(i, 'iaf_psc_alpha', NE, 1, model_params).node_seq
-    #    I_pops[i] = ngpu.RemoteCreate(i, 'iaf_psc_alpha', NI, 1, model_params).node_seq
-
-    E_pops = ngpu.RemoteCreate(mpI_popsd, 'iaf_psc_alpha', NE, 1, model_params).node_seq
-    I_pops = ngpu.RemoteCreate(mpI_popsd, 'iaf_psc_alpha', NI, 1, model_params).node_seq
-
+    for i in range(mpi_np):
+        neuron.append(ngpu.RemoteCreate(i, 'iaf_psc_alpha', NE+NI, 1, model_params).node_seq)
+        E_pops.append(neuron[i][0:NE])
+        I_pops.append(neuron[i][NE:NE+NI])
 
     if brunel_params['randomize_Vm']:
         print('Randomizing membrane potentials.')
-        ngpu.SetStatus(E_pops, {"V_m_rel": {"distribution": "normal", "mu": brunel_params['mean_potential'], "sigma": brunel_params['sigma_potential']}})
-        ngpu.SetStatus(I_pops, {"V_m_rel": {"distribution": "normal", "mu": brunel_params['mean_potential'], "sigma": brunel_params['sigma_potential']}})
-
-    #Egids[mpI_popsd] = (E_pops[mpI_popsd].node_seq[0], E_pops[mpI_popsd].node_seq[-1])
-    #Igids[mpI_popsd] = (I_pops[mpI_popsd].node_seq[0], I_pops[mpI_popsd].node_seq[-1])
-
-    # local neurons
-    #E_neurons = E_pops[mpI_popsd].node_seq
-    #I_neurons = I_pops[mpI_popsd].node_seq
+        ngpu.SetStatus(neuron[mpi_id], {"V_m_rel": {"distribution": "normal", "mu": brunel_params['mean_potential'], "sigma": brunel_params['sigma_potential']}})
 
     # total number of incoming excitatory connections
     CE = int(1. * NE / params['scale'])
@@ -280,7 +263,7 @@ def build_network(logger):
 
     if params['record_spikes']:
         recorder_label = os.path.join(brunel_params['filestem'], 'alpha_' + str(stdp_params['alpha']) + '_spikes')
-        ngpu.ActivateRecSpikeTimes(E_pops, 1000)
+        ngpu.ActivateRecSpikeTimes(neuron[mpi_id], 1000)
 
     BuildNodeTime = perf_counter_ns() - tic
 
@@ -298,87 +281,71 @@ def build_network(logger):
     print('Connecting stimulus generators.')
 
     # Connect Poisson generator to neuron
-    ngpu.Connect(E_stim, E_pops, {'rule': 'all_to_all'}, syn_dict_ex)
-    ngpu.Connect(E_stim, I_pops, {'rule': 'all_to_all'}, syn_dict_ex)
+    #ngpu.Connect(E_stim, E_pops[0], {'rule': 'all_to_all'}, syn_dict_ex)
+    #ngpu.Connect(E_stim, I_pops[0], {'rule': 'all_to_all'}, syn_dict_ex)
+    ngpu.Connect(E_stim, neuron[mpi_id], {'rule': 'all_to_all'}, syn_dict_ex)
 
-    """
+    #print(E_pops[0].i0, E_pops[0].n, E_pops[1].i0, E_pops[1].n)
+
+    
     print('Creating local connections.')
     print('Connecting excitatory -> excitatory population.')
 
-    ngpu.Connect(E_pops[mpI_popsd].node_seq, E_pops[mpI_popsd].node_seq,
-                 {'rule': 'fixed_indegree', 'indegree': CE_distrib}, syn_dict_ex)
-                  #'allow_autapses': False, 'allow_multapses': True},
-                 #syn_dict_ex)
-                 #syn_dict_stdp)
+    #CE_distrib = 1; CI_distrib = 1
+
+    ngpu.Connect(E_pops[mpi_id], E_pops[mpi_id],
+                 {'rule': 'fixed_indegree', 'indegree': CE_distrib}, syn_dict_ex) #syn_dict_stdp)
 
     print('Connecting inhibitory -> excitatory population.')
 
-    ngpu.Connect(I_pops[mpI_popsd].node_seq, E_pops[mpI_popsd].node_seq,
-                 {'rule': 'fixed_indegree', 'indegree': CI_distrib},
-                  #'allow_autapses': False, 'allow_multapses': True},
-                 syn_dict_in)
+    ngpu.Connect(I_pops[mpi_id], E_pops[mpi_id],
+                 {'rule': 'fixed_indegree', 'indegree': CI_distrib}, syn_dict_in)
 
     print('Connecting excitatory -> inhibitory population.')
 
-    ngpu.Connect(E_pops[mpI_popsd].node_seq, I_pops[mpI_popsd].node_seq,
-                 {'rule': 'fixed_indegree', 'indegree': CE_distrib},
-                  #'allow_autapses': False, 'allow_multapses': True},
-                 syn_dict_ex)
+    ngpu.Connect(E_pops[mpi_id], I_pops[mpi_id],
+                 {'rule': 'fixed_indegree', 'indegree': CE_distrib}, syn_dict_ex)
 
     print('Connecting inhibitory -> inhibitory population.')
 
-    ngpu.Connect(I_pops[mpI_popsd].node_seq, I_pops[mpI_popsd].node_seq,
-                 {'rule': 'fixed_indegree', 'indegree': CI_distrib},
-                  #'allow_autapses': False, 'allow_multapses': True},
-                 syn_dict_in)
-    """
+    ngpu.Connect(I_pops[mpi_id], I_pops[mpi_id],
+                 {'rule': 'fixed_indegree', 'indegree': CI_distrib}, syn_dict_in)
+    
+    print("Inside process {}".format(mpi_id))
 
-    print('Creating local and remote connections.')
+    
+    print('Creating remote connections.')
     for i in range(mpi_np):
         for j in range(mpi_np):
+            if(i!=j):
+                print('Connecting excitatory {} -> excitatory {} population. mpi_id = {}'.format(i, j, mpi_id))
 
-            print('Connecting excitatory {} -> excitatory {} population.'.format(i, j))
+                ngpu.RemoteConnect(i, E_pops[i], j, E_pops[j],
+                                   {'rule': 'fixed_indegree', 'indegree': CE_distrib}, syn_dict_ex)
 
-            ngpu.RemoteConnect(i, E_pops, j, E_pops,
-                        {'rule': 'fixed_indegree', 'indegree': CE_distrib},
-                        #'allow_autapses': False, 'allow_multapses': True},
-                        syn_dict_ex)
-                        #syn_dict_stdp)
+                print('Connecting inhibitory {} -> excitatory {} population. mpi_id = {}'.format(i, j, mpi_id))
 
-            comm.Barrier()
+                ngpu.RemoteConnect(i, I_pops[i], j, E_pops[j],
+                                   {'rule': 'fixed_indegree', 'indegree': CI_distrib}, syn_dict_in)
 
-            print('Connecting inhibitory {} -> excitatory {} population.'.format(i, j))
+                print('Connecting excitatory {} -> inhibitory {} population. mpi_id = {}'.format(i, j, mpi_id))
 
-            ngpu.RemoteConnect(i, I_pops, j, E_pops,
-                        {'rule': 'fixed_indegree', 'indegree': CI_distrib},
-                        #'allow_autapses': False, 'allow_multapses': True},
-                        syn_dict_in)
+                ngpu.RemoteConnect(i, E_pops[i], j, I_pops[j],
+                                   {'rule': 'fixed_indegree', 'indegree': CE_distrib}, syn_dict_ex)
 
-            comm.Barrier()
-            print('Connecting excitatory {} -> inhibitory {} population.'.format(i, j))
+                print('Connecting inhibitory {} -> inhibitory {} population. mpi_id = {}'.format(i, j, mpi_id))
 
-            ngpu.RemoteConnect(i, E_pops, j, I_pops,
-                        {'rule': 'fixed_indegree', 'indegree': CE_distrib},
-                        #'allow_autapses': False, 'allow_multapses': True},
-                        syn_dict_ex)
-
-            comm.Barrier()
-            print('Connecting inhibitory {} -> inhibitory {} population.'.format(mpI_popsd, j))
-
-            ngpu.RemoteConnect(i, I_pops, j, I_pops,
-                        {'rule': 'fixed_indegree', 'indegree': CI_distrib},
-                        #'allow_autapses': False, 'allow_multapses': True},
-                        syn_dict_in)
-            
-            comm.Barrier()
-
+                ngpu.RemoteConnect(i, I_pops[i], j, I_pops[j],
+                                   {'rule': 'fixed_indegree', 'indegree': CI_distrib}, syn_dict_in)
+                            
+    
     # read out time used for building
     BuildEdgeTime = perf_counter_ns() - tic
 
     logger.log(str(BuildEdgeTime) + ' # build_edge_time')
     #logger.log(str(memory_thisjob()) + ' # virt_mem_after_edges')
 
-    return E_pops, I_pops if params['record_spikes'] else None
+    return neuron[mpi_id] if params['record_spikes'] else None
 
 
 def run_simulation():
@@ -387,11 +354,11 @@ def run_simulation():
     # open log file
     with Logger(params['log_file']) as logger:
 
-        ngpu.SetKernelStatus({"verbosity_level": 4})
+        ngpu.SetKernelStatus({"verbosity_level": 4, "rnd_seed": params["seed"]})
 
         #logger.log(str(memory_thisjob()) + ' # virt_mem_0')
 
-        E_neurons, I_neurons = build_network(logger)
+        neuron = build_network(logger)
 
         tic = perf_counter_ns()
 
@@ -421,7 +388,7 @@ def run_simulation():
         logger.log(str(SimGPUTime) + ' # sim_time')
 
         if params['record_spikes']:
-            spike_times = ngpu.GetRecSpikeTimes(E_neurons)
+            spike_times = ngpu.GetRecSpikeTimes(neuron)
             rate = compute_rate(spike_times)
             logger.log(str(rate) + ' # average rate')
 
@@ -471,31 +438,31 @@ class Logger:
         self.file_name = file_name
 
     def __enter__(self):
-        if ngpu.Rank() < self.max_rank_log:
+        if mpi_id < self.max_rank_log:
 
             # convert rank to string, prepend 0 if necessary to make
             # numbers equally wide for all ranks
             rank = '{:0' + str(len(str(self.max_rank_log))) + '}'
             fn = '{fn}_{rank}.dat'.format(
-                fn=self.file_name, rank=rank.format(ngpu.Rank()))
+                fn=self.file_name, rank=rank.format(mpi_id))
 
             self.f = open(fn, 'w')
 
         return self
 
     def log(self, value):
-        if ngpu.Rank() < self.max_rank_log:
+        if mpi_id < self.max_rank_log:
             line = '{lc} {rank} {value} \n'.format(
-                lc=self.line_counter, rank=ngpu.Rank(), value=value)
+                lc=self.line_counter, rank=mpi_id, value=value)
             self.f.write(line)
             self.line_counter += 1
 
-        if ngpu.Rank() < self.max_rank_cout:
-            print(str(ngpu.Rank()) + ' ' + value + '\n', file=sys.stdout)
-            print(str(ngpu.Rank()) + ' ' + value + '\n', file=sys.stderr)
+        if mpi_id < self.max_rank_cout:
+            print(str(mpi_id) + ' ' + value + '\n', file=sys.stdout)
+            print(str(mpi_id) + ' ' + value + '\n', file=sys.stderr)
 
     def __exit__(self, exc_type, exc_val, traceback):
-        if ngpu.Rank() < self.max_rank_log:
+        if mpi_id < self.max_rank_log:
             self.f.close()
 
 
