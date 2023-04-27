@@ -1,18 +1,10 @@
 #!/bin/bash
 
 # Test for arguments
-if [ $# -eq 0 ]; then
-        cat << EOT
-No source given
-Usage: autoinst [--gpu-arch] source [destination]
-Example: autoinst --gpu-arch=80 my_repo/ my_build/
-Try autoinst -h or --help for additional information.
-EOT
-        exit 1
-elif [ $# -gt 3 ]; then
+if [ $# -gt 3 ]; then
         cat << EOT
 Given too many arguments
-Usage: autoinst [--gpu-arch] source [destination]
+Usage: autoinst [--gpu-arch] [source] [destination]
 Example: autoinst --gpu-arch=80 my_repo/ my_build/
 Try autoinst -h or --help for additional information.
 EOT
@@ -20,9 +12,9 @@ EOT
 fi
 
 # Initialize arguments
-arch_arg=
-source_arg=
+src_arg=
 dest_arg=
+arch_arg=
 option_pattern="^-+.*"
 help_pattern="-h|--help"
 arch_any_pattern="--gpu-arch=.*"
@@ -38,27 +30,28 @@ for arg in $*; do
 			if [[ $arg =~ $arch_any_pattern ]]; then
 				cat << EOT
 Incorrect value for gpu arch: $arg
-Usage: autoinst [--gpu-arch] source [destination]
+Usage: autoinst [--gpu-arch] [source] [destination]
 Example: autoinst --gpu-arch=80 my_repo/ my_build/
 Try autoinst -h or --help for additional information.
 EOT
 			else
 				if [[ $arg =~ $help_pattern  ]]; then
 					cat << EOT
-Usage: autoinst [--gpu-arch=] source [destination]
+Usage: autoinst [--gpu-arch=] [source] [destination]
 Install NEST GPU from a source repository in a destination directory using a given GPU architecture.
 Example: autoinst --gpu-arch=80 my_repo/ my_build/
 
 Arguments:
 	-h, --help: Print this message.
 	--gpu-arch= [Optional]: Specify the GPU compute architecture. Value must be an integer [default=70].
-	source: Path to NEST GPU repository. Can be relative.
+	source [Optional]: Path to NEST GPU repository. Can be relative, [default='.'].
 	destination [Optional]: Path to installation directory. Can be relative, [default='.'].
 EOT
+					exit 0
 				else
 					cat << EOT
 Unknown option: $arg
-Usage: autoinst [--gpu-arch] source [destination]
+Usage: autoinst [--gpu-arch] [source] [destination]
 Example: autoinst --gpu-arch=80 my_repo/ my_build/
 Try autoinst -h or --help for additional information.
 EOT
@@ -67,10 +60,18 @@ EOT
 			exit 1
 		fi
 	else
-		if [ -z $source_arg ]; then
-			source_arg=$arg
-		else
+		if [ -z $src_arg ]; then
+			src_arg=$arg
+		elif [ -z $dest_arg ]; then
 			dest_arg=$arg
+		else
+			cat << EOT
+Given extra argument: $arg
+Usage: autoinst [--gpu-arch] [source] [destination]
+Example: autoinst --gpu-arch=80 my_repo/ my_build/
+Try autoinst -h or --help for additional information.
+EOT
+        	exit 1
 		fi
 	fi
 done
@@ -80,18 +81,31 @@ if [ -z $arch ]; then
 	arch=70
 fi
 
+if [ -z $src_arg ]; then
+	src_arg=.
+fi
+
 if [ -z $dest_arg ]; then
 	dest_arg=.
 fi
 
 # Get absolute path of source i.e where autotools files are found
-SRC=$(readlink -f $source_arg)
+SRC=$( readlink -f $src_arg )
+if [ ! -d $SRC ]; then
+	echo "Given source path is not a directory"
+	exit 1
+fi
+if [ ! -f $SRC/configure.ac ]; then
+	echo "Cannot find Autotools configuration file in source directory"
+	exit 1
+fi
 
 # Get absolute path of current path or given target path
-DST=$(readlink -f $dest_arg)
+DST=$( readlink -f $dest_arg )
 if [ -z $( readlink -e $DST ) ]; then
 	mkdir -p $DST
-elif [ ! -d $DST ]; then
+fi
+if [ ! -d $DST ]; then
 	echo "Could not create destination directory"
 	exit 1
 fi
@@ -104,7 +118,8 @@ autoreconf -i
 cd $DST
 if [ -z $( readlink -e $DST/compile ) ]; then
 	mkdir $DST/compile
-elif [ ! -d $DST/compile ]; then
+fi
+if [ ! -d $DST/compile ]; then
 	echo "Could not create compile directory"
 	exit 1
 fi
@@ -128,7 +143,8 @@ py_pack=$( find lib -name "site-packages" -type d )
 # Create (if needed) install dir and create empty nestgpu vars bash file 
 if [ -z $( readlink -e $DST/install/bin ) ]; then
 	mkdir -p $DST/install/bin
-elif [ ! -d $DST/install/bin ]; then
+fi
+if [ ! -d $DST/install/bin ]; then
 	echo "Could not create install directory"
 	exit 1
 fi
