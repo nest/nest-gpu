@@ -17,7 +17,7 @@ unsigned int *curand_int(curandGenerator_t &gen, size_t n)
 
   // Generate n integers on device
   CURAND_CALL(curandGenerate(gen, dev_data, n));
-  cudaDeviceSynchronize();
+  //cudaDeviceSynchronize();
   // Copy device memory to host
   CUDA_CALL(cudaMemcpy(host_data, dev_data, n*sizeof(unsigned int),
                        cudaMemcpyDeviceToHost));
@@ -39,7 +39,7 @@ float *curand_uniform(curandGenerator_t &gen, size_t n)
 
   // Generate n integers on device
   CURAND_CALL(curandGenerateUniform(gen, dev_data, n));
-  cudaDeviceSynchronize();
+  //cudaDeviceSynchronize();
   // Copy device memory to host
   CUDA_CALL(cudaMemcpy(host_data, dev_data, n*sizeof(float),
                        cudaMemcpyDeviceToHost));
@@ -65,7 +65,7 @@ float *curand_normal(curandGenerator_t &gen, size_t n, float mean,
   //printf("curandGenerateNormal n1: %d\tmean: %f\tstd: %f\n", (int)n1, mean,
   //	 stddev);
   CURAND_CALL(curandGenerateNormal(gen, dev_data, n1, mean, stddev));
-  cudaDeviceSynchronize();
+  //cudaDeviceSynchronize();
   // Copy device memory to host
   CUDA_CALL(cudaMemcpy(host_data, dev_data, n*sizeof(float),
                        cudaMemcpyDeviceToHost));

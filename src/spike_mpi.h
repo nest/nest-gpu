@@ -1,20 +1,22 @@
 /*
- *  This file is part of NESTGPU.
+ *  spike_mpi.h
+ *
+ *  This file is part of NEST GPU.
  *
  *  Copyright (C) 2021 The NEST Initiative
  *
- *  NESTGPU is free software: you can redistribute it and/or modify
+ *  NEST GPU is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 2 of the License, or
  *  (at your option) any later version.
  *
- *  NESTGPU is distributed in the hope that it will be useful,
+ *  NEST GPU is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with NESTGPU.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with NEST GPU.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -25,11 +27,20 @@
 #ifndef SPIKEMPI_H
 #define SPIKEMPI_H
 
+/*
+Combined version of PushedSpikeFromRemote and AddOffset kernels
+using default values for arguments
+Args:
+	- int n_spikes: number of spikes to push
+	- int* spike_buffer_id: pointer to array of spike buffer ids
+	- float* spike_height: pointer to array of spike heights to send
+		Defaults to NULL, if no spike height given then a height of 1.0 is pushed
+		Must be of length == n_spikes
+	- int offset: Offset to be used for spike_buffer indexes
+		Defaults to 0
+*/
 __global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id,
-                                    float *spike_height);
-
-__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id);
-
+                                    float *spike_height = NULL, int offset = 0);
 
 #ifdef HAVE_MPI
 

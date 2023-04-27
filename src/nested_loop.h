@@ -273,7 +273,7 @@ int NestedLoop::BlockStepNestedLoop(int Nx, int *d_Ny)
 {
   BlockStepNestedLoopKernel<i_func><<<Nx, 1024>>>(Nx, d_Ny);
   gpuErrchk(cudaPeekAtLastError());
-  gpuErrchk(cudaDeviceSynchronize());
+  //gpuErrchk(cudaDeviceSynchronize());
   
   return 0;
 }
@@ -301,7 +301,7 @@ int NestedLoop::SimpleNestedLoop(int Nx, int *d_Ny, int max_Ny)
 		 (max_Ny - 1)/threadsPerBlock.y + 1);
   SimpleNestedLoopKernel<i_func> <<<numBlocks,threadsPerBlock>>>(Nx, d_Ny);
   gpuErrchk(cudaPeekAtLastError());
-  gpuErrchk(cudaDeviceSynchronize());
+  //gpuErrchk(cudaDeviceSynchronize());
 
   return 0;
 }
@@ -320,7 +320,7 @@ int NestedLoop::ParallelInnerNestedLoop(int Nx, int *d_Ny)
     // gpuErrchk(cudaDeviceSynchronize()); // uncomment only for debugging
   }
   gpuErrchk(cudaPeekAtLastError());
-  gpuErrchk(cudaDeviceSynchronize());
+  //gpuErrchk(cudaDeviceSynchronize());
 
   return 0;
 }
@@ -331,7 +331,7 @@ int NestedLoop::ParallelOuterNestedLoop(int Nx, int *d_Ny)
 {
   ParallelOuterNestedLoopKernel<i_func><<<(Nx+1023)/1024, 1024>>>(Nx, d_Ny);
   gpuErrchk(cudaPeekAtLastError());
-  gpuErrchk(cudaDeviceSynchronize());
+  //gpuErrchk(cudaDeviceSynchronize());
   
   return 0;
 }
@@ -363,7 +363,7 @@ int NestedLoop::Frame1DNestedLoop(int Nx, int *d_Ny)
       (ix0, dim_x, dim_y, d_sorted_idx_, d_sorted_Ny_);
   }
   gpuErrchk(cudaPeekAtLastError());
-  gpuErrchk(cudaDeviceSynchronize());
+  //gpuErrchk(cudaDeviceSynchronize());
   
   return 0;
 }
@@ -401,7 +401,7 @@ int NestedLoop::Frame2DNestedLoop(int Nx, int *d_Ny)
 
   }
   gpuErrchk(cudaPeekAtLastError());
-  gpuErrchk(cudaDeviceSynchronize());
+  //gpuErrchk(cudaDeviceSynchronize());
 
   return 0;
 }
@@ -477,7 +477,7 @@ int NestedLoop::Smart1DNestedLoop(int Nx, int *d_Ny)
     //CudaCheckError(); // uncomment only for debugging
   }
   gpuErrchk(cudaPeekAtLastError());
-  gpuErrchk(cudaDeviceSynchronize());
+  //gpuErrchk(cudaDeviceSynchronize());
 
   return 0;
 }
@@ -557,7 +557,7 @@ int NestedLoop::Smart2DNestedLoop(int Nx, int *d_Ny)
     //CudaCheckError(); // uncomment only for debugging      
   }
   gpuErrchk(cudaPeekAtLastError());
-  gpuErrchk(cudaDeviceSynchronize());
+  //gpuErrchk(cudaDeviceSynchronize());
   
   return 0;
 }
@@ -615,7 +615,7 @@ int NestedLoop::CumulSumNestedLoop(int Nx, int *d_Ny)
     CumulSumNestedLoopKernel<i_func><<<numBlocks, 1024>>>
     (Nx, d_Ny_cumul_sum_, Ny_sum);
     gpuErrchk(cudaPeekAtLastError());
-    gpuErrchk(cudaDeviceSynchronize());
+    //gpuErrchk(cudaDeviceSynchronize());
 
     //TMP
     //printf("cst: %lf\n", getRealTime()-time_mark);

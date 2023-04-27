@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Make Python interface available by prepending its path to PYTHONPATH in a safe way.
+export PYTHONPATH="@CMAKE_INSTALL_PREFIX@/@PYEXECDIR@${PYTHONPATH:+:$PYTHONPATH}"
+
+# Make NEST GPU library available by creating an environment variable.
+export NESTGPU_LIB="@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@/nestgpu/libnestgpukernel.so"

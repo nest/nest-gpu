@@ -1,0 +1,162 @@
+#!/bin/bash
+
+# Test for arguments
+if [ $# -gt 3 ]; then
+        cat << EOT
+Given too many arguments
+Usage: autoinst [--gpu-arch] [source] [destination]
+Example: autoinst --gpu-arch=80 my_repo/ my_build/
+Try autoinst -h or --help for additional information.
+EOT
+        exit 1
+fi
+
+# Initialize arguments
+src_arg=
+dest_arg=
+arch_arg=
+option_pattern="^-+.*"
+help_pattern="-h|--help"
+arch_any_pattern="--gpu-arch=.*"
+arch_int_pattern="--gpu-arch=[0-9]+"
+arch_sed_pattern="--gpu-arch=\([0-9]\+\)"
+
+# Parse arguments
+for arg in $*; do
+	if [[ $arg =~ $option_pattern ]]; then
+		if [[ $arg =~ $arch_int_pattern ]]; then
+			arch=$( echo $arg | sed "s/$arch_sed_pattern/\1/" )
+		else
+			if [[ $arg =~ $arch_any_pattern ]]; then
+				cat << EOT
+Incorrect value for gpu arch: $arg
+Usage: autoinst [--gpu-arch] [source] [destination]
+Example: autoinst --gpu-arch=80 my_repo/ my_build/
+Try autoinst -h or --help for additional information.
+EOT
+			else
+				if [[ $arg =~ $help_pattern  ]]; then
+					cat << EOT
+Usage: autoinst [--gpu-arch=] [source] [destination]
+Install NEST GPU from a source repository in a destination directory using a given GPU architecture.
+Example: autoinst --gpu-arch=80 my_repo/ my_build/
+
+Arguments:
+	-h, --help: Print this message.
+	--gpu-arch= [Optional]: Specify the GPU compute architecture. Value must be an integer [default=70].
+	source [Optional]: Path to NEST GPU repository. Can be relative, [default='.'].
+	destination [Optional]: Path to installation directory. Can be relative, [default='.'].
+EOT
+					exit 0
+				else
+					cat << EOT
+Unknown option: $arg
+Usage: autoinst [--gpu-arch] [source] [destination]
+Example: autoinst --gpu-arch=80 my_repo/ my_build/
+Try autoinst -h or --help for additional information.
+EOT
+				fi
+			fi
+			exit 1
+		fi
+	else
+		if [ -z $src_arg ]; then
+			src_arg=$arg
+		elif [ -z $dest_arg ]; then
+			dest_arg=$arg
+		else
+			cat << EOT
+Given extra argument: $arg
+Usage: autoinst [--gpu-arch] [source] [destination]
+Example: autoinst --gpu-arch=80 my_repo/ my_build/
+Try autoinst -h or --help for additional information.
+EOT
+        	exit 1
+		fi
+	fi
+done
+
+# Set default values
+if [ -z $arch ]; then
+	arch=70
+fi
+
+if [ -z $src_arg ]; then
+	src_arg=.
+fi
+
+if [ -z $dest_arg ]; then
+	dest_arg=.
+fi
+
+# Get absolute path of source i.e where autotools files are found
+SRC=$( readlink -f $src_arg )
+if [ ! -d $SRC ]; then
+	echo "Given source path is not a directory"
+	exit 1
+fi
+if [ ! -f $SRC/configure.ac ]; then
+	echo "Cannot find Autotools configuration file in source directory"
+	exit 1
+fi
+
+# Get absolute path of current path or given target path
+DST=$( readlink -f $dest_arg )
+if [ -z $( readlink -e $DST ) ]; then
+	mkdir -p $DST
+fi
+if [ ! -d $DST ]; then
+	echo "Could not create destination directory"
+	exit 1
+fi
+
+# Move to source and execute autoreconf in source
+cd $SRC
+autoreconf -i
+
+# Create (if needed) and move to compile dir
+cd $DST
+if [ -z $( readlink -e $DST/compile ) ]; then
+	mkdir $DST/compile
+fi
+if [ ! -d $DST/compile ]; then
+	echo "Could not create compile directory"
+	exit 1
+fi
+cd compile
+
+# Execute configure from source in compile dir
+$SRC/configure --prefix=$DST --exec-prefix=$DST --with-gpu-arch=sm_$arch &> config.out
+cat config.out
+
+# Run makefile in compile dir
+make -j &> make.out
+cat make.out
+
+make install -j &> make_install.out
+cat make_install.out
+
+# Move to destination dir and get path to python package directory
+cd $DST
+py_pack=$( find lib -name "site-packages" -type d )
+
+# Create (if needed) install dir and create empty nestgpu vars bash file 
+if [ -z $( readlink -e $DST/install/bin ) ]; then
+	mkdir -p $DST/install/bin
+fi
+if [ ! -d $DST/install/bin ]; then
+	echo "Could not create install directory"
+	exit 1
+fi
+:>$DST/install/bin/nestgpu_vars.sh
+
+# Populate nestgpu vars file
+cat > $DST/install/bin/nestgpu_vars.sh << EOT
+#!/bin/sh
+
+# Make Python interface available by prepending its path to PYTHONPATH in a safe way.
+export PYTHONPATH="$DST/$py_pack\${PYTHONPATH:+:\$PYTHONPATH}"
+
+# Make NEST GPU library available by creating an environment variable.
+export NESTGPU_LIB=$DST/lib/libnestgpu.so
+EOT
