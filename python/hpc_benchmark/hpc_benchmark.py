@@ -77,11 +77,13 @@ References
        arXiv. 2110.02883
 """
 
-import numpy as np
 import os
 import sys
-from time import perf_counter_ns
+import json
+import numpy as np
 import scipy.special as sp
+
+from time import perf_counter_ns
 from mpi4py import MPI
 
 import nestgpu as ngpu
@@ -114,6 +116,7 @@ params = {
     'simtime': 250.,        # total simulation time in ms
     'presimtime': 50.,      # simulation time until reaching equilibrium
     'dt': 0.1,              # simulation step
+    'stdp': False,          # enable plastic connections
     'record_spikes': True,  # switch to record spikes of excitatory
                             # neurons to file
     'path_name': '.',       # path where all files will have to be written
@@ -207,21 +210,21 @@ brunel_params = {
 ###############################################################################
 # Function Section
 
-def build_network(logger):
+def build_network():
     """Builds the network including setting of simulation and neuron
-    parameters, creation of neurons and connections
-    Requires an instance of Logger as argument
+    parameters, creation of neurons and connections.
+    Uses a dictionary to store information about the network construction times.
+    
+    Returns recorded neuron ids if spike recording is enabled, and the time dictionary.
     """
 
-    tic = perf_counter_ns()  # start timer on construction
+    time_start = perf_counter_ns()  # start timer on construction
 
     # unpack a few variables for convenience
     NE = brunel_params['NE']
     NI = brunel_params['NI']
     model_params = brunel_params['model_params']
     stdp_params = brunel_params['stdp_params']
-
-    ngpu.SetKernelStatus({"time_resolution": params['dt']})
 
     print('Creating neuron populations.')
 
@@ -257,7 +260,9 @@ def build_network(logger):
     nu_thresh = model_params['Theta_rel'] / ( CE * model_params['tau_m'] / model_params['C_m'] * JE_pA * np.exp(1.) * tau_syn)
     nu_ext = nu_thresh * brunel_params['eta']
 
-    E_stim= ngpu.Create('poisson_generator', 1, 1, {'rate': nu_ext * CE * 1000.})
+    rate = nu_ext * CE * 1000.
+    brunel_params["poisson_rate"] = rate
+    E_stim= ngpu.Create('poisson_generator', 1, 1, {'rate': rate})
 
     print('Creating excitatory spike recorder.')
 
@@ -265,36 +270,27 @@ def build_network(logger):
         recorder_label = os.path.join(brunel_params['filestem'], 'alpha_' + str(stdp_params['alpha']) + '_spikes')
         ngpu.ActivateRecSpikeTimes(neuron[mpi_id], 1000)
 
-    BuildNodeTime = perf_counter_ns() - tic
+    time_create = perf_counter_ns()
 
-    logger.log(str(BuildNodeTime) + ' # build_time_nodes')
-    #logger.log(str(memory_thisjob()) + ' # virt_mem_after_nodes')
-
-    tic = perf_counter_ns()
-
-    syn_dict_ex = {'weight': JE_pA, 'delay': brunel_params['delay']}
+    syn_dict_ex = None
     syn_dict_in = {'weight': brunel_params['g'] * JE_pA, 'delay': brunel_params['delay']}
-    
-    syn_group_stdp = ngpu.CreateSynGroup('stdp', stdp_params)
-    syn_dict_stdp = {"weight": JE_pA, "delay": brunel_params['stdp_delay'], "synapse_group": syn_group_stdp}
+    if params['stdp']:    
+        syn_group_stdp = ngpu.CreateSynGroup('stdp', stdp_params)
+        syn_dict_ex = {"weight": JE_pA, "delay": brunel_params['stdp_delay'], "synapse_group": syn_group_stdp}
+    else:
+        syn_dict_ex = {'weight': JE_pA, 'delay': brunel_params['delay']}
 
     print('Connecting stimulus generators.')
 
     # Connect Poisson generator to neuron
-    #ngpu.Connect(E_stim, E_pops[0], {'rule': 'all_to_all'}, syn_dict_ex)
-    #ngpu.Connect(E_stim, I_pops[0], {'rule': 'all_to_all'}, syn_dict_ex)
     ngpu.Connect(E_stim, neuron[mpi_id], {'rule': 'all_to_all'}, syn_dict_ex)
-
-    #print(E_pops[0].i0, E_pops[0].n, E_pops[1].i0, E_pops[1].n)
 
     
     print('Creating local connections.')
     print('Connecting excitatory -> excitatory population.')
 
-    #CE_distrib = 1; CI_distrib = 1
-
     ngpu.Connect(E_pops[mpi_id], E_pops[mpi_id],
-                 {'rule': 'fixed_indegree', 'indegree': CE_distrib}, syn_dict_ex) #syn_dict_stdp)
+                 {'rule': 'fixed_indegree', 'indegree': CE_distrib}, syn_dict_ex)
 
     print('Connecting inhibitory -> excitatory population.')
 
@@ -313,6 +309,7 @@ def build_network(logger):
     
     print("Inside process {}".format(mpi_id))
 
+    time_connect_local = perf_counter_ns()
     
     print('Creating remote connections.')
     for i in range(mpi_np):
@@ -340,59 +337,82 @@ def build_network(logger):
                             
     
     # read out time used for building
-    BuildEdgeTime = perf_counter_ns() - tic
+    time_connect_remote = perf_counter_ns()
 
-    logger.log(str(BuildEdgeTime) + ' # build_edge_time')
-    #logger.log(str(memory_thisjob()) + ' # virt_mem_after_edges')
+    time_dict = {
+        "time_create": time_create - time_start,
+        "time_connect_local": time_connect_local - time_create,
+        "time_connect_remote": time_connect_remote - time_connect_local,
+        "time_connect": time_connect_remote - time_create
+    }
 
-    return neuron[mpi_id] if params['record_spikes'] else None
+    return neuron[mpi_id] if params['record_spikes'] else None, time_dict
 
 
 def run_simulation():
     """Performs a simulation, including network construction"""
 
-    # open log file
-    with Logger(params['log_file']) as logger:
+    time_start = perf_counter_ns()
 
-        ngpu.SetKernelStatus({"verbosity_level": 4, "rnd_seed": params["seed"]})
+    ngpu.SetKernelStatus({
+        "verbosity_level": 4,
+        "rnd_seed": params["seed"],
+        "time_resolution": params['dt']
+        })
+    
+    time_initialize = perf_counter_ns()
 
-        #logger.log(str(memory_thisjob()) + ' # virt_mem_0')
+    neuron, time_dict = build_network()
 
-        neuron = build_network(logger)
+    time_construct = perf_counter_ns()
 
-        tic = perf_counter_ns()
+    ngpu.Calibrate()
 
-        ngpu.Calibrate()
+    time_calibrate = perf_counter_ns()
 
-        CalibrationTime = perf_counter_ns() - tic
+    ngpu.Simulate(params['presimtime'])
 
-        #logger.log(str(memory_thisjob()) + ' # virt_mem_after_presim')
-        logger.log(str(CalibrationTime) + ' # calib_time')
+    time_presimulate = perf_counter_ns()
 
-        tic = perf_counter_ns()
+    ngpu.Simulate(params['simtime'])
 
-        ngpu.Simulate(params['presimtime'])
+    time_simulate = perf_counter_ns()
 
-        PreparationTime = perf_counter_ns() - tic
+    time_dict.update({
+            "time_initialize": time_initialize - time_start,
+            "time_construct": time_construct - time_initialize,
+            "time_calibrate": time_calibrate - time_construct,
+            "time_presimulate": time_presimulate - time_calibrate,
+            "time_simulate": time_simulate - time_presimulate,
+            "time_total": time_simulate - time_start
+        })
+    
+    conf_dict = {
+        "num_processes": mpi_np,
+        "brunel_params": brunel_params,
+        "simulation_params": params
+    }
 
-        #logger.log(str(memory_thisjob()) + ' # virt_mem_after_presim')
-        logger.log(str(PreparationTime) + ' # presim_time')
+    info_dict = {
+        "rank": mpi_id,
+        "conf": conf_dict,
+        "timers": time_dict
+    }
 
-        tic = perf_counter_ns()
+    if params['record_spikes']:
+        spike_times = ngpu.GetRecSpikeTimes(neuron)
+        rate = compute_rate(spike_times)
+        info_dict["stats"] = {
+            "rate": rate
+        }
 
-        ngpu.Simulate(params['simtime'])
+    k_status = ngpu.GetKernelStatus()
+    info_dict["kernel_status"] = k_status
 
-        SimGPUTime = perf_counter_ns() - tic
+    print(json.dumps(info_dict, indent=4))
 
-        #logger.log(str(memory_thisjob()) + ' # virt_mem_after_sim')
-        logger.log(str(SimGPUTime) + ' # sim_time')
-
-        if params['record_spikes']:
-            spike_times = ngpu.GetRecSpikeTimes(neuron)
-            rate = compute_rate(spike_times)
-            logger.log(str(rate) + ' # average rate')
-
-        print(ngpu.GetKernelStatus())
+    with open(os.path.join(params['path_name'], params['log_file'] + f"_{mpi_id}.json"), 'w') as f:
+        json.dump(info_dict, f, indent=4)
 
 
 def compute_rate(spike_times):
@@ -422,48 +442,6 @@ def lambertwm1(x):
     """Wrapper for LambertWm1 function"""
     # Using scipy to mimic the gsl_sf_lambert_Wm1 function.
     return sp.lambertw(x, k=-1 if x < 0 else 0).real
-
-
-class Logger:
-    """Logger context manager used to properly log memory and timing
-    information from network simulations.
-    """
-
-    def __init__(self, file_name):
-        # copy output to cout for ranks 0..max_rank_cout-1
-        self.max_rank_cout = 5
-        # write to log files for ranks 0..max_rank_log-1
-        self.max_rank_log = 30
-        self.line_counter = 0
-        self.file_name = file_name
-
-    def __enter__(self):
-        if mpi_id < self.max_rank_log:
-
-            # convert rank to string, prepend 0 if necessary to make
-            # numbers equally wide for all ranks
-            rank = '{:0' + str(len(str(self.max_rank_log))) + '}'
-            fn = '{fn}_{rank}.dat'.format(
-                fn=self.file_name, rank=rank.format(mpi_id))
-
-            self.f = open(fn, 'w')
-
-        return self
-
-    def log(self, value):
-        if mpi_id < self.max_rank_log:
-            line = '{lc} {rank} {value} \n'.format(
-                lc=self.line_counter, rank=mpi_id, value=value)
-            self.f.write(line)
-            self.line_counter += 1
-
-        if mpi_id < self.max_rank_cout:
-            print(str(mpi_id) + ' ' + value + '\n', file=sys.stdout)
-            print(str(mpi_id) + ' ' + value + '\n', file=sys.stderr)
-
-    def __exit__(self, exc_type, exc_val, traceback):
-        if mpi_id < self.max_rank_log:
-            self.f.close()
 
 
 if __name__ == '__main__':
