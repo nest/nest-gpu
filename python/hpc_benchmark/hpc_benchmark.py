@@ -90,17 +90,28 @@ import nestgpu as ngpu
 #import nest
 #import nest.raster_plot
 
+from argparse import ArgumentParser
+
+parser = ArgumentParser()
+parser.add_argument("--path", type=str, default=".")
+parser.add_argument("--seed", type=int, default=12345)
+args = parser.parse_args()
+
 M_INFO = 10
 M_ERROR = 30
 
 ngpu.ConnectMpiInit()
-mpi_np = ngpu.MpiNp()
-
-print("Simulation with {} MPI processes".format(mpi_np))
-
-mpi_id = ngpu.MpiId()
 
 comm = MPI.COMM_WORLD
+
+mpi_id = comm.Get_rank()
+mpi_np = comm.Get_size()
+
+def rank_print(message):
+    """Prints message and attaches MPI rank"""
+    print(f"MPI RANK {mpi_id}: {message}")
+
+rank_print("Simulation with {} MPI processes".format(mpi_np))
 
 
 ###############################################################################
@@ -112,16 +123,25 @@ params = {
     #'nvp': 1,              # total number of virtual processes
     'scale': 1.,            # scaling factor of the network size
                             # total network size = scale*11250 neurons
-    'seed': 12345,          # seed for random number generation
-    'simtime': 250.,        # total simulation time in ms
-    'presimtime': 50.,      # simulation time until reaching equilibrium
+    'seed': args.seed,          # seed for random number generation
+    'simtime': 1000.,        # total simulation time in ms
+    'presimtime': 100.,      # simulation time until reaching equilibrium
     'dt': 0.1,              # simulation step
     'stdp': False,          # enable plastic connections
     'record_spikes': True,  # switch to record spikes of excitatory
                             # neurons to file
-    'path_name': '.',       # path where all files will have to be written
+    'path_name': args.path,       # path where all files will have to be written
     'log_file': 'log',      # naming scheme for the log files
+    'use_all_to_all': False, # Connect using all to all rule
+    'check_conns': False,   # Get ConnectionId objects after build. VERY SLOW!
+    'use_dc_input': True,  # Use DC input instead of Poisson generators
 }
+
+
+def lambertwm1(x):
+    """Wrapper for LambertWm1 function"""
+    # Using scipy to mimic the gsl_sf_lambert_Wm1 function.
+    return sp.lambertw(x, k=-1 if x < 0 else 0).real
 
 
 def convert_synapse_weight(tau_m, tau_syn, C_m):
@@ -141,6 +161,12 @@ def convert_synapse_weight(tau_m, tau_syn, C_m):
         (np.exp(-t_rise / tau_m) - np.exp(-t_rise / tau_syn)) /
         b - t_rise * np.exp(-t_rise / tau_syn))
     return 1. / v_max
+
+def dc_input_compensating_poisson(*args, **kwargs):
+    """TEST FUNCTION
+    DC amplitude tuned to obtain a target firing rate of 13Hz for E and I pops.
+    """
+    return 500.1
 
 ###############################################################################
 # For compatibility with earlier benchmarks, we require a rise time of
@@ -226,18 +252,18 @@ def build_network():
     model_params = brunel_params['model_params']
     stdp_params = brunel_params['stdp_params']
 
-    print('Creating neuron populations.')
+    rank_print('Creating neuron populations.')
 
-    neuron = []; E_pops = []; I_pops = []
+    neurons = []; E_pops = []; I_pops = []
 
     for i in range(mpi_np):
-        neuron.append(ngpu.RemoteCreate(i, 'iaf_psc_alpha', NE+NI, 1, model_params).node_seq)
-        E_pops.append(neuron[i][0:NE])
-        I_pops.append(neuron[i][NE:NE+NI])
+        neurons.append(ngpu.RemoteCreate(i, 'iaf_psc_alpha', NE+NI, 1, model_params).node_seq)
+        E_pops.append(neurons[i][0:NE])
+        I_pops.append(neurons[i][NE:NE+NI])
 
     if brunel_params['randomize_Vm']:
-        print('Randomizing membrane potentials.')
-        ngpu.SetStatus(neuron[mpi_id], {"V_m_rel": {"distribution": "normal", "mu": brunel_params['mean_potential'], "sigma": brunel_params['sigma_potential']}})
+        rank_print('Randomizing membrane potentials.')
+        ngpu.SetStatus(neurons[mpi_id], {"V_m_rel": {"distribution": "normal", "mu": brunel_params['mean_potential'], "sigma": brunel_params['sigma_potential']}})
 
     # total number of incoming excitatory connections
     CE = int(1. * NE / params['scale'])
@@ -251,7 +277,7 @@ def build_network():
     CE_distrib = int(1.0 * CE / mpi_np)
     CI_distrib = int(1.0 * CI / mpi_np)
 
-    print('Creating excitatory stimulus generator.')
+    rank_print('Creating excitatory stimulus generator.')
 
     # Convert synapse weight from mV to pA
     conversion_factor = convert_synapse_weight(model_params['tau_m'], model_params['tau_syn_ex'], model_params['C_m'])
@@ -259,16 +285,26 @@ def build_network():
 
     nu_thresh = model_params['Theta_rel'] / ( CE * model_params['tau_m'] / model_params['C_m'] * JE_pA * np.exp(1.) * tau_syn)
     nu_ext = nu_thresh * brunel_params['eta']
-
     rate = nu_ext * CE * 1000.
-    brunel_params["poisson_rate"] = rate
-    E_stim= ngpu.Create('poisson_generator', 1, 1, {'rate': rate})
 
-    print('Creating excitatory spike recorder.')
+    if not params['use_dc_input']:
+        brunel_params["poisson_rate"] = rate
+        E_stim= ngpu.Create('poisson_generator', 1, 1, {'rate': rate})
+    else:
+        inh_amp = dc_input_compensating_poisson(rate, CI, tau_syn, brunel_params['g'] * JE_pA)
+        ex_amp = dc_input_compensating_poisson(rate, CE, tau_syn, JE_pA)
+        brunel_params["DC_amp_I"] = inh_amp
+        brunel_params["DC_amp_E"] = ex_amp
+        ngpu.SetStatus(I_pops[mpi_id], {"I_e": inh_amp})
+        ngpu.SetStatus(E_pops[mpi_id], {"I_e": ex_amp})
+
+
+    rank_print('Creating excitatory spike recorder.')
 
     if params['record_spikes']:
-        recorder_label = os.path.join(brunel_params['filestem'], 'alpha_' + str(stdp_params['alpha']) + '_spikes')
-        ngpu.ActivateRecSpikeTimes(neuron[mpi_id], 1000)
+        recorder_label = 'alpha_' + str(stdp_params['alpha']) + '_spikes_' + str(mpi_id)
+        brunel_params["recorder_label"] = recorder_label
+        ngpu.ActivateRecSpikeTimes(neurons[mpi_id], 1000)
 
     time_create = perf_counter_ns()
 
@@ -280,61 +316,66 @@ def build_network():
     else:
         syn_dict_ex = {'weight': JE_pA, 'delay': brunel_params['delay']}
 
-    print('Connecting stimulus generators.')
+    if not params["use_dc_input"]:
+        rank_print('Connecting stimulus generators.')
+        # Connect Poisson generator to neuron
+        ngpu.Connect(E_stim, neurons[mpi_id], {'rule': 'all_to_all'}, syn_dict_ex)
 
-    # Connect Poisson generator to neuron
-    ngpu.Connect(E_stim, neuron[mpi_id], {'rule': 'all_to_all'}, syn_dict_ex)
+    rank_print('Creating local connections.')
+    rank_print('Connecting excitatory -> excitatory population.')
 
-    
-    print('Creating local connections.')
-    print('Connecting excitatory -> excitatory population.')
+    if params['use_all_to_all']:
+        i_conn_rule = {'rule': 'all_to_all'}
+        e_conn_rule = {'rule': 'all_to_all'}
+    else:
+        i_conn_rule = {'rule': 'fixed_indegree', 'indegree': CI_distrib}
+        e_conn_rule = {'rule': 'fixed_indegree', 'indegree': CE_distrib}
+
+    brunel_params["connection_rules"] = {"inhibitory": i_conn_rule, "excitatory": e_conn_rule}
 
     ngpu.Connect(E_pops[mpi_id], E_pops[mpi_id],
-                 {'rule': 'fixed_indegree', 'indegree': CE_distrib}, syn_dict_ex)
+                 e_conn_rule, syn_dict_ex)
 
-    print('Connecting inhibitory -> excitatory population.')
+    rank_print('Connecting inhibitory -> excitatory population.')
 
     ngpu.Connect(I_pops[mpi_id], E_pops[mpi_id],
-                 {'rule': 'fixed_indegree', 'indegree': CI_distrib}, syn_dict_in)
+                 i_conn_rule, syn_dict_in)
 
-    print('Connecting excitatory -> inhibitory population.')
+    rank_print('Connecting excitatory -> inhibitory population.')
 
     ngpu.Connect(E_pops[mpi_id], I_pops[mpi_id],
-                 {'rule': 'fixed_indegree', 'indegree': CE_distrib}, syn_dict_ex)
+                 e_conn_rule, syn_dict_ex)
 
-    print('Connecting inhibitory -> inhibitory population.')
+    rank_print('Connecting inhibitory -> inhibitory population.')
 
     ngpu.Connect(I_pops[mpi_id], I_pops[mpi_id],
-                 {'rule': 'fixed_indegree', 'indegree': CI_distrib}, syn_dict_in)
+                 i_conn_rule, syn_dict_in)
     
-    print("Inside process {}".format(mpi_id))
-
     time_connect_local = perf_counter_ns()
-    
-    print('Creating remote connections.')
+
+    rank_print('Creating remote connections.')
     for i in range(mpi_np):
         for j in range(mpi_np):
             if(i!=j):
-                print('Connecting excitatory {} -> excitatory {} population. mpi_id = {}'.format(i, j, mpi_id))
+                rank_print('Connecting excitatory {} -> excitatory {} population.'.format(i, j))
 
                 ngpu.RemoteConnect(i, E_pops[i], j, E_pops[j],
-                                   {'rule': 'fixed_indegree', 'indegree': CE_distrib}, syn_dict_ex)
+                                    e_conn_rule, syn_dict_ex)
 
-                print('Connecting inhibitory {} -> excitatory {} population. mpi_id = {}'.format(i, j, mpi_id))
+                rank_print('Connecting inhibitory {} -> excitatory {} population.'.format(i, j))
 
                 ngpu.RemoteConnect(i, I_pops[i], j, E_pops[j],
-                                   {'rule': 'fixed_indegree', 'indegree': CI_distrib}, syn_dict_in)
+                                    i_conn_rule, syn_dict_in)
 
-                print('Connecting excitatory {} -> inhibitory {} population. mpi_id = {}'.format(i, j, mpi_id))
+                rank_print('Connecting excitatory {} -> inhibitory {} population.'.format(i, j))
 
                 ngpu.RemoteConnect(i, E_pops[i], j, I_pops[j],
-                                   {'rule': 'fixed_indegree', 'indegree': CE_distrib}, syn_dict_ex)
+                                    e_conn_rule, syn_dict_ex)
 
-                print('Connecting inhibitory {} -> inhibitory {} population. mpi_id = {}'.format(i, j, mpi_id))
+                rank_print('Connecting inhibitory {} -> inhibitory {} population.'.format(i, j))
 
                 ngpu.RemoteConnect(i, I_pops[i], j, I_pops[j],
-                                   {'rule': 'fixed_indegree', 'indegree': CI_distrib}, syn_dict_in)
-                            
+                                    i_conn_rule, syn_dict_in)
     
     # read out time used for building
     time_connect_remote = perf_counter_ns()
@@ -346,7 +387,26 @@ def build_network():
         "time_connect": time_connect_remote - time_create
     }
 
-    return neuron[mpi_id] if params['record_spikes'] else None, time_dict
+    conns = None
+    if params['check_conns']:
+        conns = dict()
+        for i in range(mpi_np):
+            if mpi_id == i:
+                conns[i] = dict()
+                for j in range(mpi_np):
+                    conns[i][j] = dict()
+                    conns[i][j]["E"] = dict()
+                    conns[i][j]["I"] = dict()
+                    conns[i][j]["E"]["E"] = get_conn_dict_array(E_pops[i], E_pops[j])
+                    conns[i][j]["I"]["E"] = get_conn_dict_array(I_pops[i], E_pops[j])
+                    conns[i][j]["E"]["I"] = get_conn_dict_array(E_pops[i], I_pops[j])
+                    conns[i][j]["I"]["I"] = get_conn_dict_array(I_pops[i], I_pops[j])
+
+        time_check_connect = perf_counter_ns()
+
+        time_dict["time_check_connect"] = time_check_connect - time_connect_remote
+
+    return neurons[mpi_id] if params['record_spikes'] else None, conns, time_dict
 
 
 def run_simulation():
@@ -359,10 +419,11 @@ def run_simulation():
         "rnd_seed": params["seed"],
         "time_resolution": params['dt']
         })
+    seed = ngpu.GetKernelStatus("rnd_seed")
     
     time_initialize = perf_counter_ns()
 
-    neuron, time_dict = build_network()
+    neurons, conns, time_dict = build_network()
 
     time_construct = perf_counter_ns()
 
@@ -386,7 +447,7 @@ def run_simulation():
             "time_simulate": time_simulate - time_presimulate,
             "time_total": time_simulate - time_start
         })
-    
+
     conf_dict = {
         "num_processes": mpi_np,
         "brunel_params": brunel_params,
@@ -395,53 +456,95 @@ def run_simulation():
 
     info_dict = {
         "rank": mpi_id,
+        "seed": seed,
         "conf": conf_dict,
         "timers": time_dict
     }
 
     if params['record_spikes']:
-        spike_times = ngpu.GetRecSpikeTimes(neuron)
-        rate = compute_rate(spike_times)
+        e_stats, _, i_stats, _= get_spike_times(neurons)
+        e_rate = compute_rate(*e_stats)
+        i_rate = compute_rate(*i_stats)
         info_dict["stats"] = {
-            "rate": rate
+            "excitatory_firing_rate": e_rate,
+            "inhibitory_firing_rate": i_rate
         }
+
+    if params['check_conns']:
+        with open(os.path.join(params['path_name'], f"connections_{mpi_id}.json"), 'w') as f:
+            json.dump(conns, f, indent=4)
 
     k_status = ngpu.GetKernelStatus()
     info_dict["kernel_status"] = k_status
 
-    print(json.dumps(info_dict, indent=4))
+    rank_print(json.dumps(info_dict, indent=4))
 
     with open(os.path.join(params['path_name'], params['log_file'] + f"_{mpi_id}.json"), 'w') as f:
         json.dump(info_dict, f, indent=4)
 
 
-def compute_rate(spike_times):
+def get_conn_dict_array(source, target):
+    """Retrieve neural connections as an array of dictionaries."""
+    connectionIdArray = ngpu.GetConnections(source, target)
+    res = [{"i_source": i.i_source, "i_group": i.i_group, "i_conn": i.i_conn} for i in connectionIdArray]
+    return res
+
+
+def get_spike_times(neurons):
+    """Retrieve spike times from local neuron population
+    and filter through inhibitory neurons to store only excitatory spikes.
+    """
+
+    # Get spikes
+    spike_times = ngpu.GetRecSpikeTimes(neurons)
+
+    # Select excitatory neurons
+    e_count = 0
+    e_data = []
+    e_bound = brunel_params['NE']
+    i_count = 0
+    i_data = []
+    i_bound = brunel_params['NE'] + brunel_params['NI']
+    for i_neur in range(i_bound):
+        spikes = spike_times[i_neur]
+        if len(spikes) != 0:
+            if i_neur < e_bound:
+                for t in spikes:
+                    if t > params['presimtime']:
+                        e_count += 1
+                        e_data.append([i_neur, t])
+            else:
+                for t in spikes:
+                    if t > params['presimtime']:
+                        i_count += 1
+                        i_data.append([i_neur, t])
+
+    # Save data
+    if len(e_data) > 0:
+        e_array = np.array(e_data)
+        e_fn = os.path.join(brunel_params['filestem'], brunel_params["recorder_label"] + "_e_pop.dat")
+        np.savetxt(e_fn, e_array, fmt='%d\t%.3f', header="sender time_ms", comments='')
+
+    if len(i_data) > 0:
+        i_array = np.array(i_data)
+        i_fn = os.path.join(brunel_params['filestem'], brunel_params["recorder_label"] + "_i_pop.dat")
+        np.savetxt(i_fn, i_array, fmt='%d\t%.3f', header="sender time_ms", comments='')
+
+    return (brunel_params['NE'], e_count), e_data, (brunel_params['NI'], i_count), i_data
+
+
+def compute_rate(num_neurons, spike_count):
     """Compute local approximation of average firing rate
     This approximation is based on the number of local nodes, number
     of local spikes and total time. Since this also considers devices,
     the actual firing rate is usually underestimated.
     """
-    
-    #n_local_spikes = sr.n_events
-    n_local_neurons = brunel_params['NE'] + brunel_params['NI']
+    if spike_count < 1:
+        return 0
 
-    # discard spikes during presimtime
-    n_spikes = sum(sum(i>params['presimtime'] for i in j) for j in spike_times)
+    time_frame = params['simtime']
 
-    simtime = params['simtime']
-    return (1. * n_spikes / (n_local_neurons * simtime) * 1e3)
-
-
-#def memory_thisjob():
-#    """Wrapper to obtain current memory usage"""
-#    nest.ll_api.sr('memory_thisjob')
-#    return nest.ll_api.spp()
-
-
-def lambertwm1(x):
-    """Wrapper for LambertWm1 function"""
-    # Using scipy to mimic the gsl_sf_lambert_Wm1 function.
-    return sp.lambertw(x, k=-1 if x < 0 else 0).real
+    return (1. * spike_count / (num_neurons * time_frame) * 1e3)
 
 
 if __name__ == '__main__':
