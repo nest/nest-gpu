@@ -570,7 +570,7 @@ def raster_plot(e_st, i_st):
     plt.xticks(fontsize=fs)
     plt.yticks(fontsize=fs)
     plt.tight_layout()
-    plt.savefig(os.path.join(brunel_params['filestem'], 'raster_plot.png'), dpi=300)
+    plt.savefig(os.path.join(brunel_params['filestem'], 'raster_plot'+ str(mpi_id) +'.png'), dpi=300)
 
 if __name__ == '__main__':
     run_simulation()
