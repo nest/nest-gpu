@@ -82,6 +82,7 @@ import sys
 import json
 import numpy as np
 import scipy.special as sp
+import matplotlib.pyplot as plt
 
 from time import perf_counter_ns
 from mpi4py import MPI
@@ -130,11 +131,12 @@ params = {
     'stdp': False,          # enable plastic connections
     'record_spikes': True,  # switch to record spikes of excitatory
                             # neurons to file
+    'raster_plot': True,    # when record_spikes=True, depicts a raster plot
     'path_name': args.path,       # path where all files will have to be written
     'log_file': 'log',      # naming scheme for the log files
     'use_all_to_all': False, # Connect using all to all rule
     'check_conns': False,   # Get ConnectionId objects after build. VERY SLOW!
-    'use_dc_input': True,  # Use DC input instead of Poisson generators
+    'use_dc_input': False,  # Use DC input instead of Poisson generators
 }
 
 
@@ -462,13 +464,15 @@ def run_simulation():
     }
 
     if params['record_spikes']:
-        e_stats, _, i_stats, _= get_spike_times(neurons)
+        e_stats, e_data, i_stats, i_data= get_spike_times(neurons)
         e_rate = compute_rate(*e_stats)
         i_rate = compute_rate(*i_stats)
         info_dict["stats"] = {
             "excitatory_firing_rate": e_rate,
             "inhibitory_firing_rate": i_rate
         }
+        if params['raster_plot']:
+            raster_plot(e_data, i_data)
 
     if params['check_conns']:
         with open(os.path.join(params['path_name'], f"connections_{mpi_id}.json"), 'w') as f:
@@ -546,6 +550,27 @@ def compute_rate(num_neurons, spike_count):
 
     return (1. * spike_count / (num_neurons * time_frame) * 1e3)
 
+def raster_plot(e_st, i_st):
+    fs = 18  # fontsize
+    colors = ['#595289', '#af143c']
+    e_ids = np.zeros(len(e_st)); i_ids = np.zeros(len(i_st))
+    e_times = np.zeros(len(e_st)); i_times = np.zeros(len(i_st))
+    for i in range(len(e_st)):
+        e_ids[i]=e_st[i][0]
+        e_times[i]=e_st[i][1]
+    for i in range(len(i_st)):
+        i_ids[i]=i_st[i][0]
+        i_times[i]=i_st[i][1]
+    
+    plt.figure(1, figsize=(16, 10))
+    plt.plot(e_times, e_ids, '.', color=colors[0])
+    plt.plot(i_times, i_ids, '.', color=colors[1])
+    plt.xlabel('time [ms]', fontsize=fs)
+    plt.ylabel('neuron ID', fontsize=fs)
+    plt.xticks(fontsize=fs)
+    plt.yticks(fontsize=fs)
+    plt.tight_layout()
+    plt.savefig(os.path.join(brunel_params['filestem'], 'raster_plot.png'), dpi=300)
 
 if __name__ == '__main__':
     run_simulation()
