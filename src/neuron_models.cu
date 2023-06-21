@@ -56,6 +56,9 @@
 #include "izhikevich_psc_exp.h"
 #include "user_m1.h"
 #include "user_m2.h"
+// <<BEGIN_NESTML_GENERATED>>
+
+// <<END_NESTML_GENERATED>>
 
 NodeSeq NESTGPU::Create(std::string model_name, int n_node /*=1*/,
 			  int n_port /*=1*/)
@@ -177,6 +180,9 @@ NodeSeq NESTGPU::Create(std::string model_name, int n_node /*=1*/,
     izhikevich_psc_exp *izhikevich_psc_exp_group = new izhikevich_psc_exp;
     node_vect_.push_back(izhikevich_psc_exp_group);
   }
+  // <<BEGIN_NESTML_GENERATED>>
+
+  // <<END_NESTML_GENERATED>>
   else {
     throw ngpu_exception(std::string("Unknown neuron model name: ")
 			 + model_name);

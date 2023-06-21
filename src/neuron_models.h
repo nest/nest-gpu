@@ -53,6 +53,9 @@ enum NeuronModels {
   i_izhikevich_psc_exp_model,
   i_user_m1_model,
   i_user_m2_model,
+  // <<BEGIN_NESTML_GENERATED>>
+
+  // <<END_NESTML_GENERATED>>
   N_NEURON_MODELS
 };
 
@@ -82,6 +85,9 @@ const std::string neuron_model_name[N_NEURON_MODELS] = {
   "izhikevich_psc_exp",
   "user_m1",
   "user_m2"
+  // <<BEGIN_NESTML_GENERATED>>
+
+  // <<END_NESTML_GENERATED>>
 };
 
 #endif

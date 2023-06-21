@@ -140,6 +140,9 @@ set ( nestgpu_sources
 	test_syn_model.cu
 	user_m1.cu
 	user_m2.cu
+    # <<BEGIN_NESTML_GENERATED>>
+
+    # <<END_NESTML_GENERATED>>
 	connect_rules.cpp
 	nestgpu_C.cpp
     )
