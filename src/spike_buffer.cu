@@ -1,20 +1,22 @@
 /*
- *  This file is part of NESTGPU.
+ *  spike_buffer.cu
+ *
+ *  This file is part of NEST GPU.
  *
  *  Copyright (C) 2021 The NEST Initiative
  *
- *  NESTGPU is free software: you can redistribute it and/or modify
+ *  NEST GPU is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 2 of the License, or
  *  (at your option) any later version.
  *
- *  NESTGPU is distributed in the hope that it will be useful,
+ *  NEST GPU is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with NESTGPU.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with NEST GPU.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -293,8 +295,8 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
 		       n_spike_buffers*max_spike_buffer_size*sizeof(int)));
   gpuErrchk(cudaMalloc(&d_SpikeBufferHeight,
 		       n_spike_buffers*max_spike_buffer_size*sizeof(float)));
-  gpuErrchk(cudaMemset(d_SpikeBufferSize, 0, n_spike_buffers*sizeof(int)));
-  gpuErrchk(cudaMemset(d_SpikeBufferIdx0, 0, n_spike_buffers*sizeof(int)));
+  gpuErrchk(cudaMemsetAsync(d_SpikeBufferSize, 0, n_spike_buffers*sizeof(int)));
+  gpuErrchk(cudaMemsetAsync(d_SpikeBufferIdx0, 0, n_spike_buffers*sizeof(int)));
 
   if (ConnectionSpikeTimeFlag){
     //h_conn_spike_time = new unsigned short[n_conn];
@@ -306,7 +308,7 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
 
   /*
   if(ConnectionSpikeTimeFlag) {
-    cudaMemcpy(d_ConnectionGroupTargetSpikeTime,
+    cudaMemcpyAsync(d_ConnectionGroupTargetSpikeTime,
 	       h_ConnectionGroupTargetSpikeTime,
 	       n_spike_buffers*max_delay_num*sizeof(unsigned short*),
 	       cudaMemcpyHostToDevice);
@@ -323,14 +325,12 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
 			   d_LastRevSpikeTimeIdx
 				 );
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
   
   InitLastSpikeTimeIdx
     <<<(n_spike_buffers+1023)/1024, 1024>>>
     (n_spike_buffers, LAST_SPIKE_TIME_GUARD);
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaDeviceSynchronize() );
-  gpuErrchk(cudaMemset(d_LastSpikeHeight, 0,
+  gpuErrchk(cudaMemsetAsync(d_LastSpikeHeight, 0,
 		       n_spike_buffers*sizeof(unsigned short)));
   
   return 0;
@@ -360,4 +360,3 @@ __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
   SpikeBufferHeight = spike_buffer_height;
   LastRevSpikeTimeIdx = last_rev_spike_time_idx;
 }
-

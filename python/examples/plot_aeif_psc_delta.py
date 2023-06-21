@@ -12,6 +12,7 @@ n_spikes = 2
 # set spike times and height
 ngpu.SetStatus(spike, {"spike_times": spike_times})
 delay = [1.0, 100.0]
+# the aeif_psc_delta model has one port, negative inputs require negative weights
 weight = [1.0, -2.0]
 
 conn_spec={"rule": "all_to_all"}
@@ -54,11 +55,9 @@ print("rmse : ", rmse, " tolerance: ", tolerance)
 import matplotlib.pyplot as plt
 
 fig1 = plt.figure(1)
-plt.plot(t, V_m)
-fig1.suptitle("NESTGPU")
-fig2 = plt.figure(2)
-plt.plot(t1, V_m1)
-fig2.suptitle("NEST")
+plt.plot(t, V_m, "r-", label="NEST GPU")
+plt.plot(t1, V_m1, "b--", label="NEST")
+plt.legend()
 plt.draw()
 plt.pause(1)
 ngpu.waitenter("<Hit Enter To Close>")

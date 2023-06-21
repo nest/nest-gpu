@@ -1,0 +1,59 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+/*
+  config.h is automatically generated from config.h.in during the
+  configuration process. Please make all changes in config.h.in.
+*/
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#cmakedefine HAVE_DLFCN_H 1
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#cmakedefine HAVE_INTTYPES_H 1
+
+/* Define to 1 if you have the `m' library (-lm). */
+#cmakedefine HAVE_LIBM 1
+
+/* Define to 1 if you have the <limits.h> header file. */
+#cmakedefine HAVE_LIMITS_H 1
+
+/* Define to 1 if you have the <memory.h> header file. */
+#cmakedefine HAVE_MEMORY_H 1
+
+/* Define if you have the MPI library. */
+#cmakedefine HAVE_MPI 1
+
+/* Define to 1 if you have the `pow' function. */
+#cmakedefine HAVE_POW 1
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#cmakedefine HAVE_STDINT_H 1
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#cmakedefine HAVE_STDLIB_H 1
+
+/* Define to 1 if you have the <strings.h> header file. */
+#cmakedefine HAVE_STRINGS_H 1
+
+/* Define to 1 if you have the <string.h> header file. */
+#cmakedefine HAVE_STRING_H 1
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#cmakedefine HAVE_SYS_STAT_H 1
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#cmakedefine HAVE_SYS_TYPES_H 1
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#cmakedefine HAVE_UNISTD_H 1
+
+/* Version number of package */
+#define VERSION @NEST_GPU_VERSION_STRING@
+
+#ifndef HAVE_SYS_TYPES_H
+/* Define to `unsigned int' if <sys/types.h> is not defined. */
+#define size_t unsigned int
+#endif
+
+#endif // #ifndef CONFIG_H

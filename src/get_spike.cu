@@ -1,20 +1,22 @@
 /*
- *  This file is part of NESTGPU.
+ *  get_spike.cu
+ *
+ *  This file is part of NEST GPU.
  *
  *  Copyright (C) 2021 The NEST Initiative
  *
- *  NESTGPU is free software: you can redistribute it and/or modify
+ *  NEST GPU is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 2 of the License, or
  *  (at your option) any later version.
  *
- *  NESTGPU is distributed in the hope that it will be useful,
+ *  NEST GPU is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with NESTGPU.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with NEST GPU.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -89,7 +91,7 @@ int NESTGPU::ClearGetSpikeArrays()
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     BaseNeuron *bn = node_vect_[i];
     if (bn->get_spike_array_ != NULL) {
-      gpuErrchk(cudaMemset(bn->get_spike_array_, 0, bn->n_node_*bn->n_port_
+      gpuErrchk(cudaMemsetAsync(bn->get_spike_array_, 0, bn->n_node_*bn->n_port_
 			   *sizeof(double)));
     }
   }
