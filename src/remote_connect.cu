@@ -228,11 +228,38 @@ __global__ void searchSourceNodeIndexInMapKernel
   // - or it is different from previous
   int node_index = sorted_source_node_index[i_source];
   if (i_source==0 || node_index!=sorted_source_node_index[i_source-1]) {
-    // In such case search node index in the map
-    int pos = search(node_index, source_node_map_index,...);    
-    if (pos<0) {
-      // If it is not in the map then flag it to be mapped
-      // and atomic increase n_new_source_node_map
+    bool mapped = false;
+    // If the map is not empty search node index in the map
+    if (n_source_node_map>0) {
+      // determine number of blocks in node map
+      int n_blocks = (n_source_node_map - 1) / node_map_block_size + 1;
+      // determine number of elements in last block
+      int n_node_last = (n_source_node_map - 1) % node_map_block_size + 1;
+      // check if node_index is between the minimu and the maximum in the map
+      if (node_index>=source_node_map_index[0][0] &&
+	  node_index<=source_node_map_index[n_blocks-1][n_node_last-1]) {
+	for (int ib=0; ib<n_blocks; ib++) {
+	  int n = node_map_block_size;
+	  if (ib==n_blocks-1) {
+	    n = n_node_last;
+	  }
+	  if (node_index>=source_node_map_index[ib][0] &&
+	      node_index<=source_node_map_index[ib][n-1]) {
+	    int pos = locate(node_index, source_node_map_index[ib], n);    
+	    if (source_node_map_index[ib][pos] == node_index) {
+	      // If it is in the map then flag it as already mapped
+	      mapped = true;
+	    }
+	  }
+	  else if (node_index>source_node_map_index[ib][n-1]) {
+	    break;
+	  }
+	}
+      }
+    }
+    // If it is not in the map then flag it to be mapped
+    // and atomic increase n_new_source_node_map
+    if (!mapped) {
       source_node_index_to_be_mapped[i_source] = true;
       atomicInc(n_new_source_nodes_map);
     }

@@ -310,7 +310,10 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   // - or it is different from previous
   // CUDA KERNEL input for target host: remote_source_node_map_index[i_source_host]->source_node_map_index, local_spike_buffer_map_index[i_source_host]->spike_buffer_map_index
 // CUDA KERNEL input for source host: local_source_node_map_index[i_target_host]->source_node_map_index, remote_spike_buffer_map_index[i_target_host]->spike_buffer_map_index
-
+// n_remote_source_node_map[i_target_host]->n_source_node_map
+// remote_node_map_block_size->node_map_block_size forse non necessario,
+// si può usare variabile globale, uguale per remote e local
+  
 if (i_thread == 0 || sorted_source_node_index[i_thread] != sorted_source_node_index[i_thread-1]) {
 
 // b12) In such case search sorted_source_node_index in the map (locate)
