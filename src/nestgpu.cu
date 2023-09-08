@@ -49,6 +49,8 @@
 #include "connect.h"
 #include "poiss_gen.h"
 
+#include "remote_connect.h"
+
 #ifdef HAVE_MPI
 #include <mpi.h>
 #endif
@@ -113,7 +115,10 @@ NESTGPU::NESTGPU()
   distribution_ = new Distribution;
   multimeter_ = new Multimeter;
   
-  SetRandomSeed(54321ULL);
+  //SetRandomSeed(54321ULL);
+  //SetRandomSeed(54322ULL);
+  //SetRandomSeed(54323ULL);
+  SetRandomSeed(54328ULL);
   
   calibrate_flag_ = false;
   create_flag_ = false;
@@ -146,6 +151,40 @@ NESTGPU::NESTGPU()
   //connect_mpi_ = new ConnectMpi;
   //connect_mpi_->remote_spike_height_ = false;
 #endif
+
+  RemoteConnectionMapInit(4); // (uint n_hosts)
+  // TEMPORARY, REMOVE!!!!!!!!!!!!!!!!!
+  int n_neurons = 30;
+  int CE = 3;
+  Create("iaf_psc_exp", n_neurons);
+
+  float mean_delay = 0.5;
+  float std_delay = 0.25;
+  float min_delay = 0.1;
+  float w = 1.0;
+
+  ConnSpec conn_spec1(FIXED_INDEGREE, CE);
+  SynSpec syn_spec1;
+  syn_spec1.SetParam("receptor", 0);
+  syn_spec1.SetParam("weight", w);
+  syn_spec1.SetParam("delay_distribution", DISTR_TYPE_NORMAL_CLIPPED);
+  syn_spec1.SetParam("delay_mu", mean_delay);
+  syn_spec1.SetParam("delay_low", min_delay);
+  syn_spec1.SetParam("delay_high", mean_delay+3*std_delay);
+  syn_spec1.SetParam("delay_sigma", std_delay);
+
+  const int n_source = 10;
+  int h_source_node_index[n_source] = {21, 24, 21, 24, 22, 21, 23, 25, 26, 22};
+  int *d_source_node_index;
+  gpuErrchk(cudaMalloc(&d_source_node_index, n_source*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_source_node_index, h_source_node_index,
+		       n_source*sizeof(int), cudaMemcpyHostToDevice));
+
+  //_RemoteConnectSource(1, 20, 10, 10, 3, conn_spec1, syn_spec1);
+  _RemoteConnectSource(1, d_source_node_index, 10, 10, 3, conn_spec1, syn_spec1);
+
+  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
   
   // NestedLoop::Init(); moved to calibrate
   nested_loop_algo_ = CumulSumNestedLoopAlgo;

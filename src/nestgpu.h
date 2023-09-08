@@ -217,6 +217,21 @@ class NESTGPU
      T1 source, int n_source, T2 target, int n_target, int outdegree,
      SynSpec &syn_spec);
 
+template <class T1, class T2>
+int _RemoteConnect(int source_host, T1 source, int n_source,
+		   int target_host, T2 target, int n_target,
+		   ConnSpec &conn_spec, SynSpec &syn_spec);
+
+template <class T1, class T2>
+int _RemoteConnectSource(int source_host, T1 source, int n_source,
+			 T2 target, int n_target,
+			 ConnSpec &conn_spec, SynSpec &syn_spec);
+  
+template <class T1, class T2>
+int _RemoteConnectTarget(int target_host, T1 source, int n_source,
+			 T2 target, int n_target,
+			 ConnSpec &conn_spec, SynSpec &syn_spec);
+  
 #ifdef HAVE_MPI
   template <class T1, class T2>
     int _RemoteConnect(RemoteNode<T1> source, int n_source,

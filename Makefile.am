@@ -12,6 +12,7 @@ CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
 HCUSRC=\
+remote_connect.h \
 utilities.h \
 distribution.h \
 copass_kernels.h \
@@ -82,6 +83,7 @@ user_m2_kernel.h \
 user_m2_rk5.h
 
 CUSRC=\
+remote_connect.cu \
 utilities.cu \
 distribution.cu \
 copass_kernels.cu \

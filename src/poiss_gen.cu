@@ -58,11 +58,13 @@ namespace poiss_conn
 // max delay functor
 struct MaxDelay
 {
-    template <typename T>
+  //template <typename T>
     __device__ __forceinline__
-    T operator()(const T &source_delay_a, const T &source_delay_b) const {
-      int i_delay_a = source_delay_a & PortMask;
-      int i_delay_b = source_delay_b & PortMask;
+    //T operator()(const T &source_delay_a, const T &source_delay_b) const {
+    uint operator()(const uint &source_delay_a, const uint &source_delay_b)
+      const {
+      uint i_delay_a = source_delay_a & PortMask;
+      uint i_delay_b = source_delay_b & PortMask;
         return (i_delay_b > i_delay_a) ? i_delay_b : i_delay_a;
     }
 };
@@ -448,7 +450,7 @@ int poiss_gen::buildDirectConnections()
   }
 
   // Find maximum delay of poisson direct connections
-  int *d_max_delay; // maximum delay pointer in device memory
+  uint *d_max_delay; // maximum delay pointer in device memory
   gpuErrchk(cudaMalloc(&d_max_delay, sizeof(int)));
   MaxDelay max_op; // comparison operator used by Reduce function 
   // Determine temporary device storage requirements
