@@ -3,6 +3,7 @@
 
 #include "connect.h"
 #include "remote_connect.h"
+#include "utilities.h"
 
 // INITIALIZATION
 //
@@ -20,6 +21,7 @@
 // elements, which are allocated dynamically
 
 __constant__ uint node_map_block_size; // = 100000;
+uint h_node_map_block_size; // = 100000;
 
 // number of elements in the map for each source host
 // n_remote_source_node_map[i_source_host]
@@ -95,8 +97,8 @@ int allocLocalSourceNodeMapBlocks(std::vector<uint*> &i_local_src_node_map,
 // Initialize the maps for n_hosts hosts (i.e. number of MPI processes)
 int RemoteConnectionMapInit(uint n_hosts)
 {
-  int bs = 10000; // initialize node map block size
-  cudaMemcpyToSymbol(node_map_block_size, &bs, sizeof(int));
+  h_node_map_block_size = 10000; // initialize node map block size
+  cudaMemcpyToSymbol(node_map_block_size, &h_node_map_block_size, sizeof(int));
 
   // allocate and init to 0 n. of elements in the map for each source host
   gpuErrchk(cudaMalloc(&d_n_remote_source_node_map, n_hosts*sizeof(int)));
@@ -251,6 +253,7 @@ __device__ bool checkIfValueIsIn2DArr(int value, int **arr, int n_elem,
 
 
 // kernel that searches node indexes in map
+// flags nodes not yet mapped and counts them
 __global__ void searchNodeIndexInMapKernel
 (
  int **node_map,
@@ -275,7 +278,7 @@ __global__ void searchNodeIndexInMapKernel
     // and atomic increase n_new_source_node_map
     if (!mapped) {
       node_to_map[i_node] = true;
-      atomicInc(n_node_to_map);
+      atomicAdd(n_node_to_map, 1);
     }
   }
 }
