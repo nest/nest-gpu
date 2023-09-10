@@ -16,10 +16,10 @@
 // (MPI pocess) that have outgoing connections to local nodes.
 // All elements are initially empty:
 // n_remote_source_nodes[i_source_host] = 0 for each i_source_host
-// The map is organized in blocks each with remote_node_map_block_size
+// The map is organized in blocks each with node_map_block_size
 // elements, which are allocated dynamically
 
-__constant__ uint remote_node_map_block_size; // = 100000;
+__constant__ uint node_map_block_size; // = 100000;
 
 // number of elements in the map for each source host
 // n_remote_source_node_map[i_source_host]
@@ -27,13 +27,13 @@ __constant__ uint remote_node_map_block_size; // = 100000;
 __device__ uint *n_remote_source_node_map; // [mpi_proc_num];
 uint *d_n_remote_source_node_map;
 
-// remote_source_node_map_index[i_source_host][i_block][i]
-std::vector< std::vector<uint*> > h_remote_source_node_map_index;
-__device__ uint ***remote_source_node_map_index;
+// remote_source_node_map[i_source_host][i_block][i]
+std::vector< std::vector<uint*> > h_remote_source_node_map;
+__device__ uint ***remote_source_node_map;
 
-// local_spike_buffer_map_index[i_source_host][i_block][i]
-std::vector< std::vector<uint*> > h_local_spike_buffer_map_index;
-__device__ uint ***local_spike_buffer_map_index;
+// local_spike_buffer_map[i_source_host][i_block][i]
+std::vector< std::vector<uint*> > h_local_spike_buffer_map;
+__device__ uint ***local_spike_buffer_map;
 
 // Define two arrays that map local source nodes to remote spike buffers.
 // The structure is the same as for remote source nodes
@@ -44,10 +44,10 @@ __device__ uint ***local_spike_buffer_map_index;
 __device__ uint *n_local_source_node_map; // [mpi_proc_num]; 
 uint *d_n_local_source_node_map;
   
-// local_source_node_map_index[i_target_host][i_block][i]
-std::vector< std::vector<uint*> > h_local_source_node_map_index;
-__device__ uint ***local_source_node_map_index;
-uint ***d_local_source_node_map_index;
+// local_source_node_map[i_target_host][i_block][i]
+std::vector< std::vector<uint*> > h_local_source_node_map;
+__device__ uint ***local_source_node_map;
+uint ***d_local_source_node_map;
 
 // Define a boolean array with one boolean value for each connection rule
 // - true if the rule always creates at least one outgoing connection
@@ -96,7 +96,7 @@ int allocLocalSourceNodeMapBlocks(std::vector<uint*> &i_local_src_node_map,
 int RemoteConnectionMapInit(uint n_hosts)
 {
   int bs = 10000; // initialize node map block size
-  cudaMemcpyToSymbol(remote_node_map_block_size, &bs, sizeof(int));
+  cudaMemcpyToSymbol(node_map_block_size, &bs, sizeof(int));
 
   // allocate and init to 0 n. of elements in the map for each source host
   gpuErrchk(cudaMalloc(&d_n_remote_source_node_map, n_hosts*sizeof(int)));
@@ -108,14 +108,14 @@ int RemoteConnectionMapInit(uint n_hosts)
 
   // initialize maps
   for (uint i_host=0; i_host<n_hosts; i_host++) {
-    std::vector<uint*> rsn_map_index;
-    h_remote_source_node_map_index.push_back(rsn_map_index);
+    std::vector<uint*> rsn_map;
+    h_remote_source_node_map.push_back(rsn_map);
       
-    std::vector<uint*> lsb_map_index;
-    h_local_spike_buffer_map_index.push_back(lsb_map_index);
+    std::vector<uint*> lsb_map;
+    h_local_spike_buffer_map.push_back(lsb_map);
 
-    std::vector<uint*> lsn_map_index;
-    h_local_source_node_map_index.push_back(lsn_map_index);
+    std::vector<uint*> lsn_map;
+    h_local_source_node_map.push_back(lsn_map);
   }
     
 
@@ -123,10 +123,10 @@ int RemoteConnectionMapInit(uint n_hosts)
   // .....
   //RemoteConnectionMapInitKernel // <<< , >>>
   //  (d_n_remote_source_node_map,
-  //   d_remote_source_node_map_index,
-  //   d_local_spike_buffer_map_index,
+  //   d_remote_source_node_map,
+  //   d_local_spike_buffer_map,
   //   d_n_local_source_node_map,
-  //   d_local_source_node_map_index);
+  //   d_local_source_node_map);
     
   return 0;
 }
@@ -211,57 +211,71 @@ __global__ void countUsedSourceNodeKernel(uint n_source,
   }
 }
 
-// kernel that searches source node indexes in remote-connection map
-__global__ void searchSourceNodeIndexInMapKernel
-(
- int *source_node_map_index,
- int *spike_buffer_map_index,
- int *sorted_source_node_index,
- bool *source_node_index_to_be_mapped,
- int *n_new_source_node_map,
- int n_source)
+
+// device function that checks if an int value is in a sorted 2d-array 
+// assuming that the entries in the 2d-array are sorted.
+// The 2d-array is divided in noncontiguous blocks of size block_size
+__device__ bool checkIfValueIsIn2DArr(int value, int **arr, int n_elem,
+				      int block_size)
 {
-  uint i_source = threadIdx.x + blockIdx.x * blockDim.x;
-  if (i_source>=n_source) return;
-  // Check for sorted_source_node_index unique values:
-  // - either if it is the first of the array (i_source = 0)
-  // - or it is different from previous
-  int node_index = sorted_source_node_index[i_source];
-  if (i_source==0 || node_index!=sorted_source_node_index[i_source-1]) {
-    bool mapped = false;
-    // If the map is not empty search node index in the map
-    if (n_source_node_map>0) {
-      // determine number of blocks in node map
-      int n_blocks = (n_source_node_map - 1) / node_map_block_size + 1;
-      // determine number of elements in last block
-      int n_node_last = (n_source_node_map - 1) % node_map_block_size + 1;
-      // check if node_index is between the minimu and the maximum in the map
-      if (node_index>=source_node_map_index[0][0] &&
-	  node_index<=source_node_map_index[n_blocks-1][n_node_last-1]) {
-	for (int ib=0; ib<n_blocks; ib++) {
-	  int n = node_map_block_size;
-	  if (ib==n_blocks-1) {
-	    n = n_node_last;
-	  }
-	  if (node_index>=source_node_map_index[ib][0] &&
-	      node_index<=source_node_map_index[ib][n-1]) {
-	    int pos = locate(node_index, source_node_map_index[ib], n);    
-	    if (source_node_map_index[ib][pos] == node_index) {
-	      // If it is in the map then flag it as already mapped
-	      mapped = true;
-	    }
-	  }
-	  else if (node_index>source_node_map_index[ib][n-1]) {
-	    break;
-	  }
-	}
-      }
+  // If the array is empty surely the value is not contained in it
+  if (n_elem<=0) {
+    return false;
+  }
+  // determine number of blocks in array
+  int n_blocks = (n_elem - 1) / block_size + 1;
+  // determine number of elements in last block
+  int n_last = (n_elem - 1) % block_size + 1;
+  // check if value is between the minimum and the maximum in the map
+  if (value<arr[0][0] ||
+      value>arr[n_blocks-1][n_last-1]) {
+    return false;
+  }
+  for (int ib=0; ib<n_blocks; ib++) {
+    if (arr[ib][0] > value) { // the array is sorted, so in this case
+      return false;           // value cannot be in the following elements
     }
+    int n = block_size;
+    if (ib==n_blocks-1) { // the last block can be not completely full
+      n = n_last;
+    }
+    // search value in the block
+    int pos = locate<int, int>(value, arr[ib], n);
+    // if value is in the block return true
+    if (pos>=0 && pos<n && arr[ib][pos]==value) {
+      return true;
+    }
+  }
+  return false; // value not found
+}  
+
+
+// kernel that searches node indexes in map
+__global__ void searchNodeIndexInMapKernel
+(
+ int **node_map,
+ int n_node_map,
+ int *sorted_node_index,
+ bool *node_to_map,
+ int *n_node_to_map,
+ int n_node)
+{
+  uint i_node = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i_node>=n_node) return;
+  // Check for sorted_node_index unique values:
+  // - either if it is the first of the array (i_node = 0)
+  // - or it is different from previous
+  int node_index = sorted_node_index[i_node];
+  if (i_node==0 || node_index!=sorted_node_index[i_node-1]) {
+    bool mapped = checkIfValueIsIn2DArr(node_index,
+					node_map,
+					n_node_map, 
+					node_map_block_size);
     // If it is not in the map then flag it to be mapped
     // and atomic increase n_new_source_node_map
     if (!mapped) {
-      source_node_index_to_be_mapped[i_source] = true;
-      atomicInc(n_new_source_nodes_map);
+      node_to_map[i_node] = true;
+      atomicInc(n_node_to_map);
     }
   }
 }

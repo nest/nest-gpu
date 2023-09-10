@@ -7,20 +7,20 @@
 // Arrays that map remote source nodes to local spike buffers
   
 // The map is organized in blocks having block size:
-extern  __constant__ uint remote_node_map_block_size; // = 100000;
+extern  __constant__ uint node_map_block_size; // = 100000;
 
 // number of elements in the map for each source host
 // n_remote_source_node_map[i_source_host]
 // with i_source_host = 0, ..., mpi_proc_num-1 excluding this host itself
 extern __device__ uint *n_remote_source_node_map; // [mpi_proc_num];
 
-// remote_source_node_map_index[i_source_host][i_block][i]
-extern std::vector< std::vector<uint*> > h_remote_source_node_map_index;
-extern __device__ uint ***remote_source_node_map_index;
+// remote_source_node_map[i_source_host][i_block][i]
+extern std::vector< std::vector<uint*> > h_remote_source_node_map;
+extern __device__ uint ***remote_source_node_map;
 
-// local_spike_buffer_map_index[i_source_host][i_block][i]
-extern std::vector< std::vector<uint*> > h_local_spike_buffer_map_index;
-extern __device__ uint ***local_spike_buffer_map_index;
+// local_spike_buffer_map[i_source_host][i_block][i]
+extern std::vector< std::vector<uint*> > h_local_spike_buffer_map;
+extern __device__ uint ***local_spike_buffer_map;
 
 // Arrays that map local source nodes to remote spike buffers
 
@@ -29,10 +29,10 @@ extern __device__ uint ***local_spike_buffer_map_index;
 // with i_target_host = 0, ..., mpi_proc_num-1 excluding this host itself
 extern __device__ uint *n_local_source_node_map; // [mpi_proc_num]; 
 
-// local_source_node_map_index[i_target_host][i_block][i]
-extern std::vector< std::vector<uint*> > h_local_source_node_map_index;
-extern __device__ uint ***local_source_node_map_index;
-extern uint ***d_local_source_node_map_index;
+// local_source_node_map[i_target_host][i_block][i]
+extern std::vector< std::vector<uint*> > h_local_source_node_map;
+extern __device__ uint ***local_source_node_map;
+extern uint ***d_local_source_node_map;
 
 // Boolean array with one boolean value for each connection rule
 // - true if the rule always creates at least one outgoing connection
@@ -122,7 +122,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
 {
   // n_nodes will be the first index for new mapping of remote source nodes
   // to local spike buffers
-  int local_spike_buffer_map_index0 = GetNNode();
+  int local_spike_buffer_map0 = GetNNode();
     
   // check if the flag UseAllSourceNodes[conn_rule] is false
   // if (!use_all_source_nodes_flag) {
@@ -301,29 +301,32 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   //////////////////////////////
 
 
-  // Initialize n_new_source_node_map to 0
+  // Allocate n_new_source_node_map and initialize it to 0 
+  int *d_n_new_source_node_map;
+  gpuErrchk(cudaMalloc(&d_n_new_source_node_map, sizeof(int)));
+  gpuErrchk(cudaMemset(d_n_new_source_node_map, 0, sizeof(int)));
 
-  int n_new_source_node_map = 0;
+
 
   // Check for sorted_source_node_index unique values:
   // - either if it is the first of the array (i_thread = 0)
   // - or it is different from previous
-  // CUDA KERNEL input for target host: remote_source_node_map_index[i_source_host]->source_node_map_index, local_spike_buffer_map_index[i_source_host]->spike_buffer_map_index
-// CUDA KERNEL input for source host: local_source_node_map_index[i_target_host]->source_node_map_index, remote_spike_buffer_map_index[i_target_host]->spike_buffer_map_index
+  // CUDA KERNEL input for target host: remote_source_node_map[i_source_host]->source_node_map, local_spike_buffer_map[i_source_host]->spike_buffer_map
+// CUDA KERNEL input for source host: local_source_node_map[i_target_host]->source_node_map, remote_spike_buffer_map[i_target_host]->spike_buffer_map
 // n_remote_source_node_map[i_target_host]->n_source_node_map
-// remote_node_map_block_size->node_map_block_size forse non necessario,
+// node_map_block_size->node_map_block_size forse non necessario,
 // si può usare variabile globale, uguale per remote e local
-  
-if (i_thread == 0 || sorted_source_node_index[i_thread] != sorted_source_node_index[i_thread-1]) {
 
-// b12) In such case search sorted_source_node_index in the map (locate)
-// If it is not in the map then flag it to be mapped and atomic increase n_new_source_node_map
+__global__ void searchNodeIndexInMapKernel
+(
+ int **node_map,
+ int n_node_map,
+ int *sorted_node_index,
+ bool *node_to_map,
+ int *n_node_to_map,
+ int n_node)
+{
 
-search(sorted_source_node_index[i_thread], source_node_map_index,...)
-if (not_found) {
-  source_node_index_to_be_mapped[i_thread] = true;
-  atomicInc(n_new_source_nodes_map);
-}
 
 
 
