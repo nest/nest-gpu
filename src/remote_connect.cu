@@ -218,7 +218,8 @@ __global__ void countUsedSourceNodeKernel(uint n_source,
 // assuming that the entries in the 2d-array are sorted.
 // The 2d-array is divided in noncontiguous blocks of size block_size
 __device__ bool checkIfValueIsIn2DArr(int value, int **arr, int n_elem,
-				      int block_size)
+				      int block_size, int *i_block,
+				      int *i_in_block)
 {
   // If the array is empty surely the value is not contained in it
   if (n_elem<=0) {
@@ -245,6 +246,8 @@ __device__ bool checkIfValueIsIn2DArr(int value, int **arr, int n_elem,
     int pos = locate<int, int>(value, arr[ib], n);
     // if value is in the block return true
     if (pos>=0 && pos<n && arr[ib][pos]==value) {
+      *i_block = ib;
+      *i_in_block = pos;
       return true;
     }
   }
@@ -270,10 +273,11 @@ __global__ void searchNodeIndexInMapKernel
   // - or it is different from previous
   int node_index = sorted_node_index[i_node];
   if (i_node==0 || node_index!=sorted_node_index[i_node-1]) {
-    bool mapped = checkIfValueIsIn2DArr(node_index,
-					node_map,
-					n_node_map, 
-					node_map_block_size);
+    int i_block;
+    int i_in_block;
+    bool mapped = checkIfValueIsIn2DArr(node_index, node_map,
+					n_node_map, node_map_block_size,
+					&i_block, &i_in_block);
     // If it is not in the map then flag it to be mapped
     // and atomic increase n_new_source_node_map
     if (!mapped) {
@@ -313,5 +317,4 @@ __global__ void insertNodesInMapKernel
     spike_buffer_map[i_block][i] = spike_buffer_map_i0 + pos;
   }
 }
-
 

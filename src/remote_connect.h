@@ -42,6 +42,13 @@ extern uint ***d_local_source_node_map;
 // - false otherwise (fixed_indegree, fixed_total_number, pairwise_bernoulli)
 extern bool *use_all_source_nodes; // [n_connection_rules]:
 
+// device function that checks if an int value is in a sorted 2d-array 
+// assuming that the entries in the 2d-array are sorted.
+// The 2d-array is divided in noncontiguous blocks of size block_size
+__device__ bool checkIfValueIsIn2DArr(int value, int **arr, int n_elem,
+				      int block_size, int *i_block,
+				      int *i_in_block);
+
 // Initialize the maps
 int RemoteConnectionMapInit(uint n_hosts);
 
@@ -77,6 +84,38 @@ __global__ void getUsedSourceNodeIndexKernel(T source, uint n_source,
 __global__ void countUsedSourceNodeKernel(uint n_source,
 					  int *n_used_source_nodes,
 					  int *source_node_flag);
+
+
+// kernel that searches source node indexes in the map,
+// and set local_node_index
+template <class T>
+__global__ void setLocalNodeIndexKernel(T source, uint n_source,
+					int *source_node_flag,
+					int **node_map,
+					int **spike_buffer_map,
+					int n_node_map,
+					int *local_node_index
+					)
+{
+  uint i_source = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i_source>=n_source) return;
+  // Count how many source_node_flag are true using atomic increase
+  // on n_used_source_nodes
+  if (source_node_flag[i_source] != 0) {
+    int node_index = GetNodeIndex(source, i_source);
+    int i_block;
+    int i_in_block;
+    bool mapped = checkIfValueIsIn2DArr(node_index, node_map,
+					n_node_map, node_map_block_size,
+					&i_block, &i_in_block);
+    if (!mapped) {
+      printf("Error in setLocalNodeIndexKernel: node index not mapped\n");
+      return;
+    }
+    int i_spike_buffer = spike_buffer_map[i_block][i_in_block];
+    local_node_index[i_source] = i_spike_buffer;
+  }
+}
 
 
 // REMOTE CONNECT FUNCTION
@@ -568,12 +607,43 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
     }
     std::cout << "\n";
   }
+  //////////////////////////////////////////////////////////////////////
+
+  // Launch kernel that searches source node indexes in the map
+  // and set corresponding values of local_node_index
+  setLocalNodeIndexKernel<<<(n_source+1023)/1024, 1024>>>
+    (source, n_source, d_source_node_flag,
+     d_node_map, d_spike_buffer_map, n_node_map, d_local_node_index);
+  gpuErrchk( cudaPeekAtLastError() );
+  gpuErrchk( cudaDeviceSynchronize() );
+
+  /// TEMPORARY for check
+  std::cout << "n_source: " << n_source << "\n";
+  int h_local_node_index[n_source];
+  gpuErrchk(cudaMemcpy(h_local_node_index, d_local_node_index,
+		       n_source*sizeof(int), cudaMemcpyDeviceToHost));
+
+  for (int i=0; i<n_source; i++) {
+    std::cout << "i_source: " << i << " source_node_flag: "
+	      << h_source_node_flag[i] << " local_node_index: ";
+    if (h_source_node_flag[i]) {
+      std::cout << h_local_node_index[i];
+    }
+    else {
+      std::cout << "---";
+    }
+    std::cout << "\n";
+  }
+  //////////////////////////////
 
 
-  // REMEMBER TO CREATE NEW SPIKE BUFFERS!!!!!!!!!!!!!!!!!!!!!!!!!
+  // On target host. Loop on the connections. Replace the source node index source_node[i_conn] with the value of the element pointed by the index itself in the array local_node_index
+
+  // source_node[i_conn] = local_node_index[source_node[i_conn]];
+    
   // On target host. Create n_nodes_to_map nodes of type ext_neuron
   Create("ext_neuron", h_n_node_to_map);
-
+  
   return 0;
 }
 
