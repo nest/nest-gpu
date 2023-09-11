@@ -3,7 +3,7 @@
 #include <vector>
 #include <cub/cub.cuh>
 #include "nestgpu.h"
-
+#include "copass_sort.h"
 // Arrays that map remote source nodes to local spike buffers
   
 // The map is organized in blocks having block size:
@@ -513,15 +513,67 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   
   //////////////////////////////////////////////////////////////////////
   
-  // b15) sort the WHOLE key-pair map
-  // source_node_map_index, spike_buffer_map_index
-  // block_sort (source_node_map_index, spike_buffer_map_index);
+  // Sort the WHOLE key-pair map source_node_map, spike_buffer_map
+  // using block sort algorithm copass_sort
+  // typical usage:
+  // copass_sort::sort<int, value_struct>(key_subarray, value_subarray, n,
+  //				       aux_size, d_storage, storage_bytes);
+  // Determine temporary storage requirements for copass_sort
+  int64_t storage_bytes = 0;
+  void *d_storage = NULL;
+  copass_sort::sort<uint, uint>
+    (&h_remote_source_node_map[source_host][0],
+     &h_local_spike_buffer_map[source_host][0],
+     n_node_map, block_size, d_storage, storage_bytes);
+  
+  printf("storage bytes for copass sort: %ld\n", storage_bytes);
+  // Allocate temporary storage
+  gpuErrchk(cudaMalloc(&d_storage, storage_bytes));
 
+  // Run sorting operation
+  copass_sort::sort<uint, uint>
+    (&h_remote_source_node_map[source_host][0],
+     &h_local_spike_buffer_map[source_host][0],
+     n_node_map, block_size, d_storage, storage_bytes);
+  gpuErrchk(cudaFree(d_storage));
+
+  //////////////////////////////////////////////////////////////////////
+  /// TEMPORARY for check
+  std::cout << "//////////////////////////////////////////////\n";
+  std::cout << "UPDATED SORTED MAP\n";
+  std::cout << "OF REMOTE-SOURCE_NODES TO LOCAL-SPIKE-BUFFERS\n";
+  std::cout << "n_node_map: " << n_node_map << "\n";
+  std::cout << "n_blocks: " << n_blocks << "\n";
+  std::cout << "block_size: " << block_size << "\n";
+
+  for (int ib=0; ib<n_blocks; ib++) {
+    gpuErrchk(cudaMemcpy(h_node_map_block,
+			 h_remote_source_node_map[source_host][ib],
+			 block_size*sizeof(int),
+			 cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(h_spike_buffer_map_block,
+			 h_local_spike_buffer_map[source_host][ib],
+			 block_size*sizeof(int),
+			 cudaMemcpyDeviceToHost));
+    std::cout << "\n";
+    std::cout << "block " << ib << "\n";
+    std::cout << "remote source node index, local spike buffer index\n";
+    int n = block_size;
+    if (ib==n_blocks-1) {
+      n = (n_node_map - 1) % block_size + 1;
+    }
+    for (int i=0; i<n; i++) {
+      std::cout << h_node_map_block[i] << "\t" << h_spike_buffer_map_block[i]
+		<< "\n"; 
+    }
+    std::cout << "\n";
+  }
 
 
   // REMEMBER TO CREATE NEW SPIKE BUFFERS!!!!!!!!!!!!!!!!!!!!!!!!!
+  // On target host. Create n_nodes_to_map nodes of type ext_neuron
+  Create("ext_neuron", h_n_node_to_map);
 
-  
   return 0;
 }
 
