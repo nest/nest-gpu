@@ -183,6 +183,14 @@ NESTGPU::NESTGPU()
   //_RemoteConnectSource(1, 20, 10, 10, 3, conn_spec1, syn_spec1);
   _RemoteConnectSource(1, d_source_node_index, 10, 10, 3, conn_spec1, syn_spec1);
 
+  std::cout << "##################################################\n";
+  std::cout << "##################################################\n";
+  std::cout << "SECOND CONNECT COMMAND\n";
+  std::cout << "##################################################\n";
+  std::cout << "##################################################\n";
+  _RemoteConnectSource(1, 20, 10, 10, 3, conn_spec1, syn_spec1);
+
+  
   //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   

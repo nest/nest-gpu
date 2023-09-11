@@ -97,7 +97,7 @@ int allocLocalSourceNodeMapBlocks(std::vector<uint*> &i_local_src_node_map,
 // Initialize the maps for n_hosts hosts (i.e. number of MPI processes)
 int RemoteConnectionMapInit(uint n_hosts)
 {
-  h_node_map_block_size = 10000; // initialize node map block size
+  h_node_map_block_size = 3; //10000; // initialize node map block size
   cudaMemcpyToSymbol(node_map_block_size, &h_node_map_block_size, sizeof(int));
 
   // allocate and init to 0 n. of elements in the map for each source host
@@ -280,6 +280,37 @@ __global__ void searchNodeIndexInMapKernel
       node_to_map[i_node] = true;
       atomicAdd(n_node_to_map, 1);
     }
+  }
+}
+
+
+// kernel that checks if nodes are already in map
+// if not insert them in the map
+// In the target host unmapped remote source nodes must be mapped
+// to local nodes from n_nodes to n_nodes + n_node_to_map
+__global__ void insertNodesInMapKernel
+(
+ int **node_map,
+ int **spike_buffer_map,
+ int spike_buffer_map_i0,
+ int old_n_node_map,
+ int *sorted_node_index,
+ bool *node_to_map,
+ int *i_node_to_map,
+ int n_node)
+{
+  uint i_node = threadIdx.x + blockIdx.x * blockDim.x;
+  // if thread is out of range or node is already mapped, return
+  if (i_node>=n_node || !node_to_map[i_node]) return;
+  // node has to be inserted in the map
+  // get and atomically increase index of node to be mapped
+  int pos = atomicAdd(i_node_to_map, 1);
+  int i_node_map = old_n_node_map + pos;
+  int i_block = i_node_map / node_map_block_size;
+  int i = i_node_map % node_map_block_size;
+  node_map[i_block][i] = sorted_node_index[i_node];
+  if (spike_buffer_map != NULL) {
+    spike_buffer_map[i_block][i] = spike_buffer_map_i0 + pos;
   }
 }
 
