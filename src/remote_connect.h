@@ -117,6 +117,13 @@ __global__ void setLocalNodeIndexKernel(T source, uint n_source,
   }
 }
 
+// Loops on all new connections and replaces the source node index
+// source_node[i_conn] with the value of the element pointed by the
+// index itself in the array local_node_index
+int fixConnectionSourceNodeIndexes(std::vector<uint*> &key_subarray,
+				   int64_t old_n_conn, int64_t n_conn,
+				   int64_t block_size,
+				   int *d_local_node_index);
 
 // REMOTE CONNECT FUNCTION
 template <class T1, class T2>
@@ -637,8 +644,9 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   //////////////////////////////
 
 
-  // On target host. Loop on the connections. Replace the source node index source_node[i_conn] with the value of the element pointed by the index itself in the array local_node_index
-
+  // On target host. Loop on all new connections and replace
+  // the source node index source_node[i_conn] with the value of the element
+  // pointed by the index itself in the array local_node_index
   // source_node[i_conn] = local_node_index[source_node[i_conn]];
 
   // similar to setUsedSourceNodes
@@ -647,8 +655,8 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   //setUsedSourceNodes(KeySubarray, old_n_conn, NConn, h_ConnBlockSize,
   //		     d_source_node_flag);
   // becomes something like
-  // fixConnectionSourceNodeIndexes(KeySubarray, old_n_conn, NConn,
-  // h_ConnBlockSize, d_local_node_index);
+  fixConnectionSourceNodeIndexes(KeySubarray, old_n_conn, NConn,
+				 h_ConnBlockSize, d_local_node_index);
 
   // On target host. Create n_nodes_to_map nodes of type ext_neuron
   Create("ext_neuron", h_n_node_to_map);

@@ -1,0 +1,101 @@
+i_conn: 0        i_source: 4 -> 22 -> 31
+i_conn: 1        i_source: 9 -> 22 -> 31
+i_conn: 2        i_source: 9 -> 22 -> 31
+i_conn: 3        i_source: 2 -> 21 -> 30
+i_conn: 4        i_source: 5 -> 21 -> 30
+i_conn: 5        i_source: 7 -> 25 -> 33
+i_conn: 6        i_source: 4 -> 22 -> 31
+i_conn: 7        i_source: 7 -> 25 -> 33
+i_conn: 8        i_source: 6 -> 23 -> 32
+
+i_source: 0 source_node_flag: 0
+i_source: 1 source_node_flag: 0
+i_source: 2 source_node_flag: 1 -> 21
+i_source: 3 source_node_flag: 0
+i_source: 4 source_node_flag: 1 -> 22
+i_source: 5 source_node_flag: 1 -> 21
+i_source: 6 source_node_flag: 1 -> 23
+i_source: 7 source_node_flag: 1 -> 25
+i_source: 8 source_node_flag: 0
+i_source: 9 source_node_flag: 1 -> 22
+n_used_source_nodes: 6
+n_used_source_nodes: 6
+i_used_source: 0 unsorted_source_node_index: 21 i_unsorted_source_arr: 2
+i_used_source: 1 unsorted_source_node_index: 22 i_unsorted_source_arr: 4
+i_used_source: 2 unsorted_source_node_index: 21 i_unsorted_source_arr: 5
+i_used_source: 3 unsorted_source_node_index: 23 i_unsorted_source_arr: 6
+i_used_source: 4 unsorted_source_node_index: 25 i_unsorted_source_arr: 7
+i_used_source: 5 unsorted_source_node_index: 22 i_unsorted_source_arr: 9
+
+21      30
+22      31
+23      32
+25      33
+
+n_new_conn: 9   n_conn: 9       old_n_conn: 0
+n_new_conn: 9   i_conn0: 0      n_block_conn: 9
+i_conn: 0        new_i_source: 31
+i_conn: 1        new_i_source: 31
+i_conn: 2        new_i_source: 31
+i_conn: 3        new_i_source: 30
+i_conn: 4        new_i_source: 30
+i_conn: 5        new_i_source: 33
+i_conn: 6        new_i_source: 31
+i_conn: 7        new_i_source: 33
+i_conn: 8        new_i_source: 32
+
+
+##################################################
+SECOND CONNECT COMMAND
+##################################################
+
+i_conn: 0        i_source: 6 -> 26 -> 35
+i_conn: 1        i_source: 1 -> 21 -> 30
+i_conn: 2        i_source: 8 -> 28 -> 36
+i_conn: 3        i_source: 4 -> 24 -> 34
+i_conn: 4        i_source: 8 -> 28 -> 36
+i_conn: 5        i_source: 5 -> 25 -> 33
+i_conn: 6        i_source: 2 -> 22 -> 31
+i_conn: 7        i_source: 2 -> 22 -> 31
+i_conn: 8        i_source: 2 -> 22 -> 31
+
+
+i_source: 0 source_node_flag: 0
+i_source: 1 source_node_flag: 1 -> 21
+i_source: 2 source_node_flag: 1 -> 22
+i_source: 3 source_node_flag: 0
+i_source: 4 source_node_flag: 1 -> 24
+i_source: 5 source_node_flag: 1 -> 25
+i_source: 6 source_node_flag: 1 -> 26
+i_source: 7 source_node_flag: 0
+i_source: 8 source_node_flag: 1 -> 28
+i_source: 9 source_node_flag: 0
+n_used_source_nodes: 6
+n_used_source_nodes: 6
+i_used_source: 0 unsorted_source_node_index: 21 i_unsorted_source_arr: 1
+i_used_source: 1 unsorted_source_node_index: 22 i_unsorted_source_arr: 2
+i_used_source: 2 unsorted_source_node_index: 24 i_unsorted_source_arr: 4
+i_used_source: 3 unsorted_source_node_index: 25 i_unsorted_source_arr: 5
+i_used_source: 4 unsorted_source_node_index: 26 i_unsorted_source_arr: 6
+i_used_source: 5 unsorted_source_node_index: 28 i_unsorted_source_arr: 8
+
+21      30
+22      31
+23      32
+24      34
+25      33
+26      35
+28      36
+
+n_new_conn: 9   n_conn: 18      old_n_conn: 9
+n_new_conn: 9   i_conn0: 9      n_block_conn: 9
+i_conn: 0        new_i_source: 35
+i_conn: 1        new_i_source: 30
+i_conn: 2        new_i_source: 36
+i_conn: 3        new_i_source: 34
+i_conn: 4        new_i_source: 36
+i_conn: 5        new_i_source: 33
+i_conn: 6        new_i_source: 31
+i_conn: 7        new_i_source: 31
+i_conn: 8        new_i_source: 31
+ok

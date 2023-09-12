@@ -318,3 +318,67 @@ __global__ void insertNodesInMapKernel
   }
 }
 
+// kernel that replaces the source node index
+// in a new remote connection of a given block
+// source_node[i_conn] with the value of the element pointed by the
+// index itself in the array local_node_index
+__global__ void fixConnectionSourceNodeIndexesKernel(uint *key_subarray,
+						     int64_t n_conn,
+						     int *local_node_index)
+{
+  int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i_conn>=n_conn) return;
+  int i_source = key_subarray[i_conn] >> MaxPortNBits;
+  int i_delay = key_subarray[i_conn] & PortMask;
+  int new_i_source = local_node_index[i_source];
+
+  key_subarray[i_conn] = (new_i_source << MaxPortNBits) | i_delay;
+  printf("i_conn: %ld\t new_i_source: %d\n", i_conn, new_i_source); 
+}
+
+// Loops on all new connections and replaces the source node index
+// source_node[i_conn] with the value of the element pointed by the
+// index itself in the array local_node_index
+int fixConnectionSourceNodeIndexes(std::vector<uint*> &key_subarray,
+				   int64_t old_n_conn, int64_t n_conn,
+				   int64_t block_size,
+				   int *d_local_node_index)
+{
+  uint64_t n_new_conn = n_conn - old_n_conn; // number of new connections
+  std::cout << "Fixing source node indexes in new remote connections\n";
+  std::cout << "n_new_conn: " << n_new_conn
+	    << "\tn_conn: " << n_conn
+	    << "\told_n_conn: " << old_n_conn << "\n";
+  
+  uint ib0 = (uint)(old_n_conn / block_size); // first block index
+  uint ib1 = (uint)((n_conn - 1) / block_size); // last block
+  for (uint ib=ib0; ib<=ib1; ib++) { // loop on blocks
+    uint64_t n_block_conn; // number of connections in a block
+    uint64_t i_conn0; // index of first connection in a block
+    if (ib1 == ib0) {  // all connections are in the same block
+      i_conn0 = old_n_conn % block_size;
+      n_block_conn = n_new_conn;
+    }
+    else if (ib == ib0) { // first block
+      i_conn0 = old_n_conn % block_size;
+      n_block_conn = block_size - i_conn0;
+    }
+    else if (ib == ib1) { // last block
+      i_conn0 = 0;
+      n_block_conn = (n_conn - 1) % block_size + 1;
+    }
+    else {
+      i_conn0 = 0;
+      n_block_conn = block_size;
+    }
+    std::cout << "n_new_conn: " << n_new_conn
+	      << "\ti_conn0: " << i_conn0
+	      << "\tn_block_conn: " << n_block_conn << "\n";
+	  
+    fixConnectionSourceNodeIndexesKernel<<<(n_block_conn+1023)/1024, 1024>>>
+      (key_subarray[ib] + i_conn0, n_block_conn, d_local_node_index);
+    gpuErrchk( cudaPeekAtLastError() );
+    gpuErrchk( cudaDeviceSynchronize() );
+  }
+  return 0;
+}
