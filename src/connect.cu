@@ -459,8 +459,18 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
     storage_bytes = 0; 
   }
   printf("Indexing connection groups...\n");
-  uint k = key_subarray.size();
-
+  // This shoul be corrected to separate number of allocated blocks
+  // (determined by key_subarray.size()) from number of blocks
+  // on which there are connections, which is determined by n_conn
+  // uint k = key_subarray.size();
+  uint k; // number of connection blocks
+  if (n_conn<=0) {
+    k = 0;
+  }
+  else {
+    k = (n_conn - 1)  / block_size + 1;
+  }
+  
   gpuErrchk(cudaMalloc(&d_ConnGroupNum, n_node*sizeof(uint)));
   gpuErrchk(cudaMemset(d_ConnGroupNum, 0, n_node*sizeof(uint)));
   

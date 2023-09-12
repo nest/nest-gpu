@@ -180,8 +180,11 @@ NESTGPU::NESTGPU()
   gpuErrchk(cudaMemcpy(d_source_node_index, h_source_node_index,
 		       n_source*sizeof(int), cudaMemcpyHostToDevice));
 
-  //_RemoteConnectSource(1, 20, 10, 10, 3, conn_spec1, syn_spec1);
-  _RemoteConnectSource(1, d_source_node_index, 10, 10, 3, conn_spec1, syn_spec1);
+  _RemoteConnectSource(1, d_source_node_index, 10, 10, 3,
+  		       conn_spec1, syn_spec1);
+  //_RemoteConnectTarget(0, d_source_node_index, 10, 10, 3,
+  //		       conn_spec1, syn_spec1);
+  
 
   std::cout << "##################################################\n";
   std::cout << "##################################################\n";
@@ -189,7 +192,7 @@ NESTGPU::NESTGPU()
   std::cout << "##################################################\n";
   std::cout << "##################################################\n";
   _RemoteConnectSource(1, 20, 10, 10, 3, conn_spec1, syn_spec1);
-
+  //_RemoteConnectTarget(0, 20, 10, 10, 3, conn_spec1, syn_spec1);
   
   //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

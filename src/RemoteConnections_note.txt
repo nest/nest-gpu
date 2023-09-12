@@ -103,14 +103,16 @@ namespace ngpu_remote_connections
 
 // b) CONNECT FUNCTION
 // The seed for random number generation should be specific and used only by connect commands
-// It should be determined by a specific master seed, a counter of the number of connect commands, the target host index and the source host index
+// It should be determined by a specific seed for remote connections
+// a 2d array indexed by the source host index and the target host index
+// connection_rng[i_source_host][i_target_host]
 // Problem: how to update the master seed?
 // Maybe a single rnd extraction for any connect command, then summing MPI_Num*target_host_index + source_host_index
 
 connect_rnd_seed = MPI_Num*target_host_index + source_host_index
 
 // This seed should also be used for the delays if they are extracted from a random distribution,
-// in order to evaluate the minimu delay consistently in the source and in the target host.
+// in order to evaluate the minimum delay consistently in the source and in the target host.
 // OR maybe it is more efficient to send the delay from the target host to the source host throuh MPI. 
 // Check if target_host matches the MPI ID. In such case:
 // b00) n_nodes will be the first index for new mapping of remote source nodes to local spike buffers
