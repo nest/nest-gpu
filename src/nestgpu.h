@@ -797,6 +797,9 @@ int _RemoteConnectTarget(int target_host, T1 source, int n_source,
 
   float GetNeuronGroupParam(int i_node, std::string param_name);
 
+  // Calibrate remote connection maps
+  int  RemoteConnectionMapCalibrate(int i_host, int n_hosts);
+
 };
 
 

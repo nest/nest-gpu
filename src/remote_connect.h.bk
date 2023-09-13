@@ -17,12 +17,12 @@ extern __device__ uint *n_remote_source_node_map; // [mpi_proc_num];
 extern uint *d_n_remote_source_node_map;
 
 // remote_source_node_map[i_source_host][i_block][i]
-extern std::vector< std::vector<int*> > h_remote_source_node_map;
-extern __device__ int ***remote_source_node_map;
+extern std::vector< std::vector<uint*> > h_remote_source_node_map;
+extern __device__ uint ***remote_source_node_map;
 
 // local_spike_buffer_map[i_source_host][i_block][i]
-extern std::vector< std::vector<int*> > h_local_spike_buffer_map;
-extern __device__ int ***local_spike_buffer_map;
+extern std::vector< std::vector<uint*> > h_local_spike_buffer_map;
+extern __device__ uint ***local_spike_buffer_map;
 
 // Arrays that map local source nodes to remote spike buffers
 
@@ -33,9 +33,9 @@ extern __device__ uint *n_local_source_node_map; // [mpi_proc_num];
 extern uint *d_n_local_source_node_map;
 
 // local_source_node_map[i_target_host][i_block][i]
-extern std::vector< std::vector<int*> > h_local_source_node_map;
-extern __device__ int ***local_source_node_map;
-extern int ***d_local_source_node_map;
+extern std::vector< std::vector<uint*> > h_local_source_node_map;
+extern __device__ uint ***local_source_node_map;
+extern uint ***d_local_source_node_map;
 
 // Boolean array with one boolean value for each connection rule
 // - true if the rule always creates at least one outgoing connection
@@ -54,12 +54,12 @@ __device__ bool checkIfValueIsIn2DArr(int value, int **arr, int n_elem,
 int RemoteConnectionMapInit(uint n_hosts);
 
 // Allocate GPU memory for new remote-source-node-map blocks
-int allocRemoteSourceNodeMapBlocks(std::vector<int*> &i_remote_src_node_map,
-				   std::vector<int*> &i_local_spike_buf_map,
+int allocRemoteSourceNodeMapBlocks(std::vector<uint*> &i_remote_src_node_map,
+				   std::vector<uint*> &i_local_spike_buf_map,
 				   int64_t block_size, uint new_n_block);
 
 // Allocate GPU memory for new local-source-node-map blocks
-int allocLocalSourceNodeMapBlocks(std::vector<int*> &i_local_src_node_map,
+int allocLocalSourceNodeMapBlocks(std::vector<uint*> &i_local_src_node_map,
 				  int64_t block_size, uint new_n_block);
 
 int setUsedSourceNodes(std::vector<uint*> &key_subarray,
@@ -581,7 +581,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   // Determine temporary storage requirements for copass_sort
   int64_t storage_bytes = 0;
   void *d_storage = NULL;
-  copass_sort::sort<int, int>
+  copass_sort::sort<uint, uint>
     (&h_remote_source_node_map[source_host][0],
      &h_local_spike_buffer_map[source_host][0],
      n_node_map, block_size, d_storage, storage_bytes);
@@ -591,7 +591,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   gpuErrchk(cudaMalloc(&d_storage, storage_bytes));
 
   // Run sorting operation
-  copass_sort::sort<int, int>
+  copass_sort::sort<uint, uint>
     (&h_remote_source_node_map[source_host][0],
      &h_local_spike_buffer_map[source_host][0],
      n_node_map, block_size, d_storage, storage_bytes);
@@ -1028,7 +1028,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
   // Determine temporary storage requirements for copass_sort
   int64_t storage_bytes = 0;
   void *d_storage = NULL;
-  copass_sort::sort<int>
+  copass_sort::sort<uint>
     (&h_local_source_node_map[target_host][0],
      n_node_map, block_size, d_storage, storage_bytes);
   
@@ -1037,7 +1037,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
   gpuErrchk(cudaMalloc(&d_storage, storage_bytes));
 
   // Run sorting operation
-  copass_sort::sort<int>
+  copass_sort::sort<uint>
     (&h_local_source_node_map[target_host][0],
      n_node_map, block_size, d_storage, storage_bytes);
   gpuErrchk(cudaFree(d_storage));

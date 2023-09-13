@@ -30,12 +30,12 @@ __device__ uint *n_remote_source_node_map; // [mpi_proc_num];
 uint *d_n_remote_source_node_map;
 
 // remote_source_node_map[i_source_host][i_block][i]
-std::vector< std::vector<int*> > h_remote_source_node_map;
-__device__ int ***remote_source_node_map;
+std::vector< std::vector<uint*> > h_remote_source_node_map;
+__device__ uint ***remote_source_node_map;
 
 // local_spike_buffer_map[i_source_host][i_block][i]
-std::vector< std::vector<int*> > h_local_spike_buffer_map;
-__device__ int ***local_spike_buffer_map;
+std::vector< std::vector<uint*> > h_local_spike_buffer_map;
+__device__ uint ***local_spike_buffer_map;
 
 // Define two arrays that map local source nodes to remote spike buffers.
 // The structure is the same as for remote source nodes
@@ -48,11 +48,11 @@ uint *d_n_local_source_node_map;
 std::vector<uint> h_n_local_source_node_map;
 
 // local_source_node_map[i_target_host][i_block][i]
-std::vector< std::vector<int*> > h_local_source_node_map;
-__device__ int ***local_source_node_map;
-int ***d_local_source_node_map;
+std::vector< std::vector<uint*> > h_local_source_node_map;
+__device__ uint ***local_source_node_map;
+uint ***d_local_source_node_map;
 // hd_local_source_node_map[i_target_host] vector of pointers to gpu memory
-std::vector<int**> hd_local_source_node_map;
+std::vector<uint**> hd_local_source_node_map;
 
 
 // number of remote target hosts (i.e. MPI processes) on which each local node
@@ -67,17 +67,17 @@ int *d_n_target_hosts; // [n_nodes]
 bool *use_all_source_nodes; // [n_connection_rules]:
 
 // Allocate GPU memory for new remote-source-node-map blocks
-int allocRemoteSourceNodeMapBlocks(std::vector<int*> &i_remote_src_node_map,
-				   std::vector<int*> &i_local_spike_buf_map,
+int allocRemoteSourceNodeMapBlocks(std::vector<uint*> &i_remote_src_node_map,
+				   std::vector<uint*> &i_local_spike_buf_map,
 				   int64_t block_size, uint new_n_block)
 {
   // allocate new blocks if needed
   for (uint ib=i_remote_src_node_map.size(); ib<new_n_block; ib++) {
-    int *d_remote_src_node_blk_pt;
-    int *d_local_spike_buf_blk_pt;
+    uint *d_remote_src_node_blk_pt;
+    uint *d_local_spike_buf_blk_pt;
     // allocate GPU memory for new blocks 
-    gpuErrchk(cudaMalloc(&d_remote_src_node_blk_pt, block_size*sizeof(int)));
-    gpuErrchk(cudaMalloc(&d_local_spike_buf_blk_pt, block_size*sizeof(int)));
+    gpuErrchk(cudaMalloc(&d_remote_src_node_blk_pt, block_size*sizeof(uint)));
+    gpuErrchk(cudaMalloc(&d_local_spike_buf_blk_pt, block_size*sizeof(uint)));
       
     i_remote_src_node_map.push_back(d_remote_src_node_blk_pt);
     i_local_spike_buf_map.push_back(d_local_spike_buf_blk_pt);
@@ -87,14 +87,14 @@ int allocRemoteSourceNodeMapBlocks(std::vector<int*> &i_remote_src_node_map,
 }
 
 // Allocate GPU memory for new local-source-node-map blocks
-int allocLocalSourceNodeMapBlocks(std::vector<int*> &i_local_src_node_map,
+int allocLocalSourceNodeMapBlocks(std::vector<uint*> &i_local_src_node_map,
 				  int64_t block_size, uint new_n_block)
 {
   // allocate new blocks if needed
   for (uint ib=i_local_src_node_map.size(); ib<new_n_block; ib++) {
-    int *d_local_src_node_blk_pt;
+    uint *d_local_src_node_blk_pt;
     // allocate GPU memory for new blocks 
-    gpuErrchk(cudaMalloc(&d_local_src_node_blk_pt, block_size*sizeof(int)));
+    gpuErrchk(cudaMalloc(&d_local_src_node_blk_pt, block_size*sizeof(uint)));
       
     i_local_src_node_map.push_back(d_local_src_node_blk_pt);
   }
@@ -119,13 +119,13 @@ int RemoteConnectionMapInit(uint n_hosts)
 
   // initialize maps
   for (uint i_host=0; i_host<n_hosts; i_host++) {
-    std::vector<int*> rsn_map;
+    std::vector<uint*> rsn_map;
     h_remote_source_node_map.push_back(rsn_map);
       
-    std::vector<int*> lsb_map;
+    std::vector<uint*> lsb_map;
     h_local_spike_buffer_map.push_back(lsb_map);
 
-    std::vector<int*> lsn_map;
+    std::vector<uint*> lsn_map;
     h_local_source_node_map.push_back(lsn_map);
   }
     
@@ -147,7 +147,7 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
 {
   // vector of pointers to local source node maps in device memory
   // per target host hd_local_source_node_map[target_host]
-  // type std::vector<int*>
+  // type std::vector<uint*>
   // set its size and initialize to NULL
   hd_local_source_node_map.resize(n_hosts, NULL);
   // number of elements in each local source node map
