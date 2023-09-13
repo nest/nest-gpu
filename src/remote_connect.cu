@@ -28,6 +28,7 @@ uint h_node_map_block_size; // = 100000;
 // with i_source_host = 0, ..., mpi_proc_num-1 excluding this host itself
 __device__ uint *n_remote_source_node_map; // [mpi_proc_num];
 uint *d_n_remote_source_node_map;
+std::vector<uint> h_n_remote_source_node_map;
 
 // remote_source_node_map[i_source_host][i_block][i]
 std::vector< std::vector<int*> > h_remote_source_node_map;
@@ -36,6 +37,9 @@ __device__ int ***remote_source_node_map;
 // local_spike_buffer_map[i_source_host][i_block][i]
 std::vector< std::vector<int*> > h_local_spike_buffer_map;
 __device__ int ***local_spike_buffer_map;
+int ***d_local_spike_buffer_map;
+// hd_local_spike_buffer_map[i_source_host] vector of pointers to gpu memory
+std::vector<int**> hd_local_spike_buffer_map;
 
 // Define two arrays that map local source nodes to remote spike buffers.
 // The structure is the same as for remote source nodes
@@ -154,7 +158,16 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
   // h_n_local_source_node_map[target_host]
   // set its size and initialize to 0
   h_n_local_source_node_map.resize(n_hosts, 0);
-  // loop in target hosts, skip self host
+  // vector of pointers to local spike buffer maps in device memory
+  // per source host hd_local_spike_buffer_map[source_host]
+  // type std::vector<int*>
+  // set its size and initialize to NULL
+  hd_local_spike_buffer_map.resize(n_hosts, NULL);
+  // number of elements in each remote-source-node->local-spike-buffer map
+  // h_n_remote_source_node_map[source_host]
+  // set its size and initialize to 0
+  h_n_remote_source_node_map.resize(n_hosts, 0);
+  // loop on target hosts, skip self host
   for (int tg_host=0; tg_host<n_hosts; tg_host++) {
     if (tg_host != i_host) {
       // get number of elements in each map from device memory
@@ -183,6 +196,36 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
 		       n_hosts*sizeof(int**), cudaMemcpyHostToDevice));
   gpuErrchk(cudaMemcpyToSymbol(local_source_node_map,
 			       &d_local_source_node_map, sizeof(int***)));
+
+  // loop on source hosts, skip self host
+  for (int src_host=0; src_host<n_hosts; src_host++) {
+    if (src_host != i_host) {
+      // get number of elements in each map from device memory
+      int n_node_map;
+      gpuErrchk(cudaMemcpy(&n_node_map,
+			   &d_n_remote_source_node_map[src_host], sizeof(int),
+			   cudaMemcpyDeviceToHost));
+      // put it in h_n_remote_source_node_map[src_host]
+      h_n_remote_source_node_map[src_host] = n_node_map;
+      // Allocate array of local spike buffer map blocks
+      // and copy their address from host to device
+      int n_blocks = h_local_spike_buffer_map[src_host].size();
+      if (n_blocks>0) {
+	gpuErrchk(cudaMalloc(&hd_local_spike_buffer_map[src_host],
+			     n_blocks*sizeof(int*)));
+	gpuErrchk(cudaMemcpy(hd_local_spike_buffer_map[src_host],
+			     &h_local_spike_buffer_map[src_host][0],
+			     n_blocks*sizeof(int*),
+			     cudaMemcpyHostToDevice));
+      }
+    }
+  }
+  // allocate d_local_spike_buffer_map and copy it from host to device
+  gpuErrchk(cudaMalloc(&d_local_spike_buffer_map, n_hosts*sizeof(int**)));
+  gpuErrchk(cudaMemcpy(d_local_spike_buffer_map, &hd_local_spike_buffer_map[0],
+		       n_hosts*sizeof(int**), cudaMemcpyHostToDevice));
+  gpuErrchk(cudaMemcpyToSymbol(local_spike_buffer_map,
+			       &d_local_spike_buffer_map, sizeof(int***)));
   
   int n_nodes = GetNNode(); // number of nodes
   // n_target_hosts[i_node] is the number of remote target hosts
