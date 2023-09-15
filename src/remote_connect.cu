@@ -334,14 +334,14 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
   }
 
   // TEMPORARY, FOR TESTING
-  //int h_n_target_hosts[n_nodes];
-  //gpuErrchk(cudaMemcpy(h_n_target_hosts, d_n_target_hosts,
-  //		       n_nodes*sizeof(int), cudaMemcpyDeviceToHost));
-  //std::cout << "////////////////////////////////////////\n";
-  //std::cout << "i_node, n_target_hosts\n";
-  //for (int i_node=0; i_node<n_nodes; i_node++) {
-  //  std::cout << i_node << "\t" << h_n_target_hosts[i_node] << "\n";
-  //}
+  int h_n_target_hosts[n_nodes];
+  gpuErrchk(cudaMemcpy(h_n_target_hosts, d_n_target_hosts,
+  		       n_nodes*sizeof(int), cudaMemcpyDeviceToHost));
+  std::cout << "////////////////////////////////////////\n";
+  std::cout << "i_node, n_target_hosts\n";
+  for (int i_node=0; i_node<n_nodes; i_node++) {
+    std::cout << i_node << "\t" << h_n_target_hosts[i_node] << "\n";
+  }
   //////////////////////////////////////////////////////////////////////
   
   return 0;

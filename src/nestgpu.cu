@@ -153,7 +153,7 @@ NESTGPU::NESTGPU()
 #endif
 
   int this_host = 1;
-  RemoteConnectionMapInit(4); // (uint n_hosts)
+  RemoteConnectionMapInit(5); // (uint n_hosts)
   // TEMPORARY, REMOVE!!!!!!!!!!!!!!!!!
   int n_neurons = 30;
   int CE = 3;
@@ -199,9 +199,51 @@ NESTGPU::NESTGPU()
   _RemoteConnect(this_host, 1, 20, 10, 0, 10, 3, conn_spec1, syn_spec1);
   //_RemoteConnectSource(1, 20, 10, 10, 3, conn_spec1, syn_spec1);
   //_RemoteConnectTarget(0, 20, 10, 10, 3, conn_spec1, syn_spec1);
+
+  ConnSpec conn_spec2(ALL_TO_ALL);
+  
+  int n_source2 = 4;
+  int h_source_node_index2[n_source2] =
+    {1, 2, 3, 4};
+  int *d_source_node_index2;
+  gpuErrchk(cudaMalloc(&d_source_node_index2, n_source2*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_source_node_index2, h_source_node_index2,
+		       n_source2*sizeof(int), cudaMemcpyHostToDevice));
+  _RemoteConnect(this_host, 1, d_source_node_index2, n_source2, 3, 0, 1,
+  		 conn_spec2, syn_spec1);
+
+  int n_source3 = 3;
+  int h_source_node_index3[n_source3] =
+    {2, 3, 4};
+  int *d_source_node_index3;
+  gpuErrchk(cudaMalloc(&d_source_node_index3, n_source3*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_source_node_index3, h_source_node_index3,
+		       n_source3*sizeof(int), cudaMemcpyHostToDevice));
+  _RemoteConnect(this_host, 1, d_source_node_index3, n_source3, 2, 0, 1,
+  		 conn_spec2, syn_spec1);
+
+  int n_source4 = 2;
+  int h_source_node_index4[n_source4] =
+    {3, 4};
+  int *d_source_node_index4;
+  gpuErrchk(cudaMalloc(&d_source_node_index4, n_source4*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_source_node_index4, h_source_node_index4,
+		       n_source4*sizeof(int), cudaMemcpyHostToDevice));
+  _RemoteConnect(this_host, 1, d_source_node_index4, n_source4, 4, 0, 1,
+  		 conn_spec2, syn_spec1);
+
+  int n_source5 = 1;
+  int h_source_node_index5[n_source5] = {4};
+  int *d_source_node_index5;
+  gpuErrchk(cudaMalloc(&d_source_node_index5, n_source5*sizeof(int)));
+  gpuErrchk(cudaMemcpy(d_source_node_index5, h_source_node_index5,
+		       n_source5*sizeof(int), cudaMemcpyHostToDevice));
+  _RemoteConnect(this_host, 1, d_source_node_index5, n_source5, 0, 0, 1,
+  		 conn_spec2, syn_spec1);
+
   
   //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  RemoteConnectionMapCalibrate(this_host, 4);
+  RemoteConnectionMapCalibrate(this_host, 5);
   //RemoteConnectionMapCalibrate(0, 4);
   //RemoteConnectionMapCalibrate(1, 4);
   
