@@ -132,7 +132,8 @@ int fixConnectionSourceNodeIndexes(std::vector<uint*> &key_subarray,
 
 // REMOTE CONNECT FUNCTION
 template <class T1, class T2>
-int NESTGPU::_RemoteConnect(int source_host, T1 source, int n_source,
+int NESTGPU::_RemoteConnect(int this_host,
+			    int source_host, T1 source, int n_source,
 			    int target_host, T2 target, int n_target,
 			    ConnSpec &conn_spec, SynSpec &syn_spec)
 {
@@ -149,22 +150,22 @@ int NESTGPU::_RemoteConnect(int source_host, T1 source, int n_source,
 		    SynSpec &syn_spec
 		    ) { //.........
     
-    int connect_rnd_seed = master_seed + mpi_proc_num*target_host_index + 1;
-    + source_host_index;
+    int connect_rnd_seed = master_seed + mpi_proc_num*(target_host + 1)
+    + source_host;
     update(master_seed);
   */
   // Check if it is a local connection
-  if (MpiId()==source_host && source_host==target_host) {
+  if (this_host==source_host && source_host==target_host) {
     return _Connect(source, n_source, target, n_target,
 		    conn_spec, syn_spec);
   }
-  // Check if target_host matches the MPI ID.
-  else if (MpiId()==target_host) {
+  // Check if target_host matches this_host
+  else if (this_host==target_host) {
     return _RemoteConnectSource(source_host, source, n_source,
 				target, n_target, conn_spec, syn_spec);
   }
-  // Check if target_host matches the MPI ID.
-  else if (MpiId()==source_host) {
+  // Check if source_host matches this_host
+  else if (this_host==source_host) {
     return _RemoteConnectTarget(target_host, source, n_source,
 				target, n_target, conn_spec, syn_spec);
   }

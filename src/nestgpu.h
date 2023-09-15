@@ -218,7 +218,7 @@ class NESTGPU
      SynSpec &syn_spec);
 
 template <class T1, class T2>
-int _RemoteConnect(int source_host, T1 source, int n_source,
+int _RemoteConnect(int this_host, int source_host, T1 source, int n_source,
 		   int target_host, T2 target, int n_target,
 		   ConnSpec &conn_spec, SynSpec &syn_spec);
 

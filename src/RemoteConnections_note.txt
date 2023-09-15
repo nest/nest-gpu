@@ -1,3 +1,23 @@
+Better to separate the code for remote communication (i.e. MPI)
+from the rest, because in principle communication can be achieved
+through other protocols or methods, for instance some kind of shared memory,
+a software interface to communicate spikes to other simulators, physical or virtual devices, ...
+In all other files, including nestgpu.cu/h, remote_connect.cu/h, connect_rules.cu/h, ... remove any reference to MPI and its functions.
+Replace mpi_id (mpi rank, MpiId(),...) with the member variable this_host_, and mpi_num_ (mpi_proc_num, ...) with n_hosts_
+In connect_rules.cu/h, in RemoteConnect(..), replace check on MPI activation
+with check that source and target host are in the correct range, 0-n_hosts-1
+Remove RemoteConnectOneToOne, AllToAll, and so on
+
+Check that the random number generator is used consistentlyy in the code
+across different files and functions and in CUDA kernels, and whether
+a single generator initialized only once with a specified seed is used.
+Do this check in connection generation code, in particular.
+(maybe with emacs search rnd, rng, rand).
+
+Define a 2d array of random number generators specialized for connections,
+where the rows and columns of the 2d array correspond to different hosts.
+
+
 
 // remote_source_node_map_index[i_source_host][i_block][i]
 extern std::vector< std::vector<uint*> > h_remote_source_node_map_index;
