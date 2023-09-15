@@ -195,6 +195,7 @@ NESTGPU::NESTGPU()
   _RemoteConnectTarget(0, 20, 10, 10, 3, conn_spec1, syn_spec1);
   
   //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  //RemoteConnectionMapCalibrate(0, 4);
   RemoteConnectionMapCalibrate(1, 4);
   
   // NestedLoop::Init(); moved to calibrate

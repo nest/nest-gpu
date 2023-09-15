@@ -226,6 +226,87 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
 		       n_hosts*sizeof(int**), cudaMemcpyHostToDevice));
   gpuErrchk(cudaMemcpyToSymbol(local_spike_buffer_map,
 			       &d_local_spike_buffer_map, sizeof(int***)));
+
+  //// TEMPORARY, FOR CHECK
+  std::cout << "////////////////////////////////////////\n";
+  std::cout << "IN MAP CALIBRATION\n";
+  
+  int tmp_n_hosts = 2;
+  int tmp_tg_host = 0;
+  int tmp_src_host = 1;
+  
+  int **tmp_pt2[tmp_n_hosts];
+  int tmp_n[tmp_n_hosts];
+  int tmp_map[h_node_map_block_size];
+  int n_map;
+  int n_blocks;
+
+  gpuErrchk(cudaMemcpy(tmp_n, d_n_local_source_node_map,
+		       tmp_n_hosts*sizeof(int), cudaMemcpyDeviceToHost));
+  n_map = tmp_n[tmp_tg_host];
+  if (n_map>0) {
+    std::cout << "////////////////////////////////////////\n";
+    std::cout << "Local Source Node Map\n";
+    std::cout << "target host: " << tmp_tg_host << "\n";
+    std::cout << "n_local_source_node_map: " << n_map << "\n";
+    gpuErrchk(cudaMemcpy(tmp_pt2, d_local_source_node_map,
+			 tmp_n_hosts*sizeof(int**), cudaMemcpyDeviceToHost));
+  
+    n_blocks = (n_map - 1) / h_node_map_block_size + 1;
+    std::cout << "n_blocks: " << n_blocks << "\n";
+    int *tmp_pt1[n_blocks];
+    gpuErrchk(cudaMemcpy(tmp_pt1, tmp_pt2[tmp_tg_host],
+			 n_blocks*sizeof(int*), cudaMemcpyDeviceToHost));
+    
+    for (int ib=0; ib<n_blocks; ib++) {
+      std::cout << "block " << ib << "\n";
+      int n = h_node_map_block_size;
+      if (ib==n_blocks-1) {
+	n = (n_map - 1) % h_node_map_block_size + 1;
+      }
+      gpuErrchk(cudaMemcpy(tmp_map, tmp_pt1[ib],
+			   n*sizeof(int), cudaMemcpyDeviceToHost));
+      std::cout << "local source node index\n";
+      for (int i=0; i<n; i++) {
+	std::cout << tmp_map[i] << "\n";
+      }
+    }
+  }
+
+  //gpuErrchk(cudaMemcpy(tmp_n, d_n_local_spike_buffer_map,
+  gpuErrchk(cudaMemcpy(tmp_n, d_n_remote_source_node_map,
+		       tmp_n_hosts*sizeof(int), cudaMemcpyDeviceToHost));
+  n_map = tmp_n[tmp_src_host];
+  if (n_map>0) {
+    std::cout << "////////////////////////////////////////\n";
+    std::cout << "Local Spike Buffer Map\n";
+    std::cout << "source host: " << tmp_src_host << "\n";
+    std::cout << "n_local_spike_buffer_map: " << n_map << "\n";
+    gpuErrchk(cudaMemcpy(tmp_pt2, d_local_spike_buffer_map,
+			 tmp_n_hosts*sizeof(int**), cudaMemcpyDeviceToHost));
+  
+    n_blocks = (n_map - 1) / h_node_map_block_size + 1;
+    std::cout << "n_blocks: " << n_blocks << "\n";
+    int *tmp_pt1[n_blocks];
+    gpuErrchk(cudaMemcpy(tmp_pt1, tmp_pt2[tmp_src_host],
+			 n_blocks*sizeof(int*), cudaMemcpyDeviceToHost));
+    
+    for (int ib=0; ib<n_blocks; ib++) {
+      std::cout << "block " << ib << "\n";
+      int n = h_node_map_block_size;
+      if (ib==n_blocks-1) {
+	n = (n_map - 1) % h_node_map_block_size + 1;
+      }
+      gpuErrchk(cudaMemcpy(tmp_map, tmp_pt1[ib],
+			   n*sizeof(int), cudaMemcpyDeviceToHost));
+      std::cout << "local spike buffer index\n";
+      for (int i=0; i<n; i++) {
+	std::cout << tmp_map[i] << "\n";
+      }
+    }
+  }
+
+  ////////////////////////////////////////
   
   int n_nodes = GetNNode(); // number of nodes
   // n_target_hosts[i_node] is the number of remote target hosts
@@ -253,15 +334,14 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
   }
 
   // TEMPORARY, FOR TESTING
-  int h_n_target_hosts[n_nodes];
-  gpuErrchk(cudaMemcpy(h_n_target_hosts, d_n_target_hosts,
-		       n_nodes*sizeof(int), cudaMemcpyDeviceToHost));
-  std::cout << "////////////////////////////////////////\n";
-  std::cout << "IN MAP CALIBRATION\n";
-  std::cout << "i_node, n_target_hosts\n";
-  for (int i_node=0; i_node<n_nodes; i_node++) {
-    std::cout << i_node << "\t" << h_n_target_hosts[i_node] << "\n";
-  }
+  //int h_n_target_hosts[n_nodes];
+  //gpuErrchk(cudaMemcpy(h_n_target_hosts, d_n_target_hosts,
+  //		       n_nodes*sizeof(int), cudaMemcpyDeviceToHost));
+  //std::cout << "////////////////////////////////////////\n";
+  //std::cout << "i_node, n_target_hosts\n";
+  //for (int i_node=0; i_node<n_nodes; i_node++) {
+  //  std::cout << i_node << "\t" << h_n_target_hosts[i_node] << "\n";
+  //}
   //////////////////////////////////////////////////////////////////////
   
   return 0;
