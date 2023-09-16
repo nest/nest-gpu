@@ -62,7 +62,8 @@ std::vector<int**> hd_local_source_node_map;
 // number of remote target hosts (i.e. MPI processes) on which each local node
 // has outgoing connections. Must be initially set to 0
 int *d_n_target_hosts; // [n_nodes] 
-
+// cumulative sum of d_n_target_hosts
+int *d_n_target_hosts_cumul; // [n_nodes+1]
 
 // Define a boolean array with one boolean value for each connection rule
 // - true if the rule always creates at least one outgoing connection
@@ -315,6 +316,9 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
   // allocate d_n_target_hosts[n_nodes] and init to 0
   gpuErrchk(cudaMalloc(&d_n_target_hosts, n_nodes*sizeof(int)));
   gpuErrchk(cudaMemset(d_n_target_hosts, 0, n_nodes*sizeof(int)));
+  // allocate d_n_target_hosts_cumul[n_nodes+1]
+  // representing the prefix scan (cumulative sum) of d_n_target_hosts
+  gpuErrchk(cudaMalloc(&d_n_target_hosts_cumul, (n_nodes+1)*sizeof(int)));
 
   // For each local node, count the number of remote target hosts
   // on which it has outgoing connections, i.e. n_target_hosts[i_node] 
@@ -343,6 +347,35 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
     std::cout << i_node << "\t" << h_n_target_hosts[i_node] << "\n";
   }
   //////////////////////////////////////////////////////////////////////
+    // Evaluate exclusive sum of reverse connections per target node
+  // Determine temporary device storage requirements
+  void *d_temp_storage = NULL;
+  size_t temp_storage_bytes = 0;
+  cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
+				d_n_target_hosts,
+				d_n_target_hosts_cumul,
+				n_nodes+1);
+  // Allocate temporary storage
+  gpuErrchk(cudaMalloc(&d_temp_storage, temp_storage_bytes));
+  // Run exclusive prefix sum
+  cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
+				d_n_target_hosts,
+				d_n_target_hosts_cumul,
+				n_nodes+1);
+  // The last element is the sum of all elements of n_target_hosts
+  int n_target_hosts_sum;
+  gpuErrchk(cudaMemcpy(&n_target_hosts_sum, &d_n_target_hosts_cumul[n_nodes],
+		       sizeof(int), cudaMemcpyDeviceToHost));
+
+  // TEMPORARY, FOR TESTING
+  int h_n_target_hosts_cumul[n_nodes+1];
+  gpuErrchk(cudaMemcpy(h_n_target_hosts_cumul, d_n_target_hosts_cumul,
+  		       (n_nodes+1)*sizeof(int), cudaMemcpyDeviceToHost));
+  std::cout << "////////////////////////////////////////\n";
+  std::cout << "i_node, n_target_hosts_cumul\n";
+  for (int i_node=0; i_node<n_nodes+1; i_node++) {
+    std::cout << i_node << "\t" << h_n_target_hosts_cumul[i_node] << "\n";
+  }
   
   return 0;
 }
