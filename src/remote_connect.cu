@@ -65,6 +65,25 @@ int *d_n_target_hosts; // [n_nodes]
 // cumulative sum of d_n_target_hosts
 int *d_n_target_hosts_cumul; // [n_nodes+1]
 
+// Global array with remote target hosts indexes of all nodes
+// target_host_array[total_num] where total_num is the sum
+// of n_target_hosts[i_node] on all nodes
+int *d_target_host_array;
+// pointer to the starting position in target_host_array
+// of the target hosts for the node i_node
+int **d_node_target_hosts; // [i_node]
+
+// Global array with remote target hosts map indexes of all nodes
+// target_host_i_map[total_num] where total_num is the sum
+// of n_target_hosts[i_node] on all nodes
+int *d_target_host_i_map;
+// pointer to the starting position in target_host_i_map array
+// of the target host map indexes for the node i_node
+int **d_node_target_host_i_map; // [i_node]
+
+// node map index
+int **d_node_map_index; // [i_node]
+
 // Define a boolean array with one boolean value for each connection rule
 // - true if the rule always creates at least one outgoing connection
 // from each source node (one_to_one, all_to_all, fixed_outdegree)
@@ -146,6 +165,43 @@ int RemoteConnectionMapInit(uint n_hosts)
     
   return 0;
 }
+
+
+__global__ void setTargetHostArrayNodePointersKernel
+(int *target_host_array, int *target_host_i_map, int *n_target_hosts_cumul,
+ int **node_target_hosts, int **node_target_host_i_map, int n_nodes)
+{
+  uint i_node = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i_node>=n_nodes) return;
+  node_target_hosts[i_node] = target_host_array + n_target_hosts_cumul[i_node];
+  node_target_host_i_map[i_node] = target_host_i_map
+    + n_target_hosts_cumul[i_node];
+}
+
+
+// kernel that fills the arrays target_host_array
+// and target_host_i_map using the node map
+__global__ void fillTargetHostArrayFromMapKernel
+(int **node_map, int n_node_map, int *count_mapped, int **node_target_hosts,
+ int **node_target_host_i_map, int n_nodes, int i_target_host)
+{
+  uint i_node = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i_node>=n_nodes) return;
+  int i_block;
+  int i_in_block;
+  // check if node index is in map
+  bool mapped = checkIfValueIsIn2DArr(i_node, node_map,
+				      n_node_map, node_map_block_size,
+				      &i_block, &i_in_block);
+  // If it is mapped
+  if (mapped) {
+    int i_node_map = i_block*node_map_block_size + i_in_block;
+    int pos = count_mapped[i_node]++;
+    node_target_host_i_map[i_node][pos] = i_node_map;
+    node_target_hosts[i_node][pos] = i_target_host;  
+  }
+}
+
 
 // Calibrate the maps
 int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
@@ -375,6 +431,43 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
   std::cout << "i_node, n_target_hosts_cumul\n";
   for (int i_node=0; i_node<n_nodes+1; i_node++) {
     std::cout << i_node << "\t" << h_n_target_hosts_cumul[i_node] << "\n";
+  }
+  //////////////////////////////////////////////////////////////////////
+  // allocate global array with remote target hosts of all nodes
+  gpuErrchk(cudaMalloc(&d_target_host_array, n_target_hosts_sum*sizeof(int)));
+  // allocate global array with remote target hosts map index
+  gpuErrchk(cudaMalloc(&d_target_host_i_map, n_target_hosts_sum*sizeof(int)));
+  // allocate array of pointers to the starting position in target_host array
+  // of the target hosts for each node
+  gpuErrchk(cudaMalloc(&d_node_target_hosts, n_nodes*sizeof(int*)));
+  // allocate array of pointers to the starting position in target_host_i_map
+  // of the target hosts map indexes for each node
+  gpuErrchk(cudaMalloc(&d_node_target_host_i_map, n_nodes*sizeof(int*)));
+  // Launch kernel to evaluate the pointers d_node_target_hosts
+  // and d_node_target_host_i_map from the positions in target_host_array
+  // given by  n_target_hosts_cumul
+  setTargetHostArrayNodePointersKernel<<<(n_nodes+1023)/1024, 1024>>>
+    (d_target_host_array, d_target_host_i_map, d_n_target_hosts_cumul,
+     d_node_target_hosts, d_node_target_host_i_map, n_nodes);
+  gpuErrchk( cudaPeekAtLastError() );
+  gpuErrchk( cudaDeviceSynchronize() );
+
+  // reset to 0 d_n_target_hosts[n_nodes] to reuse it in the next kernel
+  gpuErrchk(cudaMemset(d_n_target_hosts, 0, n_nodes*sizeof(int)));
+
+  // Loop on target hosts (i.e. on MPI processes)
+  for (int tg_host=0; tg_host<n_hosts; tg_host++) {
+    if (tg_host != i_host) {
+      int **d_node_map = hd_local_source_node_map[tg_host];
+      int n_node_map = h_n_local_source_node_map[tg_host];
+      // Launch kernel to fill the arrays target_host_array
+      // and target_host_i_map using the node map
+      fillTargetHostArrayFromMapKernel<<<(n_nodes+1023)/1024, 1024>>>
+	(d_node_map, n_node_map, d_n_target_hosts, d_node_target_hosts,
+	 d_node_target_host_i_map, n_nodes, tg_host);
+      gpuErrchk( cudaPeekAtLastError() );
+      gpuErrchk( cudaDeviceSynchronize() );
+    }
   }
   
   return 0;
@@ -646,3 +739,6 @@ int fixConnectionSourceNodeIndexes(std::vector<uint*> &key_subarray,
   }
   return 0;
 }
+
+
+
