@@ -1,0 +1,678 @@
+>>> import nestgpu
+
+              -- NEST GPU --
+
+  Copyright (C) 2004 The NEST Initiative
+
+ This program is provided AS IS and comes with
+ NO WARRANTY. See the file LICENSE for details.
+
+ Homepage: https://github.com/nest/nest-gpu
+
+d_source_node_flag: 0x7fc308e01400
+i_conn: 0 source: 4 delay: 3
+i_conn: 1 source: 9 delay: 6
+i_conn: 2 source: 9 delay: 8
+i_conn: 3 source: 2 delay: 4
+i_conn: 4 source: 5 delay: 7
+i_conn: 5 source: 7 delay: 4
+i_conn: 6 source: 4 delay: 2
+i_conn: 7 source: 7 delay: 5
+i_conn: 8 source: 6 delay: 6
+n_new_conn: 9   n_conn: 9       old_n_conn: 0
+n_new_conn: 9   i_conn0: 0      n_block_conn: 9
+i_conn: 0        i_source: 4
+i_conn: 1        i_source: 9
+i_conn: 2        i_source: 9
+i_conn: 3        i_source: 2
+i_conn: 4        i_source: 5
+i_conn: 5        i_source: 7
+i_conn: 6        i_source: 4
+i_conn: 7        i_source: 7
+i_conn: 8        i_source: 6
+n_source: 10
+d_source_node_flag: 0x7fc308e01400
+i_source: 0 source_node_flag: 0
+i_source: 1 source_node_flag: 0
+i_source: 2 source_node_flag: 1
+i_source: 3 source_node_flag: 0
+i_source: 4 source_node_flag: 1
+i_source: 5 source_node_flag: 1
+i_source: 6 source_node_flag: 1
+i_source: 7 source_node_flag: 1
+i_source: 8 source_node_flag: 0
+i_source: 9 source_node_flag: 1
+n_used_source_nodes: 6
+n_used_source_nodes: 6
+i_used_source: 0 unsorted_source_node_index: 21 i_unsorted_source_arr: 2
+i_used_source: 1 unsorted_source_node_index: 22 i_unsorted_source_arr: 4
+i_used_source: 2 unsorted_source_node_index: 21 i_unsorted_source_arr: 5
+i_used_source: 3 unsorted_source_node_index: 23 i_unsorted_source_arr: 6
+i_used_source: 4 unsorted_source_node_index: 25 i_unsorted_source_arr: 7
+i_used_source: 5 unsorted_source_node_index: 22 i_unsorted_source_arr: 9
+i_used_source: 0 sorted_source_node_index: 21 i_sorted_source_arr: 2
+i_used_source: 1 sorted_source_node_index: 21 i_sorted_source_arr: 5
+i_used_source: 2 sorted_source_node_index: 22 i_sorted_source_arr: 4
+i_used_source: 3 sorted_source_node_index: 22 i_sorted_source_arr: 9
+i_used_source: 4 sorted_source_node_index: 23 i_sorted_source_arr: 6
+i_used_source: 5 sorted_source_node_index: 25 i_sorted_source_arr: 7
+n_node_to_map: 4
+i_used_source: 0 sorted_source_node_index: 21 node_to_map: 1
+i_used_source: 1 sorted_source_node_index: 21 node_to_map: 0
+i_used_source: 2 sorted_source_node_index: 22 node_to_map: 1
+i_used_source: 3 sorted_source_node_index: 22 node_to_map: 0
+i_used_source: 4 sorted_source_node_index: 23 node_to_map: 1
+i_used_source: 5 sorted_source_node_index: 25 node_to_map: 1
+new_n_blocks: 2
+//////////////////////////////////////////////
+UPDATED UNSORTED MAP
+OF LOCAL-SOURCE_NODES
+n_node_map: 4
+n_blocks: 2
+block_size: 3
+
+block 0
+local source node index
+21
+22
+23
+
+
+block 1
+local source node index
+25
+
+storage bytes for copass sort: 513
+//////////////////////////////////////////////
+UPDATED SORTED MAP
+OF LOCAL-SOURCE_NODES
+n_node_map: 4
+n_blocks: 2
+block_size: 3
+
+block 0
+local source node index
+21
+22
+23
+
+
+block 1
+local source node index
+25
+
+##################################################
+##################################################
+SECOND CONNECT COMMAND
+##################################################
+##################################################
+d_source_node_flag: 0x7fc308e33000
+i_conn: 0 source: 6 delay: 5
+i_conn: 1 source: 1 delay: 6
+i_conn: 2 source: 8 delay: 8
+i_conn: 3 source: 4 delay: 5
+i_conn: 4 source: 8 delay: 4
+i_conn: 5 source: 5 delay: 2
+i_conn: 6 source: 2 delay: 4
+i_conn: 7 source: 2 delay: 8
+i_conn: 8 source: 2 delay: 7
+n_new_conn: 9   n_conn: 9       old_n_conn: 0
+n_new_conn: 9   i_conn0: 0      n_block_conn: 9
+i_conn: 0        i_source: 6
+i_conn: 1        i_source: 1
+i_conn: 2        i_source: 8
+i_conn: 3        i_source: 4
+i_conn: 4        i_source: 8
+i_conn: 5        i_source: 5
+i_conn: 6        i_source: 2
+i_conn: 7        i_source: 2
+i_conn: 8        i_source: 2
+n_source: 10
+d_source_node_flag: 0x7fc308e33000
+i_source: 0 source_node_flag: 0
+i_source: 1 source_node_flag: 1
+i_source: 2 source_node_flag: 1
+i_source: 3 source_node_flag: 0
+i_source: 4 source_node_flag: 1
+i_source: 5 source_node_flag: 1
+i_source: 6 source_node_flag: 1
+i_source: 7 source_node_flag: 0
+i_source: 8 source_node_flag: 1
+i_source: 9 source_node_flag: 0
+n_used_source_nodes: 6
+n_used_source_nodes: 6
+i_used_source: 0 unsorted_source_node_index: 21 i_unsorted_source_arr: 1
+i_used_source: 1 unsorted_source_node_index: 22 i_unsorted_source_arr: 2
+i_used_source: 2 unsorted_source_node_index: 24 i_unsorted_source_arr: 4
+i_used_source: 3 unsorted_source_node_index: 25 i_unsorted_source_arr: 5
+i_used_source: 4 unsorted_source_node_index: 26 i_unsorted_source_arr: 6
+i_used_source: 5 unsorted_source_node_index: 28 i_unsorted_source_arr: 8
+i_used_source: 0 sorted_source_node_index: 21 i_sorted_source_arr: 1
+i_used_source: 1 sorted_source_node_index: 22 i_sorted_source_arr: 2
+i_used_source: 2 sorted_source_node_index: 24 i_sorted_source_arr: 4
+i_used_source: 3 sorted_source_node_index: 25 i_sorted_source_arr: 5
+i_used_source: 4 sorted_source_node_index: 26 i_sorted_source_arr: 6
+i_used_source: 5 sorted_source_node_index: 28 i_sorted_source_arr: 8
+n_node_to_map: 3
+i_used_source: 0 sorted_source_node_index: 21 node_to_map: 0
+i_used_source: 1 sorted_source_node_index: 22 node_to_map: 0
+i_used_source: 2 sorted_source_node_index: 24 node_to_map: 1
+i_used_source: 3 sorted_source_node_index: 25 node_to_map: 0
+i_used_source: 4 sorted_source_node_index: 26 node_to_map: 1
+i_used_source: 5 sorted_source_node_index: 28 node_to_map: 1
+new_n_blocks: 3
+//////////////////////////////////////////////
+UPDATED UNSORTED MAP
+OF LOCAL-SOURCE_NODES
+n_node_map: 7
+n_blocks: 3
+block_size: 3
+
+block 0
+local source node index
+21
+22
+23
+
+
+block 1
+local source node index
+25
+24
+26
+
+
+block 2
+local source node index
+28
+
+storage bytes for copass sort: 513
+//////////////////////////////////////////////
+UPDATED SORTED MAP
+OF LOCAL-SOURCE_NODES
+n_node_map: 7
+n_blocks: 3
+block_size: 3
+
+block 0
+local source node index
+21
+22
+23
+
+
+block 1
+local source node index
+24
+25
+26
+
+
+block 2
+local source node index
+28
+
+d_source_node_flag: 0x7fc308e34c00
+i_conn: 0 source: 0 delay: 11
+i_conn: 1 source: 1 delay: 7
+i_conn: 2 source: 2 delay: 6
+i_conn: 3 source: 3 delay: 4
+n_new_conn: 4   n_conn: 4       old_n_conn: 0
+n_new_conn: 4   i_conn0: 0      n_block_conn: 4
+i_conn: 0        i_source: 0
+i_conn: 1        i_source: 1
+i_conn: 2        i_source: 2
+i_conn: 3        i_source: 3
+n_source: 4
+d_source_node_flag: 0x7fc308e34c00
+i_source: 0 source_node_flag: 1
+i_source: 1 source_node_flag: 1
+i_source: 2 source_node_flag: 1
+i_source: 3 source_node_flag: 1
+n_used_source_nodes: 4
+n_used_source_nodes: 4
+i_used_source: 0 unsorted_source_node_index: 1 i_unsorted_source_arr: 0
+i_used_source: 1 unsorted_source_node_index: 2 i_unsorted_source_arr: 1
+i_used_source: 2 unsorted_source_node_index: 3 i_unsorted_source_arr: 2
+i_used_source: 3 unsorted_source_node_index: 4 i_unsorted_source_arr: 3
+i_used_source: 0 sorted_source_node_index: 1 i_sorted_source_arr: 0
+i_used_source: 1 sorted_source_node_index: 2 i_sorted_source_arr: 1
+i_used_source: 2 sorted_source_node_index: 3 i_sorted_source_arr: 2
+i_used_source: 3 sorted_source_node_index: 4 i_sorted_source_arr: 3
+n_node_to_map: 4
+i_used_source: 0 sorted_source_node_index: 1 node_to_map: 1
+i_used_source: 1 sorted_source_node_index: 2 node_to_map: 1
+i_used_source: 2 sorted_source_node_index: 3 node_to_map: 1
+i_used_source: 3 sorted_source_node_index: 4 node_to_map: 1
+new_n_blocks: 2
+//////////////////////////////////////////////
+UPDATED UNSORTED MAP
+OF LOCAL-SOURCE_NODES
+n_node_map: 4
+n_blocks: 2
+block_size: 3
+
+block 0
+local source node index
+1
+2
+3
+
+
+block 1
+local source node index
+4
+
+storage bytes for copass sort: 513
+//////////////////////////////////////////////
+UPDATED SORTED MAP
+OF LOCAL-SOURCE_NODES
+n_node_map: 4
+n_blocks: 2
+block_size: 3
+
+block 0
+local source node index
+1
+2
+3
+
+
+block 1
+local source node index
+4
+
+d_source_node_flag: 0x7fc308e36a00
+i_conn: 0 source: 0 delay: 6
+i_conn: 1 source: 1 delay: 9
+i_conn: 2 source: 2 delay: 5
+n_new_conn: 3   n_conn: 3       old_n_conn: 0
+n_new_conn: 3   i_conn0: 0      n_block_conn: 3
+i_conn: 0        i_source: 0
+i_conn: 1        i_source: 1
+i_conn: 2        i_source: 2
+n_source: 3
+d_source_node_flag: 0x7fc308e36a00
+i_source: 0 source_node_flag: 1
+i_source: 1 source_node_flag: 1
+i_source: 2 source_node_flag: 1
+n_used_source_nodes: 3
+n_used_source_nodes: 3
+i_used_source: 0 unsorted_source_node_index: 2 i_unsorted_source_arr: 0
+i_used_source: 1 unsorted_source_node_index: 3 i_unsorted_source_arr: 1
+i_used_source: 2 unsorted_source_node_index: 4 i_unsorted_source_arr: 2
+i_used_source: 0 sorted_source_node_index: 2 i_sorted_source_arr: 0
+i_used_source: 1 sorted_source_node_index: 3 i_sorted_source_arr: 1
+i_used_source: 2 sorted_source_node_index: 4 i_sorted_source_arr: 2
+n_node_to_map: 3
+i_used_source: 0 sorted_source_node_index: 2 node_to_map: 1
+i_used_source: 1 sorted_source_node_index: 3 node_to_map: 1
+i_used_source: 2 sorted_source_node_index: 4 node_to_map: 1
+new_n_blocks: 1
+//////////////////////////////////////////////
+UPDATED UNSORTED MAP
+OF LOCAL-SOURCE_NODES
+n_node_map: 3
+n_blocks: 1
+block_size: 3
+
+block 0
+local source node index
+2
+3
+4
+
+storage bytes for copass sort: 513
+//////////////////////////////////////////////
+UPDATED SORTED MAP
+OF LOCAL-SOURCE_NODES
+n_node_map: 3
+n_blocks: 1
+block_size: 3
+
+block 0
+local source node index
+2
+3
+4
+
+d_source_node_flag: 0x7fc308e38600
+i_conn: 0 source: 0 delay: 4
+i_conn: 1 source: 1 delay: 4
+n_new_conn: 2   n_conn: 2       old_n_conn: 0
+n_new_conn: 2   i_conn0: 0      n_block_conn: 2
+i_conn: 0        i_source: 0
+i_conn: 1        i_source: 1
+n_source: 2
+d_source_node_flag: 0x7fc308e38600
+i_source: 0 source_node_flag: 1
+i_source: 1 source_node_flag: 1
+n_used_source_nodes: 2
+n_used_source_nodes: 2
+i_used_source: 0 unsorted_source_node_index: 3 i_unsorted_source_arr: 0
+i_used_source: 1 unsorted_source_node_index: 4 i_unsorted_source_arr: 1
+i_used_source: 0 sorted_source_node_index: 3 i_sorted_source_arr: 0
+i_used_source: 1 sorted_source_node_index: 4 i_sorted_source_arr: 1
+n_node_to_map: 2
+i_used_source: 0 sorted_source_node_index: 3 node_to_map: 1
+i_used_source: 1 sorted_source_node_index: 4 node_to_map: 1
+new_n_blocks: 1
+//////////////////////////////////////////////
+UPDATED UNSORTED MAP
+OF LOCAL-SOURCE_NODES
+n_node_map: 2
+n_blocks: 1
+block_size: 3
+
+block 0
+local source node index
+3
+4
+
+storage bytes for copass sort: 513
+//////////////////////////////////////////////
+UPDATED SORTED MAP
+OF LOCAL-SOURCE_NODES
+n_node_map: 2
+n_blocks: 1
+block_size: 3
+
+block 0
+local source node index
+3
+4
+
+d_source_node_flag: 0x7fc308e3a200
+i_conn: 0 source: 0 delay: 9
+n_new_conn: 1   n_conn: 1       old_n_conn: 0
+n_new_conn: 1   i_conn0: 0      n_block_conn: 1
+i_conn: 0        i_source: 0
+n_source: 1
+d_source_node_flag: 0x7fc308e3a200
+i_source: 0 source_node_flag: 1
+n_used_source_nodes: 1
+n_used_source_nodes: 1
+i_used_source: 0 unsorted_source_node_index: 4 i_unsorted_source_arr: 0
+i_used_source: 0 sorted_source_node_index: 4 i_sorted_source_arr: 0
+n_node_to_map: 1
+i_used_source: 0 sorted_source_node_index: 4 node_to_map: 1
+new_n_blocks: 3
+//////////////////////////////////////////////
+UPDATED UNSORTED MAP
+OF LOCAL-SOURCE_NODES
+n_node_map: 8
+n_blocks: 3
+block_size: 3
+
+block 0
+local source node index
+21
+22
+23
+
+
+block 1
+local source node index
+24
+25
+26
+
+
+block 2
+local source node index
+28
+4
+
+storage bytes for copass sort: 513
+//////////////////////////////////////////////
+UPDATED SORTED MAP
+OF LOCAL-SOURCE_NODES
+n_node_map: 8
+n_blocks: 3
+block_size: 3
+
+block 0
+local source node index
+4
+21
+22
+
+
+block 1
+local source node index
+23
+24
+25
+
+
+block 2
+local source node index
+26
+28
+
+////////////////////////////////////////
+IN MAP CALIBRATION
+////////////////////////////////////////
+Local Source Node Map
+target host: 0
+n_local_source_node_map: 8
+n_blocks: 3
+block 0
+local source node index
+4
+21
+22
+block 1
+local source node index
+23
+24
+25
+block 2
+local source node index
+26
+28
+////////////////////////////////////////
+i_node, n_target_hosts
+0       0
+1       1
+2       2
+3       3
+4       4
+5       0
+6       0
+7       0
+8       0
+9       0
+10      0
+11      0
+12      0
+13      0
+14      0
+15      0
+16      0
+17      0
+18      0
+19      0
+20      0
+21      1
+22      1
+23      1
+24      1
+25      1
+26      1
+27      0
+28      1
+29      0
+////////////////////////////////////////
+i_node, n_target_hosts_cumul
+0       0
+1       0
+2       1
+3       3
+4       6
+5       10
+6       10
+7       10
+8       10
+9       10
+10      10
+11      10
+12      10
+13      10
+14      10
+15      10
+16      10
+17      10
+18      10
+19      10
+20      10
+21      10
+22      11
+23      12
+24      13
+25      14
+26      15
+27      16
+28      16
+29      17
+30      17
+////////////////////////////////////////
+Checking node_target_hosts and node_target_host_i_map
+
+i_node: 0
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 1
+        n_target_hosts: 1
+node_target_hosts       node_target_host_i_map
+3       0
+
+i_node: 2
+        n_target_hosts: 2
+node_target_hosts       node_target_host_i_map
+2       0
+3       1
+
+i_node: 3
+        n_target_hosts: 3
+node_target_hosts       node_target_host_i_map
+2       1
+3       2
+4       0
+
+i_node: 4
+        n_target_hosts: 4
+node_target_hosts       node_target_host_i_map
+0       0
+2       2
+3       3
+4       1
+
+i_node: 5
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 6
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 7
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 8
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 9
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 10
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 11
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 12
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 13
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 14
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 15
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 16
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 17
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 18
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 19
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 20
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 21
+        n_target_hosts: 1
+node_target_hosts       node_target_host_i_map
+0       1
+
+i_node: 22
+        n_target_hosts: 1
+node_target_hosts       node_target_host_i_map
+0       2
+
+i_node: 23
+        n_target_hosts: 1
+node_target_hosts       node_target_host_i_map
+0       3
+
+i_node: 24
+        n_target_hosts: 1
+node_target_hosts       node_target_host_i_map
+0       4
+
+i_node: 25
+        n_target_hosts: 1
+node_target_hosts       node_target_host_i_map
+0       5
+
+i_node: 26
+        n_target_hosts: 1
+node_target_hosts       node_target_host_i_map
+0       6
+
+i_node: 27
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+
+i_node: 28
+        n_target_hosts: 1
+node_target_hosts       node_target_host_i_map
+0       7
+
+i_node: 29
+        n_target_hosts: 0
+node_target_hosts       node_target_host_i_map
+>>> 

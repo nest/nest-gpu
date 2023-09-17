@@ -469,7 +469,37 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
       gpuErrchk( cudaDeviceSynchronize() );
     }
   }
-  
+    // TEMPORARY, FOR TESTING
+  std::cout << "////////////////////////////////////////\n";
+  std::cout << "Checking node_target_hosts and node_target_host_i_map\n";
+  int *hd_node_target_hosts[n_nodes];
+  int *hd_node_target_host_i_map[n_nodes];
+  int h_node_target_hosts[n_hosts];
+  int h_node_target_host_i_map[n_hosts];
+  gpuErrchk(cudaMemcpy(h_n_target_hosts, d_n_target_hosts,
+  		       n_nodes*sizeof(int), cudaMemcpyDeviceToHost));
+  gpuErrchk(cudaMemcpy(hd_node_target_hosts, d_node_target_hosts,
+  		       n_nodes*sizeof(int*), cudaMemcpyDeviceToHost));
+  gpuErrchk(cudaMemcpy(hd_node_target_host_i_map, d_node_target_host_i_map,
+  		       n_nodes*sizeof(int*), cudaMemcpyDeviceToHost));
+  for (int i_node=0; i_node<n_nodes; i_node++) {
+    std::cout << "\ni_node: " << i_node << "\n";
+    int nth = h_n_target_hosts[i_node];
+    std::cout << "\tn_target_hosts: " << nth << "\n";
+    
+    gpuErrchk(cudaMemcpy(h_node_target_hosts, hd_node_target_hosts[i_node],
+			 nth*sizeof(int), cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(h_node_target_host_i_map,
+			 hd_node_target_host_i_map[i_node],
+			 nth*sizeof(int), cudaMemcpyDeviceToHost));
+
+    std::cout << "node_target_hosts\tnode_target_host_i_map\n";
+    for (int ith=0; ith<nth; ith++) {
+      std::cout << h_node_target_hosts[ith] << "\t"
+		<< h_node_target_host_i_map[ith] << "\n";
+    }
+  }
+
   return 0;
 }
 
