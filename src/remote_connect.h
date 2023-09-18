@@ -242,8 +242,11 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   // from 0 to n_source_nodes - 1
   //_Connect<int, T2>(0, n_source, target, n_target,
   //		      conn_spec, syn_spec);
-  Connect(0, n_source, target, n_target,
-	  conn_spec, syn_spec);
+  _Connect(*conn_random_generator_[source_host][this_host_],
+	   0, n_source, target, n_target,
+	   conn_spec, syn_spec);
+  //Connect(0, n_source, target, n_target,
+  //	  conn_spec, syn_spec);
 
   /// TEMPORARY for check
   uint h_source_delay[NConn];
@@ -704,8 +707,11 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
   // from 0 to n_source_nodes - 1
   //_Connect<int, T2>(0, n_source, target, n_target,
   //		      conn_spec, syn_spec);
-  Connect(0, n_source, target, n_target,
-	  conn_spec, syn_spec);
+  _Connect(*conn_random_generator_[this_host_][target_host],
+	   0, n_source, target, n_target,
+	   conn_spec, syn_spec);
+    //Connect(0, n_source, target, n_target,
+    //	  conn_spec, syn_spec);
 
   /// TEMPORARY for check
   uint h_source_delay[NConn];

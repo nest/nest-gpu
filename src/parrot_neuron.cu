@@ -81,9 +81,9 @@ void parrot_neuron_UpdateKernel(int i_node_0, int n_node, float *var_arr,
 
 
 int parrot_neuron::Init(int i_node_0, int n_node, int /*n_port*/,
-			int i_group, unsigned long long *seed)
+			int i_group)
 {
-  BaseNeuron::Init(i_node_0, n_node, 2 /*n_port*/, i_group, seed);
+  BaseNeuron::Init(i_node_0, n_node, 2 /*n_port*/, i_group);
   node_type_ = i_parrot_neuron_model;
 
   n_scal_var_ = N_PARROT_NEURON_SCAL_VAR;

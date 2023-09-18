@@ -184,9 +184,9 @@ __global__ void PoissGenSendSpikeKernel(curandState *curand_state,
 }
 
 int poiss_gen::Init(int i_node_0, int n_node, int /*n_port*/,
-		    int i_group, unsigned long long *seed)
+		    int i_group)
 {
-  BaseNeuron::Init(i_node_0, n_node, 0 /*n_port*/, i_group, seed);
+  BaseNeuron::Init(i_node_0, n_node, 0 /*n_port*/, i_group);
   node_type_ = i_poisson_generator_model;
   n_scal_param_ = N_POISS_GEN_SCAL_PARAM;
   n_param_ = n_scal_param_;
@@ -225,7 +225,20 @@ int poiss_gen::Calibrate(double, float)
     grid_dim_y = (n_conn_ + grid_dim_x*1024 -1) / (grid_dim_x*1024);
   }
   dim3 numBlocks(grid_dim_x, grid_dim_y);
-  SetupPoissKernel<<<numBlocks, 1024>>>(d_curand_state_, n_conn_, *seed_);
+  
+  unsigned long long *d_seed;
+  unsigned long long h_seed;
+
+  gpuErrchk(cudaMalloc(&d_seed, sizeof(unsigned long long)));
+
+  // Generate a random long long integer on device
+  CURAND_CALL(curandGenerateLongLong(*random_generator_, d_seed, 1));
+
+  // Copy seed from device memory to host
+  CUDA_CALL(cudaMemcpy(&h_seed, d_seed, sizeof(unsigned long long),
+		       cudaMemcpyDeviceToHost));
+
+  SetupPoissKernel<<<numBlocks, 1024>>>(d_curand_state_, n_conn_, h_seed);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
   

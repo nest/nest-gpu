@@ -37,8 +37,7 @@ class parrot_neuron : public BaseNeuron
  public:
   ~parrot_neuron();
 
-  int Init(int i_node_0, int n_node, int n_port, int i_group,
-	   unsigned long long *seed);
+  int Init(int i_node_0, int n_node, int n_port, int i_group);
 
   int Free();
   

@@ -104,8 +104,10 @@ enum {ON_EXCEPTION_EXIT=0, ON_EXCEPTION_HANDLE};
 
 class NESTGPU
 {
+  static const int conn_seed_offset_ = 12345;
   float time_resolution_; // time resolution in ms
   curandGenerator_t *random_generator_;
+  std::vector < std::vector <curandGenerator_t *> > conn_random_generator_;
   unsigned long long kernel_seed_;
   bool calibrate_flag_; // becomes true after calibration
   bool create_flag_; // becomes true just before creation of the first node
@@ -119,6 +121,9 @@ class NESTGPU
   
   NetConnection *net_connection_;
 
+  int this_host_;
+  int n_hosts_;
+  
   bool mpi_flag_; // true if MPI is initialized
 #ifdef HAVE_MPI
   ConnectMpi *connect_mpi_;
@@ -164,6 +169,11 @@ class NESTGPU
   std::vector<int> ext_neuron_input_spike_port_;
   std::vector<float> ext_neuron_input_spike_height_;
 
+  int setNHosts(int n_hosts);
+  int setThisHost(int i_host);
+  
+  int InitConnRandomGenerator();
+
   int CreateNodeGroup(int n_neuron, int n_port);
   int CheckUncalibrated(std::string message);
   double *InitGetSpikeArray(int n_node, int n_port);
@@ -174,8 +184,13 @@ class NESTGPU
 
 
   template <class T1, class T2>
-    int _Connect(T1 source, int n_source, T2 target, int n_target,
+  int _Connect(T1 source, int n_source, T2 target, int n_target,
 		 ConnSpec &conn_spec, SynSpec &syn_spec);
+  
+  template <class T1, class T2>
+  int _Connect(curandGenerator_t &gen, T1 source, int n_source,
+	       T2 target, int n_target,
+	       ConnSpec &conn_spec, SynSpec &syn_spec);
   
   template<class T1, class T2>
     int _SingleConnect(T1 source, int i_source, T2 target, int i_target,
@@ -194,28 +209,27 @@ class NESTGPU
 			     SynSpec &syn_spec);
 
   template <class T1, class T2>
-    int _ConnectOneToOne(T1 source, T2 target, int n_node, SynSpec &syn_spec);
+    int _ConnectOneToOne(curandGenerator_t &gen, T1 source, T2 target,
+			 int n_node, SynSpec &syn_spec);
 
   template <class T1, class T2>
-    int _ConnectAllToAll
-    (T1 source, int n_source, T2 target, int n_target, SynSpec &syn_spec);
+    int _ConnectAllToAll(curandGenerator_t &gen, T1 source, int n_source,
+			 T2 target, int n_target, SynSpec &syn_spec);
 
   template <class T1, class T2>
-    int _ConnectFixedTotalNumber
-    (T1 source, int n_source, T2 target, int n_target, int total_num,
-     SynSpec &syn_spec);
+    int _ConnectFixedTotalNumber(curandGenerator_t &gen, T1 source,
+				 int n_source, T2 target, int n_target,
+				 int total_num, SynSpec &syn_spec);
 
   template <class T1, class T2>
     int _ConnectFixedIndegree
-    (
-     T1 source, int n_source, T2 target, int n_target, int indegree,
-     SynSpec &syn_spec);
+    (curandGenerator_t &gen, T1 source, int n_source, T2 target, int n_target,
+     int indegree, SynSpec &syn_spec);
 
   template <class T1, class T2>
     int _ConnectFixedOutdegree
-    (
-     T1 source, int n_source, T2 target, int n_target, int outdegree,
-     SynSpec &syn_spec);
+    (curandGenerator_t &gen, T1 source, int n_source, T2 target, int n_target,
+     int outdegree, SynSpec &syn_spec);
 
 template <class T1, class T2>
 int _RemoteConnect(int this_host, int source_host, T1 source, int n_source,

@@ -65,9 +65,9 @@ void spike_generatorUpdate(int i_node_0, int n_node, long long i_time,
 }
 
 int spike_generator::Init(int i_node_0, int n_node, int /*n_port*/,
-			  int i_group, unsigned long long *seed)
+			  int i_group)
 {
-  BaseNeuron::Init(i_node_0, n_node, 0 /*n_port*/, i_group, seed);
+  BaseNeuron::Init(i_node_0, n_node, 0 /*n_port*/, i_group);
   node_type_ = i_spike_generator_model;
   n_scal_param_ = N_SPIKE_GEN_SCAL_PARAM;
   n_param_ = n_scal_param_;

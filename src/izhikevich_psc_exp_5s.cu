@@ -99,9 +99,9 @@ izhikevich_psc_exp_5s::~izhikevich_psc_exp_5s()
 }
 
 int izhikevich_psc_exp_5s::Init(int i_node_0, int n_node, int /*n_port*/,
-			   int i_group, unsigned long long *seed)
+			   int i_group)
 {
-  BaseNeuron::Init(i_node_0, n_node, 1 /*n_port*/, i_group, seed);
+  BaseNeuron::Init(i_node_0, n_node, 1 /*n_port*/, i_group);
   node_type_ = i_izhikevich_psc_exp_5s_model;
 
   n_scal_var_ = N_SCAL_VAR;

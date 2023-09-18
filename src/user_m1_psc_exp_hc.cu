@@ -73,9 +73,9 @@ user_m1_hc::~user_m1_hc()
 }
 
 int user_m1_hc::Init(int i_node_0, int n_node, int /*n_port*/,
-			   int i_group, unsigned long long *seed)
+			   int i_group)
 {
-  BaseNeuron::Init(i_node_0, n_node, 1 /*n_port*/, i_group, seed);
+  BaseNeuron::Init(i_node_0, n_node, 1 /*n_port*/, i_group);
   node_type_ = i_user_m1_hc_model;
 
   n_scal_var_ = N_SCAL_VAR;

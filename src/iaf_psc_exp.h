@@ -108,8 +108,8 @@ class iaf_psc_exp : public BaseNeuron
  public:
   ~iaf_psc_exp();
   
-  int Init(int i_node_0, int n_neuron, int n_port, int i_group,
-	   unsigned long long *seed);
+  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
+	   
 
   int Calibrate(double, float time_resolution);
 		

@@ -107,19 +107,64 @@ const std::string kernel_bool_param_name[N_KERNEL_BOOL_PARAM] = {
   "print_time"
 };
 
+int NESTGPU::InitConnRandomGenerator()
+{
+  conn_random_generator_.resize(n_hosts_);
+  for (int i_host=0; i_host<n_hosts_; i_host++) {
+    conn_random_generator_[i_host].resize(n_hosts_);
+    for (int j_host=0; j_host<n_hosts_; j_host++) {
+      conn_random_generator_[i_host][j_host] = new curandGenerator_t; 
+      CURAND_CALL(curandCreateGenerator
+		  (conn_random_generator_[i_host][j_host],
+		   CURAND_RNG_PSEUDO_DEFAULT));
+    }
+  }
+
+  return 0;
+}
+
+int NESTGPU::setNHosts(int n_hosts)
+{
+  n_hosts_ = n_hosts;
+  // SHOULD DELETE PREVIOUS INSTANCE BEFORE CREATING NEW!!!
+  InitConnRandomGenerator();
+  SetRandomSeed(kernel_seed_);
+  
+  return 0;
+}
+
+int NESTGPU::setThisHost(int i_host)
+{
+  this_host_ = i_host;
+  SetRandomSeed(kernel_seed_);
+
+  return 0;
+}
+
+
+
+
+
+
 NESTGPU::NESTGPU()
 {
+  n_hosts_ = 1;
+  this_host_ = 0;
+  InitConnRandomGenerator();
+  
   random_generator_ = new curandGenerator_t;
   CURAND_CALL(curandCreateGenerator(random_generator_,
 				    CURAND_RNG_PSEUDO_DEFAULT));
-  distribution_ = new Distribution;
-  multimeter_ = new Multimeter;
   
   //SetRandomSeed(54321ULL);
   //SetRandomSeed(54322ULL);
   //SetRandomSeed(54323ULL);
-  SetRandomSeed(54328ULL);
-  
+  //SetRandomSeed(54328ULL);
+  SetRandomSeed(54328ULL-5-12345);
+
+  distribution_ = new Distribution;
+  multimeter_ = new Multimeter;
+
   calibrate_flag_ = false;
   create_flag_ = false;
   ConnectionSpikeTimeFlag = false;
@@ -152,8 +197,12 @@ NESTGPU::NESTGPU()
   //connect_mpi_->remote_spike_height_ = false;
 #endif
 
-  int this_host = 1;
-  RemoteConnectionMapInit(5); // (uint n_hosts)
+  int this_host = 0;
+  //int this_host = 1;
+  setNHosts(5);
+  setThisHost(this_host);
+
+  RemoteConnectionMapInit(n_hosts_); // (uint n_hosts)
   // TEMPORARY, REMOVE!!!!!!!!!!!!!!!!!
   int n_neurons = 30;
   int CE = 3;
@@ -291,13 +340,21 @@ NESTGPU::~NESTGPU()
 
 int NESTGPU::SetRandomSeed(unsigned long long seed)
 {
-  kernel_seed_ = seed + 12345;
-  CURAND_CALL(curandDestroyGenerator(*random_generator_));
-  random_generator_ = new curandGenerator_t;
-  CURAND_CALL(curandCreateGenerator(random_generator_,
-				    CURAND_RNG_PSEUDO_DEFAULT));
-  CURAND_CALL(curandSetPseudoRandomGeneratorSeed(*random_generator_, seed));
-  distribution_->setCurandGenerator(random_generator_);
+  kernel_seed_ = seed;
+  //CURAND_CALL(curandDestroyGenerator(*random_generator_));
+  //random_generator_ = new curandGenerator_t;
+  //CURAND_CALL(curandCreateGenerator(random_generator_,
+  //				    CURAND_RNG_PSEUDO_DEFAULT));
+  CURAND_CALL(curandSetPseudoRandomGeneratorSeed
+	      (*random_generator_, kernel_seed_ + this_host_));
+  
+  for (int i_host=0; i_host<n_hosts_; i_host++) {
+    for (int j_host=0; j_host<n_hosts_; j_host++) {
+      CURAND_CALL(curandSetPseudoRandomGeneratorSeed
+		  (*conn_random_generator_[i_host][j_host],
+		   seed + conn_seed_offset_ + i_host*n_hosts_ + j_host));
+    }
+  }
   
   return 0;
 }
@@ -349,8 +406,9 @@ int NESTGPU::CreateNodeGroup(int n_node, int n_port)
   }
   int i_group = node_vect_.size() - 1;
   node_group_map_.insert(node_group_map_.end(), n_node, i_group);
-    
-  node_vect_[i_group]->Init(i_node_0, n_node, n_port, i_group, &kernel_seed_);
+
+  node_vect_[i_group]->random_generator_ = random_generator_;
+  node_vect_[i_group]->Init(i_node_0, n_node, n_port, i_group);
   node_vect_[i_group]->get_spike_array_ = InitGetSpikeArray(n_node, n_port);
   
   return i_node_0;
@@ -2062,7 +2120,7 @@ int NESTGPU::GetIntParam(std::string param_name)
   int i_param =  GetIntParamIdx(param_name);
   switch (i_param) {
   case i_rnd_seed:
-    return kernel_seed_ - 12345; // see nestgpu.cu
+    return kernel_seed_;
   case i_verbosity_level:
     return verbosity_level_;
   case i_max_spike_buffer_size:

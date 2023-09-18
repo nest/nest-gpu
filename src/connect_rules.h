@@ -58,8 +58,9 @@ int RemoteNode<int*>::GetINode(int in)
 }
 
 template <class T1, class T2>
-int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
-			ConnSpec &conn_spec, SynSpec &syn_spec)
+int NESTGPU::_Connect(curandGenerator_t &gen, T1 source, int n_source,
+		      T2 target, int n_target,
+		      ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   CheckUncalibrated("Connections cannot be created after calibration");
   ////////////////////////
@@ -75,23 +76,26 @@ int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
       throw ngpu_exception("Number of source and target nodes must be equal "
 			   "for the one-to-one connection rule");
     }
-    return _ConnectOneToOne<T1, T2>(source, target, n_source, syn_spec);
+    return _ConnectOneToOne<T1, T2>(gen, source, target, n_source, syn_spec);
     break;
 
   case ALL_TO_ALL:
-    return _ConnectAllToAll<T1, T2>(source, n_source, target, n_target,
+    return _ConnectAllToAll<T1, T2>(gen, source, n_source, target, n_target,
 				    syn_spec);
     break;
   case FIXED_TOTAL_NUMBER:
-    return _ConnectFixedTotalNumber<T1, T2>(source, n_source, target, n_target,
-				       conn_spec.total_num_, syn_spec);
+    return _ConnectFixedTotalNumber<T1, T2>(gen, source, n_source,
+					    target, n_target,
+					    conn_spec.total_num_, syn_spec);
     break;
   case FIXED_INDEGREE:
-    return _ConnectFixedIndegree<T1, T2>(source, n_source, target, n_target,
-				    conn_spec.indegree_, syn_spec);
+    return _ConnectFixedIndegree<T1, T2>(gen, source, n_source,
+					 target, n_target,
+					 conn_spec.indegree_, syn_spec);
     break;
   case FIXED_OUTDEGREE:
-    return _ConnectFixedOutdegree<T1, T2>(source, n_source, target, n_target,
+    return _ConnectFixedOutdegree<T1, T2>(gen, source, n_source,
+					  target, n_target,
 					  conn_spec.outdegree_, syn_spec);
     break;
   default:
@@ -99,6 +103,45 @@ int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
   }
   return 0;
 }
+
+template
+int NESTGPU::_Connect<int, int>(curandGenerator_t &gen,
+				int source, int n_source,
+				int target, int n_target,
+				ConnSpec &conn_spec, SynSpec &syn_spec);
+
+template
+int NESTGPU::_Connect<int, int*>(curandGenerator_t &gen,
+				 int source, int n_source,
+				 int *target, int n_target,
+				 ConnSpec &conn_spec, SynSpec &syn_spec);
+
+template
+int NESTGPU::_Connect<int*, int>(curandGenerator_t &gen,
+				 int *source, int n_source,
+				 int target, int n_target,
+				 ConnSpec &conn_spec, SynSpec &syn_spec);
+
+template
+int NESTGPU::_Connect<int*, int*>(curandGenerator_t &gen,
+				  int *source, int n_source,
+				  int *target, int n_target,
+				  ConnSpec &conn_spec, SynSpec &syn_spec);
+
+template <class T1, class T2>
+int NESTGPU::_Connect(T1 source, int n_source,
+		      T2 target, int n_target,
+		      ConnSpec &conn_spec, SynSpec &syn_spec)
+{
+  return _Connect(*conn_random_generator_[this_host_][this_host_],
+		  source, n_source, target, n_target, conn_spec, syn_spec);
+}
+
+
+
+
+
+
 
 /*
 template<class T1, class T2>

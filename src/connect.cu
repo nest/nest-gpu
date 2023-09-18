@@ -1324,7 +1324,8 @@ int NESTGPU::SetConnectionFloatParamDistr(int64_t *conn_ids, int64_t n_conn,
 			 cudaMemcpyHostToDevice));
     
     // get values from array or distribution
-    float *d_arr = distribution_->getArray(n_conn);
+    float *d_arr = distribution_->getArray
+      (*conn_random_generator_[this_host_][this_host_], n_conn);
     
     // launch kernel to set connection parameters
     SetConnectionFloatParamKernel<<<(n_conn+1023)/1024, 1024 >>>

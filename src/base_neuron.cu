@@ -143,7 +143,7 @@ __global__ void BaseNeuronGetFloatPtArray(float *arr1, float *arr2, int *pos,
 
 // Initialization method for class BaseNeuron
 int BaseNeuron::Init(int i_node_0, int n_node, int n_port,
-		     int i_group, unsigned long long *seed)
+		     int i_group)
 {
   node_type_= 0; // NULL MODEL
   ext_neuron_flag_ = false; // by default neuron is not external
@@ -151,7 +151,6 @@ int BaseNeuron::Init(int i_node_0, int n_node, int n_port,
   n_node_ = n_node; // number of nodes in the group
   n_port_ = n_port; // number of receptor ports
   i_group_ = i_group; // neuron group index
-  seed_ = seed;
 
   n_scal_var_ = 0; // number of scalar state variables
   n_port_var_ = 0; // number of receptor-port state variables
@@ -568,7 +567,7 @@ int BaseNeuron::SetScalParamDistr(int i_neuron, int n_neuron,
   CheckNeuronIdx(i_neuron);
   CheckNeuronIdx(i_neuron + n_neuron - 1);
   float *param_pt = GetParamPt(i_neuron, param_name);
-  float *d_arr = distribution->getArray(n_neuron);
+  float *d_arr = distribution->getArray(*random_generator_, n_neuron);
   BaseNeuronCopyFloatArray<<<(n_neuron+1023)/1024, 1024>>>
     (param_pt, n_neuron, n_param_, d_arr);
   gpuErrchk( cudaPeekAtLastError() );
@@ -594,7 +593,7 @@ int BaseNeuron::SetScalParamDistr(int *i_neuron, int n_neuron,
   gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   float *param_pt = GetParamPt(0, param_name);
-  float *d_arr = distribution->getArray(n_neuron);
+  float *d_arr = distribution->getArray(*random_generator_, n_neuron);
   BaseNeuronCopyFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
     (param_pt, d_i_neuron, n_neuron, n_param_, d_arr);
   gpuErrchk( cudaPeekAtLastError() );
@@ -621,7 +620,7 @@ int BaseNeuron::SetScalVarDistr(int i_neuron, int n_neuron,
   CheckNeuronIdx(i_neuron + n_neuron - 1);
   float *var_pt = GetVarPt(i_neuron, var_name);
   //printf("okk1\n");
-  float *d_arr = distribution->getArray(n_neuron);
+  float *d_arr = distribution->getArray(*random_generator_, n_neuron);
   //printf("okk2\n");
   BaseNeuronCopyFloatArray<<<(n_neuron+1023)/1024, 1024>>>
     (var_pt, n_neuron, n_var_, d_arr);
@@ -650,7 +649,7 @@ int BaseNeuron::SetScalVarDistr(int *i_neuron, int n_neuron,
   gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   float *var_pt = GetVarPt(0, var_name);
-  float *d_arr = distribution->getArray(n_neuron);
+  float *d_arr = distribution->getArray(*random_generator_, n_neuron);
   BaseNeuronCopyFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
     (var_pt, d_i_neuron, n_neuron, n_var_, d_arr);
   gpuErrchk( cudaPeekAtLastError() );
@@ -683,7 +682,7 @@ int BaseNeuron::SetPortParamDistr(int i_neuron, int n_neuron,
     
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
     param_pt = GetParamPt(i_neuron, param_name, i_vect);
-    float *d_arr = distribution->getArray(n_neuron, i_vect);
+    float *d_arr = distribution->getArray(*random_generator_, n_neuron, i_vect);
     BaseNeuronCopyFloatArray<<<(n_neuron+1023)/1024, 1024>>>
       (param_pt, n_neuron, n_param_, d_arr);
     gpuErrchk( cudaPeekAtLastError() );
@@ -716,7 +715,7 @@ int BaseNeuron::SetPortParamDistr(int *i_neuron, int n_neuron,
 		       cudaMemcpyHostToDevice));
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
     float *param_pt = GetParamPt(0, param_name, i_vect);
-    float *d_arr = distribution->getArray(n_neuron, i_vect);
+    float *d_arr = distribution->getArray(*random_generator_, n_neuron, i_vect);
     BaseNeuronCopyFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
       (param_pt, d_i_neuron, n_neuron, n_param_, d_arr);
     gpuErrchk( cudaPeekAtLastError() );
@@ -750,7 +749,7 @@ int BaseNeuron::SetPortVarDistr(int i_neuron, int n_neuron,
     
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
     var_pt = GetVarPt(i_neuron, var_name, i_vect);
-    float *d_arr = distribution->getArray(n_neuron, i_vect);
+    float *d_arr = distribution->getArray(*random_generator_, n_neuron, i_vect);
     BaseNeuronCopyFloatArray<<<(n_neuron+1023)/1024, 1024>>>
       (var_pt, n_neuron, n_var_, d_arr);
     gpuErrchk( cudaPeekAtLastError() );
@@ -779,7 +778,7 @@ int BaseNeuron::SetPortVarDistr(int *i_neuron, int n_neuron,
 		       cudaMemcpyHostToDevice));
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
     float *var_pt = GetVarPt(0, var_name, i_vect);
-    float *d_arr = distribution->getArray(n_neuron, i_vect);
+    float *d_arr = distribution->getArray(*random_generator_, n_neuron, i_vect);
     BaseNeuronCopyFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
       (var_pt, d_i_neuron, n_neuron, n_var_, d_arr);
     gpuErrchk( cudaPeekAtLastError() );
