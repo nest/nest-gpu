@@ -39,10 +39,6 @@
 //#include "syn_model.h"
 //#include "distribution.h"
 
-#ifdef HAVE_MPI
-class ConnectMpi;
-#endif
-
 class Multimeter;
 class NetConnection;
 struct curandGenerator_st;
@@ -124,10 +120,11 @@ class NESTGPU
   int this_host_;
   int n_hosts_;
   
+  // if true it is possible to send spikes across different hosts
+  bool external_spike_flag_;
+  
   bool mpi_flag_; // true if MPI is initialized
-#ifdef HAVE_MPI
-  ConnectMpi *connect_mpi_;
-#endif
+  bool remote_spike_height_;
   
   std::vector<signed char> node_group_map_;
   signed char *d_node_group_map_;
@@ -169,7 +166,7 @@ class NESTGPU
   std::vector<int> ext_neuron_input_spike_port_;
   std::vector<float> ext_neuron_input_spike_height_;
 
-  int setNHosts(int n_hosts);
+  int setHostNum(int n_hosts);
   int setThisHost(int i_host);
   
   int InitConnRandomGenerator();
@@ -192,22 +189,6 @@ class NESTGPU
 	       T2 target, int n_target,
 	       ConnSpec &conn_spec, SynSpec &syn_spec);
   
-  template<class T1, class T2>
-    int _SingleConnect(T1 source, int i_source, T2 target, int i_target,
-		       int i_array, SynSpec &syn_spec);
-  template<class T1, class T2>
-    int _SingleConnect(T1 source, int i_source, T2 target, int i_target,
-		       float weight, float delay, int i_array,
-		       SynSpec &syn_spec);
-
-  template<class T>
-    int _RemoteSingleConnect(int i_source, T target, int i_target,
-			     int i_array, SynSpec &syn_spec);
-  template<class T>
-    int _RemoteSingleConnect(int i_source, T target, int i_target,
-			     float weight, float delay, int i_array,
-			     SynSpec &syn_spec);
-
   template <class T1, class T2>
     int _ConnectOneToOne(curandGenerator_t &gen, T1 source, T2 target,
 			 int n_node, SynSpec &syn_spec);
@@ -231,53 +212,26 @@ class NESTGPU
     (curandGenerator_t &gen, T1 source, int n_source, T2 target, int n_target,
      int outdegree, SynSpec &syn_spec);
 
-template <class T1, class T2>
-int _RemoteConnect(int this_host, int source_host, T1 source, int n_source,
-		   int target_host, T2 target, int n_target,
-		   ConnSpec &conn_spec, SynSpec &syn_spec);
-
-template <class T1, class T2>
-int _RemoteConnectSource(int source_host, T1 source, int n_source,
-			 T2 target, int n_target,
-			 ConnSpec &conn_spec, SynSpec &syn_spec);
-  
-template <class T1, class T2>
-int _RemoteConnectTarget(int target_host, T1 source, int n_source,
-			 T2 target, int n_target,
-			 ConnSpec &conn_spec, SynSpec &syn_spec);
-  
-#ifdef HAVE_MPI
   template <class T1, class T2>
-    int _RemoteConnect(RemoteNode<T1> source, int n_source,
-		       RemoteNode<T2> target, int n_target,
-		       ConnSpec &conn_spec, SynSpec &syn_spec);
-  
-  template <class T1, class T2>
-    int _RemoteConnectOneToOne
-    (RemoteNode<T1> source, RemoteNode<T2> target, int n_node,
-     SynSpec &syn_spec);
-  
-  template <class T1, class T2>
-    int _RemoteConnectAllToAll
-    (RemoteNode<T1> source, int n_source, RemoteNode<T2> target, int n_target,
-     SynSpec &syn_spec);
+  int _RemoteConnect(int this_host, int source_host, T1 source, int n_source,
+		     int target_host, T2 target, int n_target,
+		     ConnSpec &conn_spec, SynSpec &syn_spec);
 
   template <class T1, class T2>
-    int _RemoteConnectFixedTotalNumber
-    (RemoteNode<T1> source, int n_source, RemoteNode<T2> target, int n_target,
-     int n_conn, SynSpec &syn_spec);
-  
-  template <class T1, class T2>
-    int _RemoteConnectFixedIndegree
-    (RemoteNode<T1> source, int n_source, RemoteNode<T2> target, int n_target,
-     int indegree, SynSpec &syn_spec);
+  int _RemoteConnect(int source_host, T1 source, int n_source,
+		     int target_host, T2 target, int n_target,
+		     ConnSpec &conn_spec, SynSpec &syn_spec);
 
   template <class T1, class T2>
-    int _RemoteConnectFixedOutdegree
-    (RemoteNode<T1> source, int n_source, RemoteNode<T2> target, int n_target,
-     int outdegree, SynSpec &syn_spec);
-#endif
-  int ConnectRemoteNodes();
+  int _RemoteConnectSource(int source_host, T1 source, int n_source,
+			   T2 target, int n_target,
+			   ConnSpec &conn_spec, SynSpec &syn_spec);
+  
+  template <class T1, class T2>
+  int _RemoteConnectTarget(int target_host, T1 source, int n_source,
+			   T2 target, int n_target,
+			   ConnSpec &conn_spec, SynSpec &syn_spec);
+  
 
   double SpikeBufferUpdate_time_;
   double poisson_generator_time_;
@@ -331,6 +285,16 @@ int _RemoteConnectTarget(int target_host, T1 source, int n_source,
   int GetMaxSpikeBufferSize();
   
   uint GetNNode();
+
+  int HostNum() {
+    return n_hosts_;
+  }
+
+  int HostId() {
+    return this_host_;
+  }
+
+  std::string HostIdStr();
 
   int GetNBoolParam();
   std::vector<std::string> GetBoolParamNames();
@@ -562,16 +526,8 @@ int _RemoteConnectTarget(int target_host, T1 source, int n_source,
   
   int ConnectMpiInit(int argc, char *argv[]);
 
-  int MpiId();
-
-  int MpiNp();
-
-  int ProcMaster();
-
   int MpiFinalize();
 
-  std::string MpiRankStr();
-  
   void SetErrorFlag(bool error_flag) {error_flag_ = error_flag;}
   
   void SetErrorMessage(std::string error_message) { error_message_

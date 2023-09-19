@@ -30,6 +30,8 @@
 #include <string>
 #include <algorithm>
 #include <curand.h>
+#include <mpi.h>
+
 #include "distribution.h"
 #include "syn_model.h"
 #include "spike_buffer.h"
@@ -50,19 +52,6 @@
 #include "poiss_gen.h"
 
 #include "remote_connect.h"
-
-#ifdef HAVE_MPI
-#include <mpi.h>
-#endif
-
-#ifdef _OPENMP
-#include <omp.h>
-#define THREAD_MAXNUM omp_get_max_threads()
-#define THREAD_IDX omp_get_thread_num()
-#else
-#define THREAD_MAXNUM 1
-#define THREAD_IDX 0
-#endif
 
 				    //#define VERBOSE_TIME
 
@@ -123,13 +112,16 @@ int NESTGPU::InitConnRandomGenerator()
   return 0;
 }
 
-int NESTGPU::setNHosts(int n_hosts)
+int NESTGPU::setHostNum(int n_hosts)
 {
   n_hosts_ = n_hosts;
   // SHOULD DELETE PREVIOUS INSTANCE BEFORE CREATING NEW!!!
   InitConnRandomGenerator();
   SetRandomSeed(kernel_seed_);
-  
+  external_spike_flag_ = (n_hosts > 1) ? true : false;
+  gpuErrchk(cudaMemcpyToSymbolAsync(ExternalSpikeFlag, &external_spike_flag_,
+				    sizeof(bool)));
+
   return 0;
 }
 
@@ -150,6 +142,7 @@ NESTGPU::NESTGPU()
 {
   n_hosts_ = 1;
   this_host_ = 0;
+  external_spike_flag_ = false;
   InitConnRandomGenerator();
   
   random_generator_ = new curandGenerator_t;
@@ -192,14 +185,11 @@ NESTGPU::NESTGPU()
   print_time_ = false;
   
   mpi_flag_ = false;
-#ifdef HAVE_MPI
-  //connect_mpi_ = new ConnectMpi;
-  //connect_mpi_->remote_spike_height_ = false;
-#endif
+  remote_spike_height_ = false;
 
-  int this_host = 0;
-  //int this_host = 1;
-  setNHosts(5);
+  //int this_host = 0;
+  int this_host = 1;
+  setHostNum(5);
   setThisHost(this_host);
 
   RemoteConnectionMapInit(n_hosts_); // (uint n_hosts)
@@ -329,10 +319,6 @@ NESTGPU::~NESTGPU()
     delete node_vect_[i];
   }
 
-#ifdef HAVE_MPI
-  //delete connect_mpi_;
-#endif
-
   delete multimeter_;
   curandDestroyGenerator(*random_generator_);
   delete random_generator_;
@@ -443,18 +429,14 @@ int NESTGPU::Calibrate()
   unsigned int n_spike_buffers = GetNNode();
   NestedLoop::Init(n_spike_buffers);
 		   
-  ConnectRemoteNodes();
   // temporary
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
   
   calibrate_flag_ = true;
   
-  //gpuErrchk(cudaMemcpyToSymbolAsync(NESTGPUMpiFlag, &mpi_flag_,
-  // sizeof(bool)));
-
   if (verbosity_level_>=1) {
-    std::cout << MpiRankStr() << "Calibrating ...\n";
+    std::cout << HostIdStr() << "Calibrating ...\n";
   }
   
   neural_time_ = t_min_;
@@ -527,11 +509,6 @@ int NESTGPU::StartSimulation()
   if (!calibrate_flag_) {
     Calibrate();
   }
-#ifdef HAVE_MPI                                                                                                            
-  if (mpi_flag_) {
-    MPI_Barrier(MPI_COMM_WORLD);
-  }
-#endif
   if (first_simulation_flag_) {
     gpuErrchk(cudaMemcpyToSymbolAsync(NESTGPUTime, &neural_time_, sizeof(double)));
     multimeter_->WriteRecords(neural_time_);
@@ -539,7 +516,7 @@ int NESTGPU::StartSimulation()
     first_simulation_flag_ = false;
   }
   if (verbosity_level_>=1) {
-    std::cout << MpiRankStr() << "Simulating ...\n";
+    std::cout << HostIdStr() << "Simulating ...\n";
     printf("Neural activity simulation time: %.3lf ms\n", sim_time_);
   }
   
@@ -555,11 +532,6 @@ int NESTGPU::EndSimulation()
   if (verbosity_level_>=2  && print_time_==true) {
     printf("\r[%.2lf %%] Model time: %.3lf ms", 100.0*(neural_time_-neur_t0_)/sim_time_, neural_time_);
   }
-#ifdef HAVE_MPI                                        
-  if (mpi_flag_) {
-    MPI_Barrier(MPI_COMM_WORLD);
-  }
-#endif
 
   end_real_time_ = getRealTime();
 
@@ -568,47 +540,47 @@ int NESTGPU::EndSimulation()
 
   if (verbosity_level_>=3) {
     std::cout << "\n";
-    std::cout << MpiRankStr() << "  SpikeBufferUpdate_time: " <<
+    std::cout << HostIdStr() << "  SpikeBufferUpdate_time: " <<
       SpikeBufferUpdate_time_ << "\n";
-    std::cout << MpiRankStr() << "  poisson_generator_time: " <<
+    std::cout << HostIdStr() << "  poisson_generator_time: " <<
       poisson_generator_time_ << "\n";
-    std::cout << MpiRankStr() << "  neuron_Update_time: " <<
+    std::cout << HostIdStr() << "  neuron_Update_time: " <<
       neuron_Update_time_ << "\n";
-    std::cout << MpiRankStr() << "  copy_ext_spike_time: " <<
+    std::cout << HostIdStr() << "  copy_ext_spike_time: " <<
       copy_ext_spike_time_ << "\n";
-    std::cout << MpiRankStr() << "  SendExternalSpike_time: " <<
+    std::cout << HostIdStr() << "  SendExternalSpike_time: " <<
       SendExternalSpike_time_ << "\n";
-    std::cout << MpiRankStr() << "  SendSpikeToRemote_time: " <<
+    std::cout << HostIdStr() << "  SendSpikeToRemote_time: " <<
       SendSpikeToRemote_time_ << "\n";
-    std::cout << MpiRankStr() << "  RecvSpikeFromRemote_time: " <<
+    std::cout << HostIdStr() << "  RecvSpikeFromRemote_time: " <<
       RecvSpikeFromRemote_time_ << "\n";
-    std::cout << MpiRankStr() << "  NestedLoop_time: " <<
+    std::cout << HostIdStr() << "  NestedLoop_time: " <<
       NestedLoop_time_ << "\n";
-    std::cout << MpiRankStr() << "  GetSpike_time: " <<
+    std::cout << HostIdStr() << "  GetSpike_time: " <<
       GetSpike_time_ << "\n";
-    std::cout << MpiRankStr() << "  SpikeReset_time: " <<
+    std::cout << HostIdStr() << "  SpikeReset_time: " <<
       SpikeReset_time_ << "\n";
-    std::cout << MpiRankStr() << "  ExternalSpikeReset_time: " <<
+    std::cout << HostIdStr() << "  ExternalSpikeReset_time: " <<
       ExternalSpikeReset_time_ << "\n";
   }
   /*
   if (mpi_flag_ && verbosity_level_>=4) {
-    std::cout << MpiRankStr() << "  SendSpikeToRemote_MPI_time: " <<
+    std::cout << HostIdStr() << "  SendSpikeToRemote_MPI_time: " <<
       connect_mpi_->SendSpikeToRemote_MPI_time_ << "\n";
-    std::cout << MpiRankStr() << "  RecvSpikeFromRemote_MPI_time: " <<
+    std::cout << HostIdStr() << "  RecvSpikeFromRemote_MPI_time: " <<
       connect_mpi_->RecvSpikeFromRemote_MPI_time_ << "\n";
-    std::cout << MpiRankStr() << "  SendSpikeToRemote_CUDAcp_time: " <<
+    std::cout << HostIdStr() << "  SendSpikeToRemote_CUDAcp_time: " <<
       connect_mpi_->SendSpikeToRemote_CUDAcp_time_  << "\n";
-    std::cout << MpiRankStr() << "  RecvSpikeFromRemote_CUDAcp_time: " <<
+    std::cout << HostIdStr() << "  RecvSpikeFromRemote_CUDAcp_time: " <<
       connect_mpi_->RecvSpikeFromRemote_CUDAcp_time_  << "\n";
-    std::cout << MpiRankStr() << "  JoinSpike_time: " <<
+    std::cout << HostIdStr() << "  JoinSpike_time: " <<
       connect_mpi_->JoinSpike_time_  << "\n";
   }
   */
   if (verbosity_level_>=1) {
-    std::cout << MpiRankStr() << "Building time: " <<
+    std::cout << HostIdStr() << "Building time: " <<
       (build_real_time_ - start_real_time_) << "\n";
-    std::cout << MpiRankStr() << "Simulation time: " <<
+    std::cout << HostIdStr() << "Simulation time: " <<
       (end_real_time_ - build_real_time_) << "\n";
   }
 
@@ -1337,41 +1309,6 @@ int NESTGPU::ConnectMpiInit(int argc, char *argv[])
 #endif
 }
 
-int NESTGPU::MpiId()
-{
-#ifdef HAVE_MPI
-  /*
-  return connect_mpi_->mpi_id_;
-  */
-  return 0;
-#else
-  throw ngpu_exception("MPI is not available in your build");
-#endif
-}
-
-int NESTGPU::MpiNp()
-{
-#ifdef HAVE_MPI
-  /*
-  return connect_mpi_->mpi_np_;
-  */
-  return 0;
-#else
-  throw ngpu_exception("MPI is not available in your build");
-#endif
-
-}
-
-int NESTGPU::ProcMaster()
-{
-#ifdef HAVE_MPI
-  //return connect_mpi_->ProcMaster();
-  return 0;
-#else
-  throw ngpu_exception("MPI is not available in your build");
-#endif  
-}
-
 int NESTGPU::MpiFinalize()
 {
 #ifdef HAVE_MPI
@@ -1389,17 +1326,15 @@ int NESTGPU::MpiFinalize()
 #endif
 }
 
-std::string NESTGPU::MpiRankStr()
+std::string NESTGPU::HostIdStr()
 {
-  /*
-  if (mpi_flag_) {
-    return std::string("MPI rank ") + std::to_string(connect_mpi_->mpi_id_)
+  if (n_hosts_ > 1) {
+    return std::string("Host ") + std::to_string(this_host_)
       + " : ";
   }
   else {
-  */
     return "";
-    //}
+  }
 }
 
 unsigned int *NESTGPU::RandomInt(size_t n)
@@ -1911,29 +1846,6 @@ int NESTGPU::GetNGroupParam(int i_node)
   return node_vect_[i_group]->GetNGroupParam();
 }
 
-// Connect spike buffers of remote source nodes to local target nodes
-// Maybe move this in connect_rules.cpp ? And parallelize with OpenMP?
-int NESTGPU::ConnectRemoteNodes()
-{
-  if (n_remote_node_>0) {
-    i_remote_node_0_ = node_group_map_.size();
-    BaseNeuron *bn = new BaseNeuron;
-    node_vect_.push_back(bn);  
-    CreateNodeGroup(n_remote_node_, 0);
-    /*
-    for (unsigned int i=0; i<remote_connection_vect_.size(); i++) {
-      RemoteConnection rc = remote_connection_vect_[i];
-      net_connection_->Connect(i_remote_node_0_ + rc.i_source_rel, rc.i_target,
-			       rc.port, rc.syn_group, rc.weight, rc.delay);
-
-    }
-    */
-  }
-  
-  return 0;
-}
-
-
 int NESTGPU::GetNBoolParam()
 {
   return N_KERNEL_BOOL_PARAM;
@@ -2126,18 +2038,12 @@ int NESTGPU::GetIntParam(std::string param_name)
   case i_max_spike_buffer_size:
     return max_spike_buffer_size_;
   case i_remote_spike_height_flag:
-#ifdef HAVE_MPI
-    /*
-    if (connect_mpi_->remote_spike_height_) {
+    if (remote_spike_height_) {
       return 1;
     }
     else {
-    */
       return 0;
-      //}
-#else
-    return 0;
-#endif
+    }
   default:
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")
 			 + param_name);
@@ -2158,22 +2064,16 @@ int NESTGPU::SetIntParam(std::string param_name, int val)
     SetMaxSpikeBufferSize(val);
     break;
   case i_remote_spike_height_flag:
-#ifdef HAVE_MPI
-    /*
     if (val==0) {
-      connect_mpi_->remote_spike_height_ = false;
+      remote_spike_height_ = false;
     }
     else if (val==1) {
-      connect_mpi_->remote_spike_height_ = true;
+      remote_spike_height_ = true;
     }
     else {
       throw ngpu_exception("Admissible values of remote_spike_height_flag are only 0 or 1");
     }
-    */
     break;
-#else
-    throw ngpu_exception("remote_spike_height_flag cannot be changed in an installation without MPI support");
-#endif
   default:
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")
 			 + param_name);
@@ -2190,11 +2090,11 @@ RemoteNodeSeq NESTGPU::RemoteCreate(int i_host, std::string model_name,
     start_real_time_ = getRealTime();
   }
 #ifdef HAVE_MPI
-  if (i_host<0 || i_host>=MpiNp()) {
+  if (i_host<0 || i_host>=n_hosts_) {
     throw ngpu_exception("Invalid host index in RemoteCreate");
   }
   NodeSeq node_seq;
-  if (i_host == MpiId()) {
+  if (i_host == this_host_) {
     node_seq = Create(model_name, n_node, n_port);
   }
   MPI_Bcast(&node_seq, sizeof(NodeSeq), MPI_BYTE, i_host, MPI_COMM_WORLD);

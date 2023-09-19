@@ -34,9 +34,6 @@
 #include "node_group.h"
 #include "connect.h"
 
-#ifdef HAVE_MPI
-#include "spike_mpi.h"
-#endif
 
 #define LAST_SPIKE_TIME_GUARD 0x70000000
 
@@ -46,6 +43,7 @@ extern __constant__ float NESTGPUTimeResolution;
 extern __constant__ NodeGroupStruct NodeGroupArray[];
 extern __device__ signed char *NodeGroupMap;
 
+__constant__ bool ExternalSpikeFlag;
 __device__ int MaxSpikeBufferSize;
 __device__ int NSpikeBuffer;
 __device__ int MaxDelayNum;
@@ -129,14 +127,11 @@ __device__ void PushSpike(int i_spike_buffer, float height)
     LastRevSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx;
   }
 
-  /*
-#ifdef HAVE_MPI
-  if (NESTGPUMpiFlag) {
-    // if MPI is active spike should eventually be sent to remote connections
-    PushExternalSpike(i_spike_buffer, height);
-  }
-#endif
-  */
+  //if (ExternalSpikeFlag) {
+    // if active spike should eventually be sent to remote connections
+  // PushExternalSpike(i_spike_buffer, height);
+  //}
+  
   // if recording  spike counts is activated, increase counter
   if (NodeGroupArray[i_group].spike_count_ != NULL) {
     int i_node_0 = NodeGroupArray[i_group].i_node_0_;

@@ -12,8 +12,8 @@ extern uint h_node_map_block_size; // = 100000;
 
 // number of elements in the map for each source host
 // n_remote_source_node_map[i_source_host]
-// with i_source_host = 0, ..., mpi_proc_num-1 excluding this host itself
-extern __device__ uint *n_remote_source_node_map; // [mpi_proc_num];
+// with i_source_host = 0, ..., n_hosts-1 excluding this host itself
+extern __device__ uint *n_remote_source_node_map; // [n_hosts];
 extern uint *d_n_remote_source_node_map;
 
 // remote_source_node_map[i_source_host][i_block][i]
@@ -28,8 +28,8 @@ extern __device__ int ***local_spike_buffer_map;
 
 // number of elements in the map for each target host
 // n_local_source_node_map[i_target_host]
-// with i_target_host = 0, ..., mpi_proc_num-1 excluding this host itself
-extern __device__ uint *n_local_source_node_map; // [mpi_proc_num]; 
+// with i_target_host = 0, ..., n_hosts-1 excluding this host itself
+extern __device__ uint *n_local_source_node_map; // [n_hosts]; 
 extern uint *d_n_local_source_node_map;
 
 // local_source_node_map[i_target_host][i_block][i]
@@ -137,23 +137,16 @@ int NESTGPU::_RemoteConnect(int this_host,
 			    int target_host, T2 target, int n_target,
 			    ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  /*
-      int RemoteConnect(int source_host, int n_source, int target_host,
-		    int n_target,
-		    curandGenerator_t &gen,
-		    void *d_storage, float time_resolution,
-		    std::vector<uint*> &key_subarray,
-		    std::vector<connection_struct*> &conn_subarray,
-		    int64_t &n_conn, int64_t block_size,
-		    int64_t total_num, T1 source, int n_source,
-		    T2 target, int n_target,
-		    SynSpec &syn_spec
-		    ) { //.........
-    
-    int connect_rnd_seed = master_seed + mpi_proc_num*(target_host + 1)
-    + source_host;
-    update(master_seed);
-  */
+  if (source_host<0 || source_host>=n_hosts_) {
+    throw ngpu_exception("Source host index out of range in _RemoteConnect");
+  }
+  if (target_host<0 || target_host>=n_hosts_) {
+    throw ngpu_exception("Target host index out of range in _RemoteConnect");
+  }
+  if (this_host<0 || this_host>=n_hosts_) {
+    throw ngpu_exception("this_host index out of range in _RemoteConnect");
+  }
+
   // Check if it is a local connection
   if (this_host==source_host && source_host==target_host) {
     return _Connect(source, n_source, target, n_target,
@@ -172,6 +165,68 @@ int NESTGPU::_RemoteConnect(int this_host,
   
   return 0;
 }
+
+template
+int NESTGPU::_RemoteConnect<int, int>
+(int this_host, int source_host, int source, int n_source,
+ int target_host, int target, int n_target,
+ ConnSpec &conn_spec, SynSpec &syn_spec);
+
+template
+int NESTGPU::_RemoteConnect<int, int*>
+(int this_host, int source_host, int source, int n_source,
+ int target_host, int *target, int n_target,
+ ConnSpec &conn_spec, SynSpec &syn_spec);
+
+template
+int NESTGPU::_RemoteConnect<int*, int>
+(int this_host, int source_host, int *source, int n_source,
+ int target_host, int target, int n_target,
+ ConnSpec &conn_spec, SynSpec &syn_spec);
+
+template
+int NESTGPU::_RemoteConnect<int*, int*>
+(int this_host, int source_host, int *source, int n_source,
+ int target_host, int *target, int n_target,
+ ConnSpec &conn_spec, SynSpec &syn_spec);
+
+
+template <class T1, class T2>
+int NESTGPU::_RemoteConnect(int source_host, T1 source, int n_source,
+			    int target_host, T2 target, int n_target,
+			    ConnSpec &conn_spec, SynSpec &syn_spec)
+{
+  return _RemoteConnect<T1, T2>(this_host_, source_host, source, n_source,
+			 target_host, target, n_target,
+			 conn_spec, syn_spec);
+}
+
+template
+int NESTGPU::_RemoteConnect<int, int>
+(int source_host, int source, int n_source,
+ int target_host, int target, int n_target,
+ ConnSpec &conn_spec, SynSpec &syn_spec);
+
+template
+int NESTGPU::_RemoteConnect<int, int*>
+(int source_host, int source, int n_source,
+ int target_host, int *target, int n_target,
+ ConnSpec &conn_spec, SynSpec &syn_spec);
+
+template
+int NESTGPU::_RemoteConnect<int*, int>
+(int source_host, int *source, int n_source,
+ int target_host, int target, int n_target,
+ ConnSpec &conn_spec, SynSpec &syn_spec);
+
+template
+int NESTGPU::_RemoteConnect<int*, int*>
+(int source_host, int *source, int n_source,
+ int target_host, int *target, int n_target,
+ ConnSpec &conn_spec, SynSpec &syn_spec);
+
+
+
 
 // kernel that searches node indexes in map
 // increase counter of mapped nodes
@@ -209,7 +264,7 @@ __global__ void insertNodesInMapKernel
  int *i_node_to_map,
  int n_node);
 
-// REMOTE CONNECT FUNCTION for target_host matching the MPI ID.
+// REMOTE CONNECT FUNCTION for target_host matching this_host
 template <class T1, class T2>
 int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
 				  T2 target, int n_target,
@@ -684,7 +739,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
 
 
 
-// REMOTE CONNECT FUNCTION for source_host matching the MPI ID.
+// REMOTE CONNECT FUNCTION for source_host matching this_host
 template <class T1, class T2>
 int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
 				  T2 target, int n_target,

@@ -8,13 +8,13 @@
 // INITIALIZATION
 //
 // Define two arrays that map remote source nodes to local spike buffers
-// There is one element for each remote host (MPI process),
-// so the array size is mpi_proc_num
+// There is one element for each remote host,
+// so the array size is n_hosts
 // Each of the two arrays contain n_remote_source_node_map elements
 // that represent a map, with n_remote_source_node_map pairs
 // (remote node index, local spike buffer index)
 // where n_remote_source_node_map is the number of nodes in the source host
-// (MPI pocess) that have outgoing connections to local nodes.
+// that have outgoing connections to local nodes.
 // All elements are initially empty:
 // n_remote_source_nodes[i_source_host] = 0 for each i_source_host
 // The map is organized in blocks each with node_map_block_size
@@ -25,8 +25,8 @@ uint h_node_map_block_size; // = 100000;
 
 // number of elements in the map for each source host
 // n_remote_source_node_map[i_source_host]
-// with i_source_host = 0, ..., mpi_proc_num-1 excluding this host itself
-__device__ uint *n_remote_source_node_map; // [mpi_proc_num];
+// with i_source_host = 0, ..., n_hosts-1 excluding this host itself
+__device__ uint *n_remote_source_node_map; // [n_hosts];
 uint *d_n_remote_source_node_map;
 std::vector<uint> h_n_remote_source_node_map;
 
@@ -46,8 +46,8 @@ std::vector<int**> hd_local_spike_buffer_map;
 
 // number of elements in the map for each target host
 // n_local_source_node_map[i_target_host]
-// with i_target_host = 0, ..., mpi_proc_num-1 excluding this host itself
-__device__ uint *n_local_source_node_map; // [mpi_proc_num]; 
+// with i_target_host = 0, ..., n_hosts-1 excluding this host itself
+__device__ uint *n_local_source_node_map; // [n_hosts]; 
 uint *d_n_local_source_node_map;
 std::vector<uint> h_n_local_source_node_map;
 
@@ -59,7 +59,7 @@ int ***d_local_source_node_map;
 std::vector<int**> hd_local_source_node_map;
 
 
-// number of remote target hosts (i.e. MPI processes) on which each local node
+// number of remote target hosts on which each local node
 // has outgoing connections. Must be initially set to 0
 int *d_n_target_hosts; // [n_nodes] 
 // cumulative sum of d_n_target_hosts
@@ -127,7 +127,7 @@ int allocLocalSourceNodeMapBlocks(std::vector<int*> &i_local_src_node_map,
 }
 
 
-// Initialize the maps for n_hosts hosts (i.e. number of MPI processes)
+// Initialize the maps for n_hosts hosts
 int RemoteConnectionMapInit(uint n_hosts)
 {
   h_node_map_block_size = 3; //10000; // initialize node map block size
@@ -367,7 +367,7 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
   
   int n_nodes = GetNNode(); // number of nodes
   // n_target_hosts[i_node] is the number of remote target hosts
-  // (i.e. MPI processes) on which each local node
+  // on which each local node
   // has outgoing connections
   // allocate d_n_target_hosts[n_nodes] and init to 0
   gpuErrchk(cudaMalloc(&d_n_target_hosts, n_nodes*sizeof(int)));
@@ -378,7 +378,7 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
 
   // For each local node, count the number of remote target hosts
   // on which it has outgoing connections, i.e. n_target_hosts[i_node] 
-  // Loop on target hosts (i.e. on MPI processes)
+  // Loop on target hosts
   for (int tg_host=0; tg_host<n_hosts; tg_host++) {
     if (tg_host != i_host) {
       int **d_node_map = hd_local_source_node_map[tg_host];
@@ -455,7 +455,7 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
   // reset to 0 d_n_target_hosts[n_nodes] to reuse it in the next kernel
   gpuErrchk(cudaMemset(d_n_target_hosts, 0, n_nodes*sizeof(int)));
 
-  // Loop on target hosts (i.e. on MPI processes)
+  // Loop on target hosts
   for (int tg_host=0; tg_host<n_hosts; tg_host++) {
     if (tg_host != i_host) {
       int **d_node_map = hd_local_source_node_map[tg_host];
