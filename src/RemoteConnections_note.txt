@@ -1,3 +1,72 @@
+Checking file spike_mpi.cu
+in particular for changes that are necessary to adapt it
+to the new approach
+Note: it should be renamed to remote_spike.cu
+the mpi communication part should be separated and placed in
+a file as mpi_communication.cu
+
+
+NExternalNodeTargetHost corresponds to d_n_target_hosts
+ExternalNodeTargetHostId corresponds to d_node_target_hosts ([i_source][ith])
+ExternalNodeId corresponds to d_node_target_host_i_map ([i_source][ith])
+initialize them in the function ExternalSpikeInit
+after remote connection map calibration
+
+
+kernels PushSpikeFromRemote seem fine, but for minimum delays we'll probably
+need a version in which spike time index can be specified and possibly !=0
+
+It seems that the kernel AddOffset is obsolete and can be removed
+
+kernel PushExternalSpike seems fine
+
+kernel SendExternalSpike seems fine
+
+kernel ExternalSpikeReset seems fine
+
+in function ExternalSpikeInit
+replace class ConnectMPI:: with NESTGPU::
+initialize:
+NExternalNodeTargetHost corresponds to d_n_target_hosts
+ExternalNodeTargetHostId corresponds to d_node_target_hosts ([i_source][ith])
+ExternalNodeId corresponds to d_node_target_host_i_map ([i_source][ith])
+remove variables related to MPI related time
+e.g. SendSpikeToRemote_MPI_time_
+they can be renamed to MPI_send_time and MPI_recv_time
+and defined in the MPI related file
+remove
+  int *h_NExternalNodeTargetHost = new int[n_node];
+  int **h_ExternalNodeTargetHostId = new int*[n_node];
+  int **h_ExternalNodeId = new int*[n_node];
+and all related code
+mv recv_mpi_request to MPI related file
+remove loop   for (int i_source=0; i_source<n_node; i_source++) {
+
+kernel DeviceExternalSpikeInit
+d_NExternalNodeTargetHost -> d_n_target_hosts
+d_ExternalNodeTargetHostId -> d_node_target_hosts
+d_ExternalNodeId -> d_node_target_host_i_map
+
+move functions SendSpikeToRemote and RecvSpikeFromRemote
+to mpi related file
+
+
+in function CopySpikeFromRemote
+replace class ConnectMPI:: with NESTGPU::
+remove any reference to i_remote_node_0
+NOTE: function seems fine, however what is transmitted is not the
+node index, but the index in the map [source_host]
+which should be used to get the node index
+Maybe replace call to obsolete AddOffset kernel with search in the map
+or do it in the PushSpikeFromRemote kernel
+
+in function JoinSpikes ...
+replace prefix_scan with CUB function?
+why there is no explicit copy of the cumulative sum from device to host?
+is done twice! in device and in host memory separately!
+
+
+
 Better to separate the code for remote communication (i.e. MPI)
 from the rest, because in principle communication can be achieved
 through other protocols or methods, for instance some kind of shared memory,

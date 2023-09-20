@@ -37,6 +37,14 @@ extern std::vector< std::vector<int*> > h_local_source_node_map;
 extern __device__ int ***local_source_node_map;
 extern int ***d_local_source_node_map;
 
+// number of remote target hosts on which each local node
+//has outgoing connections
+extern int *d_n_target_hosts; // [n_nodes] 
+// target hosts for the node i_node
+extern int **d_node_target_hosts; // [i_node]
+// target host map indexes for the node i_node
+extern int **d_node_target_host_i_map; // [i_node]
+
 // Boolean array with one boolean value for each connection rule
 // - true if the rule always creates at least one outgoing connection
 // from each source node (one_to_one, all_to_all, fixed_outdegree)

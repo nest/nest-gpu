@@ -18,7 +18,7 @@
  *
  */
 
-/*
+
 #include <config.h>
 
 #include <stdio.h>
@@ -32,10 +32,10 @@
 
 #include "spike_mpi.h"
 
-//#include "connect_mpi.h"
+#include "connect_mpi.h"
 #include "scan.h"
-
-__device__ __forceinline__ int locate(int val, int *data, int n);
+#include "utilities.h"
+#include "remote_connect.h"
 
 // Simple kernel for pushing remote spikes in local spike buffers
 // Version with spike multiplicity array (spike_height) 
@@ -63,14 +63,14 @@ __global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id)
 
 // convert node group indexes to spike buffer indexes
 // by adding the index of the first node of the node group  
-__global__ void AddOffset(int n_spikes, int *spike_buffer_id,
-			  int i_remote_node_0)
-{
-  int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
-  if (i_spike<n_spikes) {
-    spike_buffer_id[i_spike] += i_remote_node_0;
-  }
-}
+//__global__ void AddOffset(int n_spikes, int *spike_buffer_id,
+//			  int i_remote_node_0)
+//{
+//  int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
+//  if (i_spike<n_spikes) {
+//    spike_buffer_id[i_spike] += i_remote_node_0;
+//  }
+//}
 
 __constant__ bool NESTGPUMpiFlag;
 
@@ -97,13 +97,13 @@ __device__ int *ExternalTargetSpikeNodeId;
 float *d_ExternalTargetSpikeHeight;
 __device__ float *ExternalTargetSpikeHeight;
 
-int *d_NExternalNodeTargetHost;
+//int *d_NExternalNodeTargetHost;
 __device__ int *NExternalNodeTargetHost;
 
-int **d_ExternalNodeTargetHostId;
+//int **d_ExternalNodeTargetHostId;
 __device__ int **ExternalNodeTargetHostId;
 
-int **d_ExternalNodeId;
+//int **d_ExternalNodeId;
 __device__ int **ExternalNodeId;
 
 //int *d_ExternalSourceSpikeNum;
@@ -182,9 +182,9 @@ int ConnectMpi::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_hos
   RecvSpikeFromRemote_CUDAcp_time_ = 0;
   JoinSpike_time_ = 0;
 
-  int *h_NExternalNodeTargetHost = new int[n_node];
-  int **h_ExternalNodeTargetHostId = new int*[n_node];
-  int **h_ExternalNodeId = new int*[n_node];
+  //int *h_NExternalNodeTargetHost = new int[n_node];
+  //int **h_ExternalNodeTargetHostId = new int*[n_node];
+  //int **h_ExternalNodeId = new int*[n_node];
   
   //h_ExternalSpikeNodeId = new int[max_spike_per_host];
   h_ExternalTargetSpikeNum = new int [n_hosts];
@@ -219,10 +219,11 @@ int ConnectMpi::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_hos
 		       n_hosts*max_spike_per_host*sizeof(int)));
   gpuErrchk(cudaMalloc(&d_ExternalTargetSpikeCumul, (n_hosts+1)*sizeof(int)));
 
-  gpuErrchk(cudaMalloc(&d_NExternalNodeTargetHost, n_node*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_ExternalNodeTargetHostId, n_node*sizeof(int*)));
-  gpuErrchk(cudaMalloc(&d_ExternalNodeId, n_node*sizeof(int*)));
- 
+  //gpuErrchk(cudaMalloc(&d_NExternalNodeTargetHost, n_node*sizeof(int)));
+  //gpuErrchk(cudaMalloc(&d_ExternalNodeTargetHostId, n_node*sizeof(int*)));
+  //gpuErrchk(cudaMalloc(&d_ExternalNodeId, n_node*sizeof(int*)));
+
+  /*
   for (int i_source=0; i_source<n_node; i_source++) {
     std::vector< ExternalConnectionNode > *conn = &extern_connection_[i_source];
     int Nth = conn->size();
@@ -251,7 +252,7 @@ int ConnectMpi::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_hos
 	     n_node*sizeof(int*), cudaMemcpyHostToDevice);
   cudaMemcpy(d_ExternalNodeId, h_ExternalNodeId,
 	     n_node*sizeof(int*), cudaMemcpyHostToDevice);
-
+  */
   DeviceExternalSpikeInit<<<1,1>>>(n_hosts, max_spike_per_host,
 				   d_ExternalSpikeNum,
 				   d_ExternalSpikeSourceNode,
@@ -259,13 +260,13 @@ int ConnectMpi::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_hos
 				   d_ExternalTargetSpikeNum,
 				   d_ExternalTargetSpikeNodeId,
 				   d_ExternalTargetSpikeHeight,
-				   d_NExternalNodeTargetHost,
-				   d_ExternalNodeTargetHostId,
-				   d_ExternalNodeId
+				   d_n_target_hosts,
+				   d_node_target_hosts,
+				   d_node_target_host_i_map
 				   );
-  delete[] h_NExternalNodeTargetHost;
-  delete[] h_ExternalNodeTargetHostId;
-  delete[] h_ExternalNodeId;
+  //delete[] h_NExternalNodeTargetHost;
+  //delete[] h_ExternalNodeTargetHostId;
+  //delete[] h_ExternalNodeId;
 
   return 0;
 }
@@ -403,8 +404,7 @@ int ConnectMpi::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
 
 // pack spikes received from remote MPI processes
 // and copy them to GPU memory
-int ConnectMpi::CopySpikeFromRemote(int n_hosts, int max_spike_per_host,
-				    int i_remote_node_0)
+int ConnectMpi::CopySpikeFromRemote(int n_hosts, int max_spike_per_host)
 {
   double time_mark = getRealTime();
   int n_spike_tot = 0;
@@ -430,10 +430,10 @@ int ConnectMpi::CopySpikeFromRemote(int n_hosts, int max_spike_per_host,
     RecvSpikeFromRemote_CUDAcp_time_ += (getRealTime() - time_mark);
     // convert node group indexes to spike buffer indexes
     // by adding the index of the first node of the node group  
-    AddOffset<<<(n_spike_tot+1023)/1024, 1024>>>
-      (n_spike_tot, d_ExternalSourceSpikeNodeId, i_remote_node_0);
-    gpuErrchk( cudaPeekAtLastError() );
-    cudaDeviceSynchronize();
+    //AddOffset<<<(n_spike_tot+1023)/1024, 1024>>>
+    //  (n_spike_tot, d_ExternalSourceSpikeNodeId, i_remote_node_0);
+    //gpuErrchk( cudaPeekAtLastError() );
+    //cudaDeviceSynchronize();
     // push remote spikes in local spike buffers
     PushSpikeFromRemote<<<(n_spike_tot+1023)/1024, 1024>>>
       (n_spike_tot, d_ExternalSourceSpikeNodeId);
@@ -504,4 +504,4 @@ int ConnectMpi::JoinSpikes(int n_hosts, int max_spike_per_host)
 }
 
 #endif
-*/
+

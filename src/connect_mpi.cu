@@ -105,57 +105,10 @@ int ConnectMpi::MpiInit(int argc, char *argv[])
   return 0;
 }
 
-bool ConnectMpi::ProcMaster()
-{
-  if (mpi_id_==mpi_master_) return true;
-  else return false;
-}
-/* // CHECK: using net_connection_->connection_.push_back(conn)
-   // connection_size() should be aligned with node_group_map_.size()
-int ConnectMpi::RemoteConnect(int i_source_host, int i_source_node,
-			      int i_target_host, int i_target_node,
-			      int port, unsigned char syn_group,
-			      float weight, float delay)
-{
-  int i_remote_node;
-  
-  if (mpi_id_==i_source_host && i_source_host==i_target_host) {
-    return net_connection_->Connect(i_source_node, i_target_node, port,
-				    syn_group, weight, delay);
-  }
-  else if (mpi_id_ == i_target_host) {
-    MPI_Recv_int(&i_remote_node, 1, i_source_host);
-    if (i_remote_node == -1) {
-      // Create remote connection node....
-      i_remote_node = net_connection_->connection_.size();
-      vector<ConnGroup> conn;
-      net_connection_->connection_.push_back(conn); /////// CHECK THIS!!!!!!!
-      MPI_Send_int(&i_remote_node, 1, i_source_host);
-    }
-    net_connection_->Connect(i_remote_node, i_target_node, port, syn_group,
-			     weight, delay);
-  }
-  else if (mpi_id_ == i_source_host) {
-    i_remote_node = -1;
-    for (vector<ExternalConnectionNode >::iterator it =
-	   extern_connection_[i_source_node].begin();
-	 it <  extern_connection_[i_source_node].end(); it++) {
-      if ((*it).target_host_id == i_target_host) {
-	i_remote_node = (*it).remote_node_id;
-	break;
-      }
-    }
-    MPI_Send_int(&i_remote_node, 1, i_target_host);
-    if (i_remote_node == -1) {
-      MPI_Recv_int(&i_remote_node, 1, i_target_host);
-      ExternalConnectionNode conn_node = {i_target_host, i_remote_node};
-      extern_connection_[i_source_node].push_back(conn_node);
-    }
-  }
-  MPI_Barrier( MPI_COMM_WORLD );
-
-  return 0;
-}
-*/
+//bool ConnectMpi::ProcMaster()
+//{
+//  if (mpi_id_==mpi_master_) return true;
+//  else return false;
+//}
 
 #endif

@@ -56,13 +56,13 @@ extern __device__ int *ExternalTargetSpikeNodeId;
 extern float *d_ExternalTargetSpikeHeight;
 extern __device__ float *ExternalTargetSpikeHeight;
 
-extern int *d_NExternalNodeTargetHost;
+//extern int *d_NExternalNodeTargetHost;
 extern __device__ int *NExternalNodeTargetHost;
 
-extern int **d_ExternalNodeTargetHostId;
+//extern int **d_ExternalNodeTargetHostId;
 extern __device__ int **ExternalNodeTargetHostId;
 
-extern int **d_ExternalNodeId;
+//extern int **d_ExternalNodeId;
 extern __device__ int **ExternalNodeId;
 
 //extern int *d_ExternalSourceSpikeNum;
