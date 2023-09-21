@@ -29,22 +29,14 @@
 #include <mpi.h>
 #include "connect.h"
 
-class ConnectMpi
+namespace ConnectMpi
 {
- public:
+  // public:
   //int mpi_id_;
   //int mpi_np_;
   //int mpi_master_;
   //bool remote_spike_height_;
   
-  double SendSpikeToRemote_MPI_time_;
-  double RecvSpikeFromRemote_MPI_time_;
-  double SendSpikeToRemote_CUDAcp_time_;
-  double RecvSpikeFromRemote_CUDAcp_time_;
-  double JoinSpike_time_;
-  
-  
-
   int MPI_Recv_int(int *int_val, int n, int sender_id);
   
   int MPI_Recv_float(float *float_val, int n, int sender_id);
@@ -57,20 +49,10 @@ class ConnectMpi
 
   int MPI_Send_uchar(unsigned char *uchar_val, int n, int target_id);
 
-  int MpiInit(int argc, char *argv[]);
+  //int MpiInit(int argc, char *argv[]);
   
   bool ProcMaster();
   
-  int ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_host);
-
-  int SendSpikeToRemote(int n_hosts, int max_spike_per_host);
-
-  int RecvSpikeFromRemote(int n_hosts, int max_spike_per_host);
-
-  int CopySpikeFromRemote(int n_hosts, int max_spike_per_host);
-
-  int JoinSpikes(int n_hosts, int max_spike_per_host);
-
 };
 
 #endif

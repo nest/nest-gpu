@@ -174,7 +174,7 @@ __global__ void ExternalSpikeReset()
 }
 
 // initialize external spike arrays
-int ConnectMpi::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_host)
+int NESTGPU::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_host)
 {
   SendSpikeToRemote_MPI_time_ = 0;
   RecvSpikeFromRemote_MPI_time_ = 0;
@@ -305,7 +305,7 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
 
 
 // Send spikes to remote MPI processes
-int ConnectMpi::SendSpikeToRemote(int n_hosts, int max_spike_per_host)
+int NESTGPU::SendSpikeToRemote(int n_hosts, int max_spike_per_host)
 {
   MPI_Request request;
   int mpi_id, tag = 1;  // id is already in the class, can be removed
@@ -354,7 +354,7 @@ int ConnectMpi::SendSpikeToRemote(int n_hosts, int max_spike_per_host)
 }
 
 // Receive spikes from remote MPI processes
-int ConnectMpi::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
+int NESTGPU::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
   
 {
   std::list<int> recv_list;
@@ -404,7 +404,7 @@ int ConnectMpi::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
 
 // pack spikes received from remote MPI processes
 // and copy them to GPU memory
-int ConnectMpi::CopySpikeFromRemote(int n_hosts, int max_spike_per_host)
+int NESTGPU::CopySpikeFromRemote(int n_hosts, int max_spike_per_host)
 {
   double time_mark = getRealTime();
   int n_spike_tot = 0;
@@ -471,7 +471,7 @@ __global__ void JoinSpikeKernel(int n_hosts, int *ExternalTargetSpikeCumul,
 
 // pack the spikes in GPU memory that must be sent externally
 // and copy them to CPU memory
-int ConnectMpi::JoinSpikes(int n_hosts, int max_spike_per_host)
+int NESTGPU::JoinSpikes(int n_hosts, int max_spike_per_host)
 {
   double time_mark = getRealTime();
   // the index in the packed array can be computed from the MPI proc index
@@ -502,6 +502,45 @@ int ConnectMpi::JoinSpikes(int n_hosts, int max_spike_per_host)
   
   return n_spike_tot;
 }
+
+int NESTGPU::ConnectMpiInit(int argc, char *argv[])
+{
+#ifdef HAVE_MPI
+  CheckUncalibrated("MPI connections cannot be initialized after calibration");
+  int initialized;
+  MPI_Initialized(&initialized);
+  if (!initialized) {
+    MPI_Init(&argc,&argv);
+  }
+  MPI_Comm_size(MPI_COMM_WORLD, &n_hosts_);
+  MPI_Comm_rank(MPI_COMM_WORLD, &this_host_);
+  mpi_flag_ = true;
+  
+  return 0;
+#else
+  throw ngpu_exception("MPI is not available in your build");
+#endif
+}
+
+
+int NESTGPU::MpiFinalize()
+{
+#ifdef HAVE_MPI
+  if (mpi_flag_) {
+    int finalized;
+    MPI_Finalized(&finalized);
+    if (!finalized) {
+      MPI_Finalize();
+    }
+  }
+  
+  return 0;
+#else
+  throw ngpu_exception("MPI is not available in your build");
+#endif
+}
+
+
 
 #endif
 

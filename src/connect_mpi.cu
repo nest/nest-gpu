@@ -91,6 +91,27 @@ int ConnectMpi::MPI_Send_uchar(unsigned char *uchar_val, int n, int target_id)
   return 0;
 }
 
+
+int NESTGPU::ConnectMpiInit(int argc, char *argv[])
+{
+#ifdef HAVE_MPI
+  CheckUncalibrated("MPI connections cannot be initialized after calibration");
+  int initialized;
+  MPI_Initialized(&initialized);
+  if (!initialized) {
+    MPI_Init(&argc,&argv);
+  }
+  MPI_Comm_size(MPI_COMM_WORLD, &n_hosts_);
+  MPI_Comm_rank(MPI_COMM_WORLD, &this_host_);
+  mpi_flag_ = true;
+  
+  return 0;
+#else
+  throw ngpu_exception("MPI is not available in your build");
+#endif
+}
+
+/*
 int ConnectMpi::MpiInit(int argc, char *argv[])
 {
   int initialized;
@@ -104,11 +125,30 @@ int ConnectMpi::MpiInit(int argc, char *argv[])
   
   return 0;
 }
+*/
 
 //bool ConnectMpi::ProcMaster()
 //{
 //  if (mpi_id_==mpi_master_) return true;
 //  else return false;
 //}
+
+int NESTGPU::MpiFinalize()
+{
+#ifdef HAVE_MPI
+  if (mpi_flag_) {
+    int finalized;
+    MPI_Finalized(&finalized);
+    if (!finalized) {
+      MPI_Finalize();
+    }
+  }
+  
+  return 0;
+#else
+  throw ngpu_exception("MPI is not available in your build");
+#endif
+}
+
 
 #endif

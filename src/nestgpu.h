@@ -245,6 +245,12 @@ class NESTGPU
   double SpikeReset_time_;
   double ExternalSpikeReset_time_;
 
+  double SendSpikeToRemote_MPI_time_;
+  double RecvSpikeFromRemote_MPI_time_;
+  double SendSpikeToRemote_CUDAcp_time_;
+  double RecvSpikeFromRemote_CUDAcp_time_;
+  double JoinSpike_time_;
+  
   bool first_simulation_flag_;
 
  public:
@@ -769,6 +775,17 @@ class NESTGPU
 
   // Calibrate remote connection maps
   int  RemoteConnectionMapCalibrate(int i_host, int n_hosts);
+  
+  int ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_host);
+
+  int CopySpikeFromRemote(int n_hosts, int max_spike_per_host);
+
+  int JoinSpikes(int n_hosts, int max_spike_per_host);
+
+  int SendSpikeToRemote(int n_hosts, int max_spike_per_host);
+
+  int RecvSpikeFromRemote(int n_hosts, int max_spike_per_host);
+
 
 };
 
