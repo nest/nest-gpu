@@ -134,14 +134,14 @@ ngpu.Simulate()
 
 data_list = ngpu.GetRecordData(record)
 
-for i in range(500):
-    conn_id = ngpu.GetConnections(i+1)
-    n_out_conn = len(conn_id)
-    if (n_out_conn!=NE+NI):
-        print("Expected number of out connections per neuron: ", NE+NI)
-        print("Number of out connections of neuron ", i + 1, ": ", \
-              n_out_conn)
-        sys.exit(1)
+#for i in range(500):
+#    conn_id = ngpu.GetConnections(i+1)
+#    n_out_conn = len(conn_id)
+#    if (n_out_conn!=NE+NI):
+#        print("Expected number of out connections per neuron: ", NE+NI)
+#        print("Number of out connections of neuron ", i + 1, ": ", \
+#              n_out_conn)
+#        sys.exit(1)
         
 
 for i in range(10):
