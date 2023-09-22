@@ -18,7 +18,7 @@
  *
  */
 
-
+//#define CHECKRC
 
 
 
@@ -96,15 +96,26 @@ const std::string kernel_bool_param_name[N_KERNEL_BOOL_PARAM] = {
   "print_time"
 };
 
+int NESTGPU::FreeConnRandomGenerator()
+{
+  for (int i_host=0; i_host<n_hosts_; i_host++) {
+    for (int j_host=0; j_host<n_hosts_; j_host++) {
+      CURAND_CALL(curandDestroyGenerator
+		  (conn_random_generator_[i_host][j_host]));
+    }
+  }
+
+  return 0;
+}
+
 int NESTGPU::InitConnRandomGenerator()
 {
   conn_random_generator_.resize(n_hosts_);
   for (int i_host=0; i_host<n_hosts_; i_host++) {
     conn_random_generator_[i_host].resize(n_hosts_);
     for (int j_host=0; j_host<n_hosts_; j_host++) {
-      conn_random_generator_[i_host][j_host] = new curandGenerator_t; 
       CURAND_CALL(curandCreateGenerator
-		  (conn_random_generator_[i_host][j_host],
+		  (&conn_random_generator_[i_host][j_host],
 		   CURAND_RNG_PSEUDO_DEFAULT));
     }
   }
@@ -114,8 +125,9 @@ int NESTGPU::InitConnRandomGenerator()
 
 int NESTGPU::setHostNum(int n_hosts)
 {
+  // free previous instances before creating new
+  FreeConnRandomGenerator();
   n_hosts_ = n_hosts;
-  // SHOULD DELETE PREVIOUS INSTANCE BEFORE CREATING NEW!!!
   InitConnRandomGenerator();
   SetRandomSeed(kernel_seed_);
   external_spike_flag_ = (n_hosts > 1) ? true : false;
@@ -187,13 +199,15 @@ NESTGPU::NESTGPU()
   mpi_flag_ = false;
   remote_spike_height_ = false;
 
+#ifdef CHECKRC
+    // TEMPORARY, REMOVE!!!!!!!!!!!!!!!!!
   //int this_host = 0;
   int this_host = 1;
   setHostNum(5);
   setThisHost(this_host);
-
+  
   RemoteConnectionMapInit(n_hosts_); // (uint n_hosts)
-  // TEMPORARY, REMOVE!!!!!!!!!!!!!!!!!
+
   int n_neurons = 30;
   int CE = 3;
   Create("iaf_psc_exp", n_neurons);
@@ -285,6 +299,8 @@ NESTGPU::NESTGPU()
   RemoteConnectionMapCalibrate(this_host, 5);
   //RemoteConnectionMapCalibrate(0, 4);
   //RemoteConnectionMapCalibrate(1, 4);
+
+#endif
   
   // NestedLoop::Init(); moved to calibrate
   nested_loop_algo_ = CumulSumNestedLoopAlgo;
@@ -337,7 +353,7 @@ int NESTGPU::SetRandomSeed(unsigned long long seed)
   for (int i_host=0; i_host<n_hosts_; i_host++) {
     for (int j_host=0; j_host<n_hosts_; j_host++) {
       CURAND_CALL(curandSetPseudoRandomGeneratorSeed
-		  (*conn_random_generator_[i_host][j_host],
+		  (conn_random_generator_[i_host][j_host],
 		   seed + conn_seed_offset_ + i_host*n_hosts_ + j_host));
     }
   }
@@ -456,10 +472,12 @@ int NESTGPU::Calibrate()
   SpikeInit(max_spike_num_);
   SpikeBufferInit(GetNNode(), max_spike_buffer_size_);
 
+#ifndef CHECKRC
   //RemoteConnectionMapCalibrate(this_host_, n_hosts_);
   if (n_hosts_ > 1) {
     ExternalSpikeInit(GetNNode(), n_hosts_, max_spike_per_host_);
   }
+#endif
 
   if (rev_conn_flag_) {
     RevSpikeInit(GetNNode());

@@ -226,17 +226,15 @@ int poiss_gen::Calibrate(double, float)
   }
   dim3 numBlocks(grid_dim_x, grid_dim_y);
   
-  unsigned long long *d_seed;
-  unsigned long long h_seed;
+  unsigned int *d_seed;
+  unsigned int h_seed;
 
-  gpuErrchk(cudaMalloc(&d_seed, sizeof(unsigned long long)));
-
-  // Generate a random long long integer on device
-  CURAND_CALL(curandGenerateLongLong(*random_generator_, d_seed, 1));
-
+  gpuErrchk(cudaMalloc(&d_seed, sizeof(unsigned int)));
+  CURAND_CALL(curandGenerate(*random_generator_, d_seed, 1));
   // Copy seed from device memory to host
-  CUDA_CALL(cudaMemcpy(&h_seed, d_seed, sizeof(unsigned long long),
-		       cudaMemcpyDeviceToHost));
+  gpuErrchk(cudaMemcpy(&h_seed, d_seed, sizeof(unsigned int),
+  		       cudaMemcpyDeviceToHost));
+  //std::cout << "h_seed: " << h_seed << "\n";
 
   SetupPoissKernel<<<numBlocks, 1024>>>(d_curand_state_, n_conn_, h_seed);
   gpuErrchk( cudaPeekAtLastError() );

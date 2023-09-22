@@ -109,7 +109,7 @@ int NESTGPU::_Connect(T1 source, int n_source,
 		      T2 target, int n_target,
 		      ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return _Connect(*conn_random_generator_[this_host_][this_host_],
+  return _Connect(conn_random_generator_[this_host_][this_host_],
 		  source, n_source, target, n_target, conn_spec, syn_spec);
 }
 

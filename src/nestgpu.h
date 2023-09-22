@@ -103,7 +103,8 @@ class NESTGPU
   static const int conn_seed_offset_ = 12345;
   float time_resolution_; // time resolution in ms
   curandGenerator_t *random_generator_;
-  std::vector < std::vector <curandGenerator_t *> > conn_random_generator_;
+  //std::vector < std::vector <curandGenerator_t *> > conn_random_generator_;
+  std::vector < std::vector <curandGenerator_t > > conn_random_generator_;
   unsigned long long kernel_seed_;
   bool calibrate_flag_; // becomes true after calibration
   bool create_flag_; // becomes true just before creation of the first node
@@ -170,6 +171,7 @@ class NESTGPU
   int setThisHost(int i_host);
   
   int InitConnRandomGenerator();
+  int FreeConnRandomGenerator();
 
   int CreateNodeGroup(int n_neuron, int n_port);
   int CheckUncalibrated(std::string message);

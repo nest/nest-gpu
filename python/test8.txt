@@ -9,7 +9,6 @@
 
  Homepage: https://github.com/nest/nest-gpu
 
-d_source_node_flag: 0x7f29bae01400
 i_conn: 0 source: 4 delay: 3
 i_conn: 1 source: 9 delay: 6
 i_conn: 2 source: 9 delay: 8
@@ -31,7 +30,6 @@ i_conn: 6        i_source: 4
 i_conn: 7        i_source: 7
 i_conn: 8        i_source: 6
 n_source: 10
-d_source_node_flag: 0x7f29bae01400
 i_source: 0 source_node_flag: 0
 i_source: 1 source_node_flag: 0
 i_source: 2 source_node_flag: 1
@@ -106,7 +104,6 @@ local source node index
 SECOND CONNECT COMMAND
 ##################################################
 ##################################################
-d_source_node_flag: 0x7f29bae33000
 i_conn: 0 source: 6 delay: 5
 i_conn: 1 source: 1 delay: 6
 i_conn: 2 source: 8 delay: 8
@@ -128,7 +125,6 @@ i_conn: 6        i_source: 2
 i_conn: 7        i_source: 2
 i_conn: 8        i_source: 2
 n_source: 10
-d_source_node_flag: 0x7f29bae33000
 i_source: 0 source_node_flag: 0
 i_source: 1 source_node_flag: 1
 i_source: 2 source_node_flag: 1
@@ -212,7 +208,6 @@ block 2
 local source node index
 28
 
-d_source_node_flag: 0x7f29bae34c00
 i_conn: 0 source: 0 delay: 9
 i_conn: 1 source: 1 delay: 7
 i_conn: 2 source: 2 delay: 6
@@ -224,7 +219,6 @@ i_conn: 1        i_source: 1
 i_conn: 2        i_source: 2
 i_conn: 3        i_source: 3
 n_source: 4
-d_source_node_flag: 0x7f29bae34c00
 i_source: 0 source_node_flag: 1
 i_source: 1 source_node_flag: 1
 i_source: 2 source_node_flag: 1
@@ -282,7 +276,6 @@ block 1
 local source node index
 4
 
-d_source_node_flag: 0x7f29bae66a00
 i_conn: 0 source: 0 delay: 6
 i_conn: 1 source: 1 delay: 3
 i_conn: 2 source: 2 delay: 4
@@ -292,7 +285,6 @@ i_conn: 0        i_source: 0
 i_conn: 1        i_source: 1
 i_conn: 2        i_source: 2
 n_source: 3
-d_source_node_flag: 0x7f29bae66a00
 i_source: 0 source_node_flag: 1
 i_source: 1 source_node_flag: 1
 i_source: 2 source_node_flag: 1
@@ -336,7 +328,6 @@ local source node index
 3
 4
 
-d_source_node_flag: 0x7f29bae98600
 i_conn: 0 source: 0 delay: 6
 i_conn: 1 source: 1 delay: 5
 n_new_conn: 2   n_conn: 2       old_n_conn: 0
@@ -344,7 +335,6 @@ n_new_conn: 2   i_conn0: 0      n_block_conn: 2
 i_conn: 0        i_source: 0
 i_conn: 1        i_source: 1
 n_source: 2
-d_source_node_flag: 0x7f29bae98600
 i_source: 0 source_node_flag: 1
 i_source: 1 source_node_flag: 1
 n_used_source_nodes: 2
@@ -382,13 +372,11 @@ local source node index
 3
 4
 
-d_source_node_flag: 0x7f29baeca200
 i_conn: 0 source: 0 delay: 11
 n_new_conn: 1   n_conn: 1       old_n_conn: 0
 n_new_conn: 1   i_conn0: 0      n_block_conn: 1
 i_conn: 0        i_source: 0
 n_source: 1
-d_source_node_flag: 0x7f29baeca200
 i_source: 0 source_node_flag: 1
 n_used_source_nodes: 1
 n_used_source_nodes: 1

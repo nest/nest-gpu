@@ -1,3 +1,5 @@
+//#define CHECKRC
+
 #ifndef REMOTECONNECTH
 #define REMOTECONNECTH
 #include <vector>
@@ -290,7 +292,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
     
   int *d_source_node_flag; // [n_source] // each element is initially false
   gpuErrchk(cudaMalloc(&d_source_node_flag, n_source*sizeof(int)));
-  std::cout << "d_source_node_flag: " << d_source_node_flag << "\n";
+  //std::cout << "d_source_node_flag: " << d_source_node_flag << "\n";
   gpuErrchk(cudaMemset(d_source_node_flag, 0, n_source*sizeof(int)));  
     
   // on the target hosts create a temporary array of integers having size
@@ -303,14 +305,12 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   // The connect command is performed on both source and target host using
   // the same initial seed and using as source node indexes the integers
   // from 0 to n_source_nodes - 1
-  //_Connect<int, T2>(0, n_source, target, n_target,
-  //		      conn_spec, syn_spec);
-  _Connect(*conn_random_generator_[source_host][this_host_],
+  _Connect(conn_random_generator_[source_host][this_host_],
 	   0, n_source, target, n_target,
 	   conn_spec, syn_spec);
-  //Connect(0, n_source, target, n_target,
-  //	  conn_spec, syn_spec);
-
+  
+  /////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   uint h_source_delay[NConn];
   int h_source[NConn];
@@ -323,6 +323,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
     std::cout << "i_conn: " << i << " source: " << h_source[i];
     std::cout << " delay: " << h_delay[i] << "\n";
   }
+#endif  
   //////////////////////////////
     
 
@@ -331,10 +332,12 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   setUsedSourceNodes(KeySubarray, old_n_conn, NConn, h_ConnBlockSize,
 		     d_source_node_flag);
 
+  //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   std::cout << "n_source: " << n_source << "\n";
   int h_source_node_flag[n_source];
-  std::cout << "d_source_node_flag: " << d_source_node_flag << "\n";
+  //std::cout << "d_source_node_flag: " << d_source_node_flag << "\n";
     
   gpuErrchk(cudaMemcpy(h_source_node_flag, d_source_node_flag,
 		       n_source*sizeof(int), cudaMemcpyDeviceToHost));
@@ -343,6 +346,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
     std::cout << "i_source: " << i << " source_node_flag: "
 	      << h_source_node_flag[i] << "\n";
   }
+#endif
   //////////////////////////////
     
   // Count source nodes actually used in new connections
@@ -361,9 +365,11 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   gpuErrchk(cudaMemcpy(&n_used_source_nodes, d_n_used_source_nodes,
 		       sizeof(int), cudaMemcpyDeviceToHost));
 
+#ifdef CHECKRC
   // TEMPORARY
   std::cout << "n_used_source_nodes: " << n_used_source_nodes << "\n";
   //
+#endif
     
   // Define and allocate arrays of size n_used_source_nodes
   int *d_unsorted_source_node_index; // [n_used_source_nodes];
@@ -397,6 +403,8 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
+  //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   std::cout << "n_used_source_nodes: " << n_used_source_nodes << "\n";
   int h_unsorted_source_node_index[n_used_source_nodes];
@@ -418,6 +426,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
 	      << " i_unsorted_source_arr: "
 	      << h_i_unsorted_source_arr[i] << "\n";
   }
+#endif
   //////////////////////////////
 
   // Sort the arrays using unsorted_source_node_index as key
@@ -444,10 +453,12 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
 				  d_i_sorted_source_arr,
 				  n_used_source_nodes);
 
+  //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   int h_sorted_source_node_index[n_used_source_nodes];
   int h_i_sorted_source_arr[n_used_source_nodes];
-    
+  
   gpuErrchk(cudaMemcpy(h_sorted_source_node_index,
 		       d_sorted_source_node_index,
 		       n_used_source_nodes*sizeof(int),
@@ -464,8 +475,11 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
 	      << " i_sorted_source_arr: "
 	      << h_i_sorted_source_arr[i] << "\n";
   }
-  //////////////////////////////
+#endif
+  //////////////////////////////////////////////////////////////////////
 
+
+  //////////////////////////////
   // Allocate array of remote source node map blocks
   // and copy their address from host to device
   int n_blocks = h_remote_source_node_map[source_host].size();
@@ -518,6 +532,8 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   gpuErrchk(cudaMemcpy(&h_n_node_to_map, d_n_node_to_map, sizeof(int),
 		       cudaMemcpyDeviceToHost));
 
+  //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   std::cout << "n_node_to_map: " << h_n_node_to_map << "\n";
   
@@ -532,12 +548,17 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
 	      << h_sorted_source_node_index[i]
 	      << " node_to_map: " << h_node_to_map[i] << "\n";
   }
+#endif
   //////////////////////////////
 
   // Check if new blocks are required for the map
   int new_n_blocks = (n_node_map + h_n_node_to_map - 1)
     / h_node_map_block_size + 1;
+
+#ifdef CHECKRC
   std::cout << "new_n_blocks: " << new_n_blocks << "\n";
+#endif
+  
   // if new blocks are required for the map, allocate them
   if (new_n_blocks != n_blocks) {
     // Allocate GPU memory for new remote-source-node-map blocks
@@ -604,6 +625,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   }
 
   //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   std::cout << "//////////////////////////////////////////////\n";
   std::cout << "UPDATED UNSORTED MAP\n";
@@ -637,7 +659,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
     }
     std::cout << "\n";
   }
-  
+#endif
   //////////////////////////////////////////////////////////////////////
   
   // Sort the WHOLE key-pair map source_node_map, spike_buffer_map
@@ -651,9 +673,12 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   copass_sort::sort<int, int>
     (&h_remote_source_node_map[source_host][0],
      &h_local_spike_buffer_map[source_host][0],
-     n_node_map, block_size, d_storage, storage_bytes);
-  
+     n_node_map, h_node_map_block_size, d_storage, storage_bytes);
+
+#ifdef CHECKRC
   printf("storage bytes for copass sort: %ld\n", storage_bytes);
+#endif
+  
   // Allocate temporary storage
   gpuErrchk(cudaMalloc(&d_storage, storage_bytes));
 
@@ -661,10 +686,11 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   copass_sort::sort<int, int>
     (&h_remote_source_node_map[source_host][0],
      &h_local_spike_buffer_map[source_host][0],
-     n_node_map, block_size, d_storage, storage_bytes);
+     n_node_map, h_node_map_block_size, d_storage, storage_bytes);
   gpuErrchk(cudaFree(d_storage));
 
   //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   std::cout << "//////////////////////////////////////////////\n";
   std::cout << "UPDATED SORTED MAP\n";
@@ -695,6 +721,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
     }
     std::cout << "\n";
   }
+#endif
   //////////////////////////////////////////////////////////////////////
 
   // Launch kernel that searches source node indexes in the map
@@ -705,6 +732,8 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
+  //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   std::cout << "n_source: " << n_source << "\n";
   int h_local_node_index[n_source];
@@ -722,6 +751,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
     }
     std::cout << "\n";
   }
+#endif
   //////////////////////////////
 
 
@@ -761,21 +791,19 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
     
   int *d_source_node_flag; // [n_source] // each element is initially false
   gpuErrchk(cudaMalloc(&d_source_node_flag, n_source*sizeof(int)));
-  std::cout << "d_source_node_flag: " << d_source_node_flag << "\n";
+  //std::cout << "d_source_node_flag: " << d_source_node_flag << "\n";
   gpuErrchk(cudaMemset(d_source_node_flag, 0, n_source*sizeof(int)));  
     
   uint64_t old_n_conn = NConn;
   // The connect command is performed on both source and target host using
   // the same initial seed and using as source node indexes the integers
   // from 0 to n_source_nodes - 1
-  //_Connect<int, T2>(0, n_source, target, n_target,
-  //		      conn_spec, syn_spec);
-  _Connect(*conn_random_generator_[this_host_][target_host],
+  _Connect(conn_random_generator_[this_host_][target_host],
 	   0, n_source, target, n_target,
 	   conn_spec, syn_spec);
-    //Connect(0, n_source, target, n_target,
-    //	  conn_spec, syn_spec);
 
+  //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   uint h_source_delay[NConn];
   int h_source[NConn];
@@ -788,6 +816,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
     std::cout << "i_conn: " << i << " source: " << h_source[i];
     std::cout << " delay: " << h_delay[i] << "\n";
   }
+#endif
   //////////////////////////////
     
 
@@ -796,18 +825,21 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
   setUsedSourceNodes(KeySubarray, old_n_conn, NConn, h_ConnBlockSize,
 		     d_source_node_flag);
 
+  //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   std::cout << "n_source: " << n_source << "\n";
   int h_source_node_flag[n_source];
-  std::cout << "d_source_node_flag: " << d_source_node_flag << "\n";
+  //  std::cout << "d_source_node_flag: " << d_source_node_flag << "\n";
     
   gpuErrchk(cudaMemcpy(h_source_node_flag, d_source_node_flag,
 		       n_source*sizeof(int), cudaMemcpyDeviceToHost));
 
   for (int i=0; i<n_source; i++) {
     std::cout << "i_source: " << i << " source_node_flag: "
-	      << h_source_node_flag[i] << "\n";
+  	      << h_source_node_flag[i] << "\n";
   }
+#endif
   //////////////////////////////
     
   // Count source nodes actually used in new connections
@@ -826,9 +858,11 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
   gpuErrchk(cudaMemcpy(&n_used_source_nodes, d_n_used_source_nodes,
 		       sizeof(int), cudaMemcpyDeviceToHost));
 
+#ifdef CHECKRC
   // TEMPORARY
   std::cout << "n_used_source_nodes: " << n_used_source_nodes << "\n";
   //
+#endif
     
   // Define and allocate arrays of size n_used_source_nodes
   int *d_unsorted_source_node_index; // [n_used_source_nodes];
@@ -862,6 +896,8 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
+  //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   std::cout << "n_used_source_nodes: " << n_used_source_nodes << "\n";
   int h_unsorted_source_node_index[n_used_source_nodes];
@@ -883,6 +919,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
 	      << " i_unsorted_source_arr: "
 	      << h_i_unsorted_source_arr[i] << "\n";
   }
+#endif
   //////////////////////////////
 
   // Sort the arrays using unsorted_source_node_index as key
@@ -909,6 +946,8 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
 				  d_i_sorted_source_arr,
 				  n_used_source_nodes);
 
+  //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   int h_sorted_source_node_index[n_used_source_nodes];
   int h_i_sorted_source_arr[n_used_source_nodes];
@@ -929,6 +968,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
 	      << " i_sorted_source_arr: "
 	      << h_i_sorted_source_arr[i] << "\n";
   }
+#endif
   //////////////////////////////
 
 
@@ -939,6 +979,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
   int **d_node_map = NULL;
   // get current number of elements in the map
   int n_node_map;
+  //std::cout << "ok2 th " << target_host << "\n"; 
   gpuErrchk(cudaMemcpy(&n_node_map,
 		       &d_n_local_source_node_map[target_host], sizeof(int),
 		       cudaMemcpyDeviceToHost));
@@ -984,6 +1025,8 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
   gpuErrchk(cudaMemcpy(&h_n_node_to_map, d_n_node_to_map, sizeof(int),
 		       cudaMemcpyDeviceToHost));
 
+  //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   std::cout << "n_node_to_map: " << h_n_node_to_map << "\n";
   
@@ -998,12 +1041,17 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
 	      << h_sorted_source_node_index[i]
 	      << " node_to_map: " << h_node_to_map[i] << "\n";
   }
+#endif
   //////////////////////////////
 
   // Check if new blocks are required for the map
   int new_n_blocks = (n_node_map + h_n_node_to_map - 1)
     / h_node_map_block_size + 1;
+
+#ifdef CHECKRC
   std::cout << "new_n_blocks: " << new_n_blocks << "\n";
+#endif
+  
   // if new blocks are required for the map, allocate them
   if (new_n_blocks != n_blocks) {
     // Allocate GPU memory for new remote-source-node-map blocks
@@ -1046,6 +1094,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
 
   // update number of elements in remote source node map
   n_node_map += h_n_node_to_map;
+  //std::cout << "ok1 nnm " << n_node_map << " th " << target_host << "\n";
   gpuErrchk(cudaMemcpy(&d_n_local_source_node_map[target_host],
 		       &n_node_map, sizeof(int), cudaMemcpyHostToDevice));
   
@@ -1060,6 +1109,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
   }
 
   //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   std::cout << "//////////////////////////////////////////////\n";
   std::cout << "UPDATED UNSORTED MAP\n";
@@ -1087,7 +1137,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
     }
     std::cout << "\n";
   }
-  
+#endif
   //////////////////////////////////////////////////////////////////////
 
   // Sort the WHOLE map source_node_map
@@ -1100,19 +1150,23 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
   void *d_storage = NULL;
   copass_sort::sort<int>
     (&h_local_source_node_map[target_host][0],
-     n_node_map, block_size, d_storage, storage_bytes);
-  
+     n_node_map, h_node_map_block_size, d_storage, storage_bytes);
+
+#ifdef CHECKRC
   printf("storage bytes for copass sort: %ld\n", storage_bytes);
+#endif
+  
   // Allocate temporary storage
   gpuErrchk(cudaMalloc(&d_storage, storage_bytes));
 
   // Run sorting operation
   copass_sort::sort<int>
     (&h_local_source_node_map[target_host][0],
-     n_node_map, block_size, d_storage, storage_bytes);
+     n_node_map, h_node_map_block_size, d_storage, storage_bytes);
   gpuErrchk(cudaFree(d_storage));
 
   //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
   /// TEMPORARY for check
   std::cout << "//////////////////////////////////////////////\n";
   std::cout << "UPDATED SORTED MAP\n";
@@ -1138,6 +1192,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
     }
     std::cout << "\n";
   }
+#endif
   //////////////////////////////////////////////////////////////////////
 
   // Remove temporary new connections in source host !!!!!!!!!!!
