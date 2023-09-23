@@ -150,18 +150,28 @@ __global__ void SendExternalSpike()
 {
   int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_spike < *ExternalSpikeNum) {
+    //printf("ExternalSpikeNum: %d\ti_spike: %d\n", *ExternalSpikeNum, i_spike);
     int i_source = ExternalSpikeSourceNode[i_spike];
+    //printf("i_source: %d\n", i_source);
     float height = ExternalSpikeHeight[i_spike];
+    //printf("height: %f\n", height);
     int Nth = NExternalNodeTargetHost[i_source];
-      
+    //printf("Nth: %d\n", Nth);
+    
     for (int ith=0; ith<Nth; ith++) {
+      //printf("ith: %d\n", ith);
       int target_host_id = ExternalNodeTargetHostId[i_source][ith];
+      //printf("target_host_id: %d\n", target_host_id);
       int remote_node_id = ExternalNodeId[i_source][ith];
+      //printf("remote_node_id: %d\n", remote_node_id);
       int pos = atomicAdd(&ExternalTargetSpikeNum[target_host_id], 1);
+      //printf("pos: %d\n", pos);
       ExternalTargetSpikeNodeId[target_host_id*MaxSpikePerHost + pos]
 	= remote_node_id;
+      //printf("ExternalTargetSpikeNodeId assigned\n");
       ExternalTargetSpikeHeight[target_host_id*MaxSpikePerHost + pos]
 	= height;
+      //printf("ExternalTargetSpikeHeight assigned\n");
     }
   }
 }
@@ -258,6 +268,8 @@ int NESTGPU::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_host)
   cudaMemcpy(d_ExternalNodeId, h_ExternalNodeId,
 	     n_node*sizeof(int*), cudaMemcpyHostToDevice);
   */
+  //std::cout << "DeviceExternalSpikeInit\n";
+  //std::cout << "init d_n_target_hosts: " << d_n_target_hosts << "\n";
   DeviceExternalSpikeInit<<<1,1>>>(n_hosts, max_spike_per_host,
 				   d_ExternalSpikeNum,
 				   d_ExternalSpikeSourceNode,

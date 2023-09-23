@@ -33,7 +33,7 @@
 #include "send_spike.h"
 #include "node_group.h"
 #include "connect.h"
-
+#include "spike_mpi.h"
 
 #define LAST_SPIKE_TIME_GUARD 0x70000000
 
@@ -127,10 +127,12 @@ __device__ void PushSpike(int i_spike_buffer, float height)
     LastRevSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx;
   }
 
-  //if (ExternalSpikeFlag) {
+  if (ExternalSpikeFlag) {
     // if active spike should eventually be sent to remote connections
-  // PushExternalSpike(i_spike_buffer, height);
-  //}
+    //printf("PushExternalSpike i_spike_buffer: %d height: %f\n",
+    //	   i_spike_buffer, height);
+    PushExternalSpike(i_spike_buffer, height);
+  }
   
   // if recording  spike counts is activated, increase counter
   if (NodeGroupArray[i_group].spike_count_ != NULL) {

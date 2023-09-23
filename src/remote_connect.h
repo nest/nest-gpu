@@ -770,7 +770,10 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
 				 h_ConnBlockSize, d_local_node_index);
 
   // On target host. Create n_nodes_to_map nodes of type ext_neuron
-  Create("ext_neuron", h_n_node_to_map);
+  //std::cout << "h_n_node_to_map " << h_n_node_to_map <<"\n";
+  if (h_n_node_to_map > 0) {
+    Create("ext_neuron", h_n_node_to_map);
+  }
   
   return 0;
 }

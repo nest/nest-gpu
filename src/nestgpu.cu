@@ -473,8 +473,8 @@ int NESTGPU::Calibrate()
   SpikeBufferInit(GetNNode(), max_spike_buffer_size_);
 
 #ifndef CHECKRC
-  //RemoteConnectionMapCalibrate(this_host_, n_hosts_);
   if (n_hosts_ > 1) {
+    RemoteConnectionMapCalibrate(this_host_, n_hosts_);
     ExternalSpikeInit(GetNNode(), n_hosts_, max_spike_per_host_);
   }
 #endif

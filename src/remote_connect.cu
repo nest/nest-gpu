@@ -132,7 +132,12 @@ int allocLocalSourceNodeMapBlocks(std::vector<int*> &i_local_src_node_map,
 // Initialize the maps for n_hosts hosts
 int RemoteConnectionMapInit(uint n_hosts)
 {
-  h_node_map_block_size = 3; //10000; // initialize node map block size
+#ifdef CHECKRC
+  h_node_map_block_size = 3; // initialize node map block size
+#else
+  h_node_map_block_size = 10000; // initialize node map block size
+#endif
+
   cudaMemcpyToSymbol(node_map_block_size, &h_node_map_block_size, sizeof(int));
 
   // allocate and init to 0 n. of elements in the map for each source host
@@ -209,6 +214,8 @@ __global__ void fillTargetHostArrayFromMapKernel
 // Calibrate the maps
 int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
 {
+  //std::cout << "In RemoteConnectionMapCalibrate " << i_host << " "
+  //	    << n_hosts << "\n";
   // vector of pointers to local source node maps in device memory
   // per target host hd_local_source_node_map[target_host]
   // type std::vector<int*>
@@ -377,7 +384,9 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
   // on which each local node
   // has outgoing connections
   // allocate d_n_target_hosts[n_nodes] and init to 0
+  // std::cout << "allocate d_n_target_hosts n_nodes: " << n_nodes << "\n";
   gpuErrchk(cudaMalloc(&d_n_target_hosts, n_nodes*sizeof(int)));
+  // std::cout << "d_n_target_hosts: " << d_n_target_hosts << "\n";
   gpuErrchk(cudaMemset(d_n_target_hosts, 0, n_nodes*sizeof(int)));
   // allocate d_n_target_hosts_cumul[n_nodes+1]
   // representing the prefix scan (cumulative sum) of d_n_target_hosts
