@@ -1205,6 +1205,8 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
   return 0;
 }
 
+__global__ void MapIndexToSpikeBufferKernel(int n_hosts, int *host_offset,
+					    int *node_index);
 
 
 #endif // REMOTECONNECTH

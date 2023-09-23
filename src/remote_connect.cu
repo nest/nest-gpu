@@ -817,5 +817,20 @@ int fixConnectionSourceNodeIndexes(std::vector<uint*> &key_subarray,
   return 0;
 }
 
-
+__global__ void MapIndexToSpikeBufferKernel(int n_hosts, int *host_offset,
+					    int *node_index)
+{
+  const int i_host = blockIdx.x;
+  if (i_host < n_hosts) {    
+    const int pos = host_offset[i_host];
+    const int num = host_offset[i_host+1] - pos;
+    for (int i_elem = threadIdx.x; i_elem < num; i_elem += blockDim.x) {
+      const int i_node_map = node_index[pos + i_elem];
+      const int i_block = i_node_map / node_map_block_size;
+      const int i = i_node_map % node_map_block_size;
+      const int i_spike_buffer = local_spike_buffer_map[i_host][i_block][i];
+      node_index[pos + i_elem] = i_spike_buffer; 
+    }
+  }
+}
 
