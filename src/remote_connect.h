@@ -308,7 +308,9 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   _Connect(conn_random_generator_[source_host][this_host_],
 	   0, n_source, target, n_target,
 	   conn_spec, syn_spec);
-  
+  if (NConn == old_n_conn) {
+    return 0;
+  }
   /////////////////////////////////////////////////////////////////////
 #ifdef CHECKRC
   /// TEMPORARY for check
@@ -805,6 +807,9 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
 	   0, n_source, target, n_target,
 	   conn_spec, syn_spec);
 
+  if (NConn == old_n_conn) {                                                                                                                  
+    return 0;                                                                                                                                 
+  }                                                                                                                                            
   //////////////////////////////////////////////////////////////////////
 #ifdef CHECKRC
   /// TEMPORARY for check

@@ -185,7 +185,7 @@ NESTGPU::NESTGPU()
   SetTimeResolution(0.1);  // time resolution in ms
   max_spike_num_fact_ = 1.0;
   max_spike_per_host_fact_ = 1.0;
-  setMaxNodeNBits(20); // maximum number of nodes is 2^20
+  setMaxNodeNBits(21); // maximum number of nodes is 2^21
 
   error_flag_ = false;
   error_message_ = "";
