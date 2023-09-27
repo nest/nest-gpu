@@ -301,7 +301,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   int *d_local_node_index; // [n_source]; // only on target host
   gpuErrchk(cudaMalloc(&d_local_node_index, n_source*sizeof(int)));
     
-  uint64_t old_n_conn = NConn;
+  int64_t old_n_conn = NConn;
   // The connect command is performed on both source and target host using
   // the same initial seed and using as source node indexes the integers
   // from 0 to n_source_nodes - 1
@@ -799,7 +799,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
   //std::cout << "d_source_node_flag: " << d_source_node_flag << "\n";
   gpuErrchk(cudaMemset(d_source_node_flag, 0, n_source*sizeof(int)));  
     
-  uint64_t old_n_conn = NConn;
+  int64_t old_n_conn = NConn;
   // The connect command is performed on both source and target host using
   // the same initial seed and using as source node indexes the integers
   // from 0 to n_source_nodes - 1

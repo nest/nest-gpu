@@ -69,7 +69,7 @@ int NESTGPU::NodeGroupArrayInit()
   //  std::cout << this_host_ << "ngs_vect.size(): " << ngs_vect.size() << "\n";
   //  std::cout << this_host_ << "NodeGroupArray: " << NodeGroupArray << "\n";
 
-  if (ngs_vect.data() > MAX_N_NODE_GROUPS) {
+  if (ngs_vect.size() > MAX_N_NODE_GROUPS) {
     throw ngpu_exception("Number of neuron groups larger than limit.");
   }
   
