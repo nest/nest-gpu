@@ -30,10 +30,10 @@
 #include "nestgpu.h"
 
 __constant__ NodeGroupStruct NodeGroupArray[MAX_N_NODE_GROUPS];
-__device__ signed char *NodeGroupMap;
+__device__ int16_t *NodeGroupMap;
 
 __global__
-void NodeGroupMapInit(signed char *node_group_map)
+void NodeGroupMapInit(int16_t *node_group_map)
 {
   NodeGroupMap = node_group_map;
 }
@@ -41,7 +41,7 @@ void NodeGroupMapInit(signed char *node_group_map)
 int NESTGPU::NodeGroupArrayInit()
 {
   gpuErrchk(cudaMalloc(&d_node_group_map_,
-		       node_group_map_.size()*sizeof(signed char)));
+		       node_group_map_.size()*sizeof(int16_t)));
 
   std::vector<NodeGroupStruct> ngs_vect;
   for (unsigned int i=0; i<node_vect_.size(); i++) {
@@ -78,7 +78,7 @@ int NESTGPU::NodeGroupArrayInit()
 
   // Memcopy will be synchronized with NodeGroupMapInit kernel
   gpuErrchk(cudaMemcpyAsync(d_node_group_map_, node_group_map_.data(),
-		       node_group_map_.size()*sizeof(signed char),
+		       node_group_map_.size()*sizeof(int16_t),
 		       cudaMemcpyHostToDevice));
   // temporary
   gpuErrchk( cudaPeekAtLastError() );

@@ -42,7 +42,7 @@
 extern __constant__ double NESTGPUTime;
 extern __constant__ float NESTGPUTimeResolution;
 extern __constant__ NodeGroupStruct NodeGroupArray[];
-extern __device__ signed char *NodeGroupMap;
+extern __device__ int16_t *NodeGroupMap;
 
 namespace poiss_conn
 {

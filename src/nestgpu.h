@@ -127,8 +127,8 @@ class NESTGPU
   bool mpi_flag_; // true if MPI is initialized
   bool remote_spike_height_;
   
-  std::vector<signed char> node_group_map_;
-  signed char *d_node_group_map_;
+  std::vector<int16_t> node_group_map_;
+  int16_t *d_node_group_map_;
 
 
   int max_spike_buffer_size_;
