@@ -214,10 +214,10 @@ brunel_params = {
     'delay': 1.5,  # synaptic delay, all alphaonnections(ms)
 
     # synaptic weight
-    'JE': 0.14,  # peak of EPSP
+    'JE': 0.05*8/90*13,  # peak of EPSP
 
     'sigma_w': 3.47,  # standard dev. of E->E synapses(pA)
-    'g': -5.0,
+    'g': -7.0,
 
     'stdp_params': {
         'alpha': 0.0513,
@@ -259,9 +259,11 @@ def build_network():
     neurons = []; E_pops = []; I_pops = []
 
     for i in range(mpi_np):
-        neurons.append(ngpu.RemoteCreate(i, 'iaf_psc_alpha', NE+NI, 1, model_params).node_seq)
+        neurons.append(ngpu.RemoteCreate(i, 'iaf_psc_alpha', NE+NI, 1).node_seq)
         E_pops.append(neurons[i][0:NE])
         I_pops.append(neurons[i][NE:NE+NI])
+    
+    print(ngpu.GetStatus(neurons[mpi_id][0]))
 
     if brunel_params['randomize_Vm']:
         rank_print('Randomizing membrane potentials.')
@@ -283,12 +285,12 @@ def build_network():
 
     # Convert synapse weight from mV to pA
     conversion_factor = convert_synapse_weight(model_params['tau_m'], model_params['tau_syn_ex'], model_params['C_m'])
-    JE_pA = conversion_factor * brunel_params['JE']
+    JE_pA = 0.05*8/90*13 #conversion_factor * brunel_params['JE']
 
     nu_thresh = model_params['Theta_rel'] / ( CE * model_params['tau_m'] / model_params['C_m'] * JE_pA * np.exp(1.) * tau_syn)
     nu_ext = nu_thresh * brunel_params['eta']
-    rate = nu_ext * CE * 1000.
-    print("Rate", rate)
+    rate = 20000.0#nu_ext * CE * 1000.
+
     if not params['use_dc_input']:
         #if mpi_id == 0:
         brunel_params["poisson_rate"] = rate
@@ -320,14 +322,14 @@ def build_network():
     else:
         syn_dict_ex = {'weight': JE_pA, 'delay': brunel_params['delay']}
 
-    if mpi_id==0:
-        print("Synaptic weights: JE={}; JI={}".format(JE_pA, JE_pA*brunel_params['g']))
+    #if mpi_id==0:
+    #    print("Synaptic weights: JE={}; JI={}".format(brunel_params['JE'], brunel_params['JE']*brunel_params['g']))
 
     if not params["use_dc_input"]:
         #if  mpi_id==0:
         rank_print('Connecting stimulus generators.')
         # Connect Poisson generator to neuron
-        my_connect(E_stim, neurons[mpi_id], {'rule': 'all_to_all'}, syn_dict_ex)
+        my_connect(E_stim, neurons[mpi_id], {'rule': 'all_to_all'}, {'weight': 0.37*13, 'delay': brunel_params['delay']})
 
     rank_print('Creating local connections.')
     rank_print('Connecting excitatory -> excitatory population.')
@@ -344,31 +346,31 @@ def build_network():
     #if mpi_id==0:
     #    print("Initial indegrees",len(ngpu.GetConnections(E_pops[mpi_id])))
     
-    my_connect(E_pops[mpi_id], neurons[mpi_id],
-                 e_conn_rule, syn_dict_ex)
-    #my_connect(E_pops[mpi_id], E_pops[mpi_id],
+    #my_connect(E_pops[mpi_id], neurons[mpi_id],
     #             e_conn_rule, syn_dict_ex)
+    my_connect(E_pops[mpi_id], E_pops[mpi_id],
+                 e_conn_rule, syn_dict_ex)
     
 
     rank_print('Connecting inhibitory -> excitatory population.')
     #if mpi_id==0:
     #    print("After E->E",len(ngpu.GetConnections(E_pops[mpi_id])))
-    my_connect(I_pops[mpi_id], neurons[mpi_id],
-                 i_conn_rule, syn_dict_in)
-    #my_connect(I_pops[mpi_id], E_pops[mpi_id],
+    #my_connect(I_pops[mpi_id], neurons[mpi_id],
     #             i_conn_rule, syn_dict_in)
+    my_connect(I_pops[mpi_id], E_pops[mpi_id],
+                 i_conn_rule, syn_dict_in)
     
     rank_print('Connecting excitatory -> inhibitory population.')
     #if mpi_id==0:
     #    print("After I->E",len(ngpu.GetConnections(E_pops[mpi_id])))
-    #my_connect(E_pops[mpi_id], I_pops[mpi_id],
-    #            e_conn_rule, syn_dict_ex)
+    my_connect(E_pops[mpi_id], I_pops[mpi_id],
+                 e_conn_rule, syn_dict_ex)
 
     rank_print('Connecting inhibitory -> inhibitory population.')
     #if mpi_id==0:
     #    print("After E->I",len(ngpu.GetConnections(E_pops[mpi_id])))
-    #my_connect(I_pops[mpi_id], I_pops[mpi_id],
-    #             i_conn_rule, syn_dict_in)
+    my_connect(I_pops[mpi_id], I_pops[mpi_id],
+                 i_conn_rule, syn_dict_in)
     
     
     time_connect_local = perf_counter_ns()
@@ -381,28 +383,27 @@ def build_network():
             if(i!=j):
                 rank_print('Connecting excitatory {} -> excitatory {} population.'.format(i, j))
 
-                my_remoteconnect(i, E_pops[i], j, neurons[j],
-                                    e_conn_rule, syn_dict_ex)
-                #my_remoteconnect(i, E_pops[i], j, E_pops[j],
+                #my_remoteconnect(i, E_pops[i], j, neurons[j],
                 #                    e_conn_rule, syn_dict_ex)
+                my_remoteconnect(i, E_pops[i], j, E_pops[j],
+                                    e_conn_rule, syn_dict_ex)
 
                 rank_print('Connecting inhibitory {} -> excitatory {} population.'.format(i, j))
                 
-                my_remoteconnect(i, I_pops[i], j, neurons[j],
-                                    i_conn_rule, syn_dict_in)
-                #my_remoteconnect(i, I_pops[i], j, E_pops[j],
+                #my_remoteconnect(i, I_pops[i], j, neurons[j],
                 #                    i_conn_rule, syn_dict_in)
+                my_remoteconnect(i, I_pops[i], j, E_pops[j],
+                                    i_conn_rule, syn_dict_in)
 
                 rank_print('Connecting excitatory {} -> inhibitory {} population.'.format(i, j))
 
-                #my_remoteconnect(i, E_pops[i], j, I_pops[j],
-                #                    e_conn_rule, syn_dict_ex)
+                my_remoteconnect(i, E_pops[i], j, I_pops[j],
+                                    e_conn_rule, syn_dict_ex)
 
                 rank_print('Connecting inhibitory {} -> inhibitory {} population.'.format(i, j))
 
-                #my_remoteconnect(i, I_pops[i], j, I_pops[j],
-                #                    i_conn_rule, syn_dict_in)
-                
+                my_remoteconnect(i, I_pops[i], j, I_pops[j],
+                                    i_conn_rule, syn_dict_in)
     #if mpi_id==0:
     #    print("After all local and remote connections",len(ngpu.GetConnections(E_pops[mpi_id])))
     
@@ -521,12 +522,12 @@ def run_simulation():
         json.dump(info_dict, f, indent=4)
 
 def my_connect(source, target, conn_dict, syn_dict):
-    print("MY id {} LOCAL Source {} {} | Target {} {}".format(mpi_id, source.i0, source.n, target.i0, target.n))
+    print("MY id {} LOCAL Source {} {} | Target {} {} | J {}".format(mpi_id, source.i0, source.n, target.i0, target.n, syn_dict['weight']))
     ngpu.Connect(source, target, conn_dict, syn_dict)
 
 
 def my_remoteconnect(source_host, source, target_host, target, conn_dict, syn_dict):
-    print("MY id {} REMOTE Source {} {} {} | Target {} {} {}".format(mpi_id, source_host, source.i0, source.n, target_host, target.i0, target.n))
+    print("MY id {} REMOTE Source {} {} {} | Target {} {} {} | J {}".format(mpi_id, source_host, source.i0, source.n, target_host, target.i0, target.n, syn_dict['weight']))
     ngpu.RemoteConnect(source_host, source, target_host, target, conn_dict, syn_dict)
 
 

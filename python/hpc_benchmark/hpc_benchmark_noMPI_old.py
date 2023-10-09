@@ -103,14 +103,6 @@ import nestgpu as ngpu
 M_INFO = 10
 M_ERROR = 30
 
-ngpu.ConnectMpiInit()
-mpi_np = ngpu.MpiNp()
-
-print("Simulation with {} MPI processes".format(mpi_np))
-
-mpi_id = ngpu.MpiId()
-
-
 ###############################################################################
 # Parameter section
 # Define all relevant parameters: changes should be made here
@@ -118,7 +110,7 @@ mpi_id = ngpu.MpiId()
 
 params = {
     #'nvp': 1,               # total number of virtual processes
-    'scale': 1.,            # scaling factor of the network size
+    'scale': 1.0,            # scaling factor of the network size
                             # total network size = scale*11250 neurons
     'simtime': 250.,        # total simulation time in ms
     'presimtime': 50.,      # simulation time until reaching equilibrium
@@ -270,12 +262,6 @@ def build_network(logger):
     # total number of incomining inhibitory connections
     CI = int(1. * NI / params['scale'])
 
-    # number of indegrees from each MPI process
-    # here the indegrees are equally distributed among the
-    # neuron populations in all the MPI processes
-    CE_distrib = int(1.0 * CE / mpi_np) 
-    CI_distrib = int(1.0 * CI / mpi_np)
-
     #nest.message(M_INFO, 'build_network', 'Creating excitatory stimulus generator.')
     print('Creating excitatory stimulus generator.')
 
@@ -333,7 +319,7 @@ def build_network(logger):
     print('Connecting excitatory -> excitatory population.')
 
     ngpu.Connect(E_neurons, E_neurons,
-                {'rule': 'fixed_indegree', 'indegree': CE_distrib},
+                {'rule': 'fixed_indegree', 'indegree': CE},
                 #'allow_autapses': False, 'allow_multapses': True},
                 syn_dict_ex)
                 #syn_dict_stdp)
@@ -341,21 +327,21 @@ def build_network(logger):
     print('Connecting inhibitory -> excitatory population.')
 
     ngpu.Connect(I_neurons, E_neurons,
-                {'rule': 'fixed_indegree', 'indegree': CI_distrib},
+                {'rule': 'fixed_indegree', 'indegree': CI},
                 #'allow_autapses': False, 'allow_multapses': True},
                 syn_dict_in)
 
     print('Connecting excitatory -> inhibitory population.')
 
     ngpu.Connect(E_neurons, I_neurons,
-                {'rule': 'fixed_indegree', 'indegree': CE_distrib},
+                {'rule': 'fixed_indegree', 'indegree': CE},
                 #'allow_autapses': False, 'allow_multapses': True},
                 syn_dict_ex)
 
     print('Connecting inhibitory -> inhibitory population.')
 
     ngpu.Connect(I_neurons, I_neurons,
-                {'rule': 'fixed_indegree', 'indegree': CI_distrib},
+                {'rule': 'fixed_indegree', 'indegree': CI},
                 #'allow_autapses': False, 'allow_multapses': True},
                 syn_dict_in)
 

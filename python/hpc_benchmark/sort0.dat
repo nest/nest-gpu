@@ -1,0 +1,13 @@
+MY id 0 LOCAL Source 0 9000 | Target 0 9000
+MY id 0 LOCAL Source 0 9000 | Target 9000 2250
+MY id 0 LOCAL Source 11250 1 | Target 0 11250
+MY id 0 LOCAL Source 9000 2250 | Target 0 9000
+MY id 0 LOCAL Source 9000 2250 | Target 9000 2250
+MY id 0 REMOTE Source 0 0 9000 | Target 1 0 9000
+MY id 0 REMOTE Source 0 0 9000 | Target 1 9000 2250
+MY id 0 REMOTE Source 0 9000 2250 | Target 1 0 9000
+MY id 0 REMOTE Source 0 9000 2250 | Target 1 9000 2250
+MY id 0 REMOTE Source 1 0 9000 | Target 0 0 9000
+MY id 0 REMOTE Source 1 0 9000 | Target 0 9000 2250
+MY id 0 REMOTE Source 1 9000 2250 | Target 0 0 9000
+MY id 0 REMOTE Source 1 9000 2250 | Target 0 9000 2250
