@@ -38,17 +38,12 @@ with indegrees equally distributed across the processes.
 This is the standard network investigated in [1]_, [2]_, [3]_.
 A note on connectivity
 ~~~~~~~~~~~~~~~~~~~~~~
-.. image:: ../examples/hpc_benchmark_connectivity.svg
-   :width: 50 %
-   :alt: HPC Benchmark network architecture
-   :align: right
 Each neuron receives :math:`K_{in,{\\tau} E}` excitatory connections randomly
 drawn from population E and :math:`K_{in,\\tau I}` inhibitory connections from
-population I. Autapses are prohibited (denoted by the crossed out A next to
-the connections) while multapses are allowed (denoted by the M). Each neuron
+population I. Autapses are prohibited while multapses are allowed. Each neuron
 receives additional input from an external stimulation device. All delays are
-constant, all weights but excitatory onto excitatory are constant. Excitatory
-onto excitatory weights are time dependent. Figure taken from [4]_.
+constant, all weights but excitatory onto excitatory are constant.
+
 A note on scaling
 ~~~~~~~~~~~~~~~~~
 This benchmark was originally developed for very large-scale simulations on
@@ -59,8 +54,7 @@ activity will remain stable over long periods of time.
 The original network size corresponds to a scale parameter of 100 or more.
 In order to make it possible to test this benchmark script on desktop
 computers, the scale parameter is set to 1 below, while the number of
-11.250 incoming synapses per neuron is retained. In this limit, correlations
-in input to neurons are large and will lead to increasing synaptic weights.
+11.250 incoming synapses per neuron is retained.
 Over time, network dynamics will therefore become unstable and all neurons
 in the network will fire in synchrony, leading to extremely slow simulation
 speeds.
@@ -93,8 +87,6 @@ from time import perf_counter_ns
 from mpi4py import MPI
 
 import nestgpu as ngpu
-#import nest
-#import nest.raster_plot
 
 from argparse import ArgumentParser
 
@@ -126,11 +118,10 @@ rank_print("Simulation with {} MPI processes".format(mpi_np))
 
 
 params = {
-    #'nvp': 1,              # total number of virtual processes
     'scale': 1.,            # scaling factor of the network size
                             # total network size = scale*11250 neurons
     'seed': args.seed,          # seed for random number generation
-    'simtime': 250.,        # total simulation time in ms
+    'simtime': 25000.,        # total simulation time in ms
     'presimtime': 50.,      # simulation time until reaching equilibrium
     'dt': 0.1,              # simulation step
     'stdp': False,          # enable plastic connections
@@ -190,7 +181,6 @@ brunel_params = {
     'NE': int(9000 * params['scale']),  # number of excitatory neurons
     'NI': int(2250 * params['scale']),  # number of inhibitory neurons
     
-    # Todo change parameter names!!!
     'model_params': {  # Set variables for iaf_psc_alpha
         'E_L': 0.0,  # Resting membrane potential(mV)
         'C_m': 250.0,  # Capacity of the membrane(pF)
@@ -212,7 +202,7 @@ brunel_params = {
     # in the paper were used for the benchmarks on K, the values given
     # here were used for the benchmark on JUQUEEN.
 
-    'randomize_Vm': False,
+    'randomize_Vm': True,
     'mean_potential': 5.7,
     'sigma_potential': 7.2,
 
@@ -228,10 +218,8 @@ brunel_params = {
         'alpha': 0.0513,
         'lambda': 0.1,  # STDP step size
         'mu_plus': 0.4,  # STDP weight dependence exponent(potentiation)
-        # added
         'mu_minus': 0.4,  # STDP weight dependence exponent(depression)
         'tau_plus': 15.0,  # time constant for potentiation
-        # added
         'tau_minus': 15.0,  # time constant for depression
     },
     'stdp_delay': 1.5,
@@ -329,7 +317,6 @@ def build_network():
         print("Synaptic weights: JE={}; JI={}".format(JE_pA, JE_pA*brunel_params['g']))
 
     if not params["use_dc_input"]:
-        #if  mpi_id==0:
         rank_print('Connecting stimulus generators.')
         # Connect Poisson generator to neuron
         my_connect(E_stim, neurons[mpi_id], {'rule': 'all_to_all'}, syn_dict_ex)
@@ -346,39 +333,14 @@ def build_network():
 
     brunel_params["connection_rules"] = {"inhibitory": i_conn_rule, "excitatory": e_conn_rule}
     
-    #if mpi_id==0:
-    #    print("Initial indegrees",len(ngpu.GetConnections(E_pops[mpi_id])))
-    
     my_connect(E_pops[mpi_id], neurons[mpi_id],
                  e_conn_rule, syn_dict_ex)
-    #my_connect(E_pops[mpi_id], E_pops[mpi_id],
-    #             e_conn_rule, syn_dict_ex)
-    
 
-    rank_print('Connecting inhibitory -> excitatory population.')
-    #if mpi_id==0:
-    #    print("After E->E",len(ngpu.GetConnections(E_pops[mpi_id])))
     my_connect(I_pops[mpi_id], neurons[mpi_id],
                  i_conn_rule, syn_dict_in)
-    #my_connect(I_pops[mpi_id], E_pops[mpi_id],
-    #             i_conn_rule, syn_dict_in)
-    
-    rank_print('Connecting excitatory -> inhibitory population.')
-    #if mpi_id==0:
-    #    print("After I->E",len(ngpu.GetConnections(E_pops[mpi_id])))
-    #my_connect(E_pops[mpi_id], I_pops[mpi_id],
-    #            e_conn_rule, syn_dict_ex)
-
-    rank_print('Connecting inhibitory -> inhibitory population.')
-    #if mpi_id==0:
-    #    print("After E->I",len(ngpu.GetConnections(E_pops[mpi_id])))
-    #my_connect(I_pops[mpi_id], I_pops[mpi_id],
-    #             i_conn_rule, syn_dict_in)
-    
-    
+        
     time_connect_local = perf_counter_ns()
-    #if mpi_id==0:
-    #    print("After all local connections",len(ngpu.GetConnections(E_pops[mpi_id])))
+
     rank_print('Creating remote connections.')
     
     for i in range(mpi_np):
@@ -388,29 +350,16 @@ def build_network():
 
                 my_remoteconnect(i, E_pops[i], j, neurons[j],
                                     e_conn_rule, syn_dict_ex)
-                #my_remoteconnect(i, E_pops[i], j, E_pops[j],
-                #                    e_conn_rule, syn_dict_ex)
 
                 rank_print('Connecting inhibitory {} -> excitatory {} population.'.format(i, j))
                 
                 my_remoteconnect(i, I_pops[i], j, neurons[j],
                                     i_conn_rule, syn_dict_in)
-                #my_remoteconnect(i, I_pops[i], j, E_pops[j],
-                #                    i_conn_rule, syn_dict_in)
 
                 rank_print('Connecting excitatory {} -> inhibitory {} population.'.format(i, j))
 
-                #my_remoteconnect(i, E_pops[i], j, I_pops[j],
-                #                    e_conn_rule, syn_dict_ex)
-
                 rank_print('Connecting inhibitory {} -> inhibitory {} population.'.format(i, j))
 
-                #my_remoteconnect(i, I_pops[i], j, I_pops[j],
-                #                    i_conn_rule, syn_dict_in)
-                
-    #if mpi_id==0:
-    #    print("After all local and remote connections",len(ngpu.GetConnections(E_pops[mpi_id])))
-    
     # read out time used for building
     time_connect_remote = perf_counter_ns()
 
