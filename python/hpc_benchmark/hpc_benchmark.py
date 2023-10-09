@@ -124,7 +124,7 @@ params = {
     'simtime': 250.,        # total simulation time in ms
     'presimtime': 50.,      # simulation time until reaching equilibrium
     'dt': 0.1,              # simulation step
-    'stdp': False,          # enable plastic connections
+    'stdp': False,          # enable plastic connections [feature not properlyly implemented yet!]
     'record_spikes': True,  # switch to record spikes of excitatory
                             # neurons to file
     'raster_plot': False,    # when record_spikes=True, depicts a raster plot
@@ -206,7 +206,7 @@ brunel_params = {
     'mean_potential': 5.7,
     'sigma_potential': 7.2,
 
-    'delay': 1.5,  # synaptic delay, all alphaonnections(ms)
+    'delay': 1.5,  # synaptic delay, all alpha connections(ms)
 
     # synaptic weight
     'JE': 0.14,  # peak of EPSP
@@ -214,6 +214,7 @@ brunel_params = {
     'sigma_w': 3.47,  # standard dev. of E->E synapses(pA)
     'g': -5.0,
 
+    # stdp synapses still to be implemented correctly
     'stdp_params': {
         'alpha': 0.0513,
         'lambda': 0.1,  # STDP step size
@@ -281,9 +282,7 @@ def build_network():
     nu_thresh = model_params['Theta_rel'] / ( CE * model_params['tau_m'] / model_params['C_m'] * JE_pA * np.exp(1.) * tau_syn)
     nu_ext = nu_thresh * brunel_params['eta']
     rate = nu_ext * CE * 1000.
-    print("Rate", rate)
     if not params['use_dc_input']:
-        #if mpi_id == 0:
         brunel_params["poisson_rate"] = rate
         E_stim= ngpu.Create('poisson_generator', 1, 1, {'rate': rate})
     else:
@@ -318,7 +317,7 @@ def build_network():
 
     if not params["use_dc_input"]:
         rank_print('Connecting stimulus generators.')
-        # Connect Poisson generator to neuron
+        # connect Poisson generator to neuron
         my_connect(E_stim, neurons[mpi_id], {'rule': 'all_to_all'}, syn_dict_ex)
 
     rank_print('Creating local connections.')
@@ -496,10 +495,10 @@ def get_spike_times(neurons):
     and filter through inhibitory neurons to store only excitatory spikes.
     """
 
-    # Get spikes
+    # get spikes
     spike_times = ngpu.GetRecSpikeTimes(neurons)
 
-    # Select excitatory neurons
+    # select excitatory neurons
     e_count = 0
     e_data = []
     e_bound = brunel_params['NE']
@@ -548,7 +547,7 @@ def compute_rate(num_neurons, spike_count):
     return (1. * spike_count / (num_neurons * time_frame) * 1e3)
 
 def raster_plot(e_st, i_st):
-    fs = 18  # fontsize
+    fs = 18 # fontsize
     colors = ['#595289', '#af143c']
     e_ids = np.zeros(len(e_st)); i_ids = np.zeros(len(i_st))
     e_times = np.zeros(len(e_st)); i_times = np.zeros(len(i_st))
