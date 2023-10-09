@@ -23,13 +23,13 @@
 """
 Random balanced network HPC benchmark
 -------------------------------------
-This script produces a balanced random network of `scale*11250` neurons in
-which the excitatory-excitatory neurons exhibit STDP with
-multiplicative depression and power-law potentiation. A mutual
-equilibrium is obtained between the activity dynamics (low rate in
-asynchronous irregular regime) and the synaptic weight distribution
-(unimodal). The number of incoming connections per neuron is fixed
-and independent of network size (indegree=11250).
+Warning: the NEST GPU implementation still presents differencies with respect
+to NEST in the average firing rate of neurons.
+
+This script produces a balanced random network of `scale*11250` neurons
+connected with static connections. The number of incoming connections 
+per neuron is fixed and independent of network size (indegree=11250).
+
 This is the standard network investigated in [1]_, [2]_, [3]_.
 A note on connectivity
 ~~~~~~~~~~~~~~~~~~~~~~
