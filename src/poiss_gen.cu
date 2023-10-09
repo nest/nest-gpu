@@ -60,9 +60,9 @@ namespace poiss_conn
 // max delay functor
 struct MaxDelay
 {
-    template <typename T>
+    template <typename T, typename U>
     __device__ __forceinline__
-    T operator()(const T &source_delay_a, const T &source_delay_b) const {
+    auto operator()(const T &source_delay_a, const U &source_delay_b) const {
       int i_delay_a = source_delay_a & PortMask;
       int i_delay_b = source_delay_b & PortMask;
         return (i_delay_b > i_delay_a) ? i_delay_b : i_delay_a;
