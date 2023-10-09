@@ -30,6 +30,11 @@ This script produces a balanced random network of `scale*11250` neurons
 connected with static connections. The number of incoming connections 
 per neuron is fixed and independent of network size (indegree=11250).
 
+Furthermore, the scale can be also increased through running the script
+using several MPI processes using the command mpirun -np nproc python hpc_benchmark.py
+This way, a network of `scale*11250` neurons is built in every MPI process,
+with indegrees equally distributed across the processes.
+
 This is the standard network investigated in [1]_, [2]_, [3]_.
 A note on connectivity
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -125,8 +130,8 @@ params = {
     'scale': 1.,            # scaling factor of the network size
                             # total network size = scale*11250 neurons
     'seed': args.seed,          # seed for random number generation
-    'simtime': 1000.,        # total simulation time in ms
-    'presimtime': 100.,      # simulation time until reaching equilibrium
+    'simtime': 250.,        # total simulation time in ms
+    'presimtime': 50.,      # simulation time until reaching equilibrium
     'dt': 0.1,              # simulation step
     'stdp': False,          # enable plastic connections
     'record_spikes': True,  # switch to record spikes of excitatory
