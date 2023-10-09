@@ -121,7 +121,7 @@ params = {
     'scale': 1.,            # scaling factor of the network size
                             # total network size = scale*11250 neurons
     'seed': args.seed,          # seed for random number generation
-    'simtime': 25000.,        # total simulation time in ms
+    'simtime': 250.,        # total simulation time in ms
     'presimtime': 50.,      # simulation time until reaching equilibrium
     'dt': 0.1,              # simulation step
     'stdp': False,          # enable plastic connections
