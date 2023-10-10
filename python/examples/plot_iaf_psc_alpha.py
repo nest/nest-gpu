@@ -1,7 +1,16 @@
 import sys
 import nestgpu as ngpu
 import numpy as np
-tolerance = 0.00005
+
+"""
+This example provides a comparison of
+the iaf_psc_alpha implementation in NEST and
+NEST GPU. A neuron is injected with two spikes
+and the plot shows the neuron membrane potential,
+compared with the one obtained with
+an analogous NEST simulation.
+
+"""
 
 neuron = ngpu.Create('iaf_psc_alpha')
 spike = ngpu.Create("spike_generator")
@@ -24,8 +33,6 @@ ngpu.Connect(spike, neuron, conn_spec, syn_spec_ex)
 ngpu.Connect(spike, neuron, conn_spec, syn_spec_in)
 
 record = ngpu.CreateRecord("", ["V_m_rel"], [neuron[0]], [0])
-#voltmeter = nest.Create('voltmeter')
-#nest.Connect(voltmeter, neuron)
 
 ngpu.Simulate(800.0)
 
