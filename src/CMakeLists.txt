@@ -50,6 +50,7 @@ set ( nestgpu_sources
 	ext_neuron.h
 	getRealTime.h
 	get_spike.h
+	iaf_psc_alpha.h
 	iaf_psc_exp_g.h
 	iaf_psc_exp.h
 	iaf_psc_exp_hc.h
@@ -74,6 +75,7 @@ set ( nestgpu_sources
 	poisson.h
 	prefix_scan.h
 	propagate_error.h
+	propagator_stability.h
 	random.h
 	rev_spike.h
 	rk5_const.h
@@ -109,6 +111,7 @@ set ( nestgpu_sources
 	ext_neuron.cu
 	getRealTime.cu
 	get_spike.cu
+	iaf_psc_alpha.cu
 	iaf_psc_exp.cu
 	iaf_psc_exp_g.cu
 	iaf_psc_exp_hc.cu
@@ -126,6 +129,7 @@ set ( nestgpu_sources
 	poiss_gen.cu
 	poisson.cu
 	prefix_scan.cu
+	propagator_stability.cu
 	random.cu
 	rev_spike.cu
 	rk5.cu
