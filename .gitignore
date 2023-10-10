@@ -37,3 +37,4 @@ libtool
 /.settings/
 doxygen
 python/test/log.txt
+.vscode/
