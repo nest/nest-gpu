@@ -45,9 +45,10 @@ endif()
 ################################################################################
 
 # select parallelization scheme
-set( with-gpu-arch "70" CACHE STRING "Specify the GPU compute architecture [default=70]." )
+set( with-gpu-arch "80" CACHE STRING "Specify the GPU compute architecture [default=80]." )
 set( with-mpi ON CACHE STRING "Build with MPI parallelization [default=ON]." )
-set( with-openmp ON CACHE BOOL "Build with OpenMP multi-threading [default=ON]. Optionally set OMP compiler flags." )
+# Disabled by default due to the mishandling of RNGs in multi-threaded network construction.
+set( with-openmp OFF CACHE BOOL "Build with OpenMP multi-threading [default=OFF]. Optionally set OMP compiler flags." )
 
 # external libraries
 # libltdl not yet needed but will be useful for NESTML
