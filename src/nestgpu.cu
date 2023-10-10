@@ -113,7 +113,6 @@ NESTGPU::NESTGPU()
   multimeter_ = new Multimeter;
   net_connection_ = new NetConnection;
   
-  SetRandomSeed(54321ULL);
   
   calibrate_flag_ = false;
 
@@ -143,6 +142,8 @@ NESTGPU::NESTGPU()
   connect_mpi_->remote_spike_height_ = false;
 #endif
   
+  SetRandomSeed(54321ULL);
+
   SpikeBufferUpdate_time_ = 0;
   poisson_generator_time_ = 0;
   neuron_Update_time_ = 0;
@@ -187,6 +188,9 @@ NESTGPU::~NESTGPU()
 int NESTGPU::SetRandomSeed(unsigned long long seed)
 {
   kernel_seed_ = seed + 12345;
+  #ifdef HAVE_MPI
+  kernel_seed_ += connect_mpi_->mpi_id_;
+  #endif
   CURAND_CALL(curandDestroyGenerator(*random_generator_));
   random_generator_ = new curandGenerator_t;
   CURAND_CALL(curandCreateGenerator(random_generator_,

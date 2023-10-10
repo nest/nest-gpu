@@ -35,6 +35,7 @@
 #include "iaf_psc_exp.h"
 #include "iaf_psc_exp_hc.h"
 #include "iaf_psc_exp_g.h"
+#include "iaf_psc_alpha.h"
 #include "ext_neuron.h"
 #include "aeif_cond_alpha.h"
 #include "aeif_cond_beta.h"
@@ -81,6 +82,11 @@ NodeSeq NESTGPU::Create(std::string model_name, int n_node /*=1*/,
     n_port = 2;
     iaf_psc_exp *iaf_psc_exp_group = new iaf_psc_exp;
     node_vect_.push_back(iaf_psc_exp_group);
+  }
+  else if (model_name == neuron_model_name[i_iaf_psc_alpha_model]) {
+    n_port = 2;
+    iaf_psc_alpha *iaf_psc_alpha_group = new iaf_psc_alpha;
+    node_vect_.push_back(iaf_psc_alpha_group);
   }
   else if (model_name == neuron_model_name[i_ext_neuron_model]) {
     ext_neuron *ext_neuron_group = new ext_neuron;
