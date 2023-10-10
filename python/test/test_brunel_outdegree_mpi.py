@@ -180,5 +180,6 @@ print("Mean rate: ", mean_spike_num)
 if diff > max_diff:
     sys.exit(1)
 else:
+    ngpu.MpiFinalize()
     sys.exit(0)
 
