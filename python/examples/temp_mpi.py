@@ -3,6 +3,14 @@ import ctypes
 import nestgpu as ngpu
 from random import randrange
 
+"""
+Example of a balanced network executed using MPI.
+A network of n_neurons is created in every MPI process,
+and a fraction of the indegrees of each population
+is connected remotely, i.e., with neurons belonging
+to other MPI processes.
+
+"""
 
 ngpu.ConnectMpiInit();
 mpi_np = ngpu.MpiNp()
