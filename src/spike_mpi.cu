@@ -186,7 +186,7 @@ __global__ void ExternalSpikeReset()
 }
 
 // initialize external spike arrays
-int NESTGPU::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_host)
+int NESTGPU::ExternalSpikeInit(int n_hosts, int max_spike_per_host)
 {
   SendSpikeToRemote_MPI_time_ = 0;
   RecvSpikeFromRemote_MPI_time_ = 0;

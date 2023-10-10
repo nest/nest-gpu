@@ -144,9 +144,11 @@ class NESTGPU
   double neur_t0_; // Neural activity simulation time origin
   long long it_; // simulation time index
   long long Nt_; // number of simulation time steps
-  int n_poiss_node_;
-  int n_remote_node_;
-  int i_remote_node_0_;
+  //int n_poiss_nodes_;
+  std::vector<int> n_remote_nodes_;
+  int n_ext_nodes_;
+  int i_ext_node_0_;
+  //int i_remote_node_0_;
 
   double start_real_time_;
   double build_real_time_;
@@ -181,7 +183,8 @@ class NESTGPU
   int FreeGetSpikeArrays();
   int FreeNodeGroupMap();
 
-
+  NodeSeq _Create(std::string model_name, int n_nodes, int n_ports);
+  
   template <class T1, class T2>
   int _Connect(T1 source, int n_source, T2 target, int n_target,
 		 ConnSpec &conn_spec, SynSpec &syn_spec);
@@ -234,6 +237,9 @@ class NESTGPU
 			   T2 target, int n_target,
 			   ConnSpec &conn_spec, SynSpec &syn_spec);
   
+  int addOffsetToExternalNodeIds();
+
+  int addOffsetToSpikeBufferMap();
 
   double SpikeBufferUpdate_time_;
   double poisson_generator_time_;
@@ -325,10 +331,10 @@ class NESTGPU
   int GetIntParam(std::string param_name);
   int SetIntParam(std::string param_name, int val);
 
-  NodeSeq Create(std::string model_name, int n_neuron=1, int n_port=1);
+  NodeSeq Create(std::string model_name, int n_nodes=1, int n_ports=1);
 
   RemoteNodeSeq RemoteCreate(int i_host, std::string model_name,
-			     int n_node=1, int n_port=1);
+			     int n_nodes=1, int n_ports=1);
 
   int CreateRecord(std::string file_name, std::string *var_name_arr,
 		   int *i_node_arr, int n_node);  
@@ -778,7 +784,7 @@ class NESTGPU
   // Calibrate remote connection maps
   int  RemoteConnectionMapCalibrate(int i_host, int n_hosts);
   
-  int ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_host);
+  int ExternalSpikeInit(int n_hosts, int max_spike_per_host);
 
   int CopySpikeFromRemote(int n_hosts, int max_spike_per_host);
 

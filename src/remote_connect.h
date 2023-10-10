@@ -25,6 +25,7 @@ extern __device__ int ***remote_source_node_map;
 // local_spike_buffer_map[i_source_host][i_block][i]
 extern std::vector< std::vector<int*> > h_local_spike_buffer_map;
 extern __device__ int ***local_spike_buffer_map;
+extern int ***d_local_spike_buffer_map;
 
 // Arrays that map local source nodes to remote spike buffers
 
@@ -282,7 +283,9 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
 {
   // n_nodes will be the first index for new mapping of remote source nodes
   // to local spike buffers
-  int spike_buffer_map_i0 = GetNNode();
+  //int spike_buffer_map_i0 = GetNNode();
+  int spike_buffer_map_i0 = n_ext_nodes_;
+  syn_spec.port_ = syn_spec.port_ | (1 << (h_MaxPortNBits-1));
     
   // check if the flag UseAllSourceNodes[conn_rule] is false
   // if (!use_all_source_nodes_flag) {
@@ -774,7 +777,9 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   // On target host. Create n_nodes_to_map nodes of type ext_neuron
   //std::cout << "h_n_node_to_map " << h_n_node_to_map <<"\n";
   if (h_n_node_to_map > 0) {
-    Create("ext_neuron", h_n_node_to_map);
+    //_Create("ext_neuron", h_n_node_to_map);
+    n_ext_nodes_ += h_n_node_to_map;
+    //std::cout << "n_ext_nodes_ " << n_ext_nodes_ <<"\n";
   }
   
   return 0;

@@ -52,32 +52,32 @@
 #include "user_m1.h"
 #include "user_m2.h"
 
-NodeSeq NESTGPU::Create(std::string model_name, int n_node /*=1*/,
-			  int n_port /*=1*/)
+NodeSeq NESTGPU::_Create(std::string model_name, int n_nodes /*=1*/,
+			 int n_ports /*=1*/)
 {
   if (!create_flag_) {
     create_flag_ = true;
     start_real_time_ = getRealTime();
   }
   CheckUncalibrated("Nodes cannot be created after calibration");
-  if (n_node <= 0) {
+  if (n_nodes <= 0) {
     throw ngpu_exception("Number of nodes must be greater than zero.");
   }
-  else if (n_port < 0) {
+  else if (n_ports < 0) {
     throw ngpu_exception("Number of ports must be >= zero.");
   }
   if (model_name == neuron_model_name[i_iaf_psc_exp_g_model]) {
-    n_port = 1;
+    n_ports = 1;
     iaf_psc_exp_g *iaf_psc_exp_g_group = new iaf_psc_exp_g;
     node_vect_.push_back(iaf_psc_exp_g_group);
   }
   else if (model_name == neuron_model_name[i_iaf_psc_exp_hc_model]) {
-    n_port = 1;
+    n_ports = 1;
     iaf_psc_exp_hc *iaf_psc_exp_hc_group = new iaf_psc_exp_hc;
     node_vect_.push_back(iaf_psc_exp_hc_group);
   }
   else if (model_name == neuron_model_name[i_iaf_psc_exp_model]) {
-    n_port = 2;
+    n_ports = 2;
     iaf_psc_exp *iaf_psc_exp_group = new iaf_psc_exp;
     node_vect_.push_back(iaf_psc_exp_group);
   }
@@ -102,7 +102,7 @@ NodeSeq NESTGPU::Create(std::string model_name, int n_node /*=1*/,
     node_vect_.push_back(aeif_psc_alpha_group);
   }
   else if (model_name == neuron_model_name[i_aeif_psc_delta_model]) {
-    n_port = 1;
+    n_ports = 1;
     aeif_psc_delta *aeif_psc_delta_group = new aeif_psc_delta;
     node_vect_.push_back(aeif_psc_delta_group);
   }
@@ -115,22 +115,22 @@ NodeSeq NESTGPU::Create(std::string model_name, int n_node /*=1*/,
     node_vect_.push_back(user_m2_group);
   }
   else if (model_name == neuron_model_name[i_poisson_generator_model]) {
-    n_port = 0;
+    n_ports = 0;
     poiss_gen *poiss_gen_group = new poiss_gen;
     node_vect_.push_back(poiss_gen_group);
   }
   else if (model_name == neuron_model_name[i_spike_generator_model]) {
-    n_port = 0;
+    n_ports = 0;
     spike_generator *spike_generator_group = new spike_generator;
     node_vect_.push_back(spike_generator_group);
   }
   else if (model_name == neuron_model_name[i_parrot_neuron_model]) {
-    n_port = 2;
+    n_ports = 2;
     parrot_neuron *parrot_neuron_group = new parrot_neuron;
     node_vect_.push_back(parrot_neuron_group);
   }
   else if (model_name == neuron_model_name[i_spike_detector_model]) {
-    n_port = 1;
+    n_ports = 1;
     spike_detector *spike_detector_group = new spike_detector;
     node_vect_.push_back(spike_detector_group);
   }
@@ -160,5 +160,15 @@ NodeSeq NESTGPU::Create(std::string model_name, int n_node /*=1*/,
     throw ngpu_exception(std::string("Unknown neuron model name: ")
 			 + model_name);
   }
-  return NodeSeq(CreateNodeGroup(n_node, n_port), n_node);
+  return NodeSeq(CreateNodeGroup(n_nodes, n_ports), n_nodes);
+}
+
+NodeSeq NESTGPU::Create(std::string model_name, int n_nodes,
+			int n_ports)
+{
+  for (int i_host=0; i_host<n_hosts_; i_host++) {
+    n_remote_nodes_[i_host] += n_nodes;
+  }
+  
+  return _Create(model_name, n_nodes, n_ports);
 }
