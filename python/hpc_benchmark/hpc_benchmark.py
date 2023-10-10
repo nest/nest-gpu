@@ -84,7 +84,6 @@ import scipy.special as sp
 import matplotlib.pyplot as plt
 
 from time import perf_counter_ns
-from mpi4py import MPI
 
 import nestgpu as ngpu
 
@@ -100,10 +99,8 @@ M_ERROR = 30
 
 ngpu.ConnectMpiInit()
 
-comm = MPI.COMM_WORLD
-
-mpi_id = comm.Get_rank()
-mpi_np = comm.Get_size()
+mpi_id = ngpu.MpiId()
+mpi_np = ngpu.MpiNp()
 
 def rank_print(message):
     """Prints message and attaches MPI rank"""
