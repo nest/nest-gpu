@@ -20,7 +20,7 @@ int poiss_gen::OrganizeConnections()
   h_key_array.size = n;
 
   key_t **d_key_array_data_pt = NULL;
-  gpuErrchk(cudaMalloc(&d_key_array_data_pt, k*sizeof(key_t*)));
+  CUDAMALLOCCTRL("&d_key_array_data_pt",&d_key_array_data_pt, k*sizeof(key_t*));
   gpuErrchk(cudaMemcpy(d_key_array_data_pt, key_subarray,
 		       k*sizeof(key_t*), cudaMemcpyHostToDevice));
 
@@ -39,7 +39,7 @@ int poiss_gen::OrganizeConnections()
   }
 
   array_t *d_subarray;
-  gpuErrchk(cudaMalloc(&d_subarray, k, sizeof(array_t)));
+  CUDAMALLOCCTRL("&d_subarray",&d_subarray, k, sizeof(array_t));
   gpuErrchk(cudaMemcpyAsync(d_subarray, h_subarray,
 			    k*sizeof(array_t), cudaMemcpyHostToDevice));
 
@@ -47,13 +47,13 @@ int poiss_gen::OrganizeConnections()
   
   int64_t h_num[k];
   int64_t *d_num;
-  gpuErrchk(cudaMalloc(&d_num, 2*k*sizeof(int64_t)));
+  CUDAMALLOCCTRL("&d_num",&d_num, 2*k*sizeof(int64_t));
   int64_t *d_sum;
-  gpuErrchk(cudaMalloc(&d_sum, 2*sizeof(int64_t)));
+  CUDAMALLOCCTRL("&d_sum",&d_sum, 2*sizeof(int64_t));
   
   key_t h_thresh[2];
   key_t *d_thresh;
-  gpuErrchk(cudaMalloc(&d_thresh, 2*sizeof(key_t)));
+  CUDAMALLOCCTRL("&d_thresh",&d_thresh, 2*sizeof(key_t));
   
   int64_t *d_num0 = &d_num[0];
   int64_t *d_num1 = &d_num[k];
@@ -97,7 +97,7 @@ int poiss_gen::OrganizeConnections()
   n_conn = i_conn0 - i_conn1;
   if (n_conn>0) {
     key_t *d_poiss_key_array;
-    gpuErrchk(cudaMalloc(&d_poiss_key_array, n_conn*sizeof(key_t)));
+    CUDAMALLOCCTRL("&d_poiss_key_array",&d_poiss_key_array, n_conn*sizeof(key_t));
     
     int64_t offset = 0;
     for (uint ib=ib0; ib<=ib1; ib++) {

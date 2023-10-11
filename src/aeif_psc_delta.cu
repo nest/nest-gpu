@@ -119,7 +119,7 @@ int aeif_psc_delta::Init(int i_node_0, int n_node, int n_port,
 
   // multiplication factor of input signal is always 1 for all nodes
   float input_weight = 1.0;
-  gpuErrchk(cudaMalloc(&port_weight_arr_, sizeof(float)));
+  CUDAMALLOCCTRL("&port_weight_arr_",&port_weight_arr_, sizeof(float));
   gpuErrchk(cudaMemcpy(port_weight_arr_, &input_weight,
 			 sizeof(float), cudaMemcpyHostToDevice));
   port_weight_arr_step_ = 0;

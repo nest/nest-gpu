@@ -333,9 +333,9 @@ int allocateNewBlocks(std::vector<uint*> &key_subarray,
     uint *d_key_pt;
     connection_struct *d_connection_pt;
     // allocate GPU memory for new blocks 
-    gpuErrchk(cudaMalloc(&d_key_pt, block_size*sizeof(uint)));
-    gpuErrchk(cudaMalloc(&d_connection_pt,
-			 block_size*sizeof(connection_struct)));
+    CUDAMALLOCCTRL("&d_key_pt",&d_key_pt, block_size*sizeof(uint));
+    CUDAMALLOCCTRL("&d_connection_pt",&d_connection_pt,
+			 block_size*sizeof(connection_struct));
     key_subarray.push_back(d_key_pt);
     conn_subarray.push_back(d_connection_pt);
   }
@@ -446,7 +446,7 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
 					       n_conn, block_size, d_storage,
 					       storage_bytes);
     printf("storage bytes: %ld\n", storage_bytes);
-    gpuErrchk(cudaMalloc(&d_storage, storage_bytes));
+    CUDAMALLOCCTRL("&d_storage",&d_storage, storage_bytes);
     
     printf("Sorting...\n");
     copass_sort::sort<uint, connection_struct>(key_subarray.data(),
@@ -471,7 +471,7 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
     k = (n_conn - 1)  / block_size + 1;
   }
   
-  gpuErrchk(cudaMalloc(&d_ConnGroupNum, n_node*sizeof(uint)));
+  CUDAMALLOCCTRL("&d_ConnGroupNum",&d_ConnGroupNum, n_node*sizeof(uint));
   gpuErrchk(cudaMemset(d_ConnGroupNum, 0, n_node*sizeof(uint)));
   
   uint *key_subarray_prev = NULL;
@@ -485,7 +485,7 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
     key_subarray_prev = key_subarray[i] + block_size - 1;
   }
   
-  gpuErrchk(cudaMalloc(&d_ConnGroupIdx0, (n_node+1)*sizeof(uint)));  
+  CUDAMALLOCCTRL("&d_ConnGroupIdx0",&d_ConnGroupIdx0, (n_node+1)*sizeof(uint));  
   void *d_temp_storage = NULL;
   size_t temp_storage_bytes = 0;
 
@@ -494,7 +494,7 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
 				d_ConnGroupNum, d_ConnGroupIdx0,
 				n_node+1);
   // Allocate temporary storage for prefix sum
-  gpuErrchk(cudaMalloc(&d_temp_storage, temp_storage_bytes));
+  CUDAMALLOCCTRL("&d_temp_storage",&d_temp_storage, temp_storage_bytes);
 
   // Run exclusive prefix sum
   cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
@@ -511,12 +511,12 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
   //////////////////////////////////////////////////////////////////////
   if (tot_conn_group_num > 0) {
     int64_t *d_conn_group_iconn0_unsorted;
-    gpuErrchk(cudaMalloc(&d_conn_group_iconn0_unsorted,
-			 tot_conn_group_num*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_conn_group_iconn0_unsorted",&d_conn_group_iconn0_unsorted,
+			 tot_conn_group_num*sizeof(int64_t));
   
     uint *d_conn_group_key_unsorted;
-    gpuErrchk(cudaMalloc(&d_conn_group_key_unsorted,
-			 tot_conn_group_num*sizeof(uint)));
+    CUDAMALLOCCTRL("&d_conn_group_key_unsorted",&d_conn_group_key_unsorted,
+			 tot_conn_group_num*sizeof(uint));
   
     gpuErrchk(cudaMemset(d_ConnGroupNum, 0, n_node*sizeof(uint)));
     key_subarray_prev = NULL;
@@ -530,11 +530,11 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
 	key_subarray_prev = key_subarray[i] + block_size - 1;
     }
 
-    gpuErrchk(cudaMalloc(&d_ConnGroupIConn0,
-			 tot_conn_group_num*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_ConnGroupIConn0",&d_ConnGroupIConn0,
+			 tot_conn_group_num*sizeof(int64_t));
     uint *d_conn_group_key;
-    gpuErrchk(cudaMalloc(&d_conn_group_key,
-			 tot_conn_group_num*sizeof(uint)));
+    CUDAMALLOCCTRL("&d_conn_group_key",&d_conn_group_key,
+			 tot_conn_group_num*sizeof(uint));
     void *d_conn_group_storage = NULL;
     size_t conn_group_storage_bytes = 0;
 
@@ -547,7 +547,7 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
 				    d_ConnGroupIConn0,
 				    tot_conn_group_num);
     // Allocate temporary storage for sorting
-    gpuErrchk(cudaMalloc(&d_conn_group_storage, conn_group_storage_bytes));
+    CUDAMALLOCCTRL("&d_conn_group_storage",&d_conn_group_storage, conn_group_storage_bytes);
     // Run radix sort
     cub::DeviceRadixSort::SortPairs(d_conn_group_storage,
 				    conn_group_storage_bytes,
@@ -560,14 +560,14 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
     gpuErrchk(cudaFree(d_conn_group_iconn0_unsorted));
     gpuErrchk(cudaFree(d_conn_group_key_unsorted));
 
-    gpuErrchk(cudaMalloc(&d_ConnGroupNConn,
-			 tot_conn_group_num*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_ConnGroupNConn",&d_ConnGroupNConn,
+			 tot_conn_group_num*sizeof(int64_t));
   
     getConnGroupNConn<<<(tot_conn_group_num+1023)/1024, 1024>>>
       (d_ConnGroupIConn0, d_ConnGroupNConn, tot_conn_group_num, n_conn);
     DBGCUDASYNC
-    gpuErrchk(cudaMalloc(&d_ConnGroupDelay,
-			 tot_conn_group_num*sizeof(uint)));
+    CUDAMALLOCCTRL("&d_ConnGroupDelay",&d_ConnGroupDelay,
+			 tot_conn_group_num*sizeof(uint));
   
     getConnGroupDelay<<<(tot_conn_group_num+1023)/1024, 1024>>>
       (d_conn_group_key, d_ConnGroupDelay, tot_conn_group_num);
@@ -583,8 +583,8 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
   cub::DeviceReduce::Max(d_temp_storage, temp_storage_bytes,
 			 d_ConnGroupNum, d_max_delay_num, n_node);
   // Allocate temporary storage
-  gpuErrchk(cudaMalloc(&d_temp_storage, temp_storage_bytes));
-  gpuErrchk(cudaMalloc(&d_max_delay_num, sizeof(uint)));
+  CUDAMALLOCCTRL("&d_temp_storage",&d_temp_storage, temp_storage_bytes);
+  CUDAMALLOCCTRL("&d_max_delay_num",&d_max_delay_num, sizeof(uint));
   
   // Run maximum search
   cub::DeviceReduce::Max(d_temp_storage, temp_storage_bytes,
@@ -636,12 +636,12 @@ int NewConnectInit()
 {
   uint k = ConnectionSubarray.size();
   uint **d_source_delay_array;
-  gpuErrchk(cudaMalloc(&d_source_delay_array, k*sizeof(uint*)));
+  CUDAMALLOCCTRL("&d_source_delay_array",&d_source_delay_array, k*sizeof(uint*));
   gpuErrchk(cudaMemcpy(d_source_delay_array, KeySubarray.data(),
 		       k*sizeof(uint*), cudaMemcpyHostToDevice));
   
   connection_struct **d_connection_array;
-  gpuErrchk(cudaMalloc(&d_connection_array, k*sizeof(connection_struct*)));
+  CUDAMALLOCCTRL("&d_connection_array",&d_connection_array, k*sizeof(connection_struct*));
   gpuErrchk(cudaMemcpy(d_connection_array, ConnectionSubarray.data(),
 		       k*sizeof(connection_struct*), cudaMemcpyHostToDevice));
 
@@ -679,8 +679,8 @@ int *sortArray(int *h_arr, int n_elem)
   // allocate unsorted and sorted array in device memory
   int *d_arr_unsorted;
   int *d_arr_sorted;
-  gpuErrchk(cudaMalloc(&d_arr_unsorted, n_elem*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_arr_sorted, n_elem*sizeof(int)));
+  CUDAMALLOCCTRL("&d_arr_unsorted",&d_arr_unsorted, n_elem*sizeof(int));
+  CUDAMALLOCCTRL("&d_arr_sorted",&d_arr_sorted, n_elem*sizeof(int));
   gpuErrchk(cudaMemcpy(d_arr_unsorted, h_arr, n_elem*sizeof(int),
 		       cudaMemcpyHostToDevice));
   void *d_storage = NULL;
@@ -689,7 +689,7 @@ int *sortArray(int *h_arr, int n_elem)
   cub::DeviceRadixSort::SortKeys(d_storage, storage_bytes, d_arr_unsorted,
 				 d_arr_sorted, n_elem);
   // Allocate temporary storage for sorting
-  gpuErrchk(cudaMalloc(&d_storage, storage_bytes));
+  CUDAMALLOCCTRL("&d_storage",&d_storage, storage_bytes);
   // Run radix sort
   cub::DeviceRadixSort::SortKeys(d_storage, storage_bytes, d_arr_unsorted,
 				 d_arr_sorted, n_elem);
@@ -796,14 +796,14 @@ int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
     int *d_tgt_arr = sortArray(i_target_pt, n_target);
     // Allocate array of combined source-target indexes (src_arr x tgt_arr)
     int64_t *d_src_tgt_arr;
-    gpuErrchk(cudaMalloc(&d_src_tgt_arr, n_src_tgt*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_src_tgt_arr",&d_src_tgt_arr, n_src_tgt*sizeof(int64_t));
     // Fill it with combined source-target indexes
     setSourceTargetIndexKernel<<<(n_src_tgt+1023)/1024, 1024>>>
       (n_src_tgt, n_source, n_target, d_src_tgt_arr, d_src_arr, d_tgt_arr);
     // Allocate array of number of connections per source-target couple
     // and initialize it to 0
     int64_t *d_src_tgt_conn_num;
-    gpuErrchk(cudaMalloc(&d_src_tgt_conn_num, (n_src_tgt + 1)*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_src_tgt_conn_num",&d_src_tgt_conn_num, (n_src_tgt + 1)*sizeof(int64_t));
     gpuErrchk(cudaMemset(d_src_tgt_conn_num, 0,
 			 (n_src_tgt + 1)*sizeof(int64_t)));
 
@@ -813,8 +813,8 @@ int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
     // Evaluate exclusive sum of connections per source-target couple
     // Allocate array for cumulative sum
     int64_t *d_src_tgt_conn_cumul;
-    gpuErrchk(cudaMalloc(&d_src_tgt_conn_cumul,
-			 (n_src_tgt + 1)*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_src_tgt_conn_cumul",&d_src_tgt_conn_cumul,
+			 (n_src_tgt + 1)*sizeof(int64_t));
     // Determine temporary device storage requirements
     void *d_temp_storage = NULL;
     size_t temp_storage_bytes = 0;
@@ -823,7 +823,7 @@ int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
 				  d_src_tgt_conn_cumul,
 				  n_src_tgt + 1);
     // Allocate temporary storage
-    gpuErrchk(cudaMalloc(&d_temp_storage, temp_storage_bytes));
+    CUDAMALLOCCTRL("&d_temp_storage",&d_temp_storage, temp_storage_bytes);
     // Run exclusive prefix sum
     cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
 				  d_src_tgt_conn_num,
@@ -837,7 +837,7 @@ int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
     
     if (n_conn_ids > 0) {
       // Allocate array of connection indexes
-      gpuErrchk(cudaMalloc(&d_conn_ids, n_conn_ids*sizeof(int64_t)));  
+      CUDAMALLOCCTRL("&d_conn_ids",&d_conn_ids, n_conn_ids*sizeof(int64_t));  
       // Set number of connections per source-target couple to 0 again
       gpuErrchk(cudaMemset(d_src_tgt_conn_num, 0,
 			   (n_src_tgt + 1)*sizeof(int64_t)));
@@ -1121,17 +1121,17 @@ int NESTGPU::GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
 
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    gpuErrchk(cudaMalloc(&d_conn_ids, n_conn*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_conn_ids",&d_conn_ids, n_conn*sizeof(int64_t));
     gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn*sizeof(int64_t),
 			 cudaMemcpyHostToDevice));
 
     // allocate arrays of connection parameters in device memory
-    gpuErrchk(cudaMalloc(&d_source, n_conn*sizeof(int)));
-    gpuErrchk(cudaMalloc(&d_target, n_conn*sizeof(int)));
-    gpuErrchk(cudaMalloc(&d_port, n_conn*sizeof(int)));
-    gpuErrchk(cudaMalloc(&d_syn_group, n_conn*sizeof(unsigned char)));
-    gpuErrchk(cudaMalloc(&d_delay, n_conn*sizeof(float)));
-    gpuErrchk(cudaMalloc(&d_weight, n_conn*sizeof(float)));
+    CUDAMALLOCCTRL("&d_source",&d_source, n_conn*sizeof(int));
+    CUDAMALLOCCTRL("&d_target",&d_target, n_conn*sizeof(int));
+    CUDAMALLOCCTRL("&d_port",&d_port, n_conn*sizeof(int));
+    CUDAMALLOCCTRL("&d_syn_group",&d_syn_group, n_conn*sizeof(unsigned char));
+    CUDAMALLOCCTRL("&d_delay",&d_delay, n_conn*sizeof(float));
+    CUDAMALLOCCTRL("&d_weight",&d_weight, n_conn*sizeof(float));
     // host arrays
     
     // launch kernel to get connection parameters
@@ -1229,12 +1229,12 @@ int NESTGPU::GetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
     float *d_arr;
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    gpuErrchk(cudaMalloc(&d_conn_ids, n_conn*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_conn_ids",&d_conn_ids, n_conn*sizeof(int64_t));
     gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn*sizeof(int64_t),
 			 cudaMemcpyHostToDevice));
     
     // allocate connection parameter array in device memory
-    gpuErrchk(cudaMalloc(&d_arr, n_conn*sizeof(float)));
+    CUDAMALLOCCTRL("&d_arr",&d_arr, n_conn*sizeof(float));
     
     // launch kernel to get connection parameters
     GetConnectionFloatParamKernel<<<(n_conn+1023)/1024, 1024 >>>
@@ -1273,12 +1273,12 @@ int NESTGPU::GetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
     int *d_arr;
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    gpuErrchk(cudaMalloc(&d_conn_ids, n_conn*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_conn_ids",&d_conn_ids, n_conn*sizeof(int64_t));
     gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn*sizeof(int64_t),
 			 cudaMemcpyHostToDevice));
     
     // allocate connection parameter array in device memory
-    gpuErrchk(cudaMalloc(&d_arr, n_conn*sizeof(int)));
+    CUDAMALLOCCTRL("&d_arr",&d_arr, n_conn*sizeof(int));
     
     // launch kernel to get connection parameters
     GetConnectionIntParamKernel<<<(n_conn+1023)/1024, 1024 >>>
@@ -1319,7 +1319,7 @@ int NESTGPU::SetConnectionFloatParamDistr(int64_t *conn_ids, int64_t n_conn,
     int64_t *d_conn_ids;
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    gpuErrchk(cudaMalloc(&d_conn_ids, n_conn*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_conn_ids",&d_conn_ids, n_conn*sizeof(int64_t));
     gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn*sizeof(int64_t),
 			 cudaMemcpyHostToDevice));
     
@@ -1360,7 +1360,7 @@ int NESTGPU::SetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
     int64_t *d_conn_ids;
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    gpuErrchk(cudaMalloc(&d_conn_ids, n_conn*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_conn_ids",&d_conn_ids, n_conn*sizeof(int64_t));
     gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn*sizeof(int64_t),
 			 cudaMemcpyHostToDevice));
         
@@ -1400,12 +1400,12 @@ int NESTGPU::SetConnectionIntParamArr(int64_t *conn_ids, int64_t n_conn,
     int *d_arr;
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    gpuErrchk(cudaMalloc(&d_conn_ids, n_conn*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_conn_ids",&d_conn_ids, n_conn*sizeof(int64_t));
     gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn*sizeof(int64_t),
 			 cudaMemcpyHostToDevice));
     
     // allocate connection parameter array in device memory
-    gpuErrchk(cudaMalloc(&d_arr, n_conn*sizeof(int)));
+    CUDAMALLOCCTRL("&d_arr",&d_arr, n_conn*sizeof(int));
 
     // copy connection parameter array from host to device memory
     gpuErrchk(cudaMemcpy(d_arr, h_param_arr, n_conn*sizeof(int),
@@ -1445,7 +1445,7 @@ int NESTGPU::SetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
     int64_t *d_conn_ids;
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    gpuErrchk(cudaMalloc(&d_conn_ids, n_conn*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_conn_ids",&d_conn_ids, n_conn*sizeof(int64_t));
     gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn*sizeof(int64_t),
 			 cudaMemcpyHostToDevice));
         

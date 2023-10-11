@@ -324,7 +324,7 @@ int NESTGPU::Connect(int i_source, int n_source, int* target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   int *d_target;
-  gpuErrchk(cudaMalloc(&d_target, n_target*sizeof(int)));
+  CUDAMALLOCCTRL("&d_target",&d_target, n_target*sizeof(int));
   gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(int),
 		       cudaMemcpyHostToDevice));
   int ret = _Connect<int, int*>(i_source, n_source, d_target, n_target,
@@ -337,7 +337,7 @@ int NESTGPU::Connect(int* source, int n_source, int i_target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   int *d_source;
-  gpuErrchk(cudaMalloc(&d_source, n_source*sizeof(int)));
+  CUDAMALLOCCTRL("&d_source",&d_source, n_source*sizeof(int));
   gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(int),
 		       cudaMemcpyHostToDevice));
   int ret = _Connect<int*, int>(d_source, n_source, i_target, n_target,
@@ -350,11 +350,11 @@ int NESTGPU::Connect(int* source, int n_source, int* target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   int *d_source;
-  gpuErrchk(cudaMalloc(&d_source, n_source*sizeof(int)));
+  CUDAMALLOCCTRL("&d_source",&d_source, n_source*sizeof(int));
   gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(int),
 		       cudaMemcpyHostToDevice));
   int *d_target;
-  gpuErrchk(cudaMalloc(&d_target, n_target*sizeof(int)));
+  CUDAMALLOCCTRL("&d_target",&d_target, n_target*sizeof(int));
   gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(int),
 		       cudaMemcpyHostToDevice));
   int ret = _Connect<int*, int*>(d_source, n_source, d_target, n_target,
@@ -408,7 +408,7 @@ int NESTGPU::RemoteConnect(int i_source_host, int i_source, int n_source,
 			   ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   int *d_target;
-  gpuErrchk(cudaMalloc(&d_target, n_target*sizeof(int)));
+  CUDAMALLOCCTRL("&d_target",&d_target, n_target*sizeof(int));
   gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(int),
 		       cudaMemcpyHostToDevice));
   int ret = _RemoteConnect<int, int*>(i_source_host, i_source, n_source,
@@ -424,7 +424,7 @@ int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
 			   ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   int *d_source;
-  gpuErrchk(cudaMalloc(&d_source, n_source*sizeof(int)));
+  CUDAMALLOCCTRL("&d_source",&d_source, n_source*sizeof(int));
   gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(int),
 		       cudaMemcpyHostToDevice));
   int ret = _RemoteConnect<int*, int>(i_source_host, d_source, n_source,
@@ -440,11 +440,11 @@ int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
 			   ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   int *d_source;
-  gpuErrchk(cudaMalloc(&d_source, n_source*sizeof(int)));
+  CUDAMALLOCCTRL("&d_source",&d_source, n_source*sizeof(int));
   gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(int),
 		       cudaMemcpyHostToDevice));
   int *d_target;
-  gpuErrchk(cudaMalloc(&d_target, n_target*sizeof(int)));
+  CUDAMALLOCCTRL("&d_target",&d_target, n_target*sizeof(int));
   gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(int),
 		       cudaMemcpyHostToDevice));
   int ret = _RemoteConnect<int*, int*>(i_source_host, d_source, n_source,

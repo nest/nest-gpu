@@ -245,8 +245,8 @@ int RevSpikeInit(uint n_spike_buffers)
   // and initialize it to 0
   int64_t *d_target_rev_conn_size_64;
   int64_t *d_target_rev_conn_cumul;
-  gpuErrchk(cudaMalloc(&d_target_rev_conn_size_64,
-		       (n_spike_buffers+1)*sizeof(int64_t)));
+  CUDAMALLOCCTRL("&d_target_rev_conn_size_64",&d_target_rev_conn_size_64,
+		       (n_spike_buffers+1)*sizeof(int64_t));
   gpuErrchk(cudaMemset(d_target_rev_conn_size_64, 0,
 		       (n_spike_buffers+1)*sizeof(int64_t)));
   // Count number of reverse connections per target node
@@ -254,8 +254,8 @@ int RevSpikeInit(uint n_spike_buffers)
     (NConn, d_target_rev_conn_size_64);
   // Evaluate exclusive sum of reverse connections per target node
   // Allocate array for cumulative sum
-  gpuErrchk(cudaMalloc(&d_target_rev_conn_cumul,
-		       (n_spike_buffers+1)*sizeof(int64_t)));
+  CUDAMALLOCCTRL("&d_target_rev_conn_cumul",&d_target_rev_conn_cumul,
+		       (n_spike_buffers+1)*sizeof(int64_t));
   // Determine temporary device storage requirements
   void *d_temp_storage = NULL;
   size_t temp_storage_bytes = 0;
@@ -264,7 +264,7 @@ int RevSpikeInit(uint n_spike_buffers)
 				d_target_rev_conn_cumul,
 				n_spike_buffers+1);
   // Allocate temporary storage
-  gpuErrchk(cudaMalloc(&d_temp_storage, temp_storage_bytes));
+  CUDAMALLOCCTRL("&d_temp_storage",&d_temp_storage, temp_storage_bytes);
   // Run exclusive prefix sum
   cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
 				d_target_rev_conn_size_64,
@@ -276,19 +276,19 @@ int RevSpikeInit(uint n_spike_buffers)
   if (h_NRevConn > 0) {
     // Allocate array of reverse connection indexes
     // CHECK THAT d_RevConnections is of type int64_t array
-    gpuErrchk(cudaMalloc(&d_RevConnections, h_NRevConn*sizeof(int64_t)));  
+    CUDAMALLOCCTRL("&d_RevConnections",&d_RevConnections, h_NRevConn*sizeof(int64_t));  
     // For each target node evaluate the pointer
     // to its first reverse connection using the exclusive sum
     // CHECK THAT d_TargetRevConnection is of type int64_t* pointer
-    gpuErrchk(cudaMalloc(&d_TargetRevConnection, n_spike_buffers
-			 *sizeof(int64_t*)));
+    CUDAMALLOCCTRL("&d_TargetRevConnection",&d_TargetRevConnection, n_spike_buffers
+			 *sizeof(int64_t*));
     SetTargetRevConnectionsPtKernel<<<(n_spike_buffers+1023)/1024, 1024>>>
       (n_spike_buffers, d_target_rev_conn_cumul,
        d_TargetRevConnection, d_RevConnections);
   
     // alloc 32 bit array of number of reverse connections per target node
-    gpuErrchk(cudaMalloc(&d_TargetRevConnectionSize,
-			 n_spike_buffers*sizeof(int)));
+    CUDAMALLOCCTRL("&d_TargetRevConnectionSize",&d_TargetRevConnectionSize,
+			 n_spike_buffers*sizeof(int));
     // and initialize it to 0
     gpuErrchk(cudaMemset(d_TargetRevConnectionSize, 0,
 			 n_spike_buffers*sizeof(int)));
@@ -305,12 +305,12 @@ int RevSpikeInit(uint n_spike_buffers)
     gpuErrchk( cudaPeekAtLastError() );
     gpuErrchk( cudaDeviceSynchronize() );
 
-    gpuErrchk(cudaMalloc(&d_RevSpikeNum, sizeof(unsigned int)));
+    CUDAMALLOCCTRL("&d_RevSpikeNum",&d_RevSpikeNum, sizeof(unsigned int));
   
-    gpuErrchk(cudaMalloc(&d_RevSpikeTarget,
-			 n_spike_buffers*sizeof(unsigned int)));
-    gpuErrchk(cudaMalloc(&d_RevSpikeNConn,
-			 n_spike_buffers*sizeof(int)));
+    CUDAMALLOCCTRL("&d_RevSpikeTarget",&d_RevSpikeTarget,
+			 n_spike_buffers*sizeof(unsigned int));
+    CUDAMALLOCCTRL("&d_RevSpikeNConn",&d_RevSpikeNConn,
+			 n_spike_buffers*sizeof(int));
 
     DeviceRevSpikeInit<<<1,1>>>(d_RevSpikeNum, d_RevSpikeTarget,
 				d_RevSpikeNConn);

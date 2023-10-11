@@ -40,8 +40,8 @@ void NodeGroupMapInit(int16_t *node_group_map)
 
 int NESTGPU::NodeGroupArrayInit()
 {
-  gpuErrchk(cudaMalloc(&d_node_group_map_,
-		       node_group_map_.size()*sizeof(int16_t)));
+  CUDAMALLOCCTRL("&d_node_group_map_",&d_node_group_map_,
+		       node_group_map_.size()*sizeof(int16_t));
 
   std::vector<NodeGroupStruct> ngs_vect;
   for (unsigned int i=0; i<node_vect_.size(); i++) {
@@ -94,8 +94,8 @@ double *NESTGPU::InitGetSpikeArray (int n_node, int n_port)
 {
   double *d_get_spike_array = NULL;
   if (n_node*n_port > 0) {
-    gpuErrchk(cudaMalloc(&d_get_spike_array, n_node*n_port
-			 *sizeof(double)));
+    CUDAMALLOCCTRL("&d_get_spike_array",&d_get_spike_array, n_node*n_port
+			 *sizeof(double));
   }
   
   return d_get_spike_array;

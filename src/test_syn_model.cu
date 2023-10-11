@@ -43,7 +43,7 @@ int TestSynModel::Init()
   type_ = i_test_syn_model;
   n_param_ = N_PARAM;
   param_name_ = test_syn_model_param_name;
-  gpuErrchk(cudaMalloc(&d_param_arr_, n_param_*sizeof(float)));
+  CUDAMALLOCCTRL("&d_param_arr_",&d_param_arr_, n_param_*sizeof(float));
   SetParam("fact", 0.1);
   SetParam("offset", 0.0);
 

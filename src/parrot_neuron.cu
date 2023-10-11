@@ -94,9 +94,9 @@ int parrot_neuron::Init(int i_node_0, int n_node, int /*n_port*/,
   n_param_ = n_scal_param_;
   scal_param_name_ = parrot_neuron_scal_param_name;
 
-  gpuErrchk(cudaMalloc(&var_arr_, n_node_*n_var_*sizeof(float)));
+  CUDAMALLOCCTRL("&var_arr_",&var_arr_, n_node_*n_var_*sizeof(float));
 
-  gpuErrchk(cudaMalloc(&param_arr_, n_node_*n_param_*sizeof(float)));
+  CUDAMALLOCCTRL("&param_arr_",&param_arr_, n_node_*n_param_*sizeof(float));
 
   SetScalParam(0, n_node, "hold_spike_height", 0.0);
 
@@ -110,7 +110,7 @@ int parrot_neuron::Init(int i_node_0, int n_node, int /*n_port*/,
 
   // multiplication factor of input signal is always 1 for all nodes
   float input_weight[] = {1.0, 0.0};
-  gpuErrchk(cudaMalloc(&port_weight_arr_, 2*sizeof(float)));
+  CUDAMALLOCCTRL("&port_weight_arr_",&port_weight_arr_, 2*sizeof(float));
   gpuErrchk(cudaMemcpy(port_weight_arr_, input_weight,
 			 2*sizeof(float), cudaMemcpyHostToDevice));
   port_weight_arr_step_ = 0;

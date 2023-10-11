@@ -210,33 +210,33 @@ int NESTGPU::ExternalSpikeInit(int n_hosts, int max_spike_per_host)
 
   recv_mpi_request = new MPI_Request[n_hosts];
  
-  gpuErrchk(cudaMalloc(&d_ExternalSpikeNum, sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_ExternalSpikeSourceNode,
-		       max_spike_per_host*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_ExternalSpikeHeight, max_spike_per_host*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_ExternalTargetSpikeNum, n_hosts*sizeof(int)));
+  CUDAMALLOCCTRL("&d_ExternalSpikeNum",&d_ExternalSpikeNum, sizeof(int));
+  CUDAMALLOCCTRL("&d_ExternalSpikeSourceNode",&d_ExternalSpikeSourceNode,
+		       max_spike_per_host*sizeof(int));
+  CUDAMALLOCCTRL("&d_ExternalSpikeHeight",&d_ExternalSpikeHeight, max_spike_per_host*sizeof(int));
+  CUDAMALLOCCTRL("&d_ExternalTargetSpikeNum",&d_ExternalTargetSpikeNum, n_hosts*sizeof(int));
 
   //printf("n_hosts, max_spike_per_host: %d %d\n", n_hosts, max_spike_per_host);
 
-  gpuErrchk(cudaMalloc(&d_ExternalTargetSpikeNodeId,
-		       n_hosts*max_spike_per_host*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_ExternalTargetSpikeHeight,
-		       n_hosts*max_spike_per_host*sizeof(float)));
-  //gpuErrchk(cudaMalloc(&d_ExternalSourceSpikeNum, n_hosts*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_ExternalSourceSpikeNodeId, n_hosts*
-		       max_spike_per_host*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_ExternalSourceSpikeHeight, n_hosts*
-		       max_spike_per_host*sizeof(float)));
+  CUDAMALLOCCTRL("&d_ExternalTargetSpikeNodeId",&d_ExternalTargetSpikeNodeId,
+		       n_hosts*max_spike_per_host*sizeof(int));
+  CUDAMALLOCCTRL("&d_ExternalTargetSpikeHeight",&d_ExternalTargetSpikeHeight,
+		       n_hosts*max_spike_per_host*sizeof(float));
+  //CUDAMALLOCCTRL("&d_ExternalSourceSpikeNum",&d_ExternalSourceSpikeNum, n_hosts*sizeof(int));
+  CUDAMALLOCCTRL("&d_ExternalSourceSpikeNodeId",&d_ExternalSourceSpikeNodeId, n_hosts*
+		       max_spike_per_host*sizeof(int));
+  CUDAMALLOCCTRL("&d_ExternalSourceSpikeHeight",&d_ExternalSourceSpikeHeight, n_hosts*
+		       max_spike_per_host*sizeof(float));
 
-  gpuErrchk(cudaMalloc(&d_ExternalTargetSpikeNodeIdJoin,
-		       n_hosts*max_spike_per_host*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_ExternalTargetSpikeCumul, (n_hosts+1)*sizeof(int)));
+  CUDAMALLOCCTRL("&d_ExternalTargetSpikeNodeIdJoin",&d_ExternalTargetSpikeNodeIdJoin,
+		       n_hosts*max_spike_per_host*sizeof(int));
+  CUDAMALLOCCTRL("&d_ExternalTargetSpikeCumul",&d_ExternalTargetSpikeCumul, (n_hosts+1)*sizeof(int));
 
-  gpuErrchk(cudaMalloc(&d_ExternalSourceSpikeCumul, (n_hosts+1)*sizeof(int)));
+  CUDAMALLOCCTRL("&d_ExternalSourceSpikeCumul",&d_ExternalSourceSpikeCumul, (n_hosts+1)*sizeof(int));
   
-  //gpuErrchk(cudaMalloc(&d_NExternalNodeTargetHost, n_node*sizeof(int)));
-  //gpuErrchk(cudaMalloc(&d_ExternalNodeTargetHostId, n_node*sizeof(int*)));
-  //gpuErrchk(cudaMalloc(&d_ExternalNodeId, n_node*sizeof(int*)));
+  //CUDAMALLOCCTRL("&d_NExternalNodeTargetHost",&d_NExternalNodeTargetHost, n_node*sizeof(int));
+  //CUDAMALLOCCTRL("&d_ExternalNodeTargetHostId",&d_ExternalNodeTargetHostId, n_node*sizeof(int*));
+  //CUDAMALLOCCTRL("&d_ExternalNodeId",&d_ExternalNodeId, n_node*sizeof(int*));
 
   /*
   for (int i_source=0; i_source<n_node; i_source++) {
@@ -244,9 +244,9 @@ int NESTGPU::ExternalSpikeInit(int n_hosts, int max_spike_per_host)
     int Nth = conn->size();
     h_NExternalNodeTargetHost[i_source] = Nth;
     if (Nth>0) {
-       gpuErrchk(cudaMalloc(&h_ExternalNodeTargetHostId[i_source],
-   			 Nth*sizeof(int)));
-       gpuErrchk(cudaMalloc(&h_ExternalNodeId[i_source], Nth*sizeof(int)));
+       CUDAMALLOCCTRL("&h_ExternalNodeTargetHostId[i_source]",&h_ExternalNodeTargetHostId[i_source],
+   			 Nth*sizeof(int));
+       CUDAMALLOCCTRL("&h_ExternalNodeId[i_source]",&h_ExternalNodeId[i_source], Nth*sizeof(int));
        int *target_host_arr = new int[Nth];
        int *node_id_arr = new int[Nth];
        for (int ith=0; ith<Nth; ith++) {

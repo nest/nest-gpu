@@ -82,7 +82,7 @@ int spike_generator::Init(int i_node_0, int n_node, int /*n_port*/,
   spike_height_vect_.clear();
   spike_height_vect_.insert(spike_height_vect_.begin(), n_node, empty_vect);
   
-  gpuErrchk(cudaMalloc(&param_arr_, n_node_*n_param_*sizeof(float)));
+  CUDAMALLOCCTRL("&param_arr_",&param_arr_, n_node_*n_param_*sizeof(float));
 
   //SetScalParam(0, n_node, "origin", 0.0);
   
@@ -93,10 +93,10 @@ int spike_generator::Init(int i_node_0, int n_node, int /*n_port*/,
     h_spike_height_[i_node] = 0;
   }
   
-  gpuErrchk(cudaMalloc(&d_n_spikes_, n_node_*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_i_spike_, n_node_*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_spike_time_idx_, n_node_*sizeof(int*)));
-  gpuErrchk(cudaMalloc(&d_spike_height_, n_node_*sizeof(float*)));
+  CUDAMALLOCCTRL("&d_n_spikes_",&d_n_spikes_, n_node_*sizeof(int));
+  CUDAMALLOCCTRL("&d_i_spike_",&d_i_spike_, n_node_*sizeof(int));
+  CUDAMALLOCCTRL("&d_spike_time_idx_",&d_spike_time_idx_, n_node_*sizeof(int*));
+  CUDAMALLOCCTRL("&d_spike_height_",&d_spike_height_, n_node_*sizeof(float*));
   
   gpuErrchk(cudaMemset(d_n_spikes_, 0, n_node_*sizeof(int)));
   gpuErrchk(cudaMemset(d_i_spike_, 0, n_node_*sizeof(int)));
@@ -236,8 +236,8 @@ int spike_generator::SetSpikes(int irel_node, int n_spikes, float *spike_time,
     gpuErrchk(cudaFree(h_spike_time_idx_[irel_node]));
     gpuErrchk(cudaFree(h_spike_height_[irel_node]));
   }
-  gpuErrchk(cudaMalloc(&h_spike_time_idx_[irel_node], n_spikes*sizeof(int)));
-  gpuErrchk(cudaMalloc(&h_spike_height_[irel_node], n_spikes*sizeof(float)));
+  CUDAMALLOCCTRL("&h_spike_time_idx_[irel_node]",&h_spike_time_idx_[irel_node], n_spikes*sizeof(int));
+  CUDAMALLOCCTRL("&h_spike_height_[irel_node]",&h_spike_height_[irel_node], n_spikes*sizeof(float));
 
   cudaMemcpy(&d_spike_time_idx_[irel_node], &h_spike_time_idx_[irel_node],
 	     sizeof(int*), cudaMemcpyHostToDevice);

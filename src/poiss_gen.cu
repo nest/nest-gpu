@@ -193,7 +193,7 @@ int poiss_gen::Init(int i_node_0, int n_node, int /*n_port*/,
   scal_param_name_ = poiss_gen_scal_param_name;
   has_dir_conn_ = true;
   
-  gpuErrchk(cudaMalloc(&param_arr_, n_node_*n_param_*sizeof(float)));
+  CUDAMALLOCCTRL("&param_arr_",&param_arr_, n_node_*n_param_*sizeof(float));
 
   SetScalParam(0, n_node, "rate", 0.0);
   SetScalParam(0, n_node, "origin", 0.0);
@@ -206,7 +206,7 @@ int poiss_gen::Init(int i_node_0, int n_node, int /*n_port*/,
 int poiss_gen::Calibrate(double, float)
 {
   buildDirectConnections();
-  gpuErrchk(cudaMalloc(&d_curand_state_, n_conn_*sizeof(curandState)));
+  CUDAMALLOCCTRL("&d_curand_state_",&d_curand_state_, n_conn_*sizeof(curandState));
 
   unsigned int grid_dim_x, grid_dim_y;
 
@@ -229,7 +229,7 @@ int poiss_gen::Calibrate(double, float)
   unsigned int *d_seed;
   unsigned int h_seed;
 
-  gpuErrchk(cudaMalloc(&d_seed, sizeof(unsigned int)));
+  CUDAMALLOCCTRL("&d_seed",&d_seed, sizeof(unsigned int));
   CURAND_CALL(curandGenerate(*random_generator_, d_seed, 1));
   // Copy seed from device memory to host
   gpuErrchk(cudaMemcpy(&h_seed, d_seed, sizeof(unsigned int),
@@ -327,7 +327,7 @@ namespace poiss_conn
     key_t **key_subarray = KeySubarray.data();
     
     
-    gpuErrchk(cudaMalloc(&d_poiss_key_array_data_pt, k*sizeof(key_t*)));
+    CUDAMALLOCCTRL("&d_poiss_key_array_data_pt",&d_poiss_key_array_data_pt, k*sizeof(key_t*));
     gpuErrchk(cudaMemcpy(d_poiss_key_array_data_pt, key_subarray,
 			 k*sizeof(key_t*), cudaMemcpyHostToDevice));
 
@@ -340,15 +340,15 @@ namespace poiss_conn
       h_poiss_subarray[i].size = i<k-1 ? block_size : n-(k-1)*block_size;
     }
 
-    gpuErrchk(cudaMalloc(&d_poiss_subarray, k*sizeof(array_t)));
+    CUDAMALLOCCTRL("&d_poiss_subarray",&d_poiss_subarray, k*sizeof(array_t));
     gpuErrchk(cudaMemcpyAsync(d_poiss_subarray, h_poiss_subarray,
 			      k*sizeof(array_t), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&d_poiss_num, 2*k*sizeof(int64_t)));
-    gpuErrchk(cudaMalloc(&d_poiss_sum, 2*sizeof(int64_t)));
+    CUDAMALLOCCTRL("&d_poiss_num",&d_poiss_num, 2*k*sizeof(int64_t));
+    CUDAMALLOCCTRL("&d_poiss_sum",&d_poiss_sum, 2*sizeof(int64_t));
   
 
-    gpuErrchk(cudaMalloc(&d_poiss_thresh, 2*sizeof(key_t)));
+    CUDAMALLOCCTRL("&d_poiss_thresh",&d_poiss_thresh, 2*sizeof(key_t));
 
     return 0;
   }
@@ -406,7 +406,7 @@ int poiss_gen::buildDirectConnections()
   }
   n_conn_ = i_conn1 - i_conn0_;
   if (n_conn_>0) {
-    gpuErrchk(cudaMalloc(&d_poiss_key_array_, n_conn_*sizeof(key_t)));
+    CUDAMALLOCCTRL("&d_poiss_key_array_",&d_poiss_key_array_, n_conn_*sizeof(key_t));
     
     int64_t offset = 0;
     for (uint ib=ib0; ib<=ib1; ib++) {
@@ -462,7 +462,7 @@ int poiss_gen::buildDirectConnections()
 
   // Find maximum delay of poisson direct connections
   uint *d_max_delay; // maximum delay pointer in device memory
-  gpuErrchk(cudaMalloc(&d_max_delay, sizeof(int)));
+  CUDAMALLOCCTRL("&d_max_delay",&d_max_delay, sizeof(int));
   MaxDelay max_op; // comparison operator used by Reduce function 
   // Determine temporary device storage requirements
   void *d_temp_storage = NULL;
@@ -471,7 +471,7 @@ int poiss_gen::buildDirectConnections()
 			    d_poiss_key_array_, d_max_delay, n_conn_, max_op,
 			    INT_MIN);
   // Allocate temporary storage
-  gpuErrchk(cudaMalloc(&d_temp_storage, temp_storage_bytes));
+  CUDAMALLOCCTRL("&d_temp_storage",&d_temp_storage, temp_storage_bytes);
   // Run reduction
   cub::DeviceReduce::Reduce(d_temp_storage, temp_storage_bytes,
 			    d_poiss_key_array_, d_max_delay, n_conn_, max_op,
@@ -482,7 +482,7 @@ int poiss_gen::buildDirectConnections()
   // max_delay_ = 200;
   printf("Max delay of direct (poisson generator) connections: %d\n",
 	 max_delay_);
-  gpuErrchk(cudaMalloc(&d_mu_arr_, n_node_*max_delay_*sizeof(float)));
+  CUDAMALLOCCTRL("&d_mu_arr_",&d_mu_arr_, n_node_*max_delay_*sizeof(float));
   gpuErrchk(cudaMemset(d_mu_arr_, 0, n_node_*max_delay_*sizeof(float)));
   
   /*

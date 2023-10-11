@@ -195,14 +195,14 @@ int BaseNeuron::Init(int i_node_0, int n_node, int n_port,
 // allocate state-variable array
 int BaseNeuron::AllocVarArr()
 {
-  gpuErrchk(cudaMalloc(&var_arr_, n_node_*n_var_*sizeof(float)));
+  CUDAMALLOCCTRL("&var_arr_",&var_arr_, n_node_*n_var_*sizeof(float));
   return 0;
 }
 
 // allocate parameter array
 int BaseNeuron::AllocParamArr()
 {
-  gpuErrchk(cudaMalloc(&param_arr_, n_node_*n_param_*sizeof(float)));
+  CUDAMALLOCCTRL("&param_arr_",&param_arr_, n_node_*n_param_*sizeof(float));
   return 0;
 }
 
@@ -258,7 +258,7 @@ int BaseNeuron::SetScalParam(int *i_neuron, int n_neuron,
 				     + param_name);
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   // Memcopy will be synchronized with BaseNeuronSetFloatPtArray kernel
   gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
@@ -317,7 +317,7 @@ int BaseNeuron::SetPortParam(int *i_neuron, int n_neuron,
 			 "to the number of ports.");
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   // Memcopy will be synchronized with BaseNeuronSetFloatPtArray kernel
   gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
@@ -403,7 +403,7 @@ int BaseNeuron::SetIntVar(int *i_neuron, int n_neuron,
 			 + var_name);
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   // Memcopy will be synchronized with BaseNeuronSetIntPtArray kernel
   gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
@@ -449,7 +449,7 @@ int BaseNeuron::SetScalVar(int *i_neuron, int n_neuron,
 				     + var_name);
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   // Memcopy will be synchronized with BaseNeuronSetFloatPtArray kernel
   gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
@@ -508,7 +508,7 @@ int BaseNeuron::SetPortVar(int *i_neuron, int n_neuron,
 			 "to the number of ports.");
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   // Memcopy will be synchronized with BaseNeuronSetFloatPtArray kernel
   gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
@@ -589,7 +589,7 @@ int BaseNeuron::SetScalParamDistr(int *i_neuron, int n_neuron,
 				     + param_name);
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   float *param_pt = GetParamPt(0, param_name);
@@ -645,7 +645,7 @@ int BaseNeuron::SetScalVarDistr(int *i_neuron, int n_neuron,
 				     + var_name);
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   float *var_pt = GetVarPt(0, var_name);
@@ -710,7 +710,7 @@ int BaseNeuron::SetPortParamDistr(int *i_neuron, int n_neuron,
 			 "equal to the number of ports.");
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
@@ -773,7 +773,7 @@ int BaseNeuron::SetPortVarDistr(int *i_neuron, int n_neuron,
 			 "equal to the number of ports.");
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   gpuErrchk(cudaMemcpy(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
@@ -810,7 +810,7 @@ float *BaseNeuron::GetScalParam(int i_neuron, int n_neuron,
   float *param_pt = GetParamPt(i_neuron, param_name);
 
   float *d_param_arr;
-  gpuErrchk(cudaMalloc(&d_param_arr, n_neuron*sizeof(float)));
+  CUDAMALLOCCTRL("&d_param_arr",&d_param_arr, n_neuron*sizeof(float));
   float *h_param_arr = (float*)malloc(n_neuron*sizeof(float));
 
   BaseNeuronGetFloatArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -835,14 +835,14 @@ float *BaseNeuron::GetScalParam(int *i_neuron, int n_neuron,
 				     + param_name);
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   // Memcopy will be synchronized with BaseNeuronGetFloatPtArray kernel
   gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   float *param_pt = GetParamPt(0, param_name);
 
   float *d_param_arr;
-  gpuErrchk(cudaMalloc(&d_param_arr, n_neuron*sizeof(float)));
+  CUDAMALLOCCTRL("&d_param_arr",&d_param_arr, n_neuron*sizeof(float));
   float *h_param_arr = (float*)malloc(n_neuron*sizeof(float));
   
   BaseNeuronGetFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -872,7 +872,7 @@ float *BaseNeuron::GetPortParam(int i_neuron, int n_neuron,
   float *param_pt;
 
   float *d_param_arr;
-  gpuErrchk(cudaMalloc(&d_param_arr, n_neuron*n_port_*sizeof(float)));
+  CUDAMALLOCCTRL("&d_param_arr",&d_param_arr, n_neuron*n_port_*sizeof(float));
   float *h_param_arr = (float*)malloc(n_neuron*n_port_*sizeof(float));
   
   for (int port=0; port<n_port_; port++) {
@@ -900,13 +900,13 @@ float *BaseNeuron::GetPortParam(int *i_neuron, int n_neuron,
 			 + param_name);
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   // Memcopy will be synchronized with BaseNeuronGetFloatPtArray kernel
   gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
 
   float *d_param_arr;
-  gpuErrchk(cudaMalloc(&d_param_arr, n_neuron*n_port_*sizeof(float)));
+  CUDAMALLOCCTRL("&d_param_arr",&d_param_arr, n_neuron*n_port_*sizeof(float));
   float *h_param_arr = (float*)malloc(n_neuron*n_port_*sizeof(float));
     
   for (int port=0; port<n_port_; port++) {
@@ -963,7 +963,7 @@ int *BaseNeuron::GetIntVar(int i_neuron, int n_neuron,
   int *var_pt = GetIntVarPt(i_neuron, var_name);
 
   int *d_var_arr;
-  gpuErrchk(cudaMalloc(&d_var_arr, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_var_arr",&d_var_arr, n_neuron*sizeof(int));
   int *h_var_arr = (int*)malloc(n_neuron*sizeof(int));
 
   BaseNeuronGetIntArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -988,14 +988,14 @@ int *BaseNeuron::GetIntVar(int *i_neuron, int n_neuron,
 			 + var_name);
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   // Memcopy will be synchronized with BaseNeuronGetIntPtArray kernel
   gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   int *var_pt = GetIntVarPt(0, var_name);
 
   int *d_var_arr;
-  gpuErrchk(cudaMalloc(&d_var_arr, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_var_arr",&d_var_arr, n_neuron*sizeof(int));
   int *h_var_arr = (int*)malloc(n_neuron*sizeof(int));
   
   BaseNeuronGetIntPtArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -1025,7 +1025,7 @@ float *BaseNeuron::GetScalVar(int i_neuron, int n_neuron,
   float *var_pt = GetVarPt(i_neuron, var_name);
 
   float *d_var_arr;
-  gpuErrchk(cudaMalloc(&d_var_arr, n_neuron*sizeof(float)));
+  CUDAMALLOCCTRL("&d_var_arr",&d_var_arr, n_neuron*sizeof(float));
   float *h_var_arr = (float*)malloc(n_neuron*sizeof(float));
 
   BaseNeuronGetFloatArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -1050,14 +1050,14 @@ float *BaseNeuron::GetScalVar(int *i_neuron, int n_neuron,
 				     + var_name);
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   // Memcopy will be synchronized with BaseNeuronGetFloatPtArray kernel
   gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
   float *var_pt = GetVarPt(0, var_name);
 
   float *d_var_arr;
-  gpuErrchk(cudaMalloc(&d_var_arr, n_neuron*sizeof(float)));
+  CUDAMALLOCCTRL("&d_var_arr",&d_var_arr, n_neuron*sizeof(float));
   float *h_var_arr = (float*)malloc(n_neuron*sizeof(float));
   
   BaseNeuronGetFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -1087,7 +1087,7 @@ float *BaseNeuron::GetPortVar(int i_neuron, int n_neuron,
   float *var_pt;
 
   float *d_var_arr;
-  gpuErrchk(cudaMalloc(&d_var_arr, n_neuron*n_port_*sizeof(float)));
+  CUDAMALLOCCTRL("&d_var_arr",&d_var_arr, n_neuron*n_port_*sizeof(float));
   float *h_var_arr = (float*)malloc(n_neuron*n_port_*sizeof(float));
   
   for (int port=0; port<n_port_; port++) {
@@ -1115,13 +1115,13 @@ float *BaseNeuron::GetPortVar(int *i_neuron, int n_neuron,
 			 + var_name);
   }
   int *d_i_neuron;
-  gpuErrchk(cudaMalloc(&d_i_neuron, n_neuron*sizeof(int)));
+  CUDAMALLOCCTRL("&d_i_neuron",&d_i_neuron, n_neuron*sizeof(int));
   // Memcopy will be synchronized with BaseNeuronGetFloatPtArray kernel
   gpuErrchk(cudaMemcpyAsync(d_i_neuron, i_neuron, n_neuron*sizeof(int),
 		       cudaMemcpyHostToDevice));
 
   float *d_var_arr;
-  gpuErrchk(cudaMalloc(&d_var_arr, n_neuron*n_port_*sizeof(float)));
+  CUDAMALLOCCTRL("&d_var_arr",&d_var_arr, n_neuron*n_port_*sizeof(float));
   float *h_var_arr = (float*)malloc(n_neuron*n_port_*sizeof(float));
     
   for (int port=0; port<n_port_; port++) {
@@ -1632,7 +1632,7 @@ int BaseNeuron::ActivateSpikeCount()
       == int_var_name_.end()) { // add it if not already present 
     int_var_name_.push_back(s);
 
-    gpuErrchk(cudaMalloc(&spike_count_, n_node_*sizeof(int)));
+    CUDAMALLOCCTRL("&spike_count_",&spike_count_, n_node_*sizeof(int));
     gpuErrchk(cudaMemset(spike_count_, 0, n_node_*sizeof(int)));
     int_var_pt_.push_back(spike_count_);
   }
@@ -1656,17 +1656,17 @@ int BaseNeuron::ActivateRecSpikeTimes(int max_n_rec_spike_times)
       == int_var_name_.end()) { // add it if not already present 
     int_var_name_.push_back(s);
 
-    gpuErrchk(cudaMalloc(&n_rec_spike_times_, n_node_*sizeof(int)));
-    gpuErrchk(cudaMalloc(&n_rec_spike_times_cumul_,
-			 (n_node_+1)*sizeof(int)));
+    CUDAMALLOCCTRL("&n_rec_spike_times_",&n_rec_spike_times_, n_node_*sizeof(int));
+    CUDAMALLOCCTRL("&n_rec_spike_times_cumul_",&n_rec_spike_times_cumul_,
+			 (n_node_+1)*sizeof(int));
     gpuErrchk(cudaMemset(n_rec_spike_times_, 0, n_node_*sizeof(int)));
     int_var_pt_.push_back(n_rec_spike_times_);
     
     max_n_rec_spike_times_ = max_n_rec_spike_times;
-    gpuErrchk(cudaMalloc(&rec_spike_times_, n_node_*max_n_rec_spike_times
-			 *sizeof(int)));
-    gpuErrchk(cudaMalloc(&rec_spike_times_pack_, n_node_*max_n_rec_spike_times
-			 *sizeof(int)));
+    CUDAMALLOCCTRL("&rec_spike_times_",&rec_spike_times_, n_node_*max_n_rec_spike_times
+			 *sizeof(int));
+    CUDAMALLOCCTRL("&rec_spike_times_pack_",&rec_spike_times_pack_, n_node_*max_n_rec_spike_times
+			 *sizeof(int));
     spike_times_pt_vect_.resize(n_node_, NULL);
     n_spike_times_vect_.resize(n_node_, 0);
     spike_times_vect_.resize(n_node_);

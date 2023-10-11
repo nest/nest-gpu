@@ -529,7 +529,7 @@ int NESTGPU::_ConnectOneToOne
   //printf("In new specialized connection one-to-one\n");
 
   void *d_storage;
-  gpuErrchk(cudaMalloc(&d_storage, h_ConnBlockSize*sizeof(int)));
+  CUDAMALLOCCTRL("&d_storage",&d_storage, h_ConnBlockSize*sizeof(int));
 
   connect_one_to_one(gen, d_storage, time_resolution_,
 		     KeySubarray, ConnectionSubarray, NConn,
@@ -547,7 +547,7 @@ int NESTGPU::_ConnectAllToAll
   //printf("In new specialized connection all-to-all\n");
 
   void *d_storage;
-  gpuErrchk(cudaMalloc(&d_storage, h_ConnBlockSize*sizeof(int)));
+  CUDAMALLOCCTRL("&d_storage",&d_storage, h_ConnBlockSize*sizeof(int));
 
   connect_all_to_all(gen, d_storage, time_resolution_,
 		     KeySubarray, ConnectionSubarray, NConn,
@@ -566,7 +566,7 @@ int NESTGPU::_ConnectFixedTotalNumber
   //printf("In new specialized connection fixed-total-number\n");
 
   void *d_storage;
-  gpuErrchk(cudaMalloc(&d_storage, h_ConnBlockSize*sizeof(int)));
+  CUDAMALLOCCTRL("&d_storage",&d_storage, h_ConnBlockSize*sizeof(int));
 
   connect_fixed_total_number(gen, d_storage, time_resolution_,
 			     KeySubarray, ConnectionSubarray, NConn,
@@ -585,7 +585,7 @@ int NESTGPU::_ConnectFixedIndegree
   //printf("In new specialized connection fixed-indegree\n");
 
   void *d_storage;
-  gpuErrchk(cudaMalloc(&d_storage, h_ConnBlockSize*sizeof(int)));
+  CUDAMALLOCCTRL("&d_storage",&d_storage, h_ConnBlockSize*sizeof(int));
 
   connect_fixed_indegree(gen, d_storage, time_resolution_,
 			 KeySubarray, ConnectionSubarray, NConn,
@@ -604,7 +604,7 @@ int NESTGPU::_ConnectFixedOutdegree
   //printf("In new specialized connection fixed-outdegree\n");
 
   void *d_storage;
-  gpuErrchk(cudaMalloc(&d_storage, h_ConnBlockSize*sizeof(int)));
+  CUDAMALLOCCTRL("&d_storage",&d_storage, h_ConnBlockSize*sizeof(int));
 
   connect_fixed_outdegree(gen, d_storage, time_resolution_,
 			  KeySubarray, ConnectionSubarray, NConn,

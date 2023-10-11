@@ -117,7 +117,7 @@ float *Distribution::getArray(curandGenerator_t &gen, int64_t n_elem,
 {
   checkDistributionInitialized();
   if (distr_idx_>=DISTR_TYPE_ARRAY) {
-    gpuErrchk(cudaMalloc(&d_array_pt_, n_elem*sizeof(float)));
+    CUDAMALLOCCTRL("&d_array_pt_",&d_array_pt_, n_elem*sizeof(float));
   }
   if (distr_idx_==DISTR_TYPE_ARRAY) {
     gpuErrchk(cudaMemcpy(d_array_pt_, h_array_pt_, n_elem*sizeof(float),

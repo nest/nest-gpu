@@ -199,8 +199,8 @@ int NESTGPU::SynGroupCalibrate()
     h_SynGroupParamMap[syn_group-1]
       = syn_group_vect_[syn_group-1]->d_param_arr_;
   }
-  gpuErrchk(cudaMalloc(&d_SynGroupTypeMap, n_group*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_SynGroupParamMap, n_group*sizeof(float*)));
+  CUDAMALLOCCTRL("&d_SynGroupTypeMap",&d_SynGroupTypeMap, n_group*sizeof(int));
+  CUDAMALLOCCTRL("&d_SynGroupParamMap",&d_SynGroupParamMap, n_group*sizeof(float*));
 
   // Memcopies will be synchronised with SynGroupInit kernel
   gpuErrchk(cudaMemcpyAsync(d_SynGroupTypeMap, h_SynGroupTypeMap,

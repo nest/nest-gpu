@@ -232,7 +232,7 @@ NESTGPU::NESTGPU()
   const int n_source = 10;
   int h_source_node_index[n_source] = {21, 24, 21, 24, 22, 21, 23, 25, 26, 22};
   int *d_source_node_index;
-  gpuErrchk(cudaMalloc(&d_source_node_index, n_source*sizeof(int)));
+  CUDAMALLOCCTRL("&d_source_node_index",&d_source_node_index, n_source*sizeof(int));
   gpuErrchk(cudaMemcpy(d_source_node_index, h_source_node_index,
 		       n_source*sizeof(int), cudaMemcpyHostToDevice));
 
@@ -261,7 +261,7 @@ NESTGPU::NESTGPU()
   int h_source_node_index2[n_source2] =
     {1, 2, 3, 4};
   int *d_source_node_index2;
-  gpuErrchk(cudaMalloc(&d_source_node_index2, n_source2*sizeof(int)));
+  CUDAMALLOCCTRL("&d_source_node_index2",&d_source_node_index2, n_source2*sizeof(int));
   gpuErrchk(cudaMemcpy(d_source_node_index2, h_source_node_index2,
 		       n_source2*sizeof(int), cudaMemcpyHostToDevice));
   _RemoteConnect(this_host, 1, d_source_node_index2, n_source2, 3, 0, 1,
@@ -271,7 +271,7 @@ NESTGPU::NESTGPU()
   int h_source_node_index3[n_source3] =
     {2, 3, 4};
   int *d_source_node_index3;
-  gpuErrchk(cudaMalloc(&d_source_node_index3, n_source3*sizeof(int)));
+  CUDAMALLOCCTRL("&d_source_node_index3",&d_source_node_index3, n_source3*sizeof(int));
   gpuErrchk(cudaMemcpy(d_source_node_index3, h_source_node_index3,
 		       n_source3*sizeof(int), cudaMemcpyHostToDevice));
   _RemoteConnect(this_host, 1, d_source_node_index3, n_source3, 2, 0, 1,
@@ -281,7 +281,7 @@ NESTGPU::NESTGPU()
   int h_source_node_index4[n_source4] =
     {3, 4};
   int *d_source_node_index4;
-  gpuErrchk(cudaMalloc(&d_source_node_index4, n_source4*sizeof(int)));
+  CUDAMALLOCCTRL("&d_source_node_index4",&d_source_node_index4, n_source4*sizeof(int));
   gpuErrchk(cudaMemcpy(d_source_node_index4, h_source_node_index4,
 		       n_source4*sizeof(int), cudaMemcpyHostToDevice));
   _RemoteConnect(this_host, 1, d_source_node_index4, n_source4, 4, 0, 1,
@@ -290,7 +290,7 @@ NESTGPU::NESTGPU()
   int n_source5 = 1;
   int h_source_node_index5[n_source5] = {4};
   int *d_source_node_index5;
-  gpuErrchk(cudaMalloc(&d_source_node_index5, n_source5*sizeof(int)));
+  CUDAMALLOCCTRL("&d_source_node_index5",&d_source_node_index5, n_source5*sizeof(int));
   gpuErrchk(cudaMemcpy(d_source_node_index5, h_source_node_index5,
 		       n_source5*sizeof(int), cudaMemcpyHostToDevice));
   _RemoteConnect(this_host, 1, d_source_node_index5, n_source5, 0, 0, 1,
@@ -1802,8 +1802,8 @@ int NESTGPU::PushSpikesToNodes(int n_spikes, int *node_id,
   /*
   int *d_node_id;
   float *d_spike_height;
-  gpuErrchk(cudaMalloc(&d_node_id, n_spikes*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_spike_height, n_spikes*sizeof(float)));
+  CUDAMALLOCCTRL("&d_node_id",&d_node_id, n_spikes*sizeof(int));
+  CUDAMALLOCCTRL("&d_spike_height",&d_spike_height, n_spikes*sizeof(float));
   // Memcpy are synchronized by PushSpikeFromRemote kernel
   gpuErrchk(cudaMemcpyAsync(d_node_id, node_id, n_spikes*sizeof(int),
 		       cudaMemcpyHostToDevice));
@@ -1830,7 +1830,7 @@ int NESTGPU::PushSpikesToNodes(int n_spikes, int *node_id)
   //std::cout << "\n";
 
   int *d_node_id;
-  gpuErrchk(cudaMalloc(&d_node_id, n_spikes*sizeof(int)));
+  CUDAMALLOCCTRL("&d_node_id",&d_node_id, n_spikes*sizeof(int));
   // memcopy data transfer is overlapped with PushSpikeFromRemote kernel
   gpuErrchk(cudaMemcpyAsync(d_node_id, node_id, n_spikes*sizeof(int),
 		       cudaMemcpyHostToDevice));  
