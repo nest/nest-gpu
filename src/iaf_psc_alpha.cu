@@ -1,5 +1,5 @@
 /*
- *  user_m2_iaf_psc_exp.cu
+ *  iaf_psc_alpha.cu
  *
  *  This file is part of NEST GPU.
  *
@@ -25,22 +25,25 @@
 
 
 // adapted from:
-// https://github.com/nest/nest-simulator/blob/master/models/user_m2.cpp
+// https://github.com/nest/nest-simulator/blob/master/models/iaf_psc_alpha.cpp
 
 #include <config.h>
 #include <cmath>
 #include <iostream>
-#include "user_m2.h"
+#include "iaf_psc_alpha.h"
 #include "propagator_stability.h"
 #include "spike_buffer.h"
 
-using namespace user_m2_ns;
+using namespace iaf_psc_alpha_ns;
 
 extern __constant__ float NESTGPUTimeResolution;
+extern __device__ double propagator_31(double, double, double, double);
 extern __device__ double propagator_32(double, double, double, double);
 
-#define I_syn_ex var[i_I_syn_ex]
-#define I_syn_in var[i_I_syn_in]
+#define I_ex var[i_I_ex]
+#define I_in var[i_I_in]
+#define dI_ex var[i_dI_ex]
+#define dI_in var[i_dI_in]
 #define V_m_rel var[i_V_m_rel]
 #define refractory_step var[i_refractory_step]
 
@@ -52,75 +55,97 @@ extern __device__ double propagator_32(double, double, double, double);
 #define V_reset_rel param[i_V_reset_rel]
 #define tau_ex param[i_tau_ex]
 #define tau_in param[i_tau_in]
-//#define rho param[i_rho]
-//#define delta param[i_delta]
 #define t_ref param[i_t_ref]
 #define den_delay param[i_den_delay]
 
-#define P20 param[i_P20]
 #define P11ex param[i_P11ex]
 #define P11in param[i_P11in]
 #define P21ex param[i_P21ex]
 #define P21in param[i_P21in]
-#define P22 param[i_P22]
+#define P22ex param[i_P22ex]
+#define P22in param[i_P22in]
+#define P31ex param[i_P31ex]
+#define P31in param[i_P31in]
+#define P32ex param[i_P32ex]
+#define P32in param[i_P32in]
+#define P30 param[i_P30]
+#define P33 param[i_P33]
+#define expm1_tau_m param[i_expm1_tau_m]
+#define EPSCInitialValue param[i_EPSCInitialValue]
+#define IPSCInitialValue param[i_IPSCInitialValue]
 
 
-
-__global__ void user_m2_Calibrate(int n_node, float *param_arr,
+__global__ void iaf_psc_alpha_Calibrate(int n_node, float *param_arr,
 				      int n_param, float h)
 {
   int i_neuron = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_neuron<n_node) {
     float *param = param_arr + n_param*i_neuron;
     
-    P11ex = exp( -h / tau_ex );
-    P11in = exp( -h / tau_in );
-    P22 = exp( -h / tau_m );
-    P21ex = (float)propagator_32( tau_ex, tau_m, C_m, h );
-    P21in = (float)propagator_32( tau_in, tau_m, C_m, h ); 
-    P20 = tau_m / C_m * ( 1.0 - P22 );
+    P11ex = P22ex = exp( -h / tau_ex );
+    P11in = P22in = exp( -h / tau_in );
+    P33 = exp( -h / tau_m );
+    expm1_tau_m = expm1( -h / tau_m );
+
+    P30 = -tau_m / C_m * expm1( -h / tau_m );
+    P21ex = h * P11ex;
+    P21in = h * P11in;
+
+    P31ex = (float)propagator_31( tau_ex, tau_m, C_m, h );
+    P32ex = (float)propagator_32( tau_ex, tau_m, C_m, h );
+    P31in = (float)propagator_31( tau_in, tau_m, C_m, h );
+    P32in = (float)propagator_32( tau_in, tau_m, C_m, h );
+
+    EPSCInitialValue = M_E / tau_ex;
+    IPSCInitialValue = M_E / tau_in;
+
   }
 }
 
 
-__global__ void user_m2_Update(int n_node, int i_node_0, float *var_arr,
+__global__ void iaf_psc_alpha_Update(int n_node, int i_node_0, float *var_arr,
 				   float *param_arr, int n_var, int n_param)
 {
   int i_neuron = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_neuron<n_node) {
     float *var = var_arr + n_var*i_neuron;
     float *param = param_arr + n_param*i_neuron;
-    
+
     if ( refractory_step > 0.0 ) {
       // neuron is absolute refractory
       refractory_step -= 1.0;
     }
     else { // neuron is not refractory, so evolve V
-      V_m_rel = V_m_rel * P22 + I_syn_ex * P21ex + I_syn_in * P21in + I_e * P20;
+      V_m_rel = P30 * I_e + P31ex * dI_ex + P32ex * I_ex
+               + P31in * dI_in + P32in * I_in + expm1_tau_m * V_m_rel + V_m_rel;
     }
-    // exponential decaying PSCs
-    I_syn_ex *= P11ex;
-    I_syn_in *= P11in;
-    
+  
+    // alpha shape PSCs
+    I_ex = P21ex * dI_ex + P22ex * I_ex;
+    dI_ex *= P11ex;
+
+    I_in = P21in * dI_in + P22in * I_in;
+    dI_in *= P11in;
+
     if (V_m_rel >= Theta_rel ) { // threshold crossing
       PushSpike(i_node_0 + i_neuron, 1.0);
       V_m_rel = V_reset_rel;
       refractory_step = (int)round(t_ref/NESTGPUTimeResolution);
-    }    
+    }
   }
 }
 
-user_m2::~user_m2()
+iaf_psc_alpha::~iaf_psc_alpha()
 {
   FreeVarArr();
   FreeParamArr();
 }
 
-int user_m2::Init(int i_node_0, int n_node, int /*n_port*/,
+int iaf_psc_alpha::Init(int i_node_0, int n_node, int n_port,
 			 int i_group)
 {
-  BaseNeuron::Init(i_node_0, n_node, 2 /*n_port*/, i_group);
-  node_type_ = i_user_m2_model;
+  BaseNeuron::Init(i_node_0, n_node, n_port, i_group);
+  node_type_ = i_iaf_psc_alpha_model;
 
   n_scal_var_ = N_SCAL_VAR;
   n_var_ = n_scal_var_;
@@ -130,8 +155,8 @@ int user_m2::Init(int i_node_0, int n_node, int /*n_port*/,
   AllocParamArr();
   AllocVarArr();
 
-  scal_var_name_ = user_m2_scal_var_name;
-  scal_param_name_ = user_m2_scal_param_name;
+  scal_var_name_ = iaf_psc_alpha_scal_var_name;
+  scal_param_name_ = iaf_psc_alpha_scal_param_name;
 
   SetScalParam(0, n_node, "tau_m", 10.0 );           // in ms
   SetScalParam(0, n_node, "C_m", 250.0 );            // in pF
@@ -139,34 +164,37 @@ int user_m2::Init(int i_node_0, int n_node, int /*n_port*/,
   SetScalParam(0, n_node, "I_e", 0.0 );              // in pA
   SetScalParam(0, n_node, "Theta_rel", -55.0 - (-70.0) );   // relative to E_L_
   SetScalParam(0, n_node, "V_reset_rel", -70.0 - (-70.0) ); // relative to E_L_
-  SetScalParam(0, n_node, "tau_ex", 2.0 );           // in ms
-  SetScalParam(0, n_node, "tau_in", 2.0 );           // in ms
-  // SetScalParam(0, n_node, "rho", 0.01 );             // in 1/s
-  // SetScalParam(0, n_node, "delta", 0.0 );            // in mV
+  SetScalParam(0, n_node, "tau_syn_ex", 2.0 );           // in ms
+  SetScalParam(0, n_node, "tau_syn_in", 2.0 );           // in ms
   SetScalParam(0, n_node, "t_ref",  2.0 );           // in ms
   SetScalParam(0, n_node, "den_delay", 0.0);         // in ms
-  SetScalParam(0, n_node, "P20", 0.0);
   SetScalParam(0, n_node, "P11ex", 0.0);
   SetScalParam(0, n_node, "P11in", 0.0);
   SetScalParam(0, n_node, "P21ex", 0.0);
   SetScalParam(0, n_node, "P21in", 0.0);
-  SetScalParam(0, n_node, "P22", 0.0);
+  SetScalParam(0, n_node, "P22ex", 0.0);
+  SetScalParam(0, n_node, "P22in", 0.0);
+  SetScalParam(0, n_node, "P31ex", 0.0);
+  SetScalParam(0, n_node, "P31in", 0.0);
+  SetScalParam(0, n_node, "P32ex", 0.0);
+  SetScalParam(0, n_node, "P32in", 0.0);
+  SetScalParam(0, n_node, "P30", 0.0);
+  SetScalParam(0, n_node, "P33", 0.0);
+  SetScalParam(0, n_node, "EPSCInitialValue", 0.0);
+  SetScalParam(0, n_node, "IPSCInitialValue", 0.0);
 
   SetScalVar(0, n_node, "I_syn_ex", 0.0 );
+  SetScalVar(0, n_node, "dI_ex", 0.0 );
   SetScalVar(0, n_node, "I_syn_in", 0.0 );
+  SetScalVar(0, n_node, "dI_in", 0.0 );
   SetScalVar(0, n_node, "V_m_rel", -70.0 - (-70.0) ); // in mV, relative to E_L
   SetScalVar(0, n_node, "refractory_step", 0 );
-
-  // multiplication factor of input signal is always 1 for all nodes
-  float input_weight = 1.0;
-  CUDAMALLOCCTRL("&port_weight_arr_",&port_weight_arr_, sizeof(float));
-  gpuErrchk(cudaMemcpy(port_weight_arr_, &input_weight,
-			 sizeof(float), cudaMemcpyHostToDevice));
-  port_weight_arr_step_ = 0;
-  port_weight_port_step_ = 0;
   
-  // input spike signal is stored in I_syn_ex, I_syn_in
-  port_input_arr_ = GetVarArr() + GetScalVarIdx("I_syn_ex");
+  port_weight_arr_ = GetParamArr() + GetScalParamIdx("EPSCInitialValue");
+  port_weight_arr_step_ = n_param_;
+  port_weight_port_step_ = 1;
+
+  port_input_arr_ = GetVarArr() + GetScalVarIdx("dI_ex");
   port_input_arr_step_ = n_var_;
   port_input_port_step_ = 1;
 
@@ -175,17 +203,17 @@ int user_m2::Init(int i_node_0, int n_node, int /*n_port*/,
   return 0;
 }
 
-int user_m2::Update(long long it, double t1)
+int iaf_psc_alpha::Update(long long it, double t1)
 {
-  // std::cout << "user_m2 neuron update\n";
-  user_m2_Update<<<(n_node_+1023)/1024, 1024>>>
+  // std::cout << "iaf_psc_alpha neuron update\n";
+  iaf_psc_alpha_Update<<<(n_node_+1023)/1024, 1024>>>
     (n_node_, i_node_0_, var_arr_, param_arr_, n_var_, n_param_);
   // gpuErrchk( cudaDeviceSynchronize() );
   
   return 0;
 }
 
-int user_m2::Free()
+int iaf_psc_alpha::Free()
 {
   FreeVarArr();  
   FreeParamArr();
@@ -193,9 +221,9 @@ int user_m2::Free()
   return 0;
 }
 
-int user_m2::Calibrate(double, float time_resolution)
+int iaf_psc_alpha::Calibrate(double, float time_resolution)
 {
-  user_m2_Calibrate<<<(n_node_+1023)/1024, 1024>>>
+  iaf_psc_alpha_Calibrate<<<(n_node_+1023)/1024, 1024>>>
     (n_node_, param_arr_, n_param_, time_resolution);
 
   return 0;

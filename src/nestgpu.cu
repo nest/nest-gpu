@@ -346,6 +346,9 @@ NESTGPU::~NESTGPU()
 int NESTGPU::SetRandomSeed(unsigned long long seed)
 {
   kernel_seed_ = seed;
+  #ifdef HAVE_MPI
+  kernel_seed_ += HostId();
+  #endif
   //CURAND_CALL(curandDestroyGenerator(*random_generator_));
   //random_generator_ = new curandGenerator_t;
   //CURAND_CALL(curandCreateGenerator(random_generator_,

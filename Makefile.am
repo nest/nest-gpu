@@ -61,6 +61,7 @@ iaf_psc_exp_g.h \
 iaf_psc_exp.h \
 iaf_psc_exp_hc.h \
 iaf_psc_exp_hc_params.h \
+iaf_psc_alpha.h \
 izhikevich_cond_beta.h \
 izhikevich_cond_beta_kernel.h \
 izhikevich_cond_beta_rk5.h \
@@ -79,6 +80,7 @@ poiss_gen.h \
 poiss_gen_variables.h \
 prefix_scan.h \
 propagate_error.h \
+propagator_stability.h \
 random.h \
 rev_spike.h \
 rk5_const.h \
@@ -133,6 +135,7 @@ get_spike.cu \
 iaf_psc_exp.cu \
 iaf_psc_exp_g.cu \
 iaf_psc_exp_hc.cu \
+iaf_psc_alpha.cu \
 izhikevich_cond_beta.cu \
 izhikevich.cu \
 izhikevich_psc_exp_2s.cu \
@@ -146,6 +149,7 @@ node_group.cu \
 parrot_neuron.cu \
 poiss_gen.cu \
 prefix_scan.cu \
+propagator_stability.cu \
 random.cu \
 rev_spike.cu \
 rk5.cu \

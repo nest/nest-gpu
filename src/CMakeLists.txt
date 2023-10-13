@@ -43,7 +43,6 @@ aeif_psc_exp_multisynapse_kernel.h
 aeif_psc_exp_multisynapse_rk5.h
 base_neuron.h
 connect.h
-connect_mpi.h
 connect_rules.h
 connect_spec.h
 copass_kernels.h
@@ -53,6 +52,7 @@ distribution.h
 ext_neuron.h
 getRealTime.h
 get_spike.h
+iaf_psc_alpha.h
 iaf_psc_exp_g.h
 iaf_psc_exp.h
 iaf_psc_exp_hc.h
@@ -76,6 +76,7 @@ poiss_gen.h
 poiss_gen_variables.h
 prefix_scan.h
 propagate_error.h
+propagator_stability.h
 random.h
 rev_spike.h
 rk5_const.h
@@ -108,7 +109,6 @@ aeif_psc_exp.cu
 aeif_psc_exp_multisynapse.cu
 base_neuron.cu
 connect.cu
-connect_mpi.cu
 connect_rules.cu
 copass_kernels.cu
 copass_sort.cu
@@ -116,6 +116,7 @@ distribution.cu
 ext_neuron.cu
 getRealTime.cu
 get_spike.cu
+iaf_psc_alpha.cu
 iaf_psc_exp.cu
 iaf_psc_exp_g.cu
 iaf_psc_exp_hc.cu
@@ -132,6 +133,7 @@ node_group.cu
 parrot_neuron.cu
 poiss_gen.cu
 prefix_scan.cu
+propagator_stability.cu
 random.cu
 rev_spike.cu
 rk5.cu
