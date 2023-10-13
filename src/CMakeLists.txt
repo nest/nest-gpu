@@ -71,6 +71,7 @@ nestgpu.h
 neuron_models.h
 ngpu_exception.h
 node_group.h
+nvtx_macros.h
 parrot_neuron.h
 poiss_gen.h
 poiss_gen_variables.h
