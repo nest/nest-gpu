@@ -1,20 +1,22 @@
 /*
- *  This file is part of NESTGPU.
+ *  aeif_cond_alpha.cu
+ *
+ *  This file is part of NEST GPU.
  *
  *  Copyright (C) 2021 The NEST Initiative
  *
- *  NESTGPU is free software: you can redistribute it and/or modify
+ *  NEST GPU is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 2 of the License, or
  *  (at your option) any later version.
  *
- *  NESTGPU is distributed in the hope that it will be useful,
+ *  NEST GPU is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with NESTGPU.  If not, see <http://www.gnu.org/licenses/>.
+ *  along with NEST GPU.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -37,7 +39,6 @@ void NodeInit(int n_var, int n_param, double x, float *y, float *param,
 	      aeif_cond_alpha_rk5 data_struct)
 {
   //int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
-  int n_port = (n_var-N_SCAL_VAR)/N_PORT_VAR;
 
   V_th = -50.4;
   Delta_T = 2.0;
@@ -52,16 +53,18 @@ void NodeInit(int n_var, int n_param, double x, float *y, float *param,
   V_reset = -60.0;
   t_ref = 0.0;
   den_delay = 0.0;
-  
+  E_rev_ex = 0.0;
+  E_rev_in = -85.0;
+  tau_syn_ex = 0.2;
+  tau_syn_in = 2.0;
+
   V_m = E_L;
   w = 0;
   refractory_step = 0;
-  for (int i = 0; i<n_port; i++) {
-    g(i) = 0;
-    g1(i) = 0;
-    E_rev(i) = 0.0;
-    tau_syn(i) = 2.0;
-  }
+  g_ex = 0;
+  g_in = 0;
+  g1_ex = 0;
+  g1_in = 0;
 }
 
 __device__
@@ -69,13 +72,11 @@ void NodeCalibrate(int n_var, int n_param, double x, float *y,
 		       float *param, aeif_cond_alpha_rk5 data_struct)
 {
   //int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
-  int n_port = (n_var-N_SCAL_VAR)/N_PORT_VAR;
 
   refractory_step = 0;
-  for (int i = 0; i<n_port; i++) {
-    // use normalization for alpha function
-    g0(i) = M_E / tau_syn(i);
-  }
+  // use normalization for alpha function
+  g0_ex = M_E / tau_syn_ex;
+  g0_in = M_E / tau_syn_in;
 }
 
 }
@@ -102,20 +103,15 @@ int aeif_cond_alpha::Init(int i_node_0, int n_node, int n_port,
   BaseNeuron::Init(i_node_0, n_node, n_port, i_group);
   node_type_ = i_aeif_cond_alpha_model;
   n_scal_var_ = N_SCAL_VAR;
-  n_port_var_ = N_PORT_VAR;
+  n_var_ = n_scal_var_;
   n_scal_param_ = N_SCAL_PARAM;
-  n_port_param_ = N_PORT_PARAM;
+  n_param_ = n_scal_param_;
   n_group_param_ = N_GROUP_PARAM;
-
-  n_var_ = n_scal_var_ + n_port_var_*n_port;
-  n_param_ = n_scal_param_ + n_port_param_*n_port;
 
   group_param_ = new float[N_GROUP_PARAM];
   
   scal_var_name_ = aeif_cond_alpha_scal_var_name;
-  port_var_name_= aeif_cond_alpha_port_var_name;
   scal_param_name_ = aeif_cond_alpha_scal_param_name;
-  port_param_name_ = aeif_cond_alpha_port_param_name;
   group_param_name_ = aeif_cond_alpha_group_param_name;
   //rk5_data_struct_.node_type_ = i_aeif_cond_alpha_model;
   rk5_data_struct_.i_node_0_ = i_node_0_;
@@ -128,15 +124,13 @@ int aeif_cond_alpha::Init(int i_node_0, int n_node, int n_port,
   var_arr_ = rk5_.GetYArr();
   param_arr_ = rk5_.GetParamArr();
 
-  port_weight_arr_ = GetParamArr() + n_scal_param_
-    + GetPortParamIdx("g0");
+  port_weight_arr_ = GetParamArr() + GetScalParamIdx("g0_ex");
   port_weight_arr_step_ = n_param_;
-  port_weight_port_step_ = n_port_param_;
+  port_weight_port_step_ = 1;
 
-  port_input_arr_ = GetVarArr() + n_scal_var_
-    + GetPortVarIdx("g1");
+  port_input_arr_ = GetVarArr() + GetScalVarIdx("g1_ex");
   port_input_arr_step_ = n_var_;
-  port_input_port_step_ = n_port_var_;
+  port_input_port_step_ = 1;
   den_delay_arr_ =  GetParamArr() + GetScalParamIdx("den_delay");
 
   return 0;
@@ -151,15 +145,8 @@ int aeif_cond_alpha::Calibrate(double time_min, float time_resolution)
   return 0;
 }
 
-template <>
-int aeif_cond_alpha::UpdateNR<0>(long long it, double t1)
-{
-  return 0;
-}
-
 int aeif_cond_alpha::Update(long long it, double t1) {
-  UpdateNR<MAX_PORT_NUM>(it, t1);
+  rk5_.Update<N_SCAL_VAR, N_SCAL_PARAM>(t1, h_min_, rk5_data_struct_);
 
   return 0;
 }
-

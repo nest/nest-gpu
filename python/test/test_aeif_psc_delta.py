@@ -12,6 +12,7 @@ n_spikes = 2
 # set spike times and height
 ngpu.SetStatus(spike, {"spike_times": spike_times})
 delay = [1.0, 100.0]
+# the aeif_psc_delta model has one port, negative inputs require negative weights
 weight = [1.0, -2.0]
 
 conn_spec={"rule": "all_to_all"}

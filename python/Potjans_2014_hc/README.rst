@@ -1,7 +1,7 @@
-NESTGPU microcircuit
-===================
+NEST GPU microcircuit
+=====================
 
-This is a NESTGPU implementation of the microcircuit model by Potjans and Diesmann [1]_.
+This is a NEST GPU implementation of the microcircuit model by Potjans and Diesmann [1]_.
 The network model represents four layers of cortex, L2/3, L4, L5, and L6, each consisting of a population of excitatory neurons and a population of inhibitory neurons.
 
 Citing this code
@@ -66,10 +66,10 @@ For benchmark simulations assessing network-construction and state-propagation t
 * ``'K_scaling': 1.``: Full indegrees.
 * ``'poisson_input': False``: DC background input.
 
-Contributions to this NESTGPU microcircuit model implementation
-##############################################################
+Contributions to this NEST GPU microcircuit model implementation
+################################################################
 
-2020: Adapted for NESTGPU by Bruno Golosio
+2020: Adapted for NEST GPU by Bruno Golosio
 
 Current communicating author of the NEST version: Johanna Senk
 

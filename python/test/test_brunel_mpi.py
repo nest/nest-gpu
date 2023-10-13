@@ -46,7 +46,7 @@ ngpu.SetStatus(pg, "rate", poiss_rate)
 pg_list = pg.ToList()
 
 # Create n_neurons neurons with n_receptor receptor ports
-neuron = ngpu.Create("aeif_cond_beta", n_neurons, n_receptors)
+neuron = ngpu.Create("aeif_cond_beta_multisynapse", n_neurons, n_receptors)
 exc_neuron = neuron[0:NE]      # excitatory neurons
 inh_neuron = neuron[NE:n_neurons]   # inhibitory neurons
 neuron_list = neuron.ToList()
@@ -183,5 +183,6 @@ print("Mean rate: ", mean_spike_num)
 if diff > max_diff:
     sys.exit(1)
 else:
+    ngpu.MpiFinalize()
     sys.exit(0)
 

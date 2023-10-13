@@ -1,17 +1,35 @@
 Differences in usage between NEST GPU and NEST
 ==============================================
 
-All aeif neuron models in NEST GPU are multisynapse models. The number
+Aeif neuron models
+------------------
+
+Aeif neuron models in NEST GPU have both a non-multisynapse and 
+a multisynapse implementation.
+For the multisynapse implementation, the number
 of receptor ports must be specified at neuron creation:
 
 .. code-block:: python
 
    # Create n_neurons neurons with n_receptor receptor ports
-   neuron = ngpu.Create("aeif_cond_beta", n_neurons, n_receptors)
+   neuron = ngpu.Create("aeif_cond_beta_multisynapse", n_neurons, n_receptors)
 
 If not specified, the number of neurons and the number of receptors are
 set to 1 and cannot be changed. The receptor index starts from 0 (and
 not from 1 as in NEST multisynapse models).
+
+The non-multisynapse implementation of aeif neuron models has two receptor
+ports (i.e. excitatory and inhibitory), and thus the connections require to
+specify the receptor port through the synapse property ``receptor`` (0 
+for the excitatory port and 1 for the inhibitory port). Differently from
+NEST, the connection weights related to the inhibitory port must be positive.
+
+The only exception is the ``aeif_psc_delta`` neuron model, which has only
+one receptor port. For this model, an inhibitory connection must have
+a negative weight.
+
+Multimeter device
+-----------------
 
 The multimeter devices in NEST GPU are used in a different way from
 NEST. To record a variable, you have to create a record, as in the

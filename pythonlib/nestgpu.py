@@ -7,16 +7,14 @@ import gc
 
 
 print('\n              -- NEST GPU --\n')
-print('  Copyright (C) 2004 The NEST Initiative\n')
+print('  Copyright (C) 2021 The NEST Initiative\n')
 print(' This program is provided AS IS and comes with')
 print(' NO WARRANTY. See the file LICENSE for details.\n')
 print(' Homepage: https://github.com/nest/nest-gpu')
 print()
 
 
-lib_dir=os.environ["NEST_GPU"]
-lib_path=lib_dir + "/lib/libnestgpu.so"
-#lib_path="/usr/local/lib/libnestgpu.so"
+lib_path=os.environ["NESTGPU_LIB"]
 _nestgpu=ctypes.CDLL(lib_path)
 
 c_float_p = ctypes.POINTER(ctypes.c_float)
@@ -1591,7 +1589,6 @@ NESTGPU_ConnectMpiInit.argtypes = (ctypes.c_int, ctypes.POINTER(c_char_p))
 NESTGPU_ConnectMpiInit.restype = ctypes.c_int
 def ConnectMpiInit():
     "Initialize MPI connections"
-    from mpi4py import MPI
     argc=len(sys.argv)
     array_char_pt_type = c_char_p * argc
     c_var_name_list=[]
@@ -1685,24 +1682,6 @@ def RandomNormalClipped(n, mean, stddev, vmin, vmax, vstep=0):
         raise ValueError(GetErrorMessage())
     return ret
 
-
-NESTGPU_ConnectMpiInit = _nestgpu.NESTGPU_ConnectMpiInit
-NESTGPU_ConnectMpiInit.argtypes = (ctypes.c_int, ctypes.POINTER(c_char_p))
-NESTGPU_ConnectMpiInit.restype = ctypes.c_int
-def ConnectMpiInit():
-    "Initialize MPI connections"
-    from mpi4py import MPI
-    argc=len(sys.argv)
-    array_char_pt_type = c_char_p * argc
-    c_var_name_list=[]
-    for i in range(argc):
-        c_arg = ctypes.create_string_buffer(to_byte_str(sys.argv[i]), 100)
-        c_var_name_list.append(c_arg)        
-    ret = NESTGPU_ConnectMpiInit(ctypes.c_int(argc),
-                                   array_char_pt_type(*c_var_name_list))
-    if GetErrorCode() != 0:
-        raise ValueError(GetErrorMessage())
-    return ret
 
 
 NESTGPU_ConnSpecInit = _nestgpu.NESTGPU_ConnSpecInit

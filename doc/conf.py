@@ -1,23 +1,22 @@
-# -*- coding: utf-8 -*-
 #
-# conf.py
+#  conf.py
 #
-# This file is part of NEST.
+# This file is part of NEST GPU.
 #
-# Copyright (C) 2004 The NEST Initiative
+# Copyright (C) 2021 The NEST Initiative
 #
-# NEST is free software: you can redistribute it and/or modify
+# NEST GPU is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 2 of the License, or
 # (at your option) any later version.
 #
-# NEST is distributed in the hope that it will be useful,
+# NEST GPU is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with NEST.  If not, see <http://www.gnu.org/licenses/>.
+# along with NEST GPU.  If not, see <http://www.gnu.org/licenses/>.
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -28,11 +27,19 @@
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
+# documentation root, use str(Path().resolve()) to make it absolute.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+
+import sys
+import json
+from pathlib import Path
+sys.path.insert(0, str(Path().resolve()))
+
+source_dir = Path(__file__).resolve().parent.resolve()
+doc_build_dir = source_dir / "models"
+
+print("doc_build_dir", str(doc_build_dir))
+print("source_dir", str(source_dir))
 
 
 # -- Project information -----------------------------------------------------
@@ -43,7 +50,6 @@ author = u'nest-simulator'
 
 # The full version, including alpha/beta/rc tags
 release = '1'
-
 
 source_suffix = '.rst'
 master_doc = 'contents'
@@ -86,6 +92,22 @@ intersphinx_mapping = {
 }
 
 
+# Extract documentation from header files in src/
+
+from extractor_userdocs import relative_glob, ExtractUserDocs
+
+def config_inited_handler(app, config):
+    ExtractUserDocs(
+        listoffiles=relative_glob("../src/*.h", basedir=source_dir),
+        basedir=source_dir,
+        outdir=str(doc_build_dir)
+    )
+
+def setup(app):
+    # for events see
+    # https://www.sphinx-doc.org/en/master/extdev/appapi.html#sphinx-core-events
+    app.connect('config-inited', config_inited_handler)
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -109,6 +131,7 @@ html_logo =  'logo/nestgpu-logo.png'
 html_theme_options = {'logo_only': True,
                       'display_version': True}
 
-#def setup(app):
+def setup(app):
+    app.connect('config-inited', config_inited_handler)
 #    app.add_css_file('css/custom.css')
 #    app.add_css_file('css/pygments.css')
