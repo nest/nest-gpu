@@ -78,6 +78,7 @@ prefix_scan.h
 propagate_error.h
 propagator_stability.h
 random.h
+remote_connect.h
 rev_spike.h
 rk5_const.h
 rk5.h
@@ -135,6 +136,7 @@ poiss_gen.cu
 prefix_scan.cu
 propagator_stability.cu
 random.cu
+remote_connect.cu
 rev_spike.cu
 rk5.cu
 scan.cu
@@ -152,12 +154,14 @@ utilities.cu
 nestgpu_C.cpp
     )
 
-if ( HAVE_MPI )
-  set( nestgpu_sources
-    ${nestgpu_sources}
-    connect_mpi.h connect_mpi.cu
-  )
-endif ()
+# MPI inclusions are handled by context switching directly in source code
+# NEEDS REFACTOR TO REENABLE CMAKE LEVEL SWITCHING
+#if ( HAVE_MPI )
+#  set( nestgpu_sources
+#    ${nestgpu_sources}
+#    connect_mpi.h connect_mpi.cu
+#  )
+#endif ()
 
 add_library( nestgpukernel ${nestgpu_sources} )
 set_target_properties( nestgpukernel

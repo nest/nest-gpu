@@ -2093,7 +2093,7 @@ def SetStatus(gen_object, params, val=None):
         raise ValueError("Unrecognized type for first argument of SetStatus")
     
     if type(gen_object)==RemoteNodeSeq:
-        if gen_object.i_host==MpiId():
+        if gen_object.i_host==HostId():
             SetStatus(gen_object.node_seq, params, val)
         return
     
