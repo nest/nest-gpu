@@ -13,7 +13,7 @@ File structure
 ##############
 
 * ``run_microcircuit.py``: an example script to try out the microcircuit
-* ``run_benchmark.py``: an example script for benchmarking purposes
+* ``run_benchmark.py``: an example script for benchmarking purposes, adapted from [3]_
 * ``network.py``: the main Network class with functions to build and simulate the network
 * ``helpers.py``: helper functions for network construction, simulation and evaluation
 * ``network_params.py``: network and neuron parameters
@@ -62,7 +62,8 @@ For benchmark simulations assessing network-construction and state-propagation t
 * ``'N_scaling': 1.``: Full number of neurons.
 * ``'K_scaling': 1.``: Full indegrees.
 
-To run the benchmarking script you should write:
+The benchmarking scripts are adapted from [3]_. See also the [GitHub repository](https://github.com/gmtiddia/ngpu_dynamic_network_creation/tree/main/ngpu_microcircuit) 
+for a detailed description of the simulation files. To run the benchmarking script you should write:
 
 .. code-block:: bash
 
