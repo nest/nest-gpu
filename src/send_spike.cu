@@ -76,11 +76,11 @@ void SpikeInit(int max_spike_num)
 {
   //h_SpikeTargetNum = new int[PrefixScan::AllocSize];
 
-  gpuErrchk(cudaMalloc(&d_SpikeNum, sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_SpikeSourceIdx, max_spike_num*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_SpikeConnIdx, max_spike_num*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_SpikeHeight, max_spike_num*sizeof(float)));
-  gpuErrchk(cudaMalloc(&d_SpikeTargetNum, max_spike_num*sizeof(int)));
+  CUDAMALLOCCTRL("&d_SpikeNum",&d_SpikeNum, sizeof(int));
+  CUDAMALLOCCTRL("&d_SpikeSourceIdx",&d_SpikeSourceIdx, max_spike_num*sizeof(int));
+  CUDAMALLOCCTRL("&d_SpikeConnIdx",&d_SpikeConnIdx, max_spike_num*sizeof(int));
+  CUDAMALLOCCTRL("&d_SpikeHeight",&d_SpikeHeight, max_spike_num*sizeof(float));
+  CUDAMALLOCCTRL("&d_SpikeTargetNum",&d_SpikeTargetNum, max_spike_num*sizeof(int));
   //printf("here: SpikeTargetNum size: %d", max_spike_num);
   DeviceSpikeInit<<<1,1>>>(d_SpikeNum, d_SpikeSourceIdx, d_SpikeConnIdx,
 			   d_SpikeHeight, d_SpikeTargetNum, max_spike_num);

@@ -12,6 +12,17 @@ CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
 HCUSRC=\
+remote_connect.h \
+utilities.h \
+distribution.h \
+copass_kernels.h \
+copass_sort.h \
+connect.h \
+iaf_psc_exp_g.h \
+iaf_psc_exp_hc_params.h \
+iaf_psc_exp_hc.h \
+iaf_psc_exp.h \
+ext_neuron.h \
 aeif_cond_alpha.h \
 aeif_cond_alpha_kernel.h \
 aeif_cond_alpha_multisynapse.h \
@@ -37,7 +48,6 @@ aeif_psc_exp_multisynapse_kernel.h \
 aeif_psc_exp_multisynapse_rk5.h \
 base_neuron.h \
 connect.h \
-connect_mpi.h \
 connect_rules.h \
 connect_spec.h \
 copass_kernels.h \
@@ -51,6 +61,7 @@ iaf_psc_exp_g.h \
 iaf_psc_exp.h \
 iaf_psc_exp_hc.h \
 iaf_psc_exp_hc_params.h \
+iaf_psc_alpha.h \
 izhikevich_cond_beta.h \
 izhikevich_cond_beta_kernel.h \
 izhikevich_cond_beta_rk5.h \
@@ -69,6 +80,7 @@ poiss_gen.h \
 poiss_gen_variables.h \
 prefix_scan.h \
 propagate_error.h \
+propagator_stability.h \
 random.h \
 rev_spike.h \
 rk5_const.h \
@@ -92,6 +104,16 @@ user_m2_rk5.h \
 utilities.h
 
 CUSRC=\
+remote_connect.cu \
+utilities.cu \
+distribution.cu \
+copass_kernels.cu \
+copass_sort.cu \
+connect.cu \
+iaf_psc_exp_g.cu \
+iaf_psc_exp_hc.cu \
+iaf_psc_exp.cu \
+ext_neuron.cu \
 aeif_cond_alpha.cu \
 aeif_cond_alpha_multisynapse.cu \
 aeif_cond_beta.cu \
@@ -103,7 +125,6 @@ aeif_psc_exp.cu \
 aeif_psc_exp_multisynapse.cu \
 base_neuron.cu \
 connect.cu \
-connect_mpi.cu \
 connect_rules.cu \
 copass_kernels.cu \
 copass_sort.cu \
@@ -114,6 +135,7 @@ get_spike.cu \
 iaf_psc_exp.cu \
 iaf_psc_exp_g.cu \
 iaf_psc_exp_hc.cu \
+iaf_psc_alpha.cu \
 izhikevich_cond_beta.cu \
 izhikevich.cu \
 izhikevich_psc_exp_2s.cu \
@@ -127,6 +149,7 @@ node_group.cu \
 parrot_neuron.cu \
 poiss_gen.cu \
 prefix_scan.cu \
+propagator_stability.cu \
 random.cu \
 rev_spike.cu \
 rk5.cu \

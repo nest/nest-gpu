@@ -43,7 +43,6 @@ aeif_psc_exp_multisynapse_kernel.h
 aeif_psc_exp_multisynapse_rk5.h
 base_neuron.h
 connect.h
-connect_mpi.h
 connect_rules.h
 connect_spec.h
 copass_kernels.h
@@ -53,6 +52,7 @@ distribution.h
 ext_neuron.h
 getRealTime.h
 get_spike.h
+iaf_psc_alpha.h
 iaf_psc_exp_g.h
 iaf_psc_exp.h
 iaf_psc_exp_hc.h
@@ -76,7 +76,9 @@ poiss_gen.h
 poiss_gen_variables.h
 prefix_scan.h
 propagate_error.h
+propagator_stability.h
 random.h
+remote_connect.h
 rev_spike.h
 rk5_const.h
 rk5.h
@@ -108,7 +110,6 @@ aeif_psc_exp.cu
 aeif_psc_exp_multisynapse.cu
 base_neuron.cu
 connect.cu
-connect_mpi.cu
 connect_rules.cu
 copass_kernels.cu
 copass_sort.cu
@@ -116,6 +117,7 @@ distribution.cu
 ext_neuron.cu
 getRealTime.cu
 get_spike.cu
+iaf_psc_alpha.cu
 iaf_psc_exp.cu
 iaf_psc_exp_g.cu
 iaf_psc_exp_hc.cu
@@ -132,7 +134,9 @@ node_group.cu
 parrot_neuron.cu
 poiss_gen.cu
 prefix_scan.cu
+propagator_stability.cu
 random.cu
+remote_connect.cu
 rev_spike.cu
 rk5.cu
 scan.cu
@@ -150,12 +154,14 @@ utilities.cu
 nestgpu_C.cpp
     )
 
-if ( HAVE_MPI )
-  set( nestgpu_sources
-    ${nestgpu_sources}
-    connect_mpi.h connect_mpi.cu
-  )
-endif ()
+# MPI inclusions are handled by context switching directly in source code
+# NEEDS REFACTOR TO REENABLE CMAKE LEVEL SWITCHING
+#if ( HAVE_MPI )
+#  set( nestgpu_sources
+#    ${nestgpu_sources}
+#    connect_mpi.h connect_mpi.cu
+#  )
+#endif ()
 
 add_library( nestgpukernel ${nestgpu_sources} )
 set_target_properties( nestgpukernel

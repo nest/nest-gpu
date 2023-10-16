@@ -5,7 +5,7 @@ from random import randrange
 
 
 ngpu.ConnectMpiInit();
-mpi_np = ngpu.MpiNp()
+mpi_np = ngpu.HostNum()
 
 if (mpi_np != 2) | (len(sys.argv) != 2):
     print ("Usage: mpirun -np 2 python %s n_neurons" % sys.argv[0])
@@ -13,7 +13,7 @@ if (mpi_np != 2) | (len(sys.argv) != 2):
     
 order = int(sys.argv[1])//5
 
-mpi_id = ngpu.MpiId()
+mpi_id = ngpu.HostId()
 print("Building on host ", mpi_id, " ...")
 
 ngpu.SetKernelStatus("rnd_seed", 1234) # seed for GPU random numbers

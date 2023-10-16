@@ -175,8 +175,7 @@ class aeif_cond_alpha_multisynapse : public BaseNeuron
   float h_;
   aeif_cond_alpha_multisynapse_rk5 rk5_data_struct_;
     
-  int Init(int i_node_0, int n_neuron, int n_port, int i_group,
-	   unsigned long long *seed);
+  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
 
   int Calibrate(double time_min, float time_resolution);
 		

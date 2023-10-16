@@ -26,7 +26,7 @@
 
 class Distribution
 {
-  curandGenerator_t *curand_generator_;
+  //curandGenerator_t *curand_generator_;
   int distr_idx_;
   int vect_size_;
   float *h_array_pt_;
@@ -37,8 +37,8 @@ class Distribution
   std::vector<float> high_;
 
 public:
-  void setCurandGenerator(curandGenerator_t *gen)
-  {curand_generator_ = gen;}
+  //void setCurandGenerator(curandGenerator_t *gen)
+  //{curand_generator_ = gen;}
   
   bool isDistribution(int distr_idx);
   
@@ -48,7 +48,7 @@ public:
 
   int vectSize();
 
-  float *getArray(int64_t n_elem, int i_vect = 0);
+  float *getArray(curandGenerator_t &gen, int64_t n_elem, int i_vect = 0);
   
   int SetIntParam(std::string param_name, int val);
 

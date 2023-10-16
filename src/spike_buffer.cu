@@ -35,10 +35,7 @@
 #include "send_spike.h"
 #include "node_group.h"
 #include "connect.h"
-
-#ifdef HAVE_MPI
 #include "spike_mpi.h"
-#endif
 
 #define LAST_SPIKE_TIME_GUARD 0x70000000
 
@@ -46,8 +43,9 @@ extern __constant__ double NESTGPUTime;
 extern __constant__ long long NESTGPUTimeIdx;
 extern __constant__ float NESTGPUTimeResolution;
 extern __constant__ NodeGroupStruct NodeGroupArray[];
-extern __device__ signed char *NodeGroupMap;
+extern __device__ int16_t *NodeGroupMap;
 
+__constant__ bool ExternalSpikeFlag;
 __device__ int MaxSpikeBufferSize;
 __device__ int NSpikeBuffer;
 __device__ int MaxDelayNum;
@@ -131,14 +129,13 @@ __device__ void PushSpike(int i_spike_buffer, float height)
     LastRevSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx;
   }
 
-  /*
-#ifdef HAVE_MPI
-  if (NESTGPUMpiFlag) {
-    // if MPI is active spike should eventually be sent to remote connections
+  if (ExternalSpikeFlag) {
+    // if active spike should eventually be sent to remote connections
+    //printf("PushExternalSpike i_spike_buffer: %d height: %f\n",
+    //	   i_spike_buffer, height);
     PushExternalSpike(i_spike_buffer, height);
   }
-#endif
-  */
+  
   // if recording  spike counts is activated, increase counter
   if (NodeGroupArray[i_group].spike_count_ != NULL) {
     int i_node_0 = NodeGroupArray[i_group].i_node_0_;
@@ -282,26 +279,26 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
   int max_delay_num = h_MaxDelayNum;
   //printf("mdn: %d\n", max_delay_num);
   
-  gpuErrchk(cudaMalloc(&d_LastSpikeTimeIdx, n_spike_buffers*sizeof(long long)));
-  gpuErrchk(cudaMalloc(&d_LastSpikeHeight, n_spike_buffers*sizeof(float)));
-  gpuErrchk(cudaMalloc(&d_LastRevSpikeTimeIdx, n_spike_buffers
-		       *sizeof(long long)));
+  CUDAMALLOCCTRL("&d_LastSpikeTimeIdx",&d_LastSpikeTimeIdx, n_spike_buffers*sizeof(long long));
+  CUDAMALLOCCTRL("&d_LastSpikeHeight",&d_LastSpikeHeight, n_spike_buffers*sizeof(float));
+  CUDAMALLOCCTRL("&d_LastRevSpikeTimeIdx",&d_LastRevSpikeTimeIdx, n_spike_buffers
+		       *sizeof(long long));
   
-  gpuErrchk(cudaMalloc(&d_SpikeBufferSize, n_spike_buffers*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_SpikeBufferIdx0, n_spike_buffers*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_SpikeBufferTimeIdx,
-		       n_spike_buffers*max_spike_buffer_size*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_SpikeBufferConnIdx,
-		       n_spike_buffers*max_spike_buffer_size*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_SpikeBufferHeight,
-		       n_spike_buffers*max_spike_buffer_size*sizeof(float)));
+  CUDAMALLOCCTRL("&d_SpikeBufferSize",&d_SpikeBufferSize, n_spike_buffers*sizeof(int));
+  CUDAMALLOCCTRL("&d_SpikeBufferIdx0",&d_SpikeBufferIdx0, n_spike_buffers*sizeof(int));
+  CUDAMALLOCCTRL("&d_SpikeBufferTimeIdx",&d_SpikeBufferTimeIdx,
+		       n_spike_buffers*max_spike_buffer_size*sizeof(int));
+  CUDAMALLOCCTRL("&d_SpikeBufferConnIdx",&d_SpikeBufferConnIdx,
+		       n_spike_buffers*max_spike_buffer_size*sizeof(int));
+  CUDAMALLOCCTRL("&d_SpikeBufferHeight",&d_SpikeBufferHeight,
+		       n_spike_buffers*max_spike_buffer_size*sizeof(float));
   gpuErrchk(cudaMemsetAsync(d_SpikeBufferSize, 0, n_spike_buffers*sizeof(int)));
   gpuErrchk(cudaMemsetAsync(d_SpikeBufferIdx0, 0, n_spike_buffers*sizeof(int)));
 
   if (ConnectionSpikeTimeFlag){
     //h_conn_spike_time = new unsigned short[n_conn];
-    gpuErrchk(cudaMalloc(&d_ConnectionSpikeTime,
-			 NConn*sizeof(unsigned short)));
+    CUDAMALLOCCTRL("&d_ConnectionSpikeTime",&d_ConnectionSpikeTime,
+			 NConn*sizeof(unsigned short));
     //gpuErrchk(cudaMemset(d_ConnectionSpikeTime, 0,
     //			 n_conn*sizeof(unsigned short)));
   }

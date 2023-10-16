@@ -71,8 +71,8 @@ class user_m1_hc : public BaseNeuron
  public:
   ~user_m1_hc();
   
-  int Init(int i_node_0, int n_neuron, int n_port, int i_group,
-	   unsigned long long *seed);
+  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
+	   
 
   int Update(long long it, double t1);
 

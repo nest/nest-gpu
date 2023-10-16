@@ -71,8 +71,8 @@ class iaf_psc_exp_hc : public BaseNeuron
  public:
   ~iaf_psc_exp_hc();
   
-  int Init(int i_node_0, int n_neuron, int n_port, int i_group,
-	   unsigned long long *seed);
+  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
+	   
 
   int Update(long long it, double t1);
 

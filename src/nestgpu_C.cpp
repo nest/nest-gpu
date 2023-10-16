@@ -525,23 +525,19 @@ extern "C" {
     ret = NESTGPU_instance->ConnectMpiInit(argc, argv);
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_MpiId()
-  { int ret = 0; BEGIN_ERR_PROP {
-    ret = NESTGPU_instance->MpiId();
-  } END_ERR_PROP return ret; }
-
-  int NESTGPU_MpiNp()
-  { int ret = 0; BEGIN_ERR_PROP {
-    ret = NESTGPU_instance->MpiNp();
-  } END_ERR_PROP return ret; }
-  int NESTGPU_ProcMaster()
-  { int ret = 0; BEGIN_ERR_PROP {
-    ret = NESTGPU_instance->ProcMaster();
-  } END_ERR_PROP return ret; }
-
   int NESTGPU_MpiFinalize()
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->MpiFinalize();
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_HostId()
+  { int ret = 0; BEGIN_ERR_PROP {
+    ret = NESTGPU_instance->HostId();
+  } END_ERR_PROP return ret; }
+
+  int NESTGPU_HostNum()
+  { int ret = 0; BEGIN_ERR_PROP {
+    ret = NESTGPU_instance->HostNum();
   } END_ERR_PROP return ret; }
 
   unsigned int *NESTGPU_RandomInt(size_t n)
@@ -566,14 +562,6 @@ extern "C" {
 						  vmax, vstep);
   } END_ERR_PROP return ret; }
   
-  int NESTGPU_Connect(int i_source_node, int i_target_node,
-		      int port, unsigned char syn_group,
-		      float weight, float delay)
-  { int ret = 0; BEGIN_ERR_PROP {
-    ret = NESTGPU_instance->Connect(i_source_node, i_target_node,
-				    port, syn_group, weight, delay);
-  } END_ERR_PROP return ret; }
-
   int NESTGPU_ConnSpecInit()
   { int ret = 0; BEGIN_ERR_PROP {
     ret = ConnSpec_instance.Init();

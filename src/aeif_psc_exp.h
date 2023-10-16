@@ -162,8 +162,8 @@ class aeif_psc_exp : public BaseNeuron
   float h_;
   aeif_psc_exp_rk5 rk5_data_struct_;
     
-  int Init(int i_node_0, int n_neuron, int n_port, int i_group,
-	   unsigned long long *seed);
+  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
+	   
 
   int Calibrate(double time_min, float time_resolution);
 		

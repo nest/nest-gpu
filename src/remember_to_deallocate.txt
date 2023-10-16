@@ -1,0 +1,36 @@
+Allocations in remote_connect.cu, must be freed (in NESTGPU destructor maybe)
+
+d_n_remote_source_node_map global
+
+d_n_local_source_node_map global
+
+hd_local_source_node_map[tg_host] global
+      hd_local_source_node_map[tg_host] = NULL;
+      int n_blocks = h_local_source_node_map[tg_host].size();
+      if (n_blocks>0) {
+	gpuErrchk(cudaMalloc(&hd_local_source_node_map[tg_host],
+			     n_blocks*sizeof(int*)));
+
+
+d_local_source_node_map global
+
+hd_local_spike_buffer_map[src_host] global
+      hd_local_spike_buffer_map[src_host] = NULL;
+      if (n_blocks>0) {
+	gpuErrchk(cudaMalloc(&hd_local_spike_buffer_map[src_host],
+			     n_blocks*sizeof(int*)));
+
+d_local_spike_buffer_map global
+
+d_n_target_hosts global
+
+d_n_target_hosts_cumul global
+
+d_target_host_array global
+
+d_target_host_i_map global
+
+d_node_target_hosts global
+
+d_node_target_host_i_map global
+

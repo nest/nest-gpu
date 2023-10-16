@@ -39,8 +39,7 @@ Args:
 	- int offset: Offset to be used for spike_buffer indexes
 		Defaults to 0
 */
-__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id,
-                                    float *spike_height = NULL, int offset = 0);
+__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id);
 
 #ifdef HAVE_MPI
 
@@ -67,13 +66,13 @@ extern __device__ int *ExternalTargetSpikeNodeId;
 extern float *d_ExternalTargetSpikeHeight;
 extern __device__ float *ExternalTargetSpikeHeight;
 
-extern int *d_NExternalNodeTargetHost;
+//extern int *d_NExternalNodeTargetHost;
 extern __device__ int *NExternalNodeTargetHost;
 
-extern int **d_ExternalNodeTargetHostId;
+//extern int **d_ExternalNodeTargetHostId;
 extern __device__ int **ExternalNodeTargetHostId;
 
-extern int **d_ExternalNodeId;
+//extern int **d_ExternalNodeId;
 extern __device__ int **ExternalNodeId;
 
 //extern int *d_ExternalSourceSpikeNum;

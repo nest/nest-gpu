@@ -112,11 +112,12 @@ int Distribution::vectSize()
   return vect_size_;
 }
 
-float *Distribution::getArray(int64_t n_elem, int i_vect)
+float *Distribution::getArray(curandGenerator_t &gen, int64_t n_elem,
+			      int i_vect)
 {
   checkDistributionInitialized();
   if (distr_idx_>=DISTR_TYPE_ARRAY) {
-    gpuErrchk(cudaMalloc(&d_array_pt_, n_elem*sizeof(float)));
+    CUDAMALLOCCTRL("&d_array_pt_",&d_array_pt_, n_elem*sizeof(float));
   }
   if (distr_idx_==DISTR_TYPE_ARRAY) {
     gpuErrchk(cudaMemcpy(d_array_pt_, h_array_pt_, n_elem*sizeof(float),
@@ -124,7 +125,7 @@ float *Distribution::getArray(int64_t n_elem, int i_vect)
   }
   else if (distr_idx_==DISTR_TYPE_NORMAL_CLIPPED) {
     //printf("ok0\n");
-    CURAND_CALL(curandGenerateUniform(*curand_generator_, d_array_pt_, n_elem));
+    CURAND_CALL(curandGenerateUniform(gen, d_array_pt_, n_elem));
     //printf("ok1\n");
     randomNormalClipped(d_array_pt_, n_elem, mu_[i_vect], sigma_[i_vect],
 			low_[i_vect], high_[i_vect]);
@@ -133,7 +134,7 @@ float *Distribution::getArray(int64_t n_elem, int i_vect)
   else if (distr_idx_==DISTR_TYPE_NORMAL) {
     float low = mu_[i_vect] - 5.0*sigma_[i_vect];
     float high = mu_[i_vect] + 5.0*sigma_[i_vect];
-    CURAND_CALL(curandGenerateUniform(*curand_generator_, d_array_pt_, n_elem));
+    CURAND_CALL(curandGenerateUniform(gen, d_array_pt_, n_elem));
     randomNormalClipped(d_array_pt_, n_elem, mu_[i_vect], sigma_[i_vect],
 			low, high);
   }

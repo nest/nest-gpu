@@ -32,10 +32,12 @@
 #include <iostream>
 #include "iaf_psc_exp.h"
 #include "spike_buffer.h"
+#include "propagator_stability.h"
 
 using namespace iaf_psc_exp_ns;
 
 extern __constant__ float NESTGPUTimeResolution;
+extern __device__ double propagator_32(double, double, double, double);
 
 #define I_syn_ex var[i_I_syn_ex]
 #define I_syn_in var[i_I_syn_in]
@@ -61,29 +63,6 @@ extern __constant__ float NESTGPUTimeResolution;
 #define P21ex param[i_P21ex]
 #define P21in param[i_P21in]
 #define P22 param[i_P22]
-
-__device__
-double propagator_32( double tau_syn, double tau, double C, double h )
-{
-  const double P32_linear = 1.0 / ( 2.0 * C * tau * tau ) * h * h
-    * ( tau_syn - tau ) * exp( -h / tau );
-  const double P32_singular = h / C * exp( -h / tau );
-  const double P32 =
-    -tau / ( C * ( 1.0 - tau / tau_syn ) ) * exp( -h / tau_syn )
-    * expm1( h * ( 1.0 / tau_syn - 1.0 / tau ) );
-
-  const double dev_P32 = fabs( P32 - P32_singular );
-
-  if ( tau == tau_syn || ( fabs( tau - tau_syn ) < 0.1 && dev_P32 > 2.0
-			   * fabs( P32_linear ) ) )
-  {
-    return P32_singular;
-  }
-  else
-  {
-    return P32;
-  }
-}
 
 
 __global__ void iaf_psc_exp_Calibrate(int n_node, float *param_arr,
@@ -137,9 +116,9 @@ iaf_psc_exp::~iaf_psc_exp()
 }
 
 int iaf_psc_exp::Init(int i_node_0, int n_node, int /*n_port*/,
-			 int i_group, unsigned long long *seed)
+			 int i_group)
 {
-  BaseNeuron::Init(i_node_0, n_node, 2 /*n_port*/, i_group, seed);
+  BaseNeuron::Init(i_node_0, n_node, 2 /*n_port*/, i_group);
   node_type_ = i_iaf_psc_exp_model;
 
   n_scal_var_ = N_SCAL_VAR;
@@ -179,7 +158,7 @@ int iaf_psc_exp::Init(int i_node_0, int n_node, int /*n_port*/,
 
   // multiplication factor of input signal is always 1 for all nodes
   float input_weight = 1.0;
-  gpuErrchk(cudaMalloc(&port_weight_arr_, sizeof(float)));
+  CUDAMALLOCCTRL("&port_weight_arr_",&port_weight_arr_, sizeof(float));
   gpuErrchk(cudaMemcpy(port_weight_arr_, &input_weight,
 			 sizeof(float), cudaMemcpyHostToDevice));
   port_weight_arr_step_ = 0;

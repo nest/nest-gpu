@@ -54,8 +54,8 @@ ext_neuron::~ext_neuron()
 }
 
 int ext_neuron::Init(int i_node_0, int n_node, int n_port,
-			 int i_group, unsigned long long *seed) {
-  BaseNeuron::Init(i_node_0, n_node, n_port, i_group, seed);
+			 int i_group) {
+  BaseNeuron::Init(i_node_0, n_node, n_port, i_group);
   node_type_ = i_ext_neuron_model;
   ext_neuron_flag_ = true;
   n_scal_var_ = N_SCAL_VAR;

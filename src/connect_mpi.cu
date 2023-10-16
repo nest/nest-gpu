@@ -93,6 +93,27 @@ int ConnectMpi::MPI_Send_uchar(unsigned char *uchar_val, int n, int target_id)
   return 0;
 }
 
+
+int NESTGPU::ConnectMpiInit(int argc, char *argv[])
+{
+#ifdef HAVE_MPI
+  CheckUncalibrated("MPI connections cannot be initialized after calibration");
+  int initialized;
+  MPI_Initialized(&initialized);
+  if (!initialized) {
+    MPI_Init(&argc,&argv);
+  }
+  MPI_Comm_size(MPI_COMM_WORLD, &n_hosts_);
+  MPI_Comm_rank(MPI_COMM_WORLD, &this_host_);
+  mpi_flag_ = true;
+  
+  return 0;
+#else
+  throw ngpu_exception("MPI is not available in your build");
+#endif
+}
+
+/*
 int ConnectMpi::MpiInit(int argc, char *argv[])
 {
   int initialized;
@@ -106,58 +127,30 @@ int ConnectMpi::MpiInit(int argc, char *argv[])
   
   return 0;
 }
-
-bool ConnectMpi::ProcMaster()
-{
-  if (mpi_id_==mpi_master_) return true;
-  else return false;
-}
-/* // CHECK: using net_connection_->connection_.push_back(conn)
-   // connection_size() should be aligned with node_group_map_.size()
-int ConnectMpi::RemoteConnect(int i_source_host, int i_source_node,
-			      int i_target_host, int i_target_node,
-			      int port, unsigned char syn_group,
-			      float weight, float delay)
-{
-  int i_remote_node;
-  
-  if (mpi_id_==i_source_host && i_source_host==i_target_host) {
-    return net_connection_->Connect(i_source_node, i_target_node, port,
-				    syn_group, weight, delay);
-  }
-  else if (mpi_id_ == i_target_host) {
-    MPI_Recv_int(&i_remote_node, 1, i_source_host);
-    if (i_remote_node == -1) {
-      // Create remote connection node....
-      i_remote_node = net_connection_->connection_.size();
-      vector<ConnGroup> conn;
-      net_connection_->connection_.push_back(conn); /////// CHECK THIS!!!!!!!
-      MPI_Send_int(&i_remote_node, 1, i_source_host);
-    }
-    net_connection_->Connect(i_remote_node, i_target_node, port, syn_group,
-			     weight, delay);
-  }
-  else if (mpi_id_ == i_source_host) {
-    i_remote_node = -1;
-    for (vector<ExternalConnectionNode >::iterator it =
-	   extern_connection_[i_source_node].begin();
-	 it <  extern_connection_[i_source_node].end(); it++) {
-      if ((*it).target_host_id == i_target_host) {
-	i_remote_node = (*it).remote_node_id;
-	break;
-      }
-    }
-    MPI_Send_int(&i_remote_node, 1, i_target_host);
-    if (i_remote_node == -1) {
-      MPI_Recv_int(&i_remote_node, 1, i_target_host);
-      ExternalConnectionNode conn_node = {i_target_host, i_remote_node};
-      extern_connection_[i_source_node].push_back(conn_node);
-    }
-  }
-  MPI_Barrier( MPI_COMM_WORLD );
-
-  return 0;
-}
 */
+
+//bool ConnectMpi::ProcMaster()
+//{
+//  if (mpi_id_==mpi_master_) return true;
+//  else return false;
+//}
+
+int NESTGPU::MpiFinalize()
+{
+#ifdef HAVE_MPI
+  if (mpi_flag_) {
+    int finalized;
+    MPI_Finalized(&finalized);
+    if (!finalized) {
+      MPI_Finalize();
+    }
+  }
+  
+  return 0;
+#else
+  throw ngpu_exception("MPI is not available in your build");
+#endif
+}
+
 
 #endif

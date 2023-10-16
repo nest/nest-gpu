@@ -1602,34 +1602,21 @@ def ConnectMpiInit():
     return ret
 
 
-NESTGPU_MpiId = _nestgpu.NESTGPU_MpiId
-NESTGPU_MpiId.restype = ctypes.c_int
-def MpiId():
-    "Get MPI Id"
-    ret = NESTGPU_MpiId()
-    if GetErrorCode() != 0:
-        raise ValueError(GetErrorMessage())
-    return ret
-
-def Rank():
-    "Get MPI rank"
-    return MpiId()
-
-NESTGPU_MpiNp = _nestgpu.NESTGPU_MpiNp
-NESTGPU_MpiNp.restype = ctypes.c_int
-def MpiNp():
-    "Get MPI Np"
-    ret = NESTGPU_MpiNp()
+NESTGPU_HostId = _nestgpu.NESTGPU_HostId
+NESTGPU_HostId.restype = ctypes.c_int
+def HostId():
+    "Get host Id"
+    ret = NESTGPU_HostId()
     if GetErrorCode() != 0:
         raise ValueError(GetErrorMessage())
     return ret
 
 
-NESTGPU_ProcMaster = _nestgpu.NESTGPU_ProcMaster
-NESTGPU_ProcMaster.restype = ctypes.c_int
-def ProcMaster():
-    "Get MPI ProcMaster"
-    ret = NESTGPU_ProcMaster()
+NESTGPU_HostNum = _nestgpu.NESTGPU_HostNum
+NESTGPU_HostNum.restype = ctypes.c_int
+def HostNum():
+    "Get number of hosts"
+    ret = NESTGPU_HostNum()
     if GetErrorCode() != 0:
         raise ValueError(GetErrorMessage())
     return ret
@@ -1695,19 +1682,6 @@ def RandomNormalClipped(n, mean, stddev, vmin, vmax, vstep=0):
         raise ValueError(GetErrorMessage())
     return ret
 
-
-NESTGPU_Connect = _nestgpu.NESTGPU_Connect
-NESTGPU_Connect.argtypes = (ctypes.c_int, ctypes.c_int, ctypes.c_ubyte, ctypes.c_float, ctypes.c_float)
-NESTGPU_Connect.restype = ctypes.c_int
-def SingleConnect(i_source_node, i_target_node, i_port, weight, delay):
-    "Connect two nodes"
-    ret = NESTGPU_Connect(ctypes.c_int(i_source_node),
-                            ctypes.c_int(i_target_node),
-                            ctypes.c_ubyte(i_port), ctypes.c_float(weight),
-                            ctypes.c_float(delay))
-    if GetErrorCode() != 0:
-        raise ValueError(GetErrorMessage())
-    return ret
 
 
 NESTGPU_ConnSpecInit = _nestgpu.NESTGPU_ConnSpecInit
@@ -2119,7 +2093,7 @@ def SetStatus(gen_object, params, val=None):
         raise ValueError("Unrecognized type for first argument of SetStatus")
     
     if type(gen_object)==RemoteNodeSeq:
-        if gen_object.i_host==MpiId():
+        if gen_object.i_host==HostId():
             SetStatus(gen_object.node_seq, params, val)
         return
     

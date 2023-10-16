@@ -546,14 +546,14 @@ int connect_fixed_outdegree(curandGenerator_t &gen,
 
 template <class T1, class T2>
 int NESTGPU::_ConnectOneToOne
-(T1 source, T2 target, int n_node, SynSpec &syn_spec)
+(curandGenerator_t &gen, T1 source, T2 target, int n_node, SynSpec &syn_spec)
 {
   //printf("In new specialized connection one-to-one\n");
 
   void *d_storage;
-  gpuErrchk(cudaMalloc(&d_storage, h_ConnBlockSize*sizeof(int)));
+  CUDAMALLOCCTRL("&d_storage",&d_storage, h_ConnBlockSize*sizeof(int));
 
-  connect_one_to_one(*random_generator_, d_storage, time_resolution_,
+  connect_one_to_one(gen, d_storage, time_resolution_,
 		     KeySubarray, ConnectionSubarray, NConn,
 		     h_ConnBlockSize, source, target, n_node, syn_spec);
   gpuErrchk(cudaFree(d_storage));
@@ -563,14 +563,15 @@ int NESTGPU::_ConnectOneToOne
 
 template <class T1, class T2>
 int NESTGPU::_ConnectAllToAll
-(T1 source, int n_source, T2 target, int n_target, SynSpec &syn_spec)
+(curandGenerator_t &gen, T1 source, int n_source, T2 target, int n_target,
+ SynSpec &syn_spec)
 {
   //printf("In new specialized connection all-to-all\n");
 
   void *d_storage;
-  gpuErrchk(cudaMalloc(&d_storage, h_ConnBlockSize*sizeof(int)));
+  CUDAMALLOCCTRL("&d_storage",&d_storage, h_ConnBlockSize*sizeof(int));
 
-  connect_all_to_all(*random_generator_, d_storage, time_resolution_,
+  connect_all_to_all(gen, d_storage, time_resolution_,
 		     KeySubarray, ConnectionSubarray, NConn,
 		     h_ConnBlockSize, source, n_source,
 		     target, n_target, syn_spec);
@@ -581,15 +582,15 @@ int NESTGPU::_ConnectAllToAll
 
 template <class T1, class T2>
 int NESTGPU::_ConnectFixedTotalNumber
-(T1 source, int n_source, T2 target, int n_target, int total_num,
- SynSpec &syn_spec)
+(curandGenerator_t &gen, T1 source, int n_source, T2 target, int n_target,
+ int total_num, SynSpec &syn_spec)
 {
   //printf("In new specialized connection fixed-total-number\n");
 
   void *d_storage;
-  gpuErrchk(cudaMalloc(&d_storage, h_ConnBlockSize*sizeof(int)));
+  CUDAMALLOCCTRL("&d_storage",&d_storage, h_ConnBlockSize*sizeof(int));
 
-  connect_fixed_total_number(*random_generator_, d_storage, time_resolution_,
+  connect_fixed_total_number(gen, d_storage, time_resolution_,
 			     KeySubarray, ConnectionSubarray, NConn,
 			     h_ConnBlockSize, total_num, source, n_source,
 			     target, n_target, syn_spec);
@@ -600,15 +601,15 @@ int NESTGPU::_ConnectFixedTotalNumber
 
 template <class T1, class T2>
 int NESTGPU::_ConnectFixedIndegree
-(T1 source, int n_source, T2 target, int n_target, int indegree,
- SynSpec &syn_spec)
+(curandGenerator_t &gen, T1 source, int n_source, T2 target, int n_target,
+ int indegree, SynSpec &syn_spec)
 {
   //printf("In new specialized connection fixed-indegree\n");
 
   void *d_storage;
-  gpuErrchk(cudaMalloc(&d_storage, h_ConnBlockSize*sizeof(int)));
+  CUDAMALLOCCTRL("&d_storage",&d_storage, h_ConnBlockSize*sizeof(int));
 
-  connect_fixed_indegree(*random_generator_, d_storage, time_resolution_,
+  connect_fixed_indegree(gen, d_storage, time_resolution_,
 			 KeySubarray, ConnectionSubarray, NConn,
 			 h_ConnBlockSize, indegree, source, n_source,
 			 target, n_target, syn_spec);
@@ -619,18 +620,18 @@ int NESTGPU::_ConnectFixedIndegree
 
 template <class T1, class T2>
 int NESTGPU::_ConnectFixedOutdegree
-(T1 source, int n_source, T2 target, int n_target, int outdegree,
- SynSpec &syn_spec)
+(curandGenerator_t &gen, T1 source, int n_source, T2 target, int n_target,
+ int outdegree, SynSpec &syn_spec)
 {
   //printf("In new specialized connection fixed-outdegree\n");
 
   void *d_storage;
-  gpuErrchk(cudaMalloc(&d_storage, h_ConnBlockSize*sizeof(int)));
+  CUDAMALLOCCTRL("&d_storage",&d_storage, h_ConnBlockSize*sizeof(int));
 
-  connect_fixed_outdegree(*random_generator_, d_storage, time_resolution_,
-			 KeySubarray, ConnectionSubarray, NConn,
-			 h_ConnBlockSize, outdegree, source, n_source,
-			 target, n_target, syn_spec);
+  connect_fixed_outdegree(gen, d_storage, time_resolution_,
+			  KeySubarray, ConnectionSubarray, NConn,
+			  h_ConnBlockSize, outdegree, source, n_source,
+			  target, n_target, syn_spec);
   gpuErrchk(cudaFree(d_storage));
 
   return 0;

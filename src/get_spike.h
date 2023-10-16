@@ -30,7 +30,7 @@
 #include "spike_buffer.h"
 
 extern __constant__ NodeGroupStruct NodeGroupArray[];
-extern __device__ signed char *NodeGroupMap;
+extern __device__ int16_t *NodeGroupMap;
 extern __constant__ float NESTGPUTimeResolution;
 extern __constant__ long long NESTGPUTimeIdx;
 

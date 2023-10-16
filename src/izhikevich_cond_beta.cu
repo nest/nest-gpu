@@ -114,8 +114,8 @@ void NodeCalibrate(int n_var, int n_param, double x, float *y,
 using namespace izhikevich_cond_beta_ns;
 
 int izhikevich_cond_beta::Init(int i_node_0, int n_node, int n_port,
-			 int i_group, unsigned long long *seed) {
-  BaseNeuron::Init(i_node_0, n_node, n_port, i_group, seed);
+			 int i_group) {
+  BaseNeuron::Init(i_node_0, n_node, n_port, i_group);
   
   node_type_ = i_izhikevich_cond_beta_model;
   n_scal_var_ = N_SCAL_VAR;

@@ -99,8 +99,8 @@ class user_m1 : public BaseNeuron
  public:
   ~user_m1();
   
-  int Init(int i_node_0, int n_neuron, int n_port, int i_group,
-	   unsigned long long *seed);
+  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
+	   
   int Calibrate(double /*time_min*/, float time_res) {
     time_resolution_ = time_res;
     return 0;

@@ -187,13 +187,11 @@ extern "C" {
 
   int NESTGPU_ConnectMpiInit(int argc, char *argv[]);
 
-  int NESTGPU_MpiId();
-
-  int NESTGPU_MpiNp();
-
-  int NESTGPU_ProcMaster();
-
   int NESTGPU_MpiFinalize();
+  
+  int NESTGPU_HostId();
+
+  int NESTGPU_HostNum();
 
   unsigned int *NESTGPU_RandomInt(size_t n);
   
@@ -204,10 +202,6 @@ extern "C" {
   float *NESTGPU_RandomNormalClipped(size_t n, float mean, float stddev,
 				       float vmin, float vmax, float vstep);
   
-  int NESTGPU_Connect(int i_source_node, int i_target_node,
-		      int port, unsigned char syn_group,
-		      float weight, float delay);
-
   int NESTGPU_ConnSpecInit();
 
   int NESTGPU_SetConnSpecParam(char *param_name, int value);

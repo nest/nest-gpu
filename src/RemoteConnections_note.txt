@@ -1,0 +1,414 @@
+Checking file spike_mpi.cu
+in particular for changes that are necessary to adapt it
+to the new approach
+Note: it should be renamed to remote_spike.cu
+the mpi communication part should be separated and placed in
+a file as mpi_communication.cu
+
+
+NExternalNodeTargetHost corresponds to d_n_target_hosts
+ExternalNodeTargetHostId corresponds to d_node_target_hosts ([i_source][ith])
+ExternalNodeId corresponds to d_node_target_host_i_map ([i_source][ith])
+initialize them in the function ExternalSpikeInit
+after remote connection map calibration
+
+
+kernels PushSpikeFromRemote seem fine, but for minimum delays we'll probably
+need a version in which spike time index can be specified and possibly !=0
+
+It seems that the kernel AddOffset is obsolete and can be removed
+
+kernel PushExternalSpike seems fine
+
+kernel SendExternalSpike seems fine
+
+kernel ExternalSpikeReset seems fine
+
+in function ExternalSpikeInit
+replace class ConnectMPI:: with NESTGPU::
+initialize:
+NExternalNodeTargetHost corresponds to d_n_target_hosts
+ExternalNodeTargetHostId corresponds to d_node_target_hosts ([i_source][ith])
+ExternalNodeId corresponds to d_node_target_host_i_map ([i_source][ith])
+remove variables related to MPI related time
+e.g. SendSpikeToRemote_MPI_time_
+they can be renamed to MPI_send_time and MPI_recv_time
+and defined in the MPI related file
+remove
+  int *h_NExternalNodeTargetHost = new int[n_node];
+  int **h_ExternalNodeTargetHostId = new int*[n_node];
+  int **h_ExternalNodeId = new int*[n_node];
+and all related code
+mv recv_mpi_request to MPI related file
+remove loop   for (int i_source=0; i_source<n_node; i_source++) {
+
+kernel DeviceExternalSpikeInit
+d_NExternalNodeTargetHost -> d_n_target_hosts
+d_ExternalNodeTargetHostId -> d_node_target_hosts
+d_ExternalNodeId -> d_node_target_host_i_map
+
+move functions SendSpikeToRemote and RecvSpikeFromRemote
+to mpi related file
+
+
+in function CopySpikeFromRemote
+replace class ConnectMPI:: with NESTGPU::
+remove any reference to i_remote_node_0
+NOTE: function seems fine, however what is transmitted is not the
+node index, but the index in the map [source_host]
+which should be used to get the node index
+Maybe replace call to obsolete AddOffset kernel with search in the map
+or do it in the PushSpikeFromRemote kernel
+
+in function JoinSpikes ...
+replace prefix_scan with CUB function?
+why there is no explicit copy of the cumulative sum from device to host?
+is done twice! in device and in host memory separately!
+
+
+
+Better to separate the code for remote communication (i.e. MPI)
+from the rest, because in principle communication can be achieved
+through other protocols or methods, for instance some kind of shared memory,
+a software interface to communicate spikes to other simulators, physical or virtual devices, ...
+In all other files, including nestgpu.cu/h, remote_connect.cu/h, connect_rules.cu/h, ... remove any reference to MPI and its functions.
+Replace mpi_id (mpi rank, MpiId(),...) with the member variable this_host_, and mpi_num_ (mpi_proc_num, ...) with n_hosts_
+In connect_rules.cu/h, in RemoteConnect(..), replace check on MPI activation
+with check that source and target host are in the correct range, 0-n_hosts-1
+Remove RemoteConnectOneToOne, AllToAll, and so on
+
+//////////////////////////////////////////////////////////////////////
+// DONE
+Check that the random number generator is used consistentlyy in the code
+across different files and functions and in CUDA kernels, and whether
+a single generator initialized only once with a specified seed is used.
+Do this check in connection generation code, in particular.
+(maybe with emacs search rnd, rng, rand).
+
+Define a 2d array of random number generators specialized for connections,
+where the rows and columns of the 2d array correspond to different hosts.
+//////////////////////////////////////////////////////////////////////
+
+
+// remote_source_node_map_index[i_source_host][i_block][i]
+extern std::vector< std::vector<uint*> > h_remote_source_node_map_index;
+extern __device__ uint ***remote_source_node_map_index;
+
+// local_spike_buffer_map_index[i_source_host][i_block][i]
+extern std::vector< std::vector<uint*> > h_local_spike_buffer_map_index;
+extern __device__ uint ***local_spike_buffer_map_index;
+
+int allocateNewNodeMapBlocks(// std::vector<uint*> &key_subarray,
+			     // std::vector<connection_struct*> &conn_subarray,
+			     // int64_t block_size,
+			     uint new_n_block);
+
+namespace ngpu_remote_connections
+{
+  // INITIALIZATION
+  //
+  // Define an array that maps remote source nodes to local spike buffers
+  // There is one element for each remote host (MPI process),
+  // so the array size is mpi_proc_num
+  // Each element of the array is a 2*n_remote_source_node_map array
+  // that represent a map, with n_remote_source_node_map pairs
+  // (remote node index, local spike buffer index)
+  // where n_remote_source_node_map is the number of nodes in the source host
+  // (MPI pocess) that have outgoing connections to local nodes.
+  // All elements are initially empty:
+  // n_remote_source_nodes[i_source_host] = 0 for each i_source_host
+  // The map is organized in blocks each with remote_node_map_block_size
+  // elements, which are allocated dynamically
+
+  __constant__ int source_node_map_block_size; // = 100000;
+  // n_remote_source_node_map[i_source_host]
+  // with i_source_host = 0, ..., mpi_proc_num-1 excluding this host itself
+  __device__ int *n_remote_source_node_map; // [mpi_proc_num];
+  int *d_n_remote_source_node_map;
+
+  __device__ int ***remote_source_node_map_index; // [i_source_host][i_block][i]
+  int ***d_remote_source_node_map_index;
+  
+  __device__ int ***local_spike_buffer_map_index; // [i_source_host][i_block][i]
+  int ***d_local_spike_buffer_map_index;
+
+  // Create array that maps local source nodes to remote spike buffers.
+  // The procedure is the same as for remote source nodes
+
+  // n_local_source_node_map[i_target_host]
+  // with i_target_host = 0, ..., mpi_proc_num-1 excluding this host itself
+  __device__ int *n_local_source_node_map; // [mpi_proc_num]; 
+  int *d_n_local_source_node_map;
+  
+  __device__ int ***local_source_node_map_index; // [i_target_host][i_block][i]
+  int ***d_local_source_node_map_index;
+
+  // Define a boolean array with one boolean value for each connection rule
+  // - true if the rule always creates at least one outgoing connection
+  // from each source node (one_to_one, all_to_all, fixed_outdegree)
+  // - false otherwise (fixed_indegree, fixed_total_number, pairwise_bernoulli)
+
+  bool use_all_source_nodes[n_connection_rules]:
+
+  // Initialize the maps
+  int RemoteConnectionMapInit(int n_hosts)
+  {
+    int bs = 10000;
+    cudaMemcpyToSymbol(source_node_map_block_size, &bs, sizeof(int));
+    gpuErrchk(cudaMalloc(&d_n_remote_source_node_map, n_hosts*sizeof(int)));
+    gpuErrchk(cudaMemset(d_n_remote_source_node_map, 0, n_hosts*sizeof(int)));  
+    gpuErrchk(cudaMalloc(&d_remote_source_node_map_index,
+			 n_hosts*sizeof(int**)));
+    gpuErrchk(cudaMalloc(&d_local_spike_buffer_map_index,
+			 n_hosts*sizeof(int**)));
+    gpuErrchk(cudaMalloc(&d_n_local_source_node_map, n_hosts*sizeof(int)));
+    gpuErrchk(cudaMemset(d_n_local_source_node_map, 0, n_hosts*sizeof(int)));  
+    gpuErrchk(cudaMalloc(&d_local_source_node_map_index,
+			 n_hosts*sizeof(int**)));
+    
+
+    // launch kernel to copy pointers to CUDA variables
+    // .....
+    RemoteConnectionMapInitKernel // <<< , >>>
+      (d_n_remote_source_node_map,
+       d_remote_source_node_map_index,
+       d_local_spike_buffer_map_index,
+       d_n_local_source_node_map,
+       d_local_source_node_map_index);
+    
+    return 0;
+  }
+
+  // Calibrate the maps
+  int RemoteConnectionMapCalibrate(int n_nodes)
+  {
+    //....
+    return 0;
+  }
+
+    
+
+    
+    return 0;
+  }
+
+// b) CONNECT FUNCTION
+// The seed for random number generation should be specific and used only by connect commands
+// It should be determined by a specific seed for remote connections
+// a 2d array indexed by the source host index and the target host index
+// connection_rng[i_source_host][i_target_host]
+// Problem: how to update the master seed?
+// Maybe a single rnd extraction for any connect command, then summing MPI_Num*target_host_index + source_host_index
+
+connect_rnd_seed = MPI_Num*target_host_index + source_host_index
+
+// This seed should also be used for the delays if they are extracted from a random distribution,
+// in order to evaluate the minimum delay consistently in the source and in the target host.
+// OR maybe it is more efficient to send the delay from the target host to the source host throuh MPI. 
+// Check if target_host matches the MPI ID. In such case:
+// b00) n_nodes will be the first index for new mapping of remote source nodes to local spike buffers
+
+if (target_host == mpi_idx  && source_host != target_host) {
+      local_spike_buffer_map_index0 = getNodeNum();
+
+// b01) If the flag UseAllSourceNodes[conn_rule] is false, than do the following
+// b02) on both the source and target hosts create a temporary array of booleans having size equal to the number of source nodes
+
+      int *d_source_node_flag; // [n_source] // each element is initially false
+      gpuErrchk(cudaMalloc(&d_source_node_flag, n_source*sizeof(int8_t)));
+      gpuErrchk(cudaMemset(d_source_node_flag, 0, n_source*sizeof(int8_t)));  
+
+// b03) on the target hosts create a temporary array of integers having size equal to the number of source nodes
+
+      int *d_local_node_index; // [n_source]; // only on target host
+      gpuErrchk(cudaMalloc(&d_local_node_index, n_source*sizeof(int)));
+      
+// b04) The connect command is performed on both source and target host using the same initial seed and using as source node indexes the integers from 0 to n_source_nodes - 1
+// The source host uses a fake connect command, which creates temporary connections the array of connections with source and target nodes, but WITHOUT setting weights and delays.
+// For both source host and target host find the minimum delay, OR send it from the target host to the source host during calibration.
+// At the end the source host restores the original number of connections.
+// b05) Loop on the connections (similar code as SetConnectionWeights kernel), and (atomic?) set
+      
+source_node_flag[i_source] = true;
+
+      Meglio inserirlo in connect.h, passare come argomento
+      anche source_node_flag controllare se è diverso da null
+      e in questo caso lanciare il kernel DOPO quello che setta i source
+      OPPURE codice simile a connect_one_to_one etc con calcolo di ib0
+      e tutto il resto.
+      Forse meglio 
+
+      
+  int64_t n_prev_conn = 0;
+  uint ib0 = (uint)(old_n_conn / block_size);
+  uint ib1 = (uint)((n_conn + block_size - 1) / block_size);
+  for (uint ib=ib0; ib<=ib1; ib++) {
+    uint64_t n_block_conn; // number of connections in a block
+    uint64_t i_conn0; // index of first connection in a block
+    if (ib1 == ib0) {  // all connections are in the same block
+      i_conn0 = old_n_conn % block_size;
+      n_block_conn = n_new_conn; // diverso da new_n_conn!!!!!
+    }
+    else if (ib == ib0) { // first block
+      i_conn0 = old_n_conn % block_size;
+      n_block_conn = block_size - i_conn0;
+    }
+    else if (ib == ib1) { // last block
+      i_conn0 = 0;
+      n_block_conn = (n_conn - 1) % block_size + 1;
+    }
+    else {
+      i_conn0 = 0;
+      n_block_conn = block_size;
+    }
+
+    setOneToOneSourceTarget<<<(n_block_conn+1023)/1024, 1024>>>
+      (key_subarray[ib] + i_conn0, conn_subarray[ib] + i_conn0,
+       n_block_conn, n_prev_conn, source, target);
+
+// b06) Initialize n_used_source_nodes to 0
+
+int n_used_source_nodes = 0;
+
+// b07) Count how many source_node_flag are true using atomic increase on n_used_source_nodes
+
+if (source_node_flag[thread_idx] == true) {
+   atomicInc(n_used_source_nodes){
+}
+
+// b08) Allocate arrays of size n_used_source_nodes
+
+int unsorted_source_node_index[n_used_source_nodes];
+int sorted_source_node_index[n_used_source_nodes];
+int i_source[n_used_source_nodes]; // this is the position in the arrays source_node_flag and local_node_index 
+bool source_node_index_to_be_mapped[n_used_source_nodes]; // initially false
+
+// b09) Fill the arrays using atomic increase when source_node_flag is true, as in the Count kernel
+
+if (source_node_flag[thread_idx] == true) {
+   int pos = atomicInc(i_used_source_node){
+   unsorted_source_node_index[pos] = GetNodeIndex<template>(thread_idx, source);
+   i_source[pos] = thread_idx;
+}
+
+// b10) Sort the arrays using unsorted_source_node_index as key and i_source as value -> sorted_source_node_index
+// b11) // Initialize n_new_source_node_map to 0
+
+int n_new_source_node_map = 0
+
+// b12) Check for sorted_source_node_index unique values:
+// - either if it is the first of the array (i_thread = 0)
+// - or it is different from previous
+// CUDA KERNEL input for target host: remote_source_node_map_index[i_source_host]->source_node_map_index, local_spike_buffer_map_index[i_source_host]->spike_buffer_map_index
+// CUDA KERNEL input for source host: local_source_node_map_index[i_target_host]->source_node_map_index, remote_spike_buffer_map_index[i_target_host]->spike_buffer_map_index
+
+if (i_thread == 0 || sorted_source_node_index[i_thread] != sorted_source_node_index[i_thread-1]) {
+
+// b12) In such case search sorted_source_node_index in the map (locate)
+// If it is not in the map then flag it to be mapped and atomic increase n_new_source_node_map
+
+search(sorted_source_node_index[i_thread], source_node_map_index,...)
+if (not_found) {
+  source_node_index_to_be_mapped[i_thread] = true;
+  atomicInc(n_new_source_nodes_map);
+}
+
+// b13) Check if new blocks are required for the map, and in such case allocate them, as done for the connections
+// CUDA KERNEL input for target host: n_remote_source_node_map[i_source_host]->n_source_node_map, n_remote_source_node_map_blocks[i_source_host]->n_source_node_map_blocks
+// CUDA KERNEL input for source host: n_local_source_node_map[i_target_host]->n_source_node_map, n_local_source_node_map_blocks[i_target_host]->n_source_node_map_blocks
+
+int new_n_blocks = (n_source_nodes + n_new_source_node_map + block_size) / block_size; // CONTROLLARE!!!!
+if (new_n_blocks != n_source_node_map_blocks) {
+   for (int ib=n_source_node_map_blocks; ib<new_n_blocks; ib++) {
+      alloc source_node_map_index[ib], block_size
+      alloc spike_buffer_map_index[ib], block_size
+
+// b14) Map the not-yet-mapped source nodes using a kernel similar to the one used for counting
+// In the target host unmapped remote source nodes must be mapped to local nodes from n_nodes to n_nodes + n_new_source_node_map
+// In the source host unmapped local source nodes must be mapped to ..... ???????????????????????????????????????????????????????????????????? 
+// Initialize i_new_source_node_map to 0
+
+int i_new_source_node_map = 0;
+
+// For each source node index search the map
+// if source_node_index it is not in the map:
+//        - atomic increase i_new_source_node_map
+//        - in the target host, put in the map the pair:
+//          (source_node_index, local_spike_buffer_map_index0 + i_new_source_node_map)
+//        - in the source host, put in the map the pair:
+//          (source_node_index, ..................... ???????????????????????????????????????????????????????????????????? + i_new_source_node_map)
+// CUDA KERNEL input for target host: remote_source_node_map_index[i_source_host]->source_node_map_index, local_spike_buffer_map_index[i_source_host]->spike_buffer_map_index
+// CUDA KERNEL input for source host: local_source_node_map_index[i_target_host]->source_node_map_index, remote_spike_buffer_map_index[i_target_host]->spike_buffer_map_index
+
+if (source_node_index_to_be_mapped[i_thread] = true) {
+   pos = atomicInc(i_new_source_node_map);
+   source_node_map_index[ib][pos] = sorted_source_node_index[i_thread];     	 
+   spike_buffer_map_index[ib][pos] = local_spike_buffer_map_index0 + pos; ????????????????????????????? e nel source host?
+}
+
+
+// b15) sort the WHOLE key-pair map source_node_map_index, spike_buffer_map_index
+
+block_sort (source_node_map_index, spike_buffer_map_index);
+
+// b16) Forse solo nel target hoost Loop (kernel) on source nodes, search source node index in the map, in the target host set local_node_index, in the source host???????????????
+// ???????????????????? forse non necessario nel source host, basta la posizione del source node nella mappa, perché le posizioni coincidono nel source e nel target
+
+source_node_index = GetNodeIndex<template>(thread_idx, source);
+ib, pos = search(sorted_source_node_index[i_thread], source_node_map_index,...)
+int i_spike_buffer = spike_buffer_map_index[ib][pos]
+local_node_index[thread_idx] = i_spike_buffer;
+
+
+// b17) On target host. Loop on the connections. Replace the source node index source_node[i_conn] with the value of the element pointed by the index itself in the array local_node_index
+
+source_node[i_conn] = local_node_index[source_node[i_conn]];
+    
+// b18) On target host. Create n_new_remote_source_nodes nodes of type external_node
+
+Create(n_new_remote_source_nodes, 'external_node')
+
+
+// CONNECT FUNCTION IN THE SOURCE HOST
+// Similar procedure as for the target host
+// Here I outline only the differences
+// c) Check if source_host matches the MPI ID
+
+   if (source_host == mpi_idx && source_host != target_host) {
+
+// c00-c15) Same procedure as in b00-b15, but using the array that maps local source nodes to remote spike buffers
+
+// c03) <-> b03) local_node_index is not necessary, should not be defined in the source host
+
+
+d1) For each local node, count the number of target MPI processes (remote target hosts) on which the local node has outgoing connections:
+- Loop on target hosts (i.e. on MPI processes)
+- Loop (kernel) on nodes
+- Search node in map of local source nodes having outgoing connections to target host
+- if found, atomic increase number of target hosts for the node
+
+int n_target_hosts[n_nodes]; // initially set to 0 with appropriate kernel
+
+for (int i_target_host=0; i_target_host<MPI_proc_num; i_target_host++) {
+//  Launch kernel on all nodes, search node in the map
+int i_source = thread_idx;
+search(i_source, local_source_node_map_index[i_target_host]);
+if (found) {
+   n_target_hosts[i_node]++;
+}
+
+d2) For each local node, create a list of target MPI processes (remote target hosts) on which the local node has outgoing connections, with the index of the remote node (spike buffer) on which it must be mapped:
+- Cumulative sum of the array of counts obtained in d1, n_target_hosts
+- Get the last element (total number)
+- allocate an array with total_number elements
+- use the cumulative sum to create, for each source node, a pointer on the allocated array
+- fill the array with the pairs (target MPI process,  node index in target)
+
+n_target_hosts_cumul = prefix_scan(n_target_hosts, n_node);
+int total_num = n_target_hosts_cumul[n_node]
+alloc target_host_array[total_num];
+// kernel on n_nodes
+i_node = thread_idx
+int *node_target_host[i_node] = &target_host_array[n_target_host_cumul[i_node]];
+
+

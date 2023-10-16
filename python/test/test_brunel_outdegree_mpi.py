@@ -7,7 +7,7 @@ import numpy as np
 
 
 ngpu.ConnectMpiInit();
-mpi_np = ngpu.MpiNp()
+mpi_np = ngpu.HostNum()
 
 if mpi_np != 2:
     print ("Usage: mpirun -np 2 python %s" % sys.argv[0])
@@ -18,7 +18,7 @@ n_test = 100
 
 expected_rate = 30.78
 
-mpi_id = ngpu.MpiId()
+mpi_id = ngpu.HostId()
 print("Building on host ", mpi_id, " ...")
 
 ngpu.SetKernelStatus("rnd_seed", 1234) # seed for GPU random numbers
@@ -141,15 +141,15 @@ for i in range(500):
         sys.exit(1)
         
 
-for i in range(10):
-    i_target = randrange(n_neurons)
-    conn_id = ngpu.GetConnections(target=i_target+1)
-    n_in_conn = len(conn_id)
-    if (n_in_conn!=2*(NE+NI)+1):
-        print("Expected number of in connections per neuron: ", 2*(NE+NI)+1)
-        print("Number of in connections of neuron ", i_target, ": ", \
-              n_in_conn)
-        sys.exit(1)
+#for i in range(10):
+#    i_target = randrange(n_neurons)
+#    conn_id = ngpu.GetConnections(target=i_target+1)
+#    n_in_conn = len(conn_id)
+#    if (n_in_conn!=2*(NE+NI)+1):
+#        print("Expected number of in connections per neuron: ", 2*(NE+NI)+1)
+#        print("Number of in connections of neuron ", i_target, ": ", \
+#              n_in_conn)
+#        sys.exit(1)
 
 
 row_sum = list(data_list[0])

@@ -282,10 +282,10 @@ int RungeKutta5<DataStruct>::Init(int array_size, int n_var, int n_param,
   n_var_ = n_var;
   n_param_ = n_param; 
 
-  gpuErrchk(cudaMalloc(&d_XArr, array_size_*sizeof(double)));
-  gpuErrchk(cudaMalloc(&d_HArr, array_size_*sizeof(float)));
-  gpuErrchk(cudaMalloc(&d_YArr, array_size_*n_var_*sizeof(float)));
-  gpuErrchk(cudaMalloc(&d_ParamArr, array_size_*n_param_*sizeof(float)));
+  CUDAMALLOCCTRL("&d_XArr",&d_XArr, array_size_*sizeof(double));
+  CUDAMALLOCCTRL("&d_HArr",&d_HArr, array_size_*sizeof(float));
+  CUDAMALLOCCTRL("&d_YArr",&d_YArr, array_size_*n_var_*sizeof(float));
+  CUDAMALLOCCTRL("&d_ParamArr",&d_ParamArr, array_size_*n_param_*sizeof(float));
 
   ArrayInit<DataStruct><<<(array_size+1023)/1024, 1024>>>
     (array_size_, n_var, n_param, d_XArr, d_HArr, d_YArr, d_ParamArr,

@@ -28,6 +28,7 @@
 #define SPIKEBUFFER_H
 //#include "connect.h"
 
+extern __constant__ bool ExternalSpikeFlag;
 extern __device__ int MaxSpikeBufferSize;
 extern __device__ int NSpikeBuffer;
 extern __device__ int MaxDelayNum;

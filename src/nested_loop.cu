@@ -89,7 +89,7 @@ namespace NestedLoop
 extern __constant__ long long NESTGPUTimeIdx;
 extern __constant__ float NESTGPUTimeResolution;
 extern __constant__ NodeGroupStruct NodeGroupArray[];
-extern __device__ signed char *NodeGroupMap;
+extern __device__ int16_t *NodeGroupMap;
 
 
 
@@ -110,8 +110,8 @@ int NestedLoop::Init()
 int NestedLoop::Init(int Nx_max)
 {
   //prefix_scan_.Init();
-  gpuErrchk(cudaMalloc(&d_Ny_cumul_sum_,
-			  PrefixScan::AllocSize*sizeof(int)));
+  CUDAMALLOCCTRL("&d_Ny_cumul_sum_",&d_Ny_cumul_sum_,
+			  PrefixScan::AllocSize*sizeof(int));
 
   if (Nx_max <= 0) return 0;
 
@@ -121,10 +121,10 @@ int NestedLoop::Init(int Nx_max)
   x_lim_ = 0.75;
   Nx_max_ = Nx_max;
 
-  gpuErrchk(cudaMalloc(&d_max_Ny_, sizeof(int)));  
-  gpuErrchk(cudaMalloc(&d_sorted_Ny_, Nx_max*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_idx_, Nx_max*sizeof(int)));
-  gpuErrchk(cudaMalloc(&d_sorted_idx_, Nx_max*sizeof(int)));
+  CUDAMALLOCCTRL("&d_max_Ny_",&d_max_Ny_, sizeof(int));  
+  CUDAMALLOCCTRL("&d_sorted_Ny_",&d_sorted_Ny_, Nx_max*sizeof(int));
+  CUDAMALLOCCTRL("&d_idx_",&d_idx_, Nx_max*sizeof(int));
+  CUDAMALLOCCTRL("&d_sorted_idx_",&d_sorted_idx_, Nx_max*sizeof(int));
 
   int *h_idx = new int[Nx_max];
   for(int i=0; i<Nx_max; i++) {
@@ -148,8 +148,8 @@ int NestedLoop::Init(int Nx_max)
 			 d_max_Ny_, Nx_max);
 
   // Allocate temporary storage
-  gpuErrchk(cudaMalloc(&d_sort_storage_, sort_storage_bytes_));
-  gpuErrchk(cudaMalloc(&d_reduce_storage_, reduce_storage_bytes_));
+  CUDAMALLOCCTRL("&d_sort_storage_",&d_sort_storage_, sort_storage_bytes_);
+  CUDAMALLOCCTRL("&d_reduce_storage_",&d_reduce_storage_, reduce_storage_bytes_);
 
   return 0;
 }

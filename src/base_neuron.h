@@ -30,11 +30,15 @@
 #include <string>
 #include <vector>
 #include <stdint.h>
+//#include <curand.h>
 //#include "distribution.h"
 
 class Distribution;
 
 class NESTGPU;
+
+struct curandGenerator_st;
+typedef struct curandGenerator_st* curandGenerator_t;
 
 class BaseNeuron
 {
@@ -46,7 +50,7 @@ class BaseNeuron
   int n_node_;
   int n_port_;
   int i_group_;
-  unsigned long long *seed_;  
+  curandGenerator_t *random_generator_;
 
   int n_int_var_;
   int n_scal_var_;
@@ -102,7 +106,7 @@ class BaseNeuron
   virtual ~BaseNeuron() {}
   
   virtual int Init(int i_node_0, int n_neuron, int n_port,
-		   int i_neuron_group, unsigned long long *seed);
+		   int i_neuron_group);
 
 
   virtual int AllocVarArr();
