@@ -62,7 +62,7 @@ For benchmark simulations assessing network-construction and state-propagation t
 * ``'N_scaling': 1.``: Full number of neurons.
 * ``'K_scaling': 1.``: Full indegrees.
 
-The benchmarking scripts are adapted from [3]_. See also the [GitHub repository](https://github.com/gmtiddia/ngpu_dynamic_network_creation/tree/main/ngpu_microcircuit) 
+The benchmarking scripts are adapted from [3]_. See also the `GitHub repository <https://github.com/gmtiddia/ngpu_dynamic_network_creation/tree/main/ngpu_microcircuit>`__ 
 for a detailed description of the simulation files. To run the benchmarking script you should write:
 
 .. code-block:: bash
