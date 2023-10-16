@@ -30,7 +30,6 @@ from source code. To adjust settings please see :doc:`CMake Options <cmake_optio
 
    sudo apt install -y \
    nvidia-cuda-toolkit \
-   openmpi-bin \
    libomp-dev \
    python3-all-dev \
    python3-numpy \
