@@ -34,7 +34,7 @@ See `here <https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-vario
 to choose the best NVIDIA GPU architecture for your GPU card.
 
 +-----------------------------------------------+----------------------------------------------------------------+
-| ``-Dwith-gpu-arch=[int]``                     | Specify the GPU compute architecture. [default=70]             |
+| ``-Dwith-gpu-arch=[int]``                     | Specify the GPU compute architecture. [default=80]             |
 +-----------------------------------------------+----------------------------------------------------------------+
 
 Change parallelization scheme
