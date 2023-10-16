@@ -226,9 +226,9 @@ int ResetConnectionSpikeTimeDown()
 
 int RevSpikeFree()
 {
-  gpuErrchk(cudaFree(&d_RevSpikeNum));
-  gpuErrchk(cudaFree(&d_RevSpikeTarget));
-  gpuErrchk(cudaFree(&d_RevSpikeNConn));
+  CUDAFREECTRL("&d_RevSpikeNum",&d_RevSpikeNum);
+  CUDAFREECTRL("&d_RevSpikeTarget",&d_RevSpikeTarget);
+  CUDAFREECTRL("&d_RevSpikeNConn",&d_RevSpikeNConn);
 
   return 0;
 }
@@ -318,9 +318,9 @@ int RevSpikeInit(uint n_spike_buffers)
     gpuErrchk( cudaDeviceSynchronize() );
   }
   
-  gpuErrchk(cudaFree(d_temp_storage));
-  gpuErrchk(cudaFree(d_target_rev_conn_size_64));
-  gpuErrchk(cudaFree(d_target_rev_conn_cumul));
+  CUDAFREECTRL("d_temp_storage",d_temp_storage);
+  CUDAFREECTRL("d_target_rev_conn_size_64",d_target_rev_conn_size_64);
+  CUDAFREECTRL("d_target_rev_conn_cumul",d_target_rev_conn_cumul);
 
   return 0;
 }

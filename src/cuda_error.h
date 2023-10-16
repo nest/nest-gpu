@@ -64,9 +64,15 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
   printf("Allocating %lld bytes pointed by %s in device memory at %s:%d\n", \
          (unsigned long long)n_bytes, str, __FILE__,__LINE__);  \
   gpuAssert(cudaMalloc(dev_pt, n_bytes), __FILE__, __LINE__); }
+#define CUDAFREECTRL(str, dev_pt) {				\
+  printf("Deallocating device memory pointed by %s in at %s:%d\n", \
+         str, __FILE__,__LINE__);				   \
+  gpuAssert(cudaFree(dev_pt), __FILE__, __LINE__); }
 #else
 #define CUDAMALLOCCTRL(str, dev_pt, n_bytes) {				\
   gpuAssert(cudaMalloc(dev_pt, n_bytes), __FILE__, __LINE__); }
+#define CUDAFREECTRL(str, dev_pt) {				\
+  gpuAssert(cudaFree(dev_pt), __FILE__, __LINE__); }
 #endif
 
 

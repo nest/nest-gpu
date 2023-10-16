@@ -55,7 +55,7 @@
 
 #include "remote_connect.h"
 
-				    //#define VERBOSE_TIME
+//#define VERBOSE_TIME
 
 __constant__ double NESTGPUTime;
 __constant__ long long NESTGPUTimeIdx;
@@ -346,9 +346,6 @@ NESTGPU::~NESTGPU()
 int NESTGPU::SetRandomSeed(unsigned long long seed)
 {
   kernel_seed_ = seed;
-  #ifdef HAVE_MPI
-  kernel_seed_ += HostId();
-  #endif
   //CURAND_CALL(curandDestroyGenerator(*random_generator_));
   //random_generator_ = new curandGenerator_t;
   //CURAND_CALL(curandCreateGenerator(random_generator_,
@@ -443,8 +440,8 @@ int NESTGPU::Calibrate()
 			       sizeof(float)));
 ///////////////////////////////////
   i_ext_node_0_ = GetNNode();
-  //std::cout << "i_ext_node_0_: " << i_ext_node_0_ << " n_ext_nodes_: "
-	//    << n_ext_nodes_ << "\n";
+  // std::cout << "i_ext_node_0_: " << i_ext_node_0_ << " n_ext_nodes_: "
+  // << n_ext_nodes_ << "\n";
   if (n_ext_nodes_ > 0) {
     _Create("ext_neuron", n_ext_nodes_, 1);
     addOffsetToExternalNodeIds();
@@ -455,7 +452,8 @@ int NESTGPU::Calibrate()
   organizeConnections(time_resolution_, GetNNode(),
 		      NConn, h_ConnBlockSize,
 		      KeySubarray, ConnectionSubarray);
-  NewConnectInit();
+  
+  ConnectInit();
 
   poiss_conn::OrganizeDirectConnections();
 
@@ -771,8 +769,8 @@ int NESTGPU::SimulationStep()
   gpuErrchk(cudaMemcpyAsync(&n_spikes, d_SpikeNum, sizeof(int),
 		       cudaMemcpyDeviceToHost));
 
-  ClearGetSpikeArrays(); 
-  gpuErrchk( cudaDeviceSynchronize() );   
+  ClearGetSpikeArrays();
+  gpuErrchk( cudaDeviceSynchronize() );
   if (n_spikes > 0) {
     time_mark = getRealTime();
     NestedLoop::Run<0>(nested_loop_algo_, n_spikes, d_SpikeTargetNum);
@@ -843,8 +841,8 @@ int NESTGPU::SimulationStep()
       // and if buffering is activated every n_step time steps...
       int n_step = node_vect_[i]->rec_spike_times_step_;
       if (n_step>0 && (time_idx%n_step == n_step-1)) {
-        // extract recorded spike times and put them in buffers
-        node_vect_[i]->BufferRecSpikeTimes();
+	// extract recorded spike times and put them in buffers
+	node_vect_[i]->BufferRecSpikeTimes();
       }
     }
   }
@@ -1811,8 +1809,8 @@ int NESTGPU::PushSpikesToNodes(int n_spikes, int *node_id,
 						     d_spike_height);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-  gpuErrchk(cudaFree(d_node_id));
-  gpuErrchk(cudaFree(d_spike_height));
+  CUDAFREECTRL("d_node_id",d_node_id);
+  CUDAFREECTRL("d_spike_height",d_spike_height);
   */
   
   return 0;
@@ -1835,7 +1833,7 @@ int NESTGPU::PushSpikesToNodes(int n_spikes, int *node_id)
   PushSpikeFromRemote<<<(n_spikes+1023)/1024, 1024>>>(n_spikes, d_node_id);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-  gpuErrchk(cudaFree(d_node_id));
+  CUDAFREECTRL("d_node_id",d_node_id);
   */
   
   return 0;

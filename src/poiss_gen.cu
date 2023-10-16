@@ -60,8 +60,11 @@ namespace poiss_conn
 // max delay functor
 struct MaxDelay
 {
+  //template <typename T>
     __device__ __forceinline__
-    uint operator()(const uint &source_delay_a, const uint &source_delay_b) const {
+    //T operator()(const T &source_delay_a, const T &source_delay_b) const {
+    uint operator()(const uint &source_delay_a, const uint &source_delay_b)
+      const {
       uint i_delay_a = source_delay_a & PortMask;
       uint i_delay_b = source_delay_b & PortMask;
         return (i_delay_b > i_delay_a) ? i_delay_b : i_delay_a;
@@ -485,11 +488,11 @@ int poiss_gen::buildDirectConnections()
   gpuErrchk(cudaMemset(d_mu_arr_, 0, n_node_*max_delay_*sizeof(float)));
   
   /*
-  gpuErrchk(cudaFree(d_key_array_data_pt));
-  gpuErrchk(cudaFree(d_subarray));
-  gpuErrchk(cudaFree(d_num));
-  gpuErrchk(cudaFree(d_sum));
-  gpuErrchk(cudaFree(d_thresh));
+  CUDAFREECTRL("d_key_array_data_pt",d_key_array_data_pt);
+  CUDAFREECTRL("d_subarray",d_subarray);
+  CUDAFREECTRL("d_num",d_num);
+  CUDAFREECTRL("d_sum",d_sum);
+  CUDAFREECTRL("d_thresh",d_thresh);
   */
   
   return 0;

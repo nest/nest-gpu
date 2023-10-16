@@ -27,19 +27,11 @@
 #ifndef SPIKEMPI_H
 #define SPIKEMPI_H
 
-/*
-Combined version of PushedSpikeFromRemote and AddOffset kernels
-using default values for arguments
-Args:
-	- int n_spikes: number of spikes to push
-	- int* spike_buffer_id: pointer to array of spike buffer ids
-	- float* spike_height: pointer to array of spike heights to send
-		Defaults to NULL, if no spike height given then a height of 1.0 is pushed
-		Must be of length == n_spikes
-	- int offset: Offset to be used for spike_buffer indexes
-		Defaults to 0
-*/
+__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id,
+                                    float *spike_height);
+
 __global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id);
+
 
 #ifdef HAVE_MPI
 

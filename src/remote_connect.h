@@ -572,7 +572,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
 				   h_node_map_block_size, new_n_blocks);
     // free d_node_map
     if (n_blocks>0) {
-      gpuErrchk(cudaFree(d_node_map));
+      CUDAFREECTRL("d_node_map",d_node_map);
     }
     // update number of blocks in the map 
     n_blocks = new_n_blocks;
@@ -692,7 +692,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
     (&h_remote_source_node_map[source_host][0],
      &h_local_spike_buffer_map[source_host][0],
      n_node_map, h_node_map_block_size, d_storage, storage_bytes);
-  gpuErrchk(cudaFree(d_storage));
+  CUDAFREECTRL("d_storage",d_storage);
 
   //////////////////////////////////////////////////////////////////////
 #ifdef CHECKRC
@@ -1072,7 +1072,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
 				   h_node_map_block_size, new_n_blocks);
     // free d_node_map
     if (n_blocks>0) {
-      gpuErrchk(cudaFree(d_node_map));
+      CUDAFREECTRL("d_node_map",d_node_map);
     }
     // update number of blocks in the map 
     n_blocks = new_n_blocks;
@@ -1176,7 +1176,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, int n_source,
   copass_sort::sort<int>
     (&h_local_source_node_map[target_host][0],
      n_node_map, h_node_map_block_size, d_storage, storage_bytes);
-  gpuErrchk(cudaFree(d_storage));
+  CUDAFREECTRL("d_storage",d_storage);
 
   //////////////////////////////////////////////////////////////////////
 #ifdef CHECKRC

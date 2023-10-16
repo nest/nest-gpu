@@ -104,7 +104,7 @@ int NESTGPU::FreeGetSpikeArrays()
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     BaseNeuron *bn = node_vect_[i];
     if (bn->get_spike_array_ != NULL) {
-      gpuErrchk(cudaFree(bn->get_spike_array_));
+      CUDAFREECTRL("bn->get_spike_array_",bn->get_spike_array_);
     }
   }
   

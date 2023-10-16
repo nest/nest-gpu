@@ -438,7 +438,7 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
 				d_n_target_hosts,
 				d_n_target_hosts_cumul,
 				n_nodes+1);
-  gpuErrchk(cudaFree(d_temp_storage));
+  CUDAFREECTRL("d_temp_storage",d_temp_storage);
   // The last element is the sum of all elements of n_target_hosts
   int n_target_hosts_sum;
   gpuErrchk(cudaMemcpy(&n_target_hosts_sum, &d_n_target_hosts_cumul[n_nodes],

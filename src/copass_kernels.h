@@ -131,8 +131,8 @@ void array_GPUMalloc(void *d_storage, int64_t &st_bytes,
 template <class KeyT, class ValueT>
 void array_GPUFree(contiguous_key_value<KeyT, ValueT> &arr, position_t size)
 {
-  gpuErrchk(cudaFree(arr.key_pt));
-  gpuErrchk(cudaFree(arr.value_pt));
+  CUDAFREECTRL("arr.key_pt",arr.key_pt);
+  CUDAFREECTRL("arr.value_pt",arr.value_pt);
   arr.offset = 0;
   arr.size = 0;
 }
@@ -379,7 +379,7 @@ void array_GPUMalloc(void *d_storage, int64_t &st_bytes,
 template <class ElementT>
 void array_GPUFree(contiguous_array<ElementT> &arr, position_t size)
 {
-  gpuErrchk(cudaFree(arr.data_pt));
+  CUDAFREECTRL("arr.data_pt",arr.data_pt);
   arr.offset = 0;
   arr.size = 0;
 }

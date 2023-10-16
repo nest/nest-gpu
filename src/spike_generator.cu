@@ -116,14 +116,14 @@ int spike_generator::Free()
 {
   for (int i_node=0; i_node<n_node_; i_node++) {
     if(h_spike_time_idx_[i_node] != 0) {
-      gpuErrchk(cudaFree(h_spike_time_idx_[i_node]));
-      gpuErrchk(cudaFree(h_spike_height_[i_node]));
+      CUDAFREECTRL("h_spike_time_idx_[i_node]",h_spike_time_idx_[i_node]);
+      CUDAFREECTRL("h_spike_height_[i_node]",h_spike_height_[i_node]);
     }
   }  
-  gpuErrchk(cudaFree(d_n_spikes_));
-  gpuErrchk(cudaFree(d_i_spike_));	    
-  gpuErrchk(cudaFree(d_spike_time_idx_));
-  gpuErrchk(cudaFree(d_spike_height_));
+  CUDAFREECTRL("d_n_spikes_",d_n_spikes_);
+  CUDAFREECTRL("d_i_spike_",d_i_spike_);	    
+  CUDAFREECTRL("d_spike_time_idx_",d_spike_time_idx_);
+  CUDAFREECTRL("d_spike_height_",d_spike_height_);
 
   delete[] h_spike_time_idx_;
   delete[] h_spike_height_;
@@ -235,8 +235,8 @@ int spike_generator::SetSpikes(int irel_node, int n_spikes, float *spike_time,
   cudaMemcpy(&d_n_spikes_[irel_node], &n_spikes, sizeof(int),
 	     cudaMemcpyHostToDevice);
   if (h_spike_time_idx_[irel_node] != 0) {
-    gpuErrchk(cudaFree(h_spike_time_idx_[irel_node]));
-    gpuErrchk(cudaFree(h_spike_height_[irel_node]));
+    CUDAFREECTRL("h_spike_time_idx_[irel_node]",h_spike_time_idx_[irel_node]);
+    CUDAFREECTRL("h_spike_height_[irel_node]",h_spike_height_[irel_node]);
   }
   CUDAMALLOCCTRL("&h_spike_time_idx_[irel_node]",&h_spike_time_idx_[irel_node], n_spikes*sizeof(int));
   CUDAMALLOCCTRL("&h_spike_height_[irel_node]",&h_spike_height_[irel_node], n_spikes*sizeof(float));

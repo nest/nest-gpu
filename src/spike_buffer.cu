@@ -20,9 +20,7 @@
  *
  */
 
-
-
-
+//#define OPTIMIZE_FOR_MEMORY
 
 #include <config.h>
 #include <iostream>
@@ -162,7 +160,9 @@ __device__ void PushSpike(int i_spike_buffer, float height)
 
   // spike should be stored if there are output connections
   // or if dendritic delay is > 0
-  if (ConnGroupNum[i_spike_buffer]>0 || den_delay_idx>0) {
+  uint conn_group_num = ConnGroupIdx0[i_spike_buffer + 1]
+    - ConnGroupIdx0[i_spike_buffer];
+  if (conn_group_num>0 || den_delay_idx>0) {
     int Ns = SpikeBufferSize[i_spike_buffer]; // n. of spikes in buffer
     if (Ns>=MaxSpikeBufferSize) {
       printf("Maximum number of spikes in spike buffer exceeded"
@@ -227,24 +227,45 @@ __global__ void SpikeBufferUpdate()
     }
     // connection index in array
     //int i_conn_arr = i_conn*NSpikeBuffer+i_spike_buffer;
-    int ig = ConnGroupIdx0[i_spike_buffer] + i_conn;
+    //int ig = ConnGroupIdx0[i_spike_buffer] + i_conn;
     // if spike time matches connection group delay deliver it
     // to global spike array
-    if (i_conn<ConnGroupNum[i_spike_buffer] &&
-	spike_time_idx+1 == ConnGroupDelay[ig]) {
-      // spike time matches connection group delay
-      float height = SpikeBufferHeight[i_arr]; // spike multiplicity
-      // deliver spike
-      SendSpike(i_spike_buffer, i_conn, height, ConnGroupNConn[ig]);
-      // increase index of the next conn. group that will emit this spike
-      i_conn++;
-      SpikeBufferConnIdx[i_arr] = i_conn;
+
+
+    uint conn_group_i0 = ConnGroupIdx0[i_spike_buffer];
+    uint conn_group_num = ConnGroupIdx0[i_spike_buffer+1] - conn_group_i0;
+    int ig = conn_group_i0 + i_conn;
+    
+
+    if (i_conn<conn_group_num) {
+#ifdef OPTIMIZE_FOR_MEMORY
+      int64_t conn_group_i_conn0 = ConnGroupIConn0[ig];
+      uint i_block = (uint)(conn_group_i_conn0 / ConnBlockSize);
+      int64_t i_block_conn = conn_group_i_conn0 % ConnBlockSize;
+      uint source_delay = SourceDelayArray[i_block][i_block_conn];
+      int conn_group_delay = source_delay & PortMask;
+      // check if spike time matches connection group delay
+      if (spike_time_idx+1 == conn_group_delay) {
+#else
+      if (spike_time_idx+1 == ConnGroupDelay[ig]) {
+	int64_t conn_group_i_conn0 = ConnGroupIConn0[ig];
+#endif
+	float height = SpikeBufferHeight[i_arr]; // spike multiplicity
+	// deliver spike
+	int64_t conn_group_n_conn = ConnGroupIConn0[ig+1] - conn_group_i_conn0;
+	//SendSpike(i_spike_buffer, i_conn, height, ConnGroupNConn[ig]);
+	SendSpike(i_spike_buffer, i_conn, height, conn_group_n_conn);
+	// increase index of the next conn. group that will emit this spike
+	i_conn++;
+	SpikeBufferConnIdx[i_arr] = i_conn;
+      }
     }
     // Check if the oldest spike should be removed from the buffer:
     // check if it is the oldest spike of the buffer
     // and if its connection group index is over the last connection group
     // and if spike time is greater than the dendritic delay
-    if (is==Ns-1 && i_conn>=ConnGroupNum[i_spike_buffer]
+    //if (is==Ns-1 && i_conn>=ConnGroupNum[i_spike_buffer]
+    if (is==Ns-1 && i_conn>=conn_group_num
 	&& spike_time_idx+1>=den_delay_idx) {
       // in this case we don't need any more to keep track of the oldest spike
       SpikeBufferSize[i_spike_buffer]--; // so remove it from buffer
