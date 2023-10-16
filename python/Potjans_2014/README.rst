@@ -7,33 +7,31 @@ The network model represents four layers of cortex, L2/3, L4, L5, and L6, each c
 Citing this code
 ################
 
-If you use this code, we ask you to cite the paper by Potjans and Diesmann [1].
+If you use this code, we ask you to cite the paper by Potjans and Diesmann [1]_ and the one by Bruno Golosio [2]_.
 
 File structure
 ##############
 
 * ``run_microcircuit.py``: an example script to try out the microcircuit
+* ``run_benchmark.py``: an example script for benchmarking purposes
 * ``network.py``: the main Network class with functions to build and simulate the network
 * ``helpers.py``: helper functions for network construction, simulation and evaluation
 * ``network_params.py``: network and neuron parameters
 * ``stimulus_params.py``: parameters for optional external stimulation
 * ``sim_params.py``: simulation parameters
-* ``reference_data``: reference data and figures obtained by executing ``run_microcircuit.py`` with default parameters
 
 Running the simulation
 ######################
 
 By default, the variables ``N_scaling`` and ``K_scaling`` in ``network_params.py`` are set to
-`0.1`, which is a good choice for running the microcircuit on a local machine.
-``N_scaling`` adjusts the number of neurons and ``K_scaling`` adjusts the indegrees.
-The full network can be run by setting these values to `1`.
+`1.0` (i.e., the full-scale network). ``N_scaling`` adjusts the number of neurons and ``K_scaling`` adjusts the indegrees.
 If this is done, the option to print the time progress should be switched off: ``'print_time': False`` in ``sim_params.py``.
 
-To run the simulation, simply use:
+To run a simulation, simply use:
 
 .. code-block:: bash
 
-   python run_microcircuit.py
+   python3 run_microcircuit.py
 
 The output will be saved in the ``data`` directory.
 
@@ -53,23 +51,43 @@ Recommendations for benchmarking
 
 For benchmark simulations assessing network-construction and state-propagation times, the recommended changes to the default parameters are the following:
 
-``sim_params.py``:
+``sim_params_benchmarking.py``:
 
 * ``'t_sim': 10000.0``: The biological simulation time should be at least `10` s for measuring the state propagation time.
 * ``'rec_dev': []``: No recording devices.
-* ``'local_num_threads': t``: Adjust the number of threads ``t`` per MPI process as needed for the benchmarks.
 * ``'print_time': False'``: No printing of time progress.
 
 ``network_params.py``:
 
 * ``'N_scaling': 1.``: Full number of neurons.
 * ``'K_scaling': 1.``: Full indegrees.
-* ``'poisson_input': False``: DC background input.
+
+To run the benchmarking script you should write:
+
+.. code-block:: bash
+
+   python3 run_benchmark.py output_file
+
+The outputn file contains, using a JSON file format, simulation information and the values of the Python timers for each simulation task performed. Times are expresses in nanoseconds.
+More simulation options can be seen by typing:
+
+.. code-block:: bash
+
+   python3 run_benchmark.py -h
+
+To perform a set of simulations for benchmarking, we provide as example the script ``run_benchmark.sh``. It performs 10 simulations of the microcircuit
+using different seed for random number generation, storing all the data in a folder named ``sim_output``. Run the set of simulations using:
+
+.. code-block:: bash
+
+   bash run_benchmark.sh
 
 Contributions to this NEST GPU microcircuit model implementation
 ################################################################
 
-2020: Adapted for NEST GPU by Bruno Golosio
+2023: revision of code and documentation by Jose Villamar and Gianmarco Tiddia [3]_
+
+2020: adapted for NEST GPU by Bruno Golosio [2]_
 
 Current communicating author of the NEST version: Johanna Senk
 
@@ -98,8 +116,11 @@ References
 .. [1]  Potjans TC. and Diesmann M. 2014. The cell-type specific cortical
         microcircuit: relating structure and activity in a full-scale spiking
         network model. Cerebral Cortex. 24(3):785–806. DOI: `10.1093/cercor/bhs358 <https://doi.org/10.1093/cercor/bhs358>`__.
-        
-.. [2]  van Albada SJ., Rowley AG., Senk J., Hopkins M., Schmidt M., Stokes AB., Lester DR., Diesmann M. and Furber SB. 2018.
-        Performance Comparison of the Digital Neuromorphic Hardware SpiNNaker
-        and the Neural Network Simulation Software NEST for a Full-Scale Cortical Microcircuit Model.
-        Front. Neurosci. 12:291. DOI: `10.3389/fnins.2018.00291 <https://doi.org/10.3389/fnins.2018.00291>`__.
+
+.. [2]  Golosio B., Tiddia G., De Luca C., Pastorelli E., Simula F. and Paolucci PS. 2021
+        Fast Simulations of Highly-Connected Spiking Cortical Models Using GPUs. 
+        Front. Comput. Neurosci. 15:627620. DOI: `10.3389/fncom.2021.627620 https://doi.org/10.3389/fncom.2021.627620`__.
+
+.. [3]  Golosio B., Villamar J., Tiddia G., Pastorelli E., Stapmanns J., Fanti V., Paolucci PS., Morrison A. and Senk J. 2023 
+        Runtime Construction of Large-Scale Spiking Neuronal Network Models on GPU Devices. 
+        Applied Sciences; 13(17):9598. DOI: `10.3390/app13179598 https://doi.org/10.3390/app13179598`__.
