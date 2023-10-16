@@ -8,13 +8,8 @@ You also need the `NVIDIA drivers <https://www.nvidia.com/Download/index.aspx?la
 for the GPU card installed in your machine and the 
 `NVIDIA CUDA development toolkit <https://developer.nvidia.com/cuda-toolkit>`_.
 To use the NEST GPU Python interface you need `Python 3 <https://www.python.org/>`_,
-`Numpy <https://numpy.org/>`_, `Scipy <https://scipy.org/>`_,
-`Matplotlib <https://matplotlib.org/>`_
-and `mpi4py <https://mpi4py.readthedocs.io/en/stable/intro.html#>`_
-for using MPI from Python.
-
-We also recommend to install the `OpenMP <https://www.openmp.org/>`_ binary and development
-packages, which are needed for using MPI.
+`Numpy <https://numpy.org/>`_, `Scipy <https://scipy.org/>`_ and
+`Matplotlib <https://matplotlib.org/>`_.
 
 .. note::
 
@@ -36,13 +31,11 @@ from source code. To adjust settings please see :doc:`CMake Options <cmake_optio
    sudo apt install -y \
    nvidia-cuda-toolkit \
    openmpi-bin \
-   libopenmpi-dev \
    libomp-dev \
    python3-all-dev \
    python3-numpy \
    python3-scipy \
-   python3-matplotlib \
-   python3-mpi4py
+   python3-matplotlib
 
 If you are using Ubuntu, `here <https://linuxhint.com/install-nvidia-drivers-on-ubuntu/>`_
 you can find a guide to install the NVIDIA drivers for the GPU card on your machine.
