@@ -44,18 +44,19 @@ Change parallelization scheme
 | ``-Dwith-mpi=[OFF|ON]``                       | Build with MPI parallelization. [default=ON]                   |
 +-----------------------------------------------+----------------------------------------------------------------+
 | ``-Dwith-openmp=[OFF|ON|<OpenMP-Flag>]``      | Enable OpenMP multi-threading.                                 |
-|                                               | Optionally set OMP compiler flag. [default=ON]                 |
+|                                               | Optionally set OMP compiler flag. [default=OFF]                |
 +-----------------------------------------------+----------------------------------------------------------------+
 
 .. warning::
 
     Currently NEST GPU must be installed with MPI to avoid compilation errors.
+    OpenMP multi-threading is disabled by default and will be deprecated in a next version of NEST GPU.
 
 
 External libraries
 ------------------
 
-+-----------------------------------------------+----------------------------------------------------------------+
++-----------------------------------------------+----------------------------------------------------------------
 | ``-Dwith-ltdl=[OFF|ON]``                      | Build with ltdl library. To set a specific ltdl, give the      |
 |                                               | install path. NEST GPU uses ltdl for dynamic loading of        |
 |                                               | external user modules. [default=OFF]                           |
