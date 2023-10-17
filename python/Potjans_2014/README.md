@@ -12,20 +12,20 @@ If you use this code, we ask you to cite the paper by Potjans and Diesmann [1]_ 
 File structure
 ##############
 
-* ``run_microcircuit.py``: an example script to try out the microcircuit
-* ``run_benchmark.py``: an example script for benchmarking purposes, adapted from [3]_
-* ``network.py``: the main Network class with functions to build and simulate the network
-* ``helpers.py``: helper functions for network construction, simulation and evaluation
-* ``network_params.py``: network and neuron parameters
-* ``stimulus_params.py``: parameters for optional external stimulation
-* ``sim_params.py``: simulation parameters
+* [run_microcircuit.py](run_microcircuit.py): an example script to try out the microcircuit
+* [run_benchmark.py](run_benchmark.py): an example script for benchmarking purposes, adapted from [3]_
+* [network.py](network.py): the main Network class with functions to build and simulate the network
+* [helpers.py](helpers.py): helper functions for network construction, simulation and evaluation
+* [network_params.py](network_params.py): network and neuron parameters
+* [stimulus_params.py](stimulus_params.py): parameters for optional external stimulation
+* [sim_params.py](sim_params.py): simulation parameters
 
 Running the simulation
 ######################
 
 By default, the variables ``N_scaling`` and ``K_scaling`` in ``network_params.py`` are set to
 `1.0` (i.e., the full-scale network). ``N_scaling`` adjusts the number of neurons and ``K_scaling`` adjusts the indegrees.
-If this is done, the option to print the time progress should be switched off: ``'print_time': False`` in ``sim_params.py``.
+If this is done, the option to print the time progress should be switched off: ``'print_time': False`` in [sim_params.py](sim_params.py).
 
 To run a simulation, simply use:
 
@@ -39,44 +39,43 @@ The output will be saved in the ``data`` directory.
 Note on parameters
 ##################
 
-By default, the simulation uses external Poissonian input to excite all neuronal populations of the microcircuit, i.e., ``poisson_input': True`` in ``network_params.py``.
+By default, the simulation uses external Poissonian input to excite all neuronal populations of the microcircuit, i.e., ``poisson_input': True`` in [network_params.py](network_params.py).
 If set to ``False``, the Poissonian input is turned off and compensated approximately by calculated direct current (DC) input.
-In addition to this ongoing external drive, a thalamic stimulation or a stimulation by an external DC input can be switched on in ``stimulus_params.py`` (the default for both types of stimuli is ``False``).
+In addition to this ongoing external drive, a thalamic stimulation or a stimulation by an external DC input can be switched on in [stimulus_params.py](stimulus_params.py) (the default for both types of stimuli is ``False``).
 
-The default random initialization of membrane voltages in this simulation uses population-specific means and standard deviations to reduce an initial activity burst in the network: ``'V_type': 'optimized'`` in ``network_params.py``.
+The default random initialization of membrane voltages in this simulation uses population-specific means and standard deviations to reduce an initial activity burst in the network: ``'V_type': 'optimized'`` in [network_params.py](network_params.py).
 Previous implementations used the same mean and standard deviation for all populations, which is here achieved by setting ``'V_type': 'original'``.
 
 Recommendations for benchmarking
 ################################
 
-For benchmark simulations assessing network-construction and state-propagation times, the recommended changes to the default parameters are the following:
+For benchmark simulations assessing network-construction and state-propagation times, some simulation parameters changing is recommented.
+You can update the parameters directly in the [run_benchmark.py](run_benchmark.py) script as follows:
 
-``sim_params_benchmarking.py``:
+.. code-block:: python3
 
-* ``'t_sim': 10000.0``: The biological simulation time should be at least `10` s for measuring the state propagation time.
-* ``'rec_dev': []``: No recording devices.
-* ``'print_time': False'``: No printing of time progress.
+   sim_dict.update({
+    't_presim': 0.1, # presimulation time equal to the duration of a single time step. This is needed to trigger the Calibration phase.
+    't_sim': 10000., # the biological simulation time should be at least `10` s for measuring the state propagation time.
+    'rec_dev': [] # no recording devices.
+   })
 
-``network_params.py``:
-
-* ``'N_scaling': 1.``: Full number of neurons.
-* ``'K_scaling': 1.``: Full indegrees.
+Also network parameters can similarly be updated, as can be seen in [L99](run_benchmark.py#L99).
 
 The benchmarking scripts are adapted from [3]_. See also the `GitHub repository <https://github.com/gmtiddia/ngpu_dynamic_network_creation/tree/main/ngpu_microcircuit>`__ 
 for a detailed description of the simulation files. To run the benchmarking script you should write:
 
 .. code-block:: bash
 
-   python3 run_benchmark.py output_file
+   python3 run_benchmark.py
 
-The outputn file contains, using a JSON file format, simulation information and the values of the Python timers for each simulation task performed. Times are expresses in nanoseconds.
-More simulation options can be seen by typing:
+A JSON file is returned as output, containing simulation information and the values of the Python timers for each simulation task performed. Times are expresses in nanoseconds. More simulation options can be seen by typing:
 
 .. code-block:: bash
 
    python3 run_benchmark.py -h
 
-To perform a set of simulations for benchmarking, we provide as example the script ``run_benchmark.sh``. It performs 10 simulations of the microcircuit
+To perform a set of simulations for benchmarking, we provide as example the script [run_benchmark.sh](run_benchmark.sh). It performs 10 simulations of the microcircuit
 using different seed for random number generation, storing all the data in a folder named ``sim_output``. Run the set of simulations using:
 
 .. code-block:: bash
