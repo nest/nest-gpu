@@ -108,7 +108,7 @@ mpi_np = ngpu.HostNum()
 
 
 params = {
-    'scale': 10.,            # scaling factor of the network size
+    'scale': 1.,             # scaling factor of the network size
                              # total network size = scale*11250 neurons
     'seed': args.seed,       # seed for random number generation
     'simtime': 250.,         # total simulation time in ms
