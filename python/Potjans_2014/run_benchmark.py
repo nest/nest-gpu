@@ -34,7 +34,7 @@ basic plots of the network activity.
 
 from stimulus_params import stim_dict
 from network_params import net_dict
-from sim_params_benchmarking import sim_dict
+from sim_params import sim_dict
 import network
 
 from time import perf_counter_ns
@@ -44,7 +44,7 @@ from json import dump, dumps
 
 # Get and check file path
 parser = ArgumentParser()
-parser.add_argument("file", type=str, help='Output file, in a JSON file format.')
+parser.add_argument("--file", type=str, default="benchmark_log", help='Output file without extention (default: benchmark_log).')
 parser.add_argument("--path", type=str, default=None, help='Path for the simulaiton output. Default indicated in sim_params.py.')
 parser.add_argument("--seed", type=int, default=12345, help='Seed for random number generation (default: 12345).')
 parser.add_argument("--algo", type=int, default=0, help='Algorithm id for nested loop operation (default: 0). See the script for more detail.')
@@ -56,11 +56,10 @@ else:
     data_path = Path(args.path)
     sim_dict["data_path"] = str(data_path) + "/" # Path to str never ends with /
 
+file_name = args.file + ".json"
 file_path = data_path / args.file
 
-print(0 <= args.algo, args.algo < 9, data_path.is_dir(), file_path.exists())
-
-assert 0 <= args.algo and args.algo < 9 and not file_path.exists()
+assert 0 <= args.algo and args.algo < 9
 sim_dict["master_seed"] = args.seed
 
 print(f"Arguments: {args}")
@@ -88,6 +87,20 @@ time_start = perf_counter_ns()
 # be excluded from a time measurement of the state propagation phase. Besides,
 # statistical measures of the spike activity should only be computed after the
 # transient has passed.
+
+
+sim_dict.update({
+    # presimulation of a single timestep to trigger calibration
+    't_presim': 0.1,
+    't_sim': 10000.,
+    'rec_dev': [],
+    'master_seed': args.seed})
+
+net_dict.update({
+    'N_scaling': 1.,
+    'K_scaling': 1.,
+    'poisson_input': True,
+    'V0_type': 'optimized'})
 
 net = network.Network(sim_dict, net_dict, stim_dict)
 net.set_algo(args.algo)
