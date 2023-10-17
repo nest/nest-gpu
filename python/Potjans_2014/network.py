@@ -78,6 +78,16 @@ class Network:
         # initialize NEST GPU
         self.__setup_ngpu()
 
+    def set_algo(self, algo_num: int):
+        """
+        Set Nested Loop algorithm.
+        Does nothing if NEST GPU version < 2.0.
+        """
+        if hasattr(ngpu, "SetNestedLoopAlgo"):
+            ngpu.SetNestedLoopAlgo(algo_num)
+        else:
+            print("Cannot set nested loop algorithm in NEST GPU version < 2.0")
+
     def create(self):
         """ Creates all network nodes.
 

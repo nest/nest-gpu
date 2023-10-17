@@ -52,6 +52,8 @@ time_start = time.time()
 # transient has passed.
 
 net = network.Network(sim_dict, net_dict, stim_dict)
+# set the fastest nested loop algorithm (i.e., BlockStep)
+net.set_algo(0)
 time_network = time.time()
 
 net.create()
