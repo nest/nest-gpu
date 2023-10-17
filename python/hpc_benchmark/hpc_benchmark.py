@@ -102,37 +102,39 @@ ngpu.ConnectMpiInit()
 mpi_id = ngpu.HostId()
 mpi_np = ngpu.HostNum()
 
-def rank_print(message):
-    """Prints message and attaches MPI rank"""
-    print(f"MPI RANK {mpi_id}: {message}")
-
-rank_print("Simulation with {} MPI processes".format(mpi_np))
-
-
 ###############################################################################
 # Parameter section
 # Define all relevant parameters: changes should be made here
 
 
 params = {
-    'scale': 1.,            # scaling factor of the network size
-                            # total network size = scale*11250 neurons
-    'seed': args.seed,          # seed for random number generation
-    'simtime': 250.,        # total simulation time in ms
-    'presimtime': 50.,      # simulation time until reaching equilibrium
-    'dt': 0.1,              # simulation step
-    'stdp': False,          # enable plastic connections [feature not properlyly implemented yet!]
-    'record_spikes': True,  # switch to record spikes of excitatory
-                            # neurons to file
-    'show_plot': False,     # switch to show plot at the end of simulation
-                            # disabled by default for benchmarking
+    'scale': 1.,             # scaling factor of the network size
+                             # total network size = scale*11250 neurons
+    'seed': args.seed,       # seed for random number generation
+    'simtime': 250.,         # total simulation time in ms
+    'presimtime': 50.,       # simulation time until reaching equilibrium
+    'dt': 0.1,               # simulation step
+    'stdp': False,           # enable plastic connections [feature not properlyly implemented yet!]
+    'record_spikes': False,  # switch to record spikes of excitatory
+                             # neurons to file
+    'show_plot': False,      # switch to show plot at the end of simulation
+                             # disabled by default for benchmarking
     'raster_plot': False,    # when record_spikes=True, depicts a raster plot
-    'path_name': args.path,       # path where all files will have to be written
-    'log_file': 'log',      # naming scheme for the log files
+    'path_name': args.path,  # path where all files will have to be written
+    'log_file': 'log',       # naming scheme for the log files
     'use_all_to_all': False, # Connect using all to all rule
-    'check_conns': False,   # Get ConnectionId objects after build. VERY SLOW!
-    'use_dc_input': False,  # Use DC input instead of Poisson generators
+    'check_conns': False,    # Get ConnectionId objects after build. VERY SLOW!
+    'use_dc_input': False,   # Use DC input instead of Poisson generators
+    'verbose_log': False,    # Enable verbose output per MPI process
 }
+
+
+def rank_print(message):
+    """Prints message and attaches MPI rank"""
+    if params['verbose_log']:
+        print(f"MPI RANK {mpi_id}: {message}")
+
+rank_print("Simulation with {} MPI processes".format(mpi_np))
 
 
 def lambertwm1(x):
@@ -312,7 +314,7 @@ def build_network():
         syn_dict_ex = {'weight': JE_pA, 'delay': brunel_params['delay']}
 
     if mpi_id==0:
-        print("Synaptic weights: JE={}; JI={}".format(JE_pA, JE_pA*brunel_params['g']))
+       rank_print("Synaptic weights: JE={}; JI={}".format(JE_pA, JE_pA*brunel_params['g']))
 
     if not params["use_dc_input"]:
         rank_print('Connecting stimulus generators.')
@@ -474,12 +476,12 @@ def run_simulation():
         json.dump(info_dict, f, indent=4)
 
 def my_connect(source, target, conn_dict, syn_dict):
-    print("MY id {} LOCAL Source {} {} | Target {} {}".format(mpi_id, source.i0, source.n, target.i0, target.n))
+    rank_print("MY id {} LOCAL Source {} {} | Target {} {}".format(mpi_id, source.i0, source.n, target.i0, target.n))
     ngpu.Connect(source, target, conn_dict, syn_dict)
 
 
 def my_remoteconnect(source_host, source, target_host, target, conn_dict, syn_dict):
-    print("MY id {} REMOTE Source {} {} {} | Target {} {} {}".format(mpi_id, source_host, source.i0, source.n, target_host, target.i0, target.n))
+    rank_print("MY id {} REMOTE Source {} {} {} | Target {} {} {}".format(mpi_id, source_host, source.i0, source.n, target_host, target.i0, target.n))
     ngpu.RemoteConnect(source_host, source, target_host, target, conn_dict, syn_dict)
 
 
