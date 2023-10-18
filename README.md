@@ -15,7 +15,7 @@ To get started with NEST GPU, please see the [NEST GPU Documentation](https://ne
 NEST GPU is an open source software licensed under the [GNU General Public Lincese version 2](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html).
 
 ## Installing NEST GPU
-To install NEST GPU see the [NEST GPU Installation Intructions](https://nest-gpu.readthedocs.io/en/latest/installation/installation.html) on our Documentation.
+To install NEST GPU see the [NEST GPU Installation Intructions](https://nest-gpu.readthedocs.io/en/latest/installation/index.html) on our Documentation.
 
 ## Citing NEST GPU
 If you use NEST GPU in your work, please cite the publications in our [publication list](https://nest-gpu.readthedocs.io/en/latest/publications.html).
