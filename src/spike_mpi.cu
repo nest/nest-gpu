@@ -426,15 +426,18 @@ int NESTGPU::CopySpikeFromRemote(int n_hosts, int max_spike_per_host)
     gpuErrchk(cudaMemcpyAsync(d_ExternalSourceSpikeCumul,
 			      h_ExternalSourceSpikeCumul,
 			      (n_hosts+1)*sizeof(int), cudaMemcpyHostToDevice));
+    CUDASYNC;
     // copy to GPU memory packed spikes from remote MPI proc
     gpuErrchk(cudaMemcpyAsync(d_ExternalSourceSpikeNodeId,
 			      h_ExternalSourceSpikeNodeId,
 			      n_spike_tot*sizeof(int), cudaMemcpyHostToDevice));
+    CUDASYNC;
     RecvSpikeFromRemote_CUDAcp_time_ += (getRealTime() - time_mark);
     // convert node map indexes to spike buffer indexes
     MapIndexToSpikeBufferKernel<<<n_hosts, 1024>>>(n_hosts,
 						   d_ExternalSourceSpikeCumul,
 						   d_ExternalSourceSpikeNodeId);
+    CUDASYNC;
     // convert node group indexes to spike buffer indexes
     // by adding the index of the first node of the node group  
     //AddOffset<<<(n_spike_tot+1023)/1024, 1024>>>
@@ -444,7 +447,8 @@ int NESTGPU::CopySpikeFromRemote(int n_hosts, int max_spike_per_host)
     // push remote spikes in local spike buffers
     PushSpikeFromRemote<<<(n_spike_tot+1023)/1024, 1024>>>
       (n_spike_tot, d_ExternalSourceSpikeNodeId);
-    gpuErrchk( cudaPeekAtLastError() );
+    CUDASYNC;
+    //gpuErrchk( cudaPeekAtLastError() );
     //cudaDeviceSynchronize();
   }
   

@@ -185,7 +185,7 @@ NESTGPU::NESTGPU()
   sim_time_ = 1000.0;        //Simulation time in ms
   //n_poiss_nodes_ = 0;
   n_remote_nodes_.assign(1, 0);
-  n_ext_nodes_ = 0;
+  n_image_nodes_ = 0;
   SetTimeResolution(0.1);  // time resolution in ms
   max_spike_num_fact_ = 1.0;
   max_spike_per_host_fact_ = 1.0;
@@ -390,31 +390,45 @@ int NESTGPU::GetMaxSpikeBufferSize()
   return max_spike_buffer_size_;
 }
 
-uint NESTGPU::GetNNode()
+uint NESTGPU::GetNLocalNodes()
 {
   return node_group_map_.size();
 }
 
-int NESTGPU::CreateNodeGroup(int n_node, int n_port)
+int NESTGPU::CheckImageNodes(int n_nodes)
 {
-  int i_node_0 = GetNNode();
-  int max_n_neurons = IntPow(2,h_MaxNodeNBits);
+  int i_node_0 = GetNLocalNodes();
+  int max_n_nodes = IntPow(2,h_MaxNodeNBits);
+  
+  if ((i_node_0 + n_nodes) > max_n_nodes) {
+    throw ngpu_exception(std::string("Local plus Image nodes exceed maximum"
+				     " number of nodes ")
+			 + std::to_string(max_n_nodes));
+  }
+  
+  return i_node_0;
+}
+
+int NESTGPU::CreateNodeGroup(int n_nodes, int n_ports)
+{
+  int i_node_0 = GetNLocalNodes();
+  int max_n_nodes = IntPow(2,h_MaxNodeNBits);
   int max_n_ports = IntPow(2,h_MaxPortNBits);
   
-  if ((i_node_0 + n_node) > max_n_neurons) {
-    throw ngpu_exception(std::string("Maximum number of neurons ")
-			 + std::to_string(max_n_neurons) + " exceeded");
+  if ((i_node_0 + n_nodes) > max_n_nodes) {
+    throw ngpu_exception(std::string("Maximum number of nodes ")
+			 + std::to_string(max_n_nodes) + " exceeded");
   }
-  if (n_port > max_n_ports) {
+  if (n_ports > max_n_ports) {
     throw ngpu_exception(std::string("Maximum number of ports ")
 			 + std::to_string(max_n_ports) + " exceeded");
   }
   int i_group = node_vect_.size() - 1;
-  node_group_map_.insert(node_group_map_.end(), n_node, i_group);
+  node_group_map_.insert(node_group_map_.end(), n_nodes, i_group);
 
   node_vect_[i_group]->random_generator_ = random_generator_;
-  node_vect_[i_group]->Init(i_node_0, n_node, n_port, i_group);
-  node_vect_[i_group]->get_spike_array_ = InitGetSpikeArray(n_node, n_port);
+  node_vect_[i_group]->Init(i_node_0, n_nodes, n_ports, i_group);
+  node_vect_[i_group]->get_spike_array_ = InitGetSpikeArray(n_nodes, n_ports);
   
   return i_node_0;
 }
@@ -439,17 +453,20 @@ int NESTGPU::Calibrate()
   gpuErrchk(cudaMemcpyToSymbol(NESTGPUTimeResolution, &time_resolution_,
 			       sizeof(float)));
 ///////////////////////////////////
-  i_ext_node_0_ = GetNNode();
-  // std::cout << "i_ext_node_0_: " << i_ext_node_0_ << " n_ext_nodes_: "
-  // << n_ext_nodes_ << "\n";
-  if (n_ext_nodes_ > 0) {
-    _Create("ext_neuron", n_ext_nodes_, 1);
+  int n_nodes = GetNLocalNodes();
+  gpuErrchk(cudaMemcpyToSymbol(n_local_nodes, &n_nodes,
+			       sizeof(int)));
+
+  // std::cout << "n_local_nodes: " << n_nodes << " n_image_nodes_: "
+  // << n_image_nodes_ << "\n";
+  if (n_image_nodes_ > 0) {
+    CheckImageNodes(n_image_nodes_);
     addOffsetToExternalNodeIds();
   }
   
   calibrate_flag_ = true;
   
-  organizeConnections(time_resolution_, GetNNode(),
+  organizeConnections(time_resolution_, GetTotalNNodes(),
 		      NConn, h_ConnBlockSize,
 		      KeySubarray, ConnectionSubarray);
   
@@ -459,7 +476,7 @@ int NESTGPU::Calibrate()
 
   int max_delay_num = h_MaxDelayNum;
   
-  unsigned int n_spike_buffers = GetNNode();
+  unsigned int n_spike_buffers = GetTotalNNodes();
   NestedLoop::Init(n_spike_buffers);
 		   
   // temporary
@@ -472,17 +489,17 @@ int NESTGPU::Calibrate()
   NodeGroupArrayInit();
   
   max_spike_num_ = (int)round(max_spike_num_fact_
-			      * GetNNode()
+			      * GetTotalNNodes()
 			      * max_delay_num);
   max_spike_num_ = (max_spike_num_>1) ? max_spike_num_ : 1;
 
   max_spike_per_host_ = (int)round(max_spike_per_host_fact_
-				   * GetNNode()
+				   * GetNLocalNodes()
 				   * max_delay_num);
   max_spike_per_host_ = (max_spike_per_host_>1) ? max_spike_per_host_ : 1;
   
   SpikeInit(max_spike_num_);
-  SpikeBufferInit(GetNNode(), max_spike_buffer_size_);
+  SpikeBufferInit(GetTotalNNodes(), max_spike_buffer_size_);
 
   //#ifndef CHECKRC
   if (n_hosts_ > 1) {
@@ -577,7 +594,7 @@ int NESTGPU::Calibrate()
   //#endif
 
   if (rev_conn_flag_) {
-    RevSpikeInit(GetNNode());
+    RevSpikeInit(GetNLocalNodes());
   }
  
   multimeter_->OpenFiles();
@@ -706,7 +723,7 @@ int NESTGPU::SimulationStep()
   double time_mark;
 
   time_mark = getRealTime();
-  SpikeBufferUpdate<<<(GetNNode()+1023)/1024, 1024>>>();
+  SpikeBufferUpdate<<<(GetTotalNNodes()+1023)/1024, 1024>>>();
   gpuErrchk( cudaPeekAtLastError() );
   SpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   time_mark = getRealTime();
@@ -744,7 +761,8 @@ int NESTGPU::SimulationStep()
     if (n_ext_spike != 0) {
       time_mark = getRealTime();
       SendExternalSpike<<<(n_ext_spike+1023)/1024, 1024>>>();
-      gpuErrchk( cudaPeekAtLastError() );
+      //gpuErrchk( cudaPeekAtLastError() );
+      CUDASYNC;
       SendExternalSpike_time_ += (getRealTime() - time_mark);
     }
     //for (int ih=0; ih<connect_mpi_->mpi_np_; ih++) {
@@ -752,15 +770,18 @@ int NESTGPU::SimulationStep()
 
     time_mark = getRealTime();
     SendSpikeToRemote(n_hosts_, max_spike_per_host_);
+    CUDASYNC;
     SendSpikeToRemote_time_ += (getRealTime() - time_mark);
     time_mark = getRealTime();
     RecvSpikeFromRemote(n_hosts_, max_spike_per_host_);
-				      
+    CUDASYNC;			      
     RecvSpikeFromRemote_time_ += (getRealTime() - time_mark);
     CopySpikeFromRemote(n_hosts_, max_spike_per_host_);
+    CUDASYNC;
     MPI_Barrier(MPI_COMM_WORLD);
  
   }
+  CUDASYNC;
   
   int n_spikes;
   time_mark = getRealTime();
@@ -824,7 +845,8 @@ int NESTGPU::SimulationStep()
     //time_mark = getRealTime();
     RevSpikeReset<<<1, 1>>>();
     gpuErrchk( cudaPeekAtLastError() );
-    RevSpikeBufferUpdate<<<(GetNNode()+1023)/1024, 1024>>>(GetNNode());
+    RevSpikeBufferUpdate<<<(GetNLocalNodes()+1023)/1024, 1024>>>
+      (GetNLocalNodes());
     gpuErrchk( cudaPeekAtLastError() );
     unsigned int n_rev_spikes;
     gpuErrchk(cudaMemcpy(&n_rev_spikes, d_RevSpikeNum, sizeof(unsigned int),
@@ -1624,11 +1646,12 @@ int64_t *NESTGPU::GetConnections(int i_source, int n_source,
 {
   if (n_source<=0) {
     i_source = 0;
-    n_source = GetNNode();
+    // gets also connections from image neurons
+    n_source = GetTotalNNodes();
   }
   if (n_target<=0) {
     i_target = 0;
-    n_target = GetNNode();
+    n_target = GetNLocalNodes();
   }
   int *i_source_pt = new int[n_source];
   for (int i=0; i<n_source; i++) {
@@ -1654,7 +1677,7 @@ int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
 {
   if (n_target<=0) {
     i_target = 0;
-    n_target = GetNNode();
+    n_target = GetNLocalNodes();
   }
   int *i_target_pt = new int[n_target];
   for (int i=0; i<n_target; i++) {
@@ -1676,7 +1699,8 @@ int64_t *NESTGPU::GetConnections(int i_source, int n_source,
 {
   if (n_source<=0) {
     i_source = 0;
-    n_source = GetNNode();
+    //  gets also connections from image neurons
+    n_source = GetTotalNNodes();
   }
   int *i_source_pt = new int[n_source];
   for (int i=0; i<n_source; i++) {

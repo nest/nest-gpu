@@ -63,6 +63,8 @@ __device__ long long *LastRevSpikeTimeIdx; //
 unsigned short *d_ConnectionSpikeTime; // [NConnection];
 __device__ unsigned short *ConnectionSpikeTime; //
 
+extern __constant__ int n_local_nodes;
+
 //////////////////////////////////////////////////////////////////////
 
 int *d_SpikeBufferSize; // [NSpikeBuffer];
@@ -101,60 +103,59 @@ __device__ float *SpikeBufferHeight; // [NSpikeBuffer*MaxSpikeBufferNum];
 ////////////////////////////////////////////////////////////
 __device__ void PushSpike(int i_spike_buffer, float height)
 {
-  LastSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx;
-  LastSpikeHeight[i_spike_buffer] = height;
-  int i_group = NodeGroupMap[i_spike_buffer];
-  int den_delay_idx;
-  float *den_delay_arr = NodeGroupArray[i_group].den_delay_arr_;
-  // check if node has dendritic delay
-  if (den_delay_arr != NULL) {
-    int i_neuron = i_spike_buffer - NodeGroupArray[i_group].i_node_0_;
-    int n_param = NodeGroupArray[i_group].n_param_;
-    // dendritic delay index is stored in the parameter array
-    // den_delay_arr points to the dendritic delay if the first
-    // node of the group. The other are separate by steps = n_param
-    den_delay_idx = (int)round(den_delay_arr[i_neuron*n_param]
-			       /NESTGPUTimeResolution);
-    //printf("isb %d\tden_delay_idx: %d\n", i_spike_buffer, den_delay_idx);
-  }
-  else {
-    den_delay_idx = 0;
-  }
-  // printf("Node %d spikes at time %lld , den_delay_idx: %d\n",
-  //	 i_spike_buffer, NESTGPUTimeIdx, den_delay_idx); 
-  if (den_delay_idx==0) {
-    // last time when spike is sent back to dendrites (e.g. for STDP)
-    LastRevSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx;
-  }
-
-  if (ExternalSpikeFlag) {
-    // if active spike should eventually be sent to remote connections
-    //printf("PushExternalSpike i_spike_buffer: %d height: %f\n",
-    //	   i_spike_buffer, height);
-    PushExternalSpike(i_spike_buffer, height);
-  }
-  
-  // if recording  spike counts is activated, increase counter
-  if (NodeGroupArray[i_group].spike_count_ != NULL) {
-    int i_node_0 = NodeGroupArray[i_group].i_node_0_;
-    NodeGroupArray[i_group].spike_count_[i_spike_buffer-i_node_0]++;
-  }
-
-  // check if recording spike times is activated
-  int max_n_rec_spike_times = NodeGroupArray[i_group].max_n_rec_spike_times_;
-  if (max_n_rec_spike_times != 0) {
-    int i_node_rel = i_spike_buffer - NodeGroupArray[i_group].i_node_0_;
-    int n_rec_spike_times =
-      NodeGroupArray[i_group].n_rec_spike_times_[i_node_rel];
-    if (n_rec_spike_times>=max_n_rec_spike_times-1) {
-      printf("Maximum number of recorded spike times exceeded"
-	     " for spike buffer %d\n", i_spike_buffer);
+  int den_delay_idx = 0;
+  if (i_spike_buffer<n_local_nodes) {
+    LastSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx;
+    LastSpikeHeight[i_spike_buffer] = height;
+    int i_group = NodeGroupMap[i_spike_buffer];
+    float *den_delay_arr = NodeGroupArray[i_group].den_delay_arr_;
+    // check if node has dendritic delay
+    if (den_delay_arr != NULL) {
+      int i_neuron = i_spike_buffer - NodeGroupArray[i_group].i_node_0_;
+      int n_param = NodeGroupArray[i_group].n_param_;
+      // dendritic delay index is stored in the parameter array
+      // den_delay_arr points to the dendritic delay if the first
+      // node of the group. The other are separate by steps = n_param
+      den_delay_idx = (int)round(den_delay_arr[i_neuron*n_param]
+				 /NESTGPUTimeResolution);
+      //printf("isb %d\tden_delay_idx: %d\n", i_spike_buffer, den_delay_idx);
     }
-    else { // record spike time
-      NodeGroupArray[i_group].rec_spike_times_
-	[i_node_rel*max_n_rec_spike_times + n_rec_spike_times]
-	= NESTGPUTime;
-      NodeGroupArray[i_group].n_rec_spike_times_[i_node_rel]++;
+    // printf("Node %d spikes at time %lld , den_delay_idx: %d\n",
+    //	 i_spike_buffer, NESTGPUTimeIdx, den_delay_idx); 
+    if (den_delay_idx==0) {
+      // last time when spike is sent back to dendrites (e.g. for STDP)
+      LastRevSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx;
+    }
+    
+    if (ExternalSpikeFlag) {
+      // if active spike should eventually be sent to remote connections
+      //printf("PushExternalSpike i_spike_buffer: %d height: %f\n",
+      //	   i_spike_buffer, height);
+      PushExternalSpike(i_spike_buffer, height);
+    }
+    
+    // if recording  spike counts is activated, increase counter
+    if (NodeGroupArray[i_group].spike_count_ != NULL) {
+      int i_node_0 = NodeGroupArray[i_group].i_node_0_;
+      NodeGroupArray[i_group].spike_count_[i_spike_buffer-i_node_0]++;
+    }
+    
+    // check if recording spike times is activated
+    int max_n_rec_spike_times = NodeGroupArray[i_group].max_n_rec_spike_times_;
+    if (max_n_rec_spike_times != 0) {
+      int i_node_rel = i_spike_buffer - NodeGroupArray[i_group].i_node_0_;
+      int n_rec_spike_times =
+	NodeGroupArray[i_group].n_rec_spike_times_[i_node_rel];
+      if (n_rec_spike_times>=max_n_rec_spike_times-1) {
+	printf("Maximum number of recorded spike times exceeded"
+	       " for spike buffer %d\n", i_spike_buffer);
+      }
+      else { // record spike time
+	NodeGroupArray[i_group].rec_spike_times_
+	  [i_node_rel*max_n_rec_spike_times + n_rec_spike_times]
+	  = NESTGPUTime;
+	NodeGroupArray[i_group].n_rec_spike_times_[i_node_rel]++;
+      }
     }
   }
 
@@ -192,23 +193,22 @@ __global__ void SpikeBufferUpdate()
 {
   int i_spike_buffer = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_spike_buffer>=NSpikeBuffer) return;
-  
-  int i_group=NodeGroupMap[i_spike_buffer];
-  int den_delay_idx;
-  float *den_delay_arr = NodeGroupArray[i_group].den_delay_arr_;
-  // check if node has dendritic delay
-  if (den_delay_arr != NULL) {
-    int i_neuron = i_spike_buffer - NodeGroupArray[i_group].i_node_0_;
-    int n_param = NodeGroupArray[i_group].n_param_;
-    // dendritic delay index is stored in the parameter array
-    // den_delay_arr points to the dendritic delay if the first
-    // node of the group. The other are separate by steps = n_param
-    den_delay_idx = (int)round(den_delay_arr[i_neuron*n_param]
-			       /NESTGPUTimeResolution);
-    //printf("isb update %d\tden_delay_idx: %d\n", i_spike_buffer, den_delay_idx);
-  }
-  else {
-    den_delay_idx = 0;
+
+  int den_delay_idx = 0;
+  if (i_spike_buffer<n_local_nodes) {
+    int i_group=NodeGroupMap[i_spike_buffer];
+    float *den_delay_arr = NodeGroupArray[i_group].den_delay_arr_;
+    // check if node has dendritic delay
+    if (den_delay_arr != NULL) {
+      int i_neuron = i_spike_buffer - NodeGroupArray[i_group].i_node_0_;
+      int n_param = NodeGroupArray[i_group].n_param_;
+      // dendritic delay index is stored in the parameter array
+      // den_delay_arr points to the dendritic delay if the first
+      // node of the group. The other are separate by steps = n_param
+      den_delay_idx = (int)round(den_delay_arr[i_neuron*n_param]
+				 /NESTGPUTimeResolution);
+      //printf("isb update %d\tden_delay_idx: %d\n", i_spike_buffer, den_delay_idx);
+    }
   }
   // flag for sending spikes back through dendrites (e.g. for STDP)
   bool rev_spike = false;
@@ -230,13 +230,12 @@ __global__ void SpikeBufferUpdate()
     //int ig = ConnGroupIdx0[i_spike_buffer] + i_conn;
     // if spike time matches connection group delay deliver it
     // to global spike array
-
-
+    
     uint conn_group_i0 = ConnGroupIdx0[i_spike_buffer];
     uint conn_group_num = ConnGroupIdx0[i_spike_buffer+1] - conn_group_i0;
     int ig = conn_group_i0 + i_conn;
     
-
+    
     if (i_conn<conn_group_num) {
 #ifdef OPTIMIZE_FOR_MEMORY
       int64_t conn_group_i_conn0 = ConnGroupIConn0[ig];
@@ -275,7 +274,7 @@ __global__ void SpikeBufferUpdate()
       // increase time index
     }
   }
-
+    
   if (rev_spike) {
     LastRevSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx+1;
   }
