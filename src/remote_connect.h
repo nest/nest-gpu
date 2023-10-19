@@ -54,6 +54,8 @@ extern int **d_node_target_host_i_map; // [i_node]
 // - false otherwise (fixed_indegree, fixed_total_number, pairwise_bernoulli)
 extern bool *use_all_source_nodes; // [n_connection_rules]:
 
+extern __constant__ int n_local_nodes; // number of local nodes
+
 // device function that checks if an int value is in a sorted 2d-array 
 // assuming that the entries in the 2d-array are sorted.
 // The 2d-array is divided in noncontiguous blocks of size block_size
@@ -284,7 +286,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   // n_nodes will be the first index for new mapping of remote source nodes
   // to local spike buffers
   //int spike_buffer_map_i0 = GetNNode();
-  int spike_buffer_map_i0 = n_ext_nodes_;
+  int spike_buffer_map_i0 = n_image_nodes_;
   syn_spec.port_ = syn_spec.port_ | (1 << (h_MaxPortNBits-1));
     
   // check if the flag UseAllSourceNodes[conn_rule] is false
@@ -774,12 +776,12 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   fixConnectionSourceNodeIndexes(KeySubarray, old_n_conn, NConn,
 				 h_ConnBlockSize, d_local_node_index);
 
-  // On target host. Create n_nodes_to_map nodes of type ext_neuron
+  // On target host. Create n_nodes_to_map nodes of type image_node
   //std::cout << "h_n_node_to_map " << h_n_node_to_map <<"\n";
   if (h_n_node_to_map > 0) {
-    //_Create("ext_neuron", h_n_node_to_map);
-    n_ext_nodes_ += h_n_node_to_map;
-    //std::cout << "n_ext_nodes_ " << n_ext_nodes_ <<"\n";
+    //_Create("image_node", h_n_node_to_map);
+    n_image_nodes_ += h_n_node_to_map;
+    //std::cout << "n_image_nodes_ " << n_image_nodes_ <<"\n";
   }
   
   return 0;

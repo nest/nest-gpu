@@ -148,9 +148,10 @@ class NESTGPU
   long long Nt_; // number of simulation time steps
   //int n_poiss_nodes_;
   std::vector<int> n_remote_nodes_;
-  int n_ext_nodes_;
-  int i_ext_node_0_;
+  //int n_ext_nodes_;
+  //int i_ext_node_0_;
   //int i_remote_node_0_;
+  int n_image_nodes_;
 
   double start_real_time_;
   double build_real_time_;
@@ -177,13 +178,14 @@ class NESTGPU
   int InitConnRandomGenerator();
   int FreeConnRandomGenerator();
 
-  int CreateNodeGroup(int n_neuron, int n_port);
+  int CreateNodeGroup(int n_nodes, int n_ports);
   int CheckUncalibrated(std::string message);
-  double *InitGetSpikeArray(int n_node, int n_port);
+  double *InitGetSpikeArray(int n_nodes, int n_ports);
   int NodeGroupArrayInit();
   int ClearGetSpikeArrays();
   int FreeGetSpikeArrays();
   int FreeNodeGroupMap();
+  int CheckImageNodes(int n_nodes);
 
   NodeSeq _Create(std::string model_name, int n_nodes, int n_ports);
   
@@ -300,7 +302,9 @@ class NESTGPU
   int SetMaxSpikeBufferSize(int max_size);
   int GetMaxSpikeBufferSize();
   
-  uint GetNNode();
+  uint GetNLocalNodes();
+  
+  uint GetTotalNNodes() { return GetNLocalNodes() + n_image_nodes_; }
 
   int HostNum() {
     return n_hosts_;
