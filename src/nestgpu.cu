@@ -765,7 +765,7 @@ int NESTGPU::SimulationStep()
       time_mark = getRealTime();
       SendExternalSpike<<<(n_ext_spike+1023)/1024, 1024>>>();
       //gpuErrchk( cudaPeekAtLastError() );
-      CUDASYNC;
+      DBGCUDASYNC;
       SendExternalSpike_time_ += (getRealTime() - time_mark);
     }
     //for (int ih=0; ih<connect_mpi_->mpi_np_; ih++) {
@@ -773,18 +773,16 @@ int NESTGPU::SimulationStep()
 
     time_mark = getRealTime();
     SendSpikeToRemote(n_hosts_, max_spike_per_host_);
-    CUDASYNC;
+
     SendSpikeToRemote_time_ += (getRealTime() - time_mark);
     time_mark = getRealTime();
     RecvSpikeFromRemote(n_hosts_, max_spike_per_host_);
-    CUDASYNC;			      
     RecvSpikeFromRemote_time_ += (getRealTime() - time_mark);
     CopySpikeFromRemote(n_hosts_, max_spike_per_host_);
-    CUDASYNC;
+
     MPI_Barrier(MPI_COMM_WORLD);
  
   }
-  CUDASYNC;
   
   int n_spikes;
   time_mark = getRealTime();
