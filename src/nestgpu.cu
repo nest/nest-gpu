@@ -452,6 +452,9 @@ int NESTGPU::Calibrate()
   
   gpuErrchk(cudaMemcpyToSymbol(NESTGPUTimeResolution, &time_resolution_,
 			       sizeof(float)));
+
+  gpuErrchk(cudaMemcpyToSymbol(have_remote_spike_height, &remote_spike_height_,
+			       sizeof(bool)));
 ///////////////////////////////////
   int n_nodes = GetNLocalNodes();
   gpuErrchk(cudaMemcpyToSymbol(n_local_nodes, &n_nodes,

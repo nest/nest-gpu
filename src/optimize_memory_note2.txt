@@ -1,0 +1,24 @@
+in spike_mpi.cu
+put an
+#ifdef HAVE_REMOTE_SPIKE_HEIGHT
+for sections using height for remote spikes, and leave a
+//#define HAVE_REMOTE_SPIKE_HEIGHT
+commented at the beginning.
+
+The kernel
+__global__ void SendExternalSpike()
+should be copied/pasted in two kernels:
+1) the first for counting spikes per remote target host;
+2) The second for filling the array
+replace the internal loop with the approach proposed by Partick Atkins(on?)
+
+
+after counting (1) use the prefix scan
+(as in JoinSpikes line 492 to evaluate the first index of each target host in the 1D array. Maybe rename d_ExternalTargetSpikeCumul to
+d_ExternalTargetSpikeIdx0
+
+ExternalTargetSpikeNodeIdJoin should replace ExternalTargetSpikeNodeId,
+which therefore becomes a compact 1D array rather than a 2D array with empty spaces in the rowe
+
+In the calibration size ExternalTargetSpikeNodeId properly
+(maybe using maximum average rate?)

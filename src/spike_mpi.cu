@@ -20,6 +20,7 @@
  *
  */
 
+__constant__ bool have_remote_spike_height;
 
 #include <config.h>
 
@@ -135,6 +136,19 @@ __device__ void PushExternalSpike(int i_source, float height)
   ExternalSpikeHeight[pos] = height;
 }
 
+// Push in a dedicated array the spikes that must be sent externally
+// (version without spike height)
+__device__ void PushExternalSpike(int i_source)
+{
+  int pos = atomicAdd(ExternalSpikeNum, 1);
+  if (pos>=MaxSpikePerHost) {
+    printf("Number of spikes larger than MaxSpikePerHost: %d\n", MaxSpikePerHost);
+    *ExternalSpikeNum = MaxSpikePerHost;
+    return;
+  }
+  ExternalSpikeSourceNode[pos] = i_source;
+}
+
 // Properly organize the spikes that must be sent externally
 __global__ void SendExternalSpike()
 {
@@ -143,8 +157,6 @@ __global__ void SendExternalSpike()
     //printf("ExternalSpikeNum: %d\ti_spike: %d\n", *ExternalSpikeNum, i_spike);
     int i_source = ExternalSpikeSourceNode[i_spike];
     //printf("i_source: %d\n", i_source);
-    float height = ExternalSpikeHeight[i_spike];
-    //printf("height: %f\n", height);
     int Nth = NExternalNodeTargetHost[i_source];
     //printf("Nth: %d\n", Nth);
     
@@ -159,9 +171,13 @@ __global__ void SendExternalSpike()
       ExternalTargetSpikeNodeId[target_host_id*MaxSpikePerHost + pos]
 	= remote_node_id;
       //printf("ExternalTargetSpikeNodeId assigned\n");
-      ExternalTargetSpikeHeight[target_host_id*MaxSpikePerHost + pos]
-	= height;
-      //printf("ExternalTargetSpikeHeight assigned\n");
+      if (have_remote_spike_height) {
+	    float height = ExternalSpikeHeight[i_spike];
+	    //printf("height: %f\n", height);
+	    ExternalTargetSpikeHeight[target_host_id*MaxSpikePerHost + pos]
+	      = height;
+	    //printf("ExternalTargetSpikeHeight assigned\n");
+      }
     }
   }
 }
@@ -196,28 +212,31 @@ int NESTGPU::ExternalSpikeInit(int n_hosts, int max_spike_per_host)
   h_ExternalTargetSpikeNodeId = new int[n_hosts*(max_spike_per_host + 1)];
   h_ExternalSourceSpikeNodeId = new int[n_hosts*(max_spike_per_host + 1)];
 
-  h_ExternalSpikeHeight = new float[max_spike_per_host];
-
+  
   recv_mpi_request = new MPI_Request[n_hosts];
  
   CUDAMALLOCCTRL("&d_ExternalSpikeNum",&d_ExternalSpikeNum, sizeof(int));
   CUDAMALLOCCTRL("&d_ExternalSpikeSourceNode",&d_ExternalSpikeSourceNode,
 		       max_spike_per_host*sizeof(int));
-  CUDAMALLOCCTRL("&d_ExternalSpikeHeight",&d_ExternalSpikeHeight, max_spike_per_host*sizeof(int));
+  
+  if (remote_spike_height_) {
+    h_ExternalSpikeHeight = new float[max_spike_per_host];
+    CUDAMALLOCCTRL("&d_ExternalSpikeHeight",&d_ExternalSpikeHeight, max_spike_per_host*sizeof(float));
+    CUDAMALLOCCTRL("&d_ExternalTargetSpikeHeight",&d_ExternalTargetSpikeHeight,
+		   n_hosts*max_spike_per_host*sizeof(float));
+    CUDAMALLOCCTRL("&d_ExternalSourceSpikeHeight",&d_ExternalSourceSpikeHeight, n_hosts*
+		   max_spike_per_host*sizeof(float));
+  }
+  
   CUDAMALLOCCTRL("&d_ExternalTargetSpikeNum",&d_ExternalTargetSpikeNum, n_hosts*sizeof(int));
 
   //printf("n_hosts, max_spike_per_host: %d %d\n", n_hosts, max_spike_per_host);
 
   CUDAMALLOCCTRL("&d_ExternalTargetSpikeNodeId",&d_ExternalTargetSpikeNodeId,
 		       n_hosts*max_spike_per_host*sizeof(int));
-  CUDAMALLOCCTRL("&d_ExternalTargetSpikeHeight",&d_ExternalTargetSpikeHeight,
-		       n_hosts*max_spike_per_host*sizeof(float));
   //CUDAMALLOCCTRL("&d_ExternalSourceSpikeNum",&d_ExternalSourceSpikeNum, n_hosts*sizeof(int));
   CUDAMALLOCCTRL("&d_ExternalSourceSpikeNodeId",&d_ExternalSourceSpikeNodeId, n_hosts*
 		       max_spike_per_host*sizeof(int));
-  CUDAMALLOCCTRL("&d_ExternalSourceSpikeHeight",&d_ExternalSourceSpikeHeight, n_hosts*
-		       max_spike_per_host*sizeof(float));
-
   CUDAMALLOCCTRL("&d_ExternalTargetSpikeNodeIdJoin",&d_ExternalTargetSpikeNodeIdJoin,
 		       n_hosts*max_spike_per_host*sizeof(int));
   CUDAMALLOCCTRL("&d_ExternalTargetSpikeCumul",&d_ExternalTargetSpikeCumul, (n_hosts+1)*sizeof(int));
@@ -260,17 +279,30 @@ int NESTGPU::ExternalSpikeInit(int n_hosts, int max_spike_per_host)
   */
   //std::cout << "DeviceExternalSpikeInit\n";
   //std::cout << "init d_n_target_hosts: " << d_n_target_hosts << "\n";
-  DeviceExternalSpikeInit<<<1,1>>>(n_hosts, max_spike_per_host,
-				   d_ExternalSpikeNum,
-				   d_ExternalSpikeSourceNode,
-				   d_ExternalSpikeHeight,
-				   d_ExternalTargetSpikeNum,
-				   d_ExternalTargetSpikeNodeId,
-				   d_ExternalTargetSpikeHeight,
-				   d_n_target_hosts,
-				   d_node_target_hosts,
-				   d_node_target_host_i_map
-				   );
+  if (remote_spike_height_) {
+    DeviceExternalSpikeInit<<<1,1>>>(n_hosts, max_spike_per_host,
+				     d_ExternalSpikeNum,
+				     d_ExternalSpikeSourceNode,
+				     d_ExternalSpikeHeight,
+				     d_ExternalTargetSpikeNum,
+				     d_ExternalTargetSpikeNodeId,
+				     d_ExternalTargetSpikeHeight,
+				     d_n_target_hosts,
+				     d_node_target_hosts,
+				     d_node_target_host_i_map
+				     );
+  }
+  else {
+    DeviceExternalSpikeInit<<<1,1>>>(n_hosts, max_spike_per_host,
+				     d_ExternalSpikeNum,
+				     d_ExternalSpikeSourceNode,
+				     d_ExternalTargetSpikeNum,
+				     d_ExternalTargetSpikeNodeId,
+				     d_n_target_hosts,
+				     d_node_target_hosts,
+				     d_node_target_host_i_map
+				     );  
+  }
   //delete[] h_NExternalNodeTargetHost;
   //delete[] h_ExternalNodeTargetHostId;
   //delete[] h_ExternalNodeId;
@@ -301,6 +333,37 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
   ExternalTargetSpikeNum = ext_target_spike_num;
   ExternalTargetSpikeNodeId = ext_target_spike_node_id;
   ExternalTargetSpikeHeight = ext_target_spike_height;
+  NExternalNodeTargetHost = n_ext_node_target_host;
+  ExternalNodeTargetHostId = ext_node_target_host_id;
+  ExternalNodeId = ext_node_id;
+  *ExternalSpikeNum = 0;
+  for (int ith=0; ith<NExternalTargetHost; ith++) {
+    ExternalTargetSpikeNum[ith] = 0;
+  }  
+}
+
+// initialize external spike array pointers in the GPU
+// (version without spike height)
+__global__ void DeviceExternalSpikeInit(int n_hosts,
+					int max_spike_per_host,
+					int *ext_spike_num,
+					int *ext_spike_source_node,
+					int *ext_target_spike_num,
+					int *ext_target_spike_node_id,
+					int *n_ext_node_target_host,
+					int **ext_node_target_host_id,
+					int **ext_node_id
+					)
+  
+{
+  NExternalTargetHost = n_hosts;
+  MaxSpikePerHost =  max_spike_per_host;
+  ExternalSpikeNum = ext_spike_num;
+  ExternalSpikeSourceNode = ext_spike_source_node;
+  ExternalSpikeHeight = NULL;
+  ExternalTargetSpikeNum = ext_target_spike_num;
+  ExternalTargetSpikeNodeId = ext_target_spike_node_id;
+  ExternalTargetSpikeHeight = NULL;
   NExternalNodeTargetHost = n_ext_node_target_host;
   ExternalNodeTargetHostId = ext_node_target_host_id;
   ExternalNodeId = ext_node_id;

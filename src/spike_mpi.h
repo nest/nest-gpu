@@ -27,6 +27,8 @@
 #ifndef SPIKEMPI_H
 #define SPIKEMPI_H
 
+extern __constant__ bool have_remote_spike_height;
+
 __global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id,
                                     float *spike_height);
 
@@ -78,6 +80,8 @@ extern __device__ float *ExternalSourceSpikeHeight;
 
 __device__ void PushExternalSpike(int i_source, float height);
 
+__device__ void PushExternalSpike(int i_source);
+
 __global__ void SendExternalSpike();
 
 __global__ void ExternalSpikeReset();
@@ -90,6 +94,17 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
 					int *ext_target_spike_num,
 					int *ext_target_spike_node_id,
                                         float *ext_target_spike_height,
+					int *n_ext_node_target_host,
+					int **ext_node_target_host_id,
+					int **ext_node_id
+					);
+
+__global__ void DeviceExternalSpikeInit(int n_hosts,
+					int max_spike_per_host,
+		      			int *ext_spike_num,
+					int *ext_spike_source_node,
+					int *ext_target_spike_num,
+					int *ext_target_spike_node_id,
 					int *n_ext_node_target_host,
 					int **ext_node_target_host_id,
 					int **ext_node_id
