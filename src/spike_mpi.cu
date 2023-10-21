@@ -152,7 +152,7 @@ __device__ void PushExternalSpike(int i_source)
 // Properly organize the spikes that must be sent externally
 __global__ void SendExternalSpike()
 {
-  int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
+  const int i_spike = blockIdx.x;
   if (i_spike < *ExternalSpikeNum) {
     //printf("ExternalSpikeNum: %d\ti_spike: %d\n", *ExternalSpikeNum, i_spike);
     int i_source = ExternalSpikeSourceNode[i_spike];
@@ -160,7 +160,7 @@ __global__ void SendExternalSpike()
     int Nth = NExternalNodeTargetHost[i_source];
     //printf("Nth: %d\n", Nth);
     
-    for (int ith=0; ith<Nth; ith++) {
+    for (int ith=threadIdx.x; ith<Nth; ith+=blockDim.x){
       //printf("ith: %d\n", ith);
       int target_host_id = ExternalNodeTargetHostId[i_source][ith];
       //printf("target_host_id: %d\n", target_host_id);

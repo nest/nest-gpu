@@ -763,7 +763,8 @@ int NESTGPU::SimulationStep()
 
     if (n_ext_spike != 0) {
       time_mark = getRealTime();
-      SendExternalSpike<<<(n_ext_spike+1023)/1024, 1024>>>();
+      //SendExternalSpike<<<(n_ext_spike+1023)/1024, 1024>>>();
+      SendExternalSpike<<<n_ext_spike, 1024>>>();
       //gpuErrchk( cudaPeekAtLastError() );
       DBGCUDASYNC;
       SendExternalSpike_time_ += (getRealTime() - time_mark);
