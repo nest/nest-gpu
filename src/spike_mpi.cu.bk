@@ -111,7 +111,6 @@ __device__ float *ExternalSourceSpikeHeight;
 
 int *d_ExternalTargetSpikeIdx0;
 __device__ int *ExternalTargetSpikeIdx0;
-int *h_ExternalTargetSpikeIdx0;
 
 int *d_ExternalTargetSpikeCumul;
 int *d_ExternalTargetSpikeNodeIdJoin;
@@ -198,15 +197,11 @@ __global__ void organizeExternalSpikesPerTargetHost()
       int remote_node_id = ExternalNodeId[i_source][ith];
       //printf("remote_node_id: %d\n", remote_node_id);
       int pos = atomicAdd(&ExternalTargetSpikeNum[target_host_id], 1);
-      //printf("pos: %d\n", pos);
       int i_arr = ExternalTargetSpikeIdx0[target_host_id] + pos;
       NewExternalTargetSpikeNodeId[i_arr] = remote_node_id;
-      if (have_remote_spike_height) {
-	float height = ExternalSpikeHeight[i_spike];
-	//printf("height: %f\n", height);
-	ExternalTargetSpikeHeight[i_arr] = height;
-	//printf("ExternalTargetSpikeHeight assigned\n");
-      }
+      //if (have_remote_spike_height) {
+      //}
+      //printf("pos: %d\n", pos);
     }
   }
 }
@@ -273,8 +268,7 @@ int NESTGPU::ExternalSpikeInit(int n_hosts, int max_spike_per_host)
   //int *h_NExternalNodeTargetHost = new int[n_node];
   //int **h_ExternalNodeTargetHostId = new int*[n_node];
   //int **h_ExternalNodeId = new int*[n_node];
-
-  h_ExternalTargetSpikeIdx0 = new int[n_hosts+1];
+  
   //h_ExternalSpikeNodeId = new int[max_spike_per_host];
   h_ExternalTargetSpikeNum = new int [n_hosts];
   h_ExternalTargetSpikeCumul = new int[n_hosts+1];
@@ -465,7 +459,7 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
 
 
 // Send spikes to remote MPI processes
-int NESTGPU::SendSpikeToRemote(int n_ext_spikes)
+int NESTGPU::SendSpikeToRemote(int n_hosts, int max_spike_per_host)
 {
   MPI_Request request;
   int mpi_id, tag = 1; // id is already in the class, can be removed
@@ -473,48 +467,35 @@ int NESTGPU::SendSpikeToRemote(int n_ext_spikes)
 
   double time_mark = getRealTime();
   gpuErrchk(cudaMemcpy(h_ExternalTargetSpikeNum, d_ExternalTargetSpikeNum,
-		       n_hosts_*sizeof(int), cudaMemcpyDeviceToHost));
+		       n_hosts*sizeof(int), cudaMemcpyDeviceToHost));
   SendSpikeToRemote_CUDAcp_time_ += (getRealTime() - time_mark);
-  
+
+  // pack the spikes in GPU memory and copy them to CPU
+  int n_spike_tot = JoinSpikes(n_hosts, max_spike_per_host);
+
   time_mark = getRealTime();
-  int n_spike_tot = 0;
   // copy spikes from GPU to CPU memory
-  if (n_ext_spikes > 0) {
-    gpuErrchk(cudaMemcpy(&n_spike_tot, d_ExternalTargetSpikeIdx0 + n_hosts_,
-			 sizeof(int), cudaMemcpyDeviceToHost));
-    gpuErrchk(cudaMemcpy(h_ExternalTargetSpikeNodeId,
-			 d_NewExternalTargetSpikeNodeId,
-			 n_spike_tot*sizeof(int),
-			 cudaMemcpyDeviceToHost));
-    gpuErrchk(cudaMemcpy(h_ExternalTargetSpikeIdx0,
-			 d_ExternalTargetSpikeIdx0,
-			 (n_hosts_ + 1)*sizeof(int),
-			 cudaMemcpyDeviceToHost));
-  }
-  else {
-    for (int i=0; i<n_hosts_+1; i++) {
-      h_ExternalTargetSpikeIdx0[i] = 0;
-    }
-  }
-  
+  gpuErrchk(cudaMemcpy(h_ExternalTargetSpikeNodeId,
+		       d_NewExternalTargetSpikeNodeId, // d_ExternalTargetSpikeNodeIdJoin,
+		       n_spike_tot*sizeof(int),
+		       cudaMemcpyDeviceToHost));
   SendSpikeToRemote_CUDAcp_time_ += (getRealTime() - time_mark);
   time_mark = getRealTime();
 
   // loop on remote MPI proc
-  for (int ih=0; ih<n_hosts_; ih++) {
+  for (int ih=0; ih<n_hosts; ih++) {
     if (ih == mpi_id) { // skip self MPI proc
       continue;
     }
     // get index and size of spike packet that must be sent to MPI proc ih
     // array_idx is the first index of the packet for host ih
-    int array_idx = h_ExternalTargetSpikeIdx0[ih];
-    int n_spikes = h_ExternalTargetSpikeIdx0[ih+1] - array_idx;
+    int array_idx = h_ExternalTargetSpikeCumul[ih];
+    int n_spikes = h_ExternalTargetSpikeCumul[ih+1] - array_idx;
     //printf("MPI_Send (src,tgt,nspike): %d %d %d\n", mpi_id, ih, n_spike);
     
     // nonblocking sent of spike packet to MPI proc ih
     MPI_Isend(&h_ExternalTargetSpikeNodeId[array_idx],
 	      n_spikes, MPI_INT, ih, tag, MPI_COMM_WORLD, &request);
-    
     //printf("MPI_Send nspikes (src,tgt,nspike): "
     //	   "%d %d %d\n", mpi_id, ih, n_spikes);
     //printf("MPI_Send 1st-neuron-idx (src,tgt,idx): "

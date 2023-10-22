@@ -11,7 +11,27 @@ after counting (1) use the prefix scan
 d_ExternalTargetSpikeIdx0
 
 ExternalTargetSpikeNodeIdJoin should replace ExternalTargetSpikeNodeId,
-which therefore becomes a compact 1D array rather than a 2D array with empty spaces in the rowe
+which therefore becomes a compact 1D array rather than a 2D array with empty spaces in the rows
 
 In the calibration size ExternalTargetSpikeNodeId properly
 (maybe using maximum average rate?)
+
+remove d_ExternalTargetSpikeCumul, h_ExternalTargetSpikeCumul
+now NewExternalTargetSpikeNodeId
+must be sized properly and replace ExternalTargetSpikeNodeId
+
+remove ExternalTargetSpikeNodeIdJoin
+
+in kernel __global__ void organizeExternalSpikesPerTargetHost()
+fix section:
+      //if (have_remote_spike_height) {
+      //}
+maybe something like:
+ExternalTargetSpikeHeight[i_arr] = height;
+
+
+in kernel externaspikerese
+replace loop with cuda threads
+
+find a more efficient solution for resetting h_ExternalTargetSpikeIdx0
+elements when n_ext_spikes is zero in SendSpikeToRemote

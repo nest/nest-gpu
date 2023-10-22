@@ -796,7 +796,7 @@ class NESTGPU
 
   int JoinSpikes(int n_hosts, int max_spike_per_host);
 
-  int SendSpikeToRemote(int n_hosts, int max_spike_per_host);
+  int SendSpikeToRemote(int n_ext_spikes);
 
   int RecvSpikeFromRemote(int n_hosts, int max_spike_per_host);
 

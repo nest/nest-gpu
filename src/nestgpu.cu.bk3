@@ -766,30 +766,85 @@ int NESTGPU::SimulationStep()
     copy_ext_spike_time_ += (getRealTime() - time_mark);
 
     if (n_ext_spikes != 0) {
+      // TEMPORARY !!!!!!!!!!!
+      int h_external_target_spike_num_new[n_hosts_];
+      int h_external_target_spike_num_old[n_hosts_];
+      //////////////////////////////////////
+      
       time_mark = getRealTime();
       countExternalSpikesPerTargetHost<<<n_ext_spikes, 1024>>>();
       CUDASYNC;
+      gpuErrchk(cudaMemcpy(h_external_target_spike_num_new,
+			   d_ExternalTargetSpikeNum, n_hosts_*sizeof(int),
+			   cudaMemcpyDeviceToHost));
+      
       prefix_scan(d_ExternalTargetSpikeIdx0, d_ExternalTargetSpikeNum,
 		  n_hosts_+1, true);
-      DBGCUDASYNC;
+      CUDASYNC;
       TmpExternalSpikeReset<<<1, 1>>>();
       CUDASYNC;
       organizeExternalSpikesPerTargetHost<<<n_ext_spikes, 1024>>>();
       CUDASYNC;
       
       // TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      //TmpExternalSpikeReset<<<1, 1>>>();
+      TmpExternalSpikeReset<<<1, 1>>>();
       //SendExternalSpike<<<(n_ext_spikes+1023)/1024, 1024>>>();
-      //SendExternalSpike<<<n_ext_spikes, 1024>>>();
-      //CUDASYNC;
+      SendExternalSpike<<<n_ext_spikes, 1024>>>();
+      CUDASYNC;
+      ////// TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!
+      gpuErrchk(cudaMemcpy(h_external_target_spike_num_old,
+			   d_ExternalTargetSpikeNum, n_hosts_*sizeof(int),
+			   cudaMemcpyDeviceToHost));
+
+      std::cout << HostIdStr() << "Comparing ExternalTargetSpikeNum new "
+	"and ExternalTargetSpikeNum old\n";
+      for (int i=0; i<n_hosts_; i++) {
+	if (h_external_target_spike_num_new[i]
+	    !=h_external_target_spike_num_old[i]) {
+	  std::cout << HostIdStr() << " Error1. i_host: " << i << " " <<
+	    h_external_target_spike_num_new[i] << " " <<
+	    h_external_target_spike_num_old[i] << "\n";
+	  exit(0);
+	}
+      }
+      std::cout << HostIdStr() << "OK1\n";
+
+      //gpuErrchk( cudaPeekAtLastError() );
       ///////////////////////////////////////////////////////////
+      
+      DBGCUDASYNC;
       SendExternalSpike_time_ += (getRealTime() - time_mark);
     }
     //for (int ih=0; ih<connect_mpi_->mpi_np_; ih++) {
     //if (ih == connect_mpi_->mpi_id_) {
 
     time_mark = getRealTime();
-    SendSpikeToRemote(n_ext_spikes);
+    SendSpikeToRemote(n_ext_spikes, max_spike_per_host_);
+
+    //// TEMPORARY
+    if (n_ext_spikes != 0) {
+      int h_external_target_spike_idx0[n_hosts_+1];
+      int h_external_target_spike_cumul[n_hosts_+1];
+      
+      gpuErrchk(cudaMemcpy(h_external_target_spike_idx0,
+			   d_ExternalTargetSpikeIdx0, (n_hosts_+1)*sizeof(int),
+			   cudaMemcpyDeviceToHost));
+      gpuErrchk(cudaMemcpy(h_external_target_spike_cumul,
+			   d_ExternalTargetSpikeCumul, (n_hosts_+1)*sizeof(int),
+			   cudaMemcpyDeviceToHost));
+      std::cout << HostIdStr() << "Comparing ExternalTargetSpikeIdx0 "
+	"and ExternalTargetSpikeCumul\n";
+      for (int i=0; i<n_hosts_+1; i++) {
+	if (h_external_target_spike_idx0[i]!=h_external_target_spike_cumul[i]) {
+	  std::cout << HostIdStr() << " Error2. i_host: " << i << " " <<
+	    h_external_target_spike_idx0[i] << " " <<
+	    h_external_target_spike_cumul[i] << "\n";
+	  exit(0);
+	}
+      }
+      std::cout << HostIdStr() << "OK2\n";
+    }
+    //////////////////////////////////////////////////////////////////////
     
     SendSpikeToRemote_time_ += (getRealTime() - time_mark);
     time_mark = getRealTime();
