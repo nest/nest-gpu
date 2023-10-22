@@ -259,8 +259,8 @@ class NESTGPU
   double SpikeReset_time_;
   double ExternalSpikeReset_time_;
 
-  double SendSpikeToRemote_MPI_time_;
-  double RecvSpikeFromRemote_MPI_time_;
+  double SendSpikeToRemote_comm_time_;
+  double RecvSpikeFromRemote_comm_time_;
   double SendSpikeToRemote_CUDAcp_time_;
   double RecvSpikeFromRemote_CUDAcp_time_;
   

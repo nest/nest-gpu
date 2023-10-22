@@ -32,7 +32,6 @@
 #include <string>
 #include <algorithm>
 #include <curand.h>
-#include <mpi.h>
 
 #include "distribution.h"
 #include "syn_model.h"
@@ -40,7 +39,6 @@
 #include "cuda_error.h"
 #include "send_spike.h"
 #include "get_spike.h"
-#include "connect_mpi.h"
 
 #include "spike_generator.h"
 #include "multimeter.h"
@@ -49,7 +47,7 @@
 #include "nestgpu.h"
 #include "nested_loop.h"
 #include "rev_spike.h"
-#include "spike_mpi.h"
+#include "remote_spike.h"
 #include "connect.h"
 #include "poiss_gen.h"
 
@@ -707,10 +705,10 @@ int NESTGPU::EndSimulation()
   }
 
   if (n_hosts_>1 && verbosity_level_>=4) {
-    std::cout << HostIdStr() << "  SendSpikeToRemote_MPI_time: " <<
-      SendSpikeToRemote_MPI_time_ << "\n";
-    std::cout << HostIdStr() << "  RecvSpikeFromRemote_MPI_time: " <<
-      RecvSpikeFromRemote_MPI_time_ << "\n";
+    std::cout << HostIdStr() << "  SendSpikeToRemote_comm_time: " <<
+      SendSpikeToRemote_comm_time_ << "\n";
+    std::cout << HostIdStr() << "  RecvSpikeFromRemote_comm_time: " <<
+      RecvSpikeFromRemote_comm_time_ << "\n";
     std::cout << HostIdStr() << "  SendSpikeToRemote_CUDAcp_time: " <<
       SendSpikeToRemote_CUDAcp_time_  << "\n";
     std::cout << HostIdStr() << "  RecvSpikeFromRemote_CUDAcp_time: " <<
@@ -776,9 +774,6 @@ int NESTGPU::SimulationStep()
       organizeExternalSpikes(n_ext_spikes);
       organizeExternalSpike_time_ += (getRealTime() - time_mark);
     }
-    //for (int ih=0; ih<connect_mpi_->mpi_np_; ih++) {
-    //if (ih == connect_mpi_->mpi_id_) {
-
     time_mark = getRealTime();
     SendSpikeToRemote(n_ext_spikes);
     
@@ -787,9 +782,6 @@ int NESTGPU::SimulationStep()
     RecvSpikeFromRemote();
     RecvSpikeFromRemote_time_ += (getRealTime() - time_mark);
     CopySpikeFromRemote();
-
-    MPI_Barrier(MPI_COMM_WORLD);
- 
   }
   
   int n_spikes;
@@ -1414,23 +1406,6 @@ float *NESTGPU::GetArrayVar(int i_node, std::string var_name)
 
   return node_vect_[i_group]->GetArrayVar(i_neuron, var_name);
 }
-
-/*
-int NESTGPU::ConnectMpiInit(int argc, char *argv[])
-{
-#ifdef HAVE_MPI
-  CheckUncalibrated("MPI connections cannot be initialized after calibration");
-  int err = ConnectMpi::MpiInit(argc, argv);
-  if (err==0) {
-    mpi_flag_ = true;
-  }
-  
-  return err;
-#else
-  throw ngpu_exception("MPI is not available in your build");
-#endif
-}
-*/
 
 std::string NESTGPU::HostIdStr()
 {
@@ -2202,22 +2177,22 @@ RemoteNodeSeq NESTGPU::RemoteCreate(int i_host, std::string model_name,
     create_flag_ = true;
     start_real_time_ = getRealTime();
   }
-#ifdef HAVE_MPI
-  if (i_host<0 || i_host>=n_hosts_) {
-    throw ngpu_exception("Invalid host index in RemoteCreate");
-  }
-  NodeSeq node_seq(n_remote_nodes_[i_host], n_nodes);
-  n_remote_nodes_[i_host] += n_nodes;
-  if (i_host == this_host_) {
-    NodeSeq check_node_seq = _Create(model_name, n_nodes, n_ports);
-    if (check_node_seq.i0 != node_seq.i0) {
-      throw ngpu_exception("Inconsistency in number of nodes in local"
-			   " and remote representation of the host.");
+  if (n_hosts_ > 1) {
+    if (i_host<0 || i_host>=n_hosts_) {
+      throw ngpu_exception("Invalid host index in RemoteCreate");
     }
+    NodeSeq node_seq(n_remote_nodes_[i_host], n_nodes);
+    n_remote_nodes_[i_host] += n_nodes;
+    if (i_host == this_host_) {
+      NodeSeq check_node_seq = _Create(model_name, n_nodes, n_ports);
+      if (check_node_seq.i0 != node_seq.i0) {
+	throw ngpu_exception("Inconsistency in number of nodes in local"
+			     " and remote representation of the host.");
+      }
+    }
+    return RemoteNodeSeq(i_host, node_seq);
   }
-  //MPI_Bcast(&node_seq, sizeof(NodeSeq), MPI_BYTE, i_host, MPI_COMM_WORLD);
-  return RemoteNodeSeq(i_host, node_seq);
-#else
-  throw ngpu_exception("MPI is not available in your build");
-#endif
+  else {
+    throw ngpu_exception("RemoteCreate requires at least two hosts");
+  }
 }

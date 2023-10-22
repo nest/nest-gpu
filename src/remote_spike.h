@@ -1,5 +1,5 @@
 /*
- *  spike_mpi.h
+ *  remote_spike.h
  *
  *  This file is part of NEST GPU.
  *
@@ -24,8 +24,8 @@
 
 
 
-#ifndef SPIKEMPI_H
-#define SPIKEMPI_H
+#ifndef REMOTE_SPIKE_H
+#define REMOTE_SPIKE_H
 
 extern __constant__ bool have_remote_spike_height;
 
@@ -33,11 +33,6 @@ __global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id,
                                     float *spike_height);
 
 __global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id);
-
-
-#ifdef HAVE_MPI
-
-extern __constant__ bool NESTGPUMpiFlag;
 
 extern __device__ int NExternalTargetHost;
 extern __device__ int MaxSpikePerHost;
@@ -80,6 +75,19 @@ extern __device__ float *ExternalSourceSpikeHeight;
 
 extern int *d_ExternalTargetSpikeIdx0;
 extern __device__ int *ExternalTargetSpikeIdx0;
+extern int *h_ExternalTargetSpikeIdx0;
+
+extern int *d_ExternalSourceSpikeIdx0;
+
+extern int *h_ExternalTargetSpikeNum;
+extern int *h_ExternalSourceSpikeNum;
+extern int *h_ExternalSourceSpikeIdx0;
+extern int *h_ExternalTargetSpikeNodeId;
+extern int *h_ExternalSourceSpikeNodeId;
+
+//extern int *h_ExternalSpikeNodeId;
+
+extern float *h_ExternalSpikeHeight;
 
 __device__ void PushExternalSpike(int i_source, float height);
 
@@ -115,5 +123,6 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
 					int **ext_node_id
 					);
 
+
 #endif
-#endif
+

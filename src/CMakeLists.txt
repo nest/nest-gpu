@@ -88,7 +88,8 @@ send_spike.h
 spike_buffer.h
 spike_detector.h
 spike_generator.h
-spike_mpi.h
+remote_spike.h
+mpi_comm.h
 stdp.h
 syn_model.h
 test_syn_model.h
@@ -144,7 +145,8 @@ send_spike.cu
 spike_buffer.cu
 spike_detector.cu
 spike_generator.cu
-spike_mpi.cu
+remote_spike.cu
+mpi_comm.cu
 stdp.cu
 syn_model.cu
 test_syn_model.cu

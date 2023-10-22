@@ -33,7 +33,7 @@
 #include "send_spike.h"
 #include "node_group.h"
 #include "connect.h"
-#include "spike_mpi.h"
+#include "remote_spike.h"
 
 #define LAST_SPIKE_TIME_GUARD 0x70000000
 
