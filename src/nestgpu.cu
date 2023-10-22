@@ -69,6 +69,7 @@ enum KernelFloatParamIndexes {
   i_time_resolution = 0,
   i_max_spike_num_fact,
   i_max_spike_per_host_fact,
+  i_max_remote_spike_num_fact,
   N_KERNEL_FLOAT_PARAM
 };
 
@@ -88,7 +89,8 @@ enum KernelBoolParamIndexes {
 const std::string kernel_float_param_name[N_KERNEL_FLOAT_PARAM] = {
   "time_resolution",
   "max_spike_num_fact",
-  "max_spike_per_host_fact"
+  "max_spike_per_host_fact",
+  "max_remote_spike_num_fact"
 };
 
 const std::string kernel_int_param_name[N_KERNEL_INT_PARAM] = {
@@ -193,6 +195,7 @@ NESTGPU::NESTGPU()
   SetTimeResolution(0.1);  // time resolution in ms
   max_spike_num_fact_ = 1.0;
   max_spike_per_host_fact_ = 1.0;
+  max_remote_spike_num_fact_ = 1.0;
   setMaxNodeNBits(20); // maximum number of nodes is 2^20
 
   error_flag_ = false;
@@ -316,7 +319,7 @@ NESTGPU::NESTGPU()
   poisson_generator_time_ = 0;
   neuron_Update_time_ = 0;
   copy_ext_spike_time_ = 0;
-  SendExternalSpike_time_ = 0;
+  organizeExternalSpike_time_ = 0;
   SendSpikeToRemote_time_ = 0;
   RecvSpikeFromRemote_time_ = 0;
   NestedLoop_time_ = 0;
@@ -504,6 +507,11 @@ int NESTGPU::Calibrate()
 				   * GetNLocalNodes()
 				   * max_delay_num);
   max_spike_per_host_ = (max_spike_per_host_>1) ? max_spike_per_host_ : 1;
+
+  max_remote_spike_num_ = max_spike_per_host_ * n_hosts_
+    * max_remote_spike_num_fact_;
+  max_remote_spike_num_ = (max_remote_spike_num_>1)
+    ? max_remote_spike_num_ : 1;
   
   SpikeInit(max_spike_num_);
   SpikeBufferInit(GetTotalNNodes(), max_spike_buffer_size_);
@@ -596,7 +604,7 @@ int NESTGPU::Calibrate()
     ////////////////////////////////////////
 #endif
 
-    ExternalSpikeInit(n_hosts_, max_spike_per_host_);
+    ExternalSpikeInit();
   }
   //#endif
 
@@ -682,8 +690,8 @@ int NESTGPU::EndSimulation()
       neuron_Update_time_ << "\n";
     std::cout << HostIdStr() << "  copy_ext_spike_time: " <<
       copy_ext_spike_time_ << "\n";
-    std::cout << HostIdStr() << "  SendExternalSpike_time: " <<
-      SendExternalSpike_time_ << "\n";
+    std::cout << HostIdStr() << "  organizeExternalSpike_time: " <<
+      organizeExternalSpike_time_ << "\n";
     std::cout << HostIdStr() << "  SendSpikeToRemote_time: " <<
       SendSpikeToRemote_time_ << "\n";
     std::cout << HostIdStr() << "  RecvSpikeFromRemote_time: " <<
@@ -707,8 +715,6 @@ int NESTGPU::EndSimulation()
       SendSpikeToRemote_CUDAcp_time_  << "\n";
     std::cout << HostIdStr() << "  RecvSpikeFromRemote_CUDAcp_time: " <<
       RecvSpikeFromRemote_CUDAcp_time_  << "\n";
-    std::cout << HostIdStr() << "  JoinSpike_time: " <<
-      JoinSpike_time_  << "\n";
   }
   
   if (verbosity_level_>=1) {
@@ -767,23 +773,8 @@ int NESTGPU::SimulationStep()
 
     if (n_ext_spikes != 0) {
       time_mark = getRealTime();
-      countExternalSpikesPerTargetHost<<<n_ext_spikes, 1024>>>();
-      CUDASYNC;
-      prefix_scan(d_ExternalTargetSpikeIdx0, d_ExternalTargetSpikeNum,
-		  n_hosts_+1, true);
-      DBGCUDASYNC;
-      TmpExternalSpikeReset<<<1, 1>>>();
-      CUDASYNC;
-      organizeExternalSpikesPerTargetHost<<<n_ext_spikes, 1024>>>();
-      CUDASYNC;
-      
-      // TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      //TmpExternalSpikeReset<<<1, 1>>>();
-      //SendExternalSpike<<<(n_ext_spikes+1023)/1024, 1024>>>();
-      //SendExternalSpike<<<n_ext_spikes, 1024>>>();
-      //CUDASYNC;
-      ///////////////////////////////////////////////////////////
-      SendExternalSpike_time_ += (getRealTime() - time_mark);
+      organizeExternalSpikes(n_ext_spikes);
+      organizeExternalSpike_time_ += (getRealTime() - time_mark);
     }
     //for (int ih=0; ih<connect_mpi_->mpi_np_; ih++) {
     //if (ih == connect_mpi_->mpi_id_) {
@@ -793,9 +784,9 @@ int NESTGPU::SimulationStep()
     
     SendSpikeToRemote_time_ += (getRealTime() - time_mark);
     time_mark = getRealTime();
-    RecvSpikeFromRemote(n_hosts_, max_spike_per_host_);
+    RecvSpikeFromRemote();
     RecvSpikeFromRemote_time_ += (getRealTime() - time_mark);
-    CopySpikeFromRemote(n_hosts_, max_spike_per_host_);
+    CopySpikeFromRemote();
 
     MPI_Barrier(MPI_COMM_WORLD);
  
@@ -854,8 +845,7 @@ int NESTGPU::SimulationStep()
 
   if (n_hosts_>1) {
     time_mark = getRealTime();
-    ExternalSpikeReset<<<1, 1>>>();
-    gpuErrchk( cudaPeekAtLastError() );
+    ExternalSpikeReset();
     ExternalSpikeReset_time_ += (getRealTime() - time_mark);
   }
 
@@ -2079,6 +2069,8 @@ float NESTGPU::GetFloatParam(std::string param_name)
     return max_spike_num_fact_;
   case i_max_spike_per_host_fact:
     return max_spike_per_host_fact_;
+  case i_max_remote_spike_num_fact:
+    return max_remote_spike_num_fact_;
   default:
     throw ngpu_exception(std::string("Unrecognized kernel float parameter ")
 			 + param_name);
@@ -2098,6 +2090,9 @@ int NESTGPU::SetFloatParam(std::string param_name, float val)
     break;
   case i_max_spike_per_host_fact:
     max_spike_per_host_fact_ = val;
+    break;
+  case i_max_remote_spike_num_fact:
+    max_remote_spike_num_fact_ = val;
     break;
   default:
     throw ngpu_exception(std::string("Unrecognized kernel float parameter ")

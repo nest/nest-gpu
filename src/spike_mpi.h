@@ -54,9 +54,6 @@ extern __device__ float *ExternalSpikeHeight;
 extern int *d_ExternalTargetSpikeNum;
 extern __device__ int *ExternalTargetSpikeNum;
 
-extern int *d_NewExternalTargetSpikeNodeId;
-extern __device__ int *NewExternalTargetSpikeNodeId;
-
 extern int *d_ExternalTargetSpikeNodeId;
 extern __device__ int *ExternalTargetSpikeNodeId;
 
@@ -84,22 +81,13 @@ extern __device__ float *ExternalSourceSpikeHeight;
 extern int *d_ExternalTargetSpikeIdx0;
 extern __device__ int *ExternalTargetSpikeIdx0;
 
-extern int *d_ExternalTargetSpikeCumul;
-
 __device__ void PushExternalSpike(int i_source, float height);
 
 __device__ void PushExternalSpike(int i_source);
 
-__global__ void SendExternalSpike();
-
 __global__ void countExternalSpikesPerTargetHost();
 
 __global__ void organizeExternalSpikesPerTargetHost();
-
-__global__ void ExternalSpikeReset();
-
-// TEMPORARY!!!!!!!!!!
-__global__ void TmpExternalSpikeReset();
 
 __global__ void DeviceExternalSpikeInit(int n_hosts,
 					int max_spike_per_host,
@@ -109,7 +97,6 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
 					int *ext_target_spike_num,
 					int *ext_target_spike_idx0,
 					int *ext_target_spike_node_id,
-					int *new_ext_target_spike_node_id,
                                         float *ext_target_spike_height,
 					int *n_ext_node_target_host,
 					int **ext_node_target_host_id,
@@ -123,7 +110,6 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
 					int *ext_target_spike_num,
 					int *ext_target_spike_idx0,
 					int *ext_target_spike_node_id,
-					int *new_ext_target_spike_node_id,
 					int *n_ext_node_target_host,
 					int **ext_node_target_host_id,
 					int **ext_node_id

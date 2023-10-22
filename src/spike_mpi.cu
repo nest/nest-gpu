@@ -82,9 +82,6 @@ __device__ float *ExternalSpikeHeight;
 int *d_ExternalTargetSpikeNum;
 __device__ int *ExternalTargetSpikeNum;
 
-int *d_NewExternalTargetSpikeNodeId;
-__device__ int *NewExternalTargetSpikeNodeId;
-
 int *d_ExternalTargetSpikeNodeId;
 __device__ int *ExternalTargetSpikeNodeId;
 
@@ -113,14 +110,11 @@ int *d_ExternalTargetSpikeIdx0;
 __device__ int *ExternalTargetSpikeIdx0;
 int *h_ExternalTargetSpikeIdx0;
 
-int *d_ExternalTargetSpikeCumul;
-int *d_ExternalTargetSpikeNodeIdJoin;
-int *d_ExternalSourceSpikeCumul;
+int *d_ExternalSourceSpikeIdx0;
 
 int *h_ExternalTargetSpikeNum;
-int *h_ExternalTargetSpikeCumul;
 int *h_ExternalSourceSpikeNum;
-int *h_ExternalSourceSpikeCumul;
+int *h_ExternalSourceSpikeIdx0;
 int *h_ExternalTargetSpikeNodeId;
 int *h_ExternalSourceSpikeNodeId;
 
@@ -200,7 +194,7 @@ __global__ void organizeExternalSpikesPerTargetHost()
       int pos = atomicAdd(&ExternalTargetSpikeNum[target_host_id], 1);
       //printf("pos: %d\n", pos);
       int i_arr = ExternalTargetSpikeIdx0[target_host_id] + pos;
-      NewExternalTargetSpikeNodeId[i_arr] = remote_node_id;
+      ExternalTargetSpikeNodeId[i_arr] = remote_node_id;
       if (have_remote_spike_height) {
 	float height = ExternalSpikeHeight[i_spike];
 	//printf("height: %f\n", height);
@@ -211,161 +205,84 @@ __global__ void organizeExternalSpikesPerTargetHost()
   }
 }
 
-// Properly organize the spikes that must be sent externally
-__global__ void SendExternalSpike()
-{
-  const int i_spike = blockIdx.x;
-  if (i_spike < *ExternalSpikeNum) {
-    //printf("ExternalSpikeNum: %d\ti_spike: %d\n", *ExternalSpikeNum, i_spike);
-    int i_source = ExternalSpikeSourceNode[i_spike];
-    //printf("i_source: %d\n", i_source);
-    int Nth = NExternalNodeTargetHost[i_source];
-    //printf("Nth: %d\n", Nth);
-    
-    for (int ith=threadIdx.x; ith<Nth; ith+=blockDim.x){
-      //printf("ith: %d\n", ith);
-      int target_host_id = ExternalNodeTargetHostId[i_source][ith];
-      //printf("target_host_id: %d\n", target_host_id);
-      int remote_node_id = ExternalNodeId[i_source][ith];
-      //printf("remote_node_id: %d\n", remote_node_id);
-      int pos = atomicAdd(&ExternalTargetSpikeNum[target_host_id], 1);
-      //printf("pos: %d\n", pos);
-      ExternalTargetSpikeNodeId[target_host_id*MaxSpikePerHost + pos]
-	= remote_node_id;
-      //printf("ExternalTargetSpikeNodeId assigned\n");
-      if (have_remote_spike_height) {
-	    float height = ExternalSpikeHeight[i_spike];
-	    //printf("height: %f\n", height);
-	    ExternalTargetSpikeHeight[target_host_id*MaxSpikePerHost + pos]
-	      = height;
-	    //printf("ExternalTargetSpikeHeight assigned\n");
-      }
-    }
-  }
-}
-
 // reset external spike counters
-__global__ void ExternalSpikeReset()
+int NESTGPU::ExternalSpikeReset()
 {
-  *ExternalSpikeNum = 0;
-  for (int ith=0; ith<NExternalTargetHost; ith++) {
-    ExternalTargetSpikeNum[ith] = 0;
-  }
-}
-
-// TEMPORARY !!!!!!!!!!!!!!!!!reset external spike counters
-__global__ void TmpExternalSpikeReset()
-{
-  for (int ith=0; ith<NExternalTargetHost; ith++) {
-    ExternalTargetSpikeNum[ith] = 0;
-  }
+  gpuErrchk(cudaMemset(d_ExternalSpikeNum, 0, sizeof(int)));
+  gpuErrchk(cudaMemset(d_ExternalTargetSpikeNum, 0, n_hosts_*sizeof(int)));
+  
+  return 0;
 }
 
 // initialize external spike arrays
-int NESTGPU::ExternalSpikeInit(int n_hosts, int max_spike_per_host)
+int NESTGPU::ExternalSpikeInit()
 {
   SendSpikeToRemote_MPI_time_ = 0;
   RecvSpikeFromRemote_MPI_time_ = 0;
   SendSpikeToRemote_CUDAcp_time_ = 0;
   RecvSpikeFromRemote_CUDAcp_time_ = 0;
-  JoinSpike_time_ = 0;
 
   //int *h_NExternalNodeTargetHost = new int[n_node];
   //int **h_ExternalNodeTargetHostId = new int*[n_node];
   //int **h_ExternalNodeId = new int*[n_node];
 
-  h_ExternalTargetSpikeIdx0 = new int[n_hosts+1];
-  //h_ExternalSpikeNodeId = new int[max_spike_per_host];
-  h_ExternalTargetSpikeNum = new int [n_hosts];
-  h_ExternalTargetSpikeCumul = new int[n_hosts+1];
-  h_ExternalSourceSpikeNum = new int[n_hosts];
-  h_ExternalSourceSpikeCumul = new int[n_hosts+1];
-  h_ExternalTargetSpikeNodeId = new int[n_hosts*(max_spike_per_host + 1)];
-  h_ExternalSourceSpikeNodeId = new int[n_hosts*(max_spike_per_host + 1)];
+  h_ExternalTargetSpikeIdx0 = new int[n_hosts_+1];
+  //h_ExternalSpikeNodeId = new int[max_spike_per_host_];
+  h_ExternalTargetSpikeNum = new int [n_hosts_];
+  h_ExternalSourceSpikeNum = new int[n_hosts_];
+  h_ExternalSourceSpikeIdx0 = new int[n_hosts_ + 1];
+  h_ExternalTargetSpikeNodeId = new int[max_remote_spike_num_];
+  h_ExternalSourceSpikeNodeId = new int[max_remote_spike_num_];
 
-  
-  recv_mpi_request = new MPI_Request[n_hosts];
+  recv_mpi_request = new MPI_Request[n_hosts_];
  
   CUDAMALLOCCTRL("&d_ExternalSpikeNum",&d_ExternalSpikeNum, sizeof(int));
   CUDAMALLOCCTRL("&d_ExternalSpikeSourceNode",&d_ExternalSpikeSourceNode,
-		       max_spike_per_host*sizeof(int));
+		       max_spike_per_host_*sizeof(int));
   
   if (remote_spike_height_) {
-    h_ExternalSpikeHeight = new float[max_spike_per_host];
-    CUDAMALLOCCTRL("&d_ExternalSpikeHeight",&d_ExternalSpikeHeight, max_spike_per_host*sizeof(float));
+    h_ExternalSpikeHeight = new float[max_spike_per_host_];
+    CUDAMALLOCCTRL("&d_ExternalSpikeHeight",&d_ExternalSpikeHeight,
+		   max_spike_per_host_*sizeof(float));
     CUDAMALLOCCTRL("&d_ExternalTargetSpikeHeight",&d_ExternalTargetSpikeHeight,
-		   n_hosts*max_spike_per_host*sizeof(float));
-    CUDAMALLOCCTRL("&d_ExternalSourceSpikeHeight",&d_ExternalSourceSpikeHeight, n_hosts*
-		   max_spike_per_host*sizeof(float));
+		   max_remote_spike_num_*sizeof(float));
+    CUDAMALLOCCTRL("&d_ExternalSourceSpikeHeight",&d_ExternalSourceSpikeHeight,
+		   max_remote_spike_num_*sizeof(float));
   }
   
-  CUDAMALLOCCTRL("&d_ExternalTargetSpikeNum",&d_ExternalTargetSpikeNum, n_hosts*sizeof(int));
+  CUDAMALLOCCTRL("&d_ExternalTargetSpikeNum",&d_ExternalTargetSpikeNum,
+		 n_hosts_*sizeof(int));
 
   //printf("n_hosts, max_spike_per_host: %d %d\n", n_hosts, max_spike_per_host);
 
-  CUDAMALLOCCTRL("&d_ExternalTargetSpikeNodeId",&d_ExternalTargetSpikeNodeId,
-		       n_hosts*max_spike_per_host*sizeof(int));
-
-  CUDAMALLOCCTRL("&d_NewExternalTargetSpikeNodeId",
-		 &d_NewExternalTargetSpikeNodeId,
-		 n_hosts*max_spike_per_host*sizeof(int));
+  CUDAMALLOCCTRL("&d_ExternalTargetSpikeNodeId",
+		 &d_ExternalTargetSpikeNodeId,
+		 max_remote_spike_num_*sizeof(int));
   
-  //CUDAMALLOCCTRL("&d_ExternalSourceSpikeNum",&d_ExternalSourceSpikeNum, n_hosts*sizeof(int));
-  CUDAMALLOCCTRL("&d_ExternalSourceSpikeNodeId",&d_ExternalSourceSpikeNodeId, n_hosts*
-		       max_spike_per_host*sizeof(int));
-  CUDAMALLOCCTRL("&d_ExternalTargetSpikeNodeIdJoin",&d_ExternalTargetSpikeNodeIdJoin,
-		       n_hosts*max_spike_per_host*sizeof(int));
-  CUDAMALLOCCTRL("&d_ExternalTargetSpikeCumul",&d_ExternalTargetSpikeCumul, (n_hosts+1)*sizeof(int));
+  //CUDAMALLOCCTRL("&d_ExternalSourceSpikeNum",&d_ExternalSourceSpikeNum,
+  //n_hosts*sizeof(int));
+  CUDAMALLOCCTRL("&d_ExternalSourceSpikeNodeId",&d_ExternalSourceSpikeNodeId,
+		 max_remote_spike_num_*sizeof(int));
+  CUDAMALLOCCTRL("&d_ExternalTargetSpikeIdx0",&d_ExternalTargetSpikeIdx0,
+		 (n_hosts_ + 1)*sizeof(int));
 
-  CUDAMALLOCCTRL("&d_ExternalTargetSpikeIdx0",&d_ExternalTargetSpikeIdx0, (n_hosts+1)*sizeof(int));
-
-  CUDAMALLOCCTRL("&d_ExternalSourceSpikeCumul",&d_ExternalSourceSpikeCumul, (n_hosts+1)*sizeof(int));
+  CUDAMALLOCCTRL("&d_ExternalSourceSpikeIdx0",&d_ExternalSourceSpikeIdx0,
+		 (n_hosts_ + 1)*sizeof(int));
   
-  //CUDAMALLOCCTRL("&d_NExternalNodeTargetHost",&d_NExternalNodeTargetHost, n_node*sizeof(int));
-  //CUDAMALLOCCTRL("&d_ExternalNodeTargetHostId",&d_ExternalNodeTargetHostId, n_node*sizeof(int*));
+  //CUDAMALLOCCTRL("&d_NExternalNodeTargetHost",&d_NExternalNodeTargetHost,
+  //n_node*sizeof(int));
+  //CUDAMALLOCCTRL("&d_ExternalNodeTargetHostId",&d_ExternalNodeTargetHostId,
+  //n_node*sizeof(int*));
   //CUDAMALLOCCTRL("&d_ExternalNodeId",&d_ExternalNodeId, n_node*sizeof(int*));
 
-  /*
-  for (int i_source=0; i_source<n_node; i_source++) {
-    std::vector< ExternalConnectionNode > *conn = &extern_connection_[i_source];
-    int Nth = conn->size();
-    h_NExternalNodeTargetHost[i_source] = Nth;
-    if (Nth>0) {
-       CUDAMALLOCCTRL("&h_ExternalNodeTargetHostId[i_source]",&h_ExternalNodeTargetHostId[i_source],
-   			 Nth*sizeof(int));
-       CUDAMALLOCCTRL("&h_ExternalNodeId[i_source]",&h_ExternalNodeId[i_source], Nth*sizeof(int));
-       int *target_host_arr = new int[Nth];
-       int *node_id_arr = new int[Nth];
-       for (int ith=0; ith<Nth; ith++) {
-         target_host_arr[ith] = conn->at(ith).target_host_id;
-         node_id_arr[ith] = conn->at(ith).remote_node_id;
-       }
-       cudaMemcpyAsync(h_ExternalNodeTargetHostId[i_source], target_host_arr,
-   	       Nth*sizeof(int), cudaMemcpyHostToDevice);
-       cudaMemcpy(h_ExternalNodeId[i_source], node_id_arr,
-   	       Nth*sizeof(int), cudaMemcpyHostToDevice);
-       delete[] target_host_arr;
-       delete[] node_id_arr;
-     }
-  }
-  cudaMemcpyAsync(d_NExternalNodeTargetHost, h_NExternalNodeTargetHost,
-	     n_node*sizeof(int), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_ExternalNodeTargetHostId, h_ExternalNodeTargetHostId,
-	     n_node*sizeof(int*), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_ExternalNodeId, h_ExternalNodeId,
-	     n_node*sizeof(int*), cudaMemcpyHostToDevice);
-  */
-  //std::cout << "DeviceExternalSpikeInit\n";
-  //std::cout << "init d_n_target_hosts: " << d_n_target_hosts << "\n";
   if (remote_spike_height_) {
-    DeviceExternalSpikeInit<<<1,1>>>(n_hosts, max_spike_per_host,
+    DeviceExternalSpikeInit<<<1,1>>>(n_hosts_, max_spike_per_host_,
 				     d_ExternalSpikeNum,
 				     d_ExternalSpikeSourceNode,
 				     d_ExternalSpikeHeight,
 				     d_ExternalTargetSpikeNum,
 				     d_ExternalTargetSpikeIdx0,
 				     d_ExternalTargetSpikeNodeId,
-				     d_NewExternalTargetSpikeNodeId,
 				     d_ExternalTargetSpikeHeight,
 				     d_n_target_hosts,
 				     d_node_target_hosts,
@@ -373,13 +290,12 @@ int NESTGPU::ExternalSpikeInit(int n_hosts, int max_spike_per_host)
 				     );
   }
   else {
-    DeviceExternalSpikeInit<<<1,1>>>(n_hosts, max_spike_per_host,
+    DeviceExternalSpikeInit<<<1,1>>>(n_hosts_, max_spike_per_host_,
 				     d_ExternalSpikeNum,
 				     d_ExternalSpikeSourceNode,
 				     d_ExternalTargetSpikeNum,
 				     d_ExternalTargetSpikeIdx0,
 				     d_ExternalTargetSpikeNodeId,
-				     d_NewExternalTargetSpikeNodeId,
 				     d_n_target_hosts,
 				     d_node_target_hosts,
 				     d_node_target_host_i_map
@@ -401,7 +317,6 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
 					int *ext_target_spike_num,
 					int *ext_target_spike_idx0,
 					int *ext_target_spike_node_id,
-					int *new_ext_target_spike_node_id,
 					float *ext_target_spike_height,
 					int *n_ext_node_target_host,
 					int **ext_node_target_host_id,
@@ -417,7 +332,6 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
   ExternalTargetSpikeNum = ext_target_spike_num;
   ExternalTargetSpikeIdx0 = ext_target_spike_idx0,
   ExternalTargetSpikeNodeId = ext_target_spike_node_id;
-  NewExternalTargetSpikeNodeId = new_ext_target_spike_node_id;
   ExternalTargetSpikeHeight = ext_target_spike_height;
   NExternalNodeTargetHost = n_ext_node_target_host;
   ExternalNodeTargetHostId = ext_node_target_host_id;
@@ -437,7 +351,6 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
 					int *ext_target_spike_num,
 					int *ext_target_spike_idx0,
 					int *ext_target_spike_node_id,
-					int *new_ext_target_spike_node_id,
 					int *n_ext_node_target_host,
 					int **ext_node_target_host_id,
 					int **ext_node_id
@@ -452,7 +365,6 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
   ExternalTargetSpikeNum = ext_target_spike_num;
   ExternalTargetSpikeIdx0 = ext_target_spike_idx0,
   ExternalTargetSpikeNodeId = ext_target_spike_node_id;
-  NewExternalTargetSpikeNodeId = new_ext_target_spike_node_id;
   ExternalTargetSpikeHeight = NULL;
   NExternalNodeTargetHost = n_ext_node_target_host;
   ExternalNodeTargetHostId = ext_node_target_host_id;
@@ -482,8 +394,15 @@ int NESTGPU::SendSpikeToRemote(int n_ext_spikes)
   if (n_ext_spikes > 0) {
     gpuErrchk(cudaMemcpy(&n_spike_tot, d_ExternalTargetSpikeIdx0 + n_hosts_,
 			 sizeof(int), cudaMemcpyDeviceToHost));
+    if (n_spike_tot >= max_remote_spike_num_) {
+      throw ngpu_exception
+	(std::string("Number of spikes to be sent remotely ")
+	 + std::to_string(n_spike_tot)
+	 + " larger than limit " + std::to_string(max_remote_spike_num_));
+    }
+    
     gpuErrchk(cudaMemcpy(h_ExternalTargetSpikeNodeId,
-			 d_NewExternalTargetSpikeNodeId,
+			 d_ExternalTargetSpikeNodeId,
 			 n_spike_tot*sizeof(int),
 			 cudaMemcpyDeviceToHost));
     gpuErrchk(cudaMemcpy(h_ExternalTargetSpikeIdx0,
@@ -527,7 +446,7 @@ int NESTGPU::SendSpikeToRemote(int n_ext_spikes)
 }
 
 // Receive spikes from remote MPI processes
-int NESTGPU::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
+int NESTGPU::RecvSpikeFromRemote()
   
 {
   
@@ -537,19 +456,19 @@ int NESTGPU::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
   double time_mark = getRealTime();
   
   // loop on remote MPI proc
-  for (int i_host=0; i_host<n_hosts; i_host++) {
+  for (int i_host=0; i_host<n_hosts_; i_host++) {
     if (i_host == mpi_id) continue; // skip self MPI proc
     // start nonblocking MPI receive from MPI proc i_host
-    MPI_Irecv(&h_ExternalSourceSpikeNodeId[i_host*max_spike_per_host],
-	      max_spike_per_host, MPI_INT, i_host, tag, MPI_COMM_WORLD,
+    MPI_Irecv(&h_ExternalSourceSpikeNodeId[i_host*max_spike_per_host_],
+	      max_spike_per_host_, MPI_INT, i_host, tag, MPI_COMM_WORLD,
 	      &recv_mpi_request[i_host]);
   }
   
-  MPI_Status statuses[n_hosts];
+  MPI_Status statuses[n_hosts_];
   recv_mpi_request[mpi_id] = MPI_REQUEST_NULL;
-  MPI_Waitall(n_hosts, recv_mpi_request, statuses);
+  MPI_Waitall(n_hosts_, recv_mpi_request, statuses);
 
-  for (int i_host=0; i_host<n_hosts; i_host++) {
+  for (int i_host=0; i_host<n_hosts_; i_host++) {
     if (i_host == mpi_id) {
       h_ExternalSourceSpikeNum[i_host] = 0;
       continue;
@@ -566,32 +485,37 @@ int NESTGPU::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
 
 // pack spikes received from remote MPI processes
 // and copy them to GPU memory
-int NESTGPU::CopySpikeFromRemote(int n_hosts, int max_spike_per_host)
+int NESTGPU::CopySpikeFromRemote()
 {
-  double time_mark = getRealTime();
   int n_spike_tot = 0;
-  h_ExternalSourceSpikeCumul[0] = 0;
+  h_ExternalSourceSpikeIdx0[0] = 0;
   // loop on MPI proc
-  for (int i_host=0; i_host<n_hosts; i_host++) {
+  for (int i_host=0; i_host<n_hosts_; i_host++) {
     int n_spike = h_ExternalSourceSpikeNum[i_host];
-    h_ExternalSourceSpikeCumul[i_host+1] =
-      h_ExternalSourceSpikeCumul[i_host] + n_spike;
+    h_ExternalSourceSpikeIdx0[i_host+1] =
+      h_ExternalSourceSpikeIdx0[i_host] + n_spike;
     for (int i_spike=0; i_spike<n_spike; i_spike++) {
       // pack spikes received from remote MPI processes
       h_ExternalSourceSpikeNodeId[n_spike_tot] =
-	h_ExternalSourceSpikeNodeId[i_host*max_spike_per_host + i_spike];
+	h_ExternalSourceSpikeNodeId[i_host*max_spike_per_host_ + i_spike];
       n_spike_tot++;
     }
   }
-  JoinSpike_time_ += (getRealTime() - time_mark);
+  
+  if (n_spike_tot >= max_remote_spike_num_) {
+    throw ngpu_exception
+      (std::string("Number of spikes to be received remotely ")
+       + std::to_string(n_spike_tot)
+       + " larger than limit " + std::to_string(max_remote_spike_num_));
+  }
   
   if (n_spike_tot>0) {
-    time_mark = getRealTime();
+    double time_mark = getRealTime();
     // Memcopy will be synchronized    
     // copy to GPU memory cumulative sum of number of spikes per source host
-    gpuErrchk(cudaMemcpyAsync(d_ExternalSourceSpikeCumul,
-			      h_ExternalSourceSpikeCumul,
-			      (n_hosts+1)*sizeof(int), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpyAsync(d_ExternalSourceSpikeIdx0,
+			      h_ExternalSourceSpikeIdx0,
+			      (n_hosts_+1)*sizeof(int), cudaMemcpyHostToDevice));
     DBGCUDASYNC;
     // copy to GPU memory packed spikes from remote MPI proc
     gpuErrchk(cudaMemcpyAsync(d_ExternalSourceSpikeNodeId,
@@ -600,8 +524,8 @@ int NESTGPU::CopySpikeFromRemote(int n_hosts, int max_spike_per_host)
     DBGCUDASYNC;
     RecvSpikeFromRemote_CUDAcp_time_ += (getRealTime() - time_mark);
     // convert node map indexes to spike buffer indexes
-    MapIndexToSpikeBufferKernel<<<n_hosts, 1024>>>(n_hosts,
-						   d_ExternalSourceSpikeCumul,
+    MapIndexToSpikeBufferKernel<<<n_hosts_, 1024>>>(n_hosts_,
+						   d_ExternalSourceSpikeIdx0,
 						   d_ExternalSourceSpikeNodeId);
     DBGCUDASYNC;
     // convert node group indexes to spike buffer indexes
@@ -619,64 +543,6 @@ int NESTGPU::CopySpikeFromRemote(int n_hosts, int max_spike_per_host)
   return n_spike_tot;
 }
 
-// pack the spikes in GPU memory that must be sent externally
-__global__ void JoinSpikeKernel(int n_hosts, int *ExternalTargetSpikeCumul,
-				int *ExternalTargetSpikeNodeId,
-				int *ExternalTargetSpikeNodeIdJoin,
-				int n_spike_tot, int max_spike_per_host)
-{
-  // parallel implementation of nested loop
-  // outer loop index i_host = 0, ... , n_hosts
-  // inner loop index i_spike = 0, ... , ExternalTargetSpikeNum[i_host];
-  // array_idx is the index in the packed spike array
-  int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
-  if (array_idx<n_spike_tot) {
-    int i_host = locate(array_idx, ExternalTargetSpikeCumul, n_hosts + 1);
-    while ((i_host < n_hosts) && (ExternalTargetSpikeCumul[i_host+1]
-				  == ExternalTargetSpikeCumul[i_host])) {
-      i_host++;
-      if (i_host==n_hosts) return;
-    }
-    int i_spike = array_idx - ExternalTargetSpikeCumul[i_host];
-    // packed spike array
-    ExternalTargetSpikeNodeIdJoin[array_idx] =
-      ExternalTargetSpikeNodeId[i_host*max_spike_per_host + i_spike];
-  }
-}
-
-// pack the spikes in GPU memory that must be sent externally
-// and copy them to CPU memory
-int NESTGPU::JoinSpikes(int n_hosts, int max_spike_per_host)
-{
-  double time_mark = getRealTime();
-  // the index in the packed array can be computed from the MPI proc index
-  // and from the spike index using  a cumulative sum (prefix scan)
-  // of the number of spikes per MPI proc
-  // the cumulative sum is done both in CPU and in GPU
-  prefix_scan(d_ExternalTargetSpikeCumul, d_ExternalTargetSpikeNum, n_hosts+1,
-  	      true);
-  h_ExternalTargetSpikeCumul[0] = 0;
-  for (int ih=0; ih<n_hosts; ih++) {
-    h_ExternalTargetSpikeCumul[ih+1] = h_ExternalTargetSpikeCumul[ih]
-      + h_ExternalTargetSpikeNum[ih];
-  }
-  int n_spike_tot = h_ExternalTargetSpikeCumul[n_hosts];
-
-  if (n_spike_tot>0) {
-    // pack the spikes in GPU memory
-    JoinSpikeKernel<<<(n_spike_tot+1023)/1024, 1024>>>(n_hosts,
-		     d_ExternalTargetSpikeCumul,
-		     d_ExternalTargetSpikeNodeId,
-		     d_ExternalTargetSpikeNodeIdJoin,
-		     n_spike_tot, max_spike_per_host);
-
-    gpuErrchk( cudaPeekAtLastError() );
-  }
-
-  JoinSpike_time_ += (getRealTime() - time_mark);
-  
-  return n_spike_tot;
-}
 
 int NESTGPU::ConnectMpiInit(int argc, char *argv[])
 {
@@ -720,6 +586,20 @@ int NESTGPU::MpiFinalize()
 #endif
 }
 
+
+int NESTGPU::organizeExternalSpikes(int n_ext_spikes)
+{
+  countExternalSpikesPerTargetHost<<<n_ext_spikes, 1024>>>();
+  CUDASYNC;
+  prefix_scan(d_ExternalTargetSpikeIdx0, d_ExternalTargetSpikeNum,
+	      n_hosts_+1, true);
+  DBGCUDASYNC;
+  gpuErrchk(cudaMemset(d_ExternalTargetSpikeNum, 0, n_hosts_*sizeof(int)));
+  organizeExternalSpikesPerTargetHost<<<n_ext_spikes, 1024>>>();
+  CUDASYNC;
+  
+  return 0;  
+}
 
 
 #endif

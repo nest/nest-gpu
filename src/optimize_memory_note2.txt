@@ -1,3 +1,21 @@
+ALL DONE:
+
+In the calibration size ExternalTargetSpikeNodeId properly
+(maybe using maximum average rate?):
+replace [n_hosts*(max_spike_per_host + 1) and
+n_hosts*max_spike_per_host with max_remote_spike_num
+
+Check that n_spike_tot is not larger than maximum
+compare with max_remote_spike_num
+
+See if use of max_spike_per_host can be avoided in
+CopySpikeFromRemote
+Maybe h_ExternalSourceSpikeNodeId can be organized differently?
+Otherwise max_spike_per_host should be differentiated for sending and receiving spikes (average over host in the first case, maximum over all host in the second)
+
+Maybe rename d_ExternalSourceSpikeCumul and h_ExternalSourceSpikeCumul
+to d_ExternalSourceSpikeIdx0 and h_ExternalSourceSpikeIdx0?
+
 In spike_mpi.cu the kernel
 __global__ void SendExternalSpike()
 should be copied/pasted in two kernels:
@@ -13,11 +31,9 @@ d_ExternalTargetSpikeIdx0
 ExternalTargetSpikeNodeIdJoin should replace ExternalTargetSpikeNodeId,
 which therefore becomes a compact 1D array rather than a 2D array with empty spaces in the rows
 
-In the calibration size ExternalTargetSpikeNodeId properly
-(maybe using maximum average rate?)
+Remove d_ExternalTargetSpikeCumul, h_ExternalTargetSpikeCumul
 
-remove d_ExternalTargetSpikeCumul, h_ExternalTargetSpikeCumul
-now NewExternalTargetSpikeNodeId
+Now NewExternalTargetSpikeNodeId
 must be sized properly and replace ExternalTargetSpikeNodeId
 
 remove ExternalTargetSpikeNodeIdJoin
@@ -35,3 +51,7 @@ replace loop with cuda threads
 
 find a more efficient solution for resetting h_ExternalTargetSpikeIdx0
 elements when n_ext_spikes is zero in SendSpikeToRemote
+
+rename SendExternalSpike_time_ to organizeExternalSpike_time_
+
+remove JoinSpike_time_;
