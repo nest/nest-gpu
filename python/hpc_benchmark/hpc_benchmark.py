@@ -253,10 +253,16 @@ def build_network():
 
     neurons = []; E_pops = []; I_pops = []
 
-    for i in range(mpi_np):
-        neurons.append(ngpu.RemoteCreate(i, 'iaf_psc_alpha', NE+NI, 1, model_params).node_seq)
-        E_pops.append(neurons[i][0:NE])
-        I_pops.append(neurons[i][NE:NE+NI])
+    if(mpi_np > 1):
+        for i in range(mpi_np):
+            neurons.append(ngpu.RemoteCreate(i, 'iaf_psc_alpha', NE+NI, 1, model_params).node_seq)
+            E_pops.append(neurons[i][0:NE])
+            I_pops.append(neurons[i][NE:NE+NI])
+
+    else:
+        neurons.append(ngpu.Create('iaf_psc_alpha', NE+NI, 1, model_params))
+        E_pops.append(neurons[mpi_id][0:NE])
+        I_pops.append(neurons[mpi_id][NE:NE+NI])
 
     if brunel_params['randomize_Vm']:
         rank_print('Randomizing membrane potentials.')

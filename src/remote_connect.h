@@ -5,6 +5,7 @@
 #include <vector>
 #include <cub/cub.cuh>
 #include "nestgpu.h"
+#include "connect.h"
 #include "copass_sort.h"
 // Arrays that map remote source nodes to local spike buffers
   

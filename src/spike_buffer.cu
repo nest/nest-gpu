@@ -33,7 +33,7 @@
 #include "send_spike.h"
 #include "node_group.h"
 #include "connect.h"
-#include "spike_mpi.h"
+#include "remote_spike.h"
 
 #define LAST_SPIKE_TIME_GUARD 0x70000000
 
@@ -131,7 +131,12 @@ __device__ void PushSpike(int i_spike_buffer, float height)
       // if active spike should eventually be sent to remote connections
       //printf("PushExternalSpike i_spike_buffer: %d height: %f\n",
       //	   i_spike_buffer, height);
-      PushExternalSpike(i_spike_buffer, height);
+      if (have_remote_spike_height) {
+	PushExternalSpike(i_spike_buffer, height);
+      }
+      else {
+	PushExternalSpike(i_spike_buffer);
+      }
     }
     
     // if recording  spike counts is activated, increase counter
