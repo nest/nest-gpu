@@ -82,6 +82,8 @@ int allocateNewBlocks(std::vector<uint*> &key_subarray,
 		      std::vector<connection_struct*> &conn_subarray,
 		      int64_t block_size, uint new_n_block);
 
+int freeConnectionKey(std::vector<uint*> &key_subarray);
+
 int setConnectionWeights(curandGenerator_t &gen, void *d_storage,
 			 connection_struct *conn_subarray, int64_t n_conn,
 			 SynSpec &syn_spec);

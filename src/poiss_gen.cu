@@ -207,7 +207,7 @@ int poiss_gen::Init(int i_node_0, int n_node, int /*n_port*/,
 
 int poiss_gen::Calibrate(double, float)
 {
-  buildDirectConnections();
+  //buildDirectConnections();
   CUDAMALLOCCTRL("&d_curand_state_",&d_curand_state_, n_conn_*sizeof(curandState));
 
   unsigned int grid_dim_x, grid_dim_y;

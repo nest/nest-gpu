@@ -129,6 +129,8 @@ class BaseNeuron
   virtual int Calibrate(double time_min, float time_resolution) {return 0;}
 		
   virtual int Update(long long it, double t1) {return 0;}
+
+  virtual int buildDirectConnections() {return 0;}
   
   virtual int GetX(int i_neuron, int n_neuron, double *x) {return 0;}
   

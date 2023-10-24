@@ -330,6 +330,16 @@ __global__ void getConnGroupDelay(int64_t block_size,
 }
 
 
+int freeConnectionKey(std::vector<uint*> &key_subarray)
+{
+  for (uint ib=0; ib<key_subarray.size(); ib++) {
+    uint *d_key_pt = key_subarray[ib];
+    if (d_key_pt != NULL) {
+      CUDAFREECTRL("d_key_pt", d_key_pt);
+    }
+  }
+  return 0;
+}
 
 
 int allocateNewBlocks(std::vector<uint*> &key_subarray,

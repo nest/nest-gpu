@@ -76,12 +76,13 @@ enum KernelIntParamIndexes {
   i_verbosity_level,
   i_max_spike_buffer_size,
   i_max_node_n_bits,
-  i_remote_spike_height_flag,
   N_KERNEL_INT_PARAM
 };
 
 enum KernelBoolParamIndexes {
   i_print_time,
+  i_remove_conn_key,
+  i_remote_spike_height_flag,
   N_KERNEL_BOOL_PARAM
 };
 
@@ -96,12 +97,13 @@ const std::string kernel_int_param_name[N_KERNEL_INT_PARAM] = {
   "rnd_seed",
   "verbosity_level",
   "max_spike_buffer_size",
-  "max_node_n_bits",
-  "remote_spike_height_flag"
+  "max_node_n_bits"
 };
 
 const std::string kernel_bool_param_name[N_KERNEL_BOOL_PARAM] = {
-  "print_time"
+  "print_time",
+  "remove_conn_key",
+  "remote_spike_height_flag"
 };
 
 int NESTGPU::FreeConnRandomGenerator()
@@ -206,6 +208,7 @@ NESTGPU::NESTGPU()
 
   verbosity_level_ = 4;
   print_time_ = false;
+  remove_conn_key_ = false;
   
   mpi_flag_ = false;
   remote_spike_height_ = false;
@@ -483,7 +486,16 @@ int NESTGPU::Calibrate()
   ConnectInit();
 
   poiss_conn::OrganizeDirectConnections();
-
+  for (unsigned int i=0; i<node_vect_.size(); i++) {
+    if (node_vect_[i]->has_dir_conn_) {
+      node_vect_[i]->buildDirectConnections();
+    }
+  }
+  
+  if (remove_conn_key_) {
+    freeConnectionKey(KeySubarray);
+  }
+  
   int max_delay_num = h_MaxDelayNum;
   
   unsigned int n_spike_buffers = GetTotalNNodes();
@@ -1975,6 +1987,10 @@ bool NESTGPU::GetBoolParam(std::string param_name)
   switch (i_param) {
   case i_print_time:
     return print_time_;
+  case i_remove_conn_key:
+    return remove_conn_key_;
+  case i_remote_spike_height_flag:
+    return remote_spike_height_;
   default:
     throw ngpu_exception(std::string("Unrecognized kernel boolean parameter ")
 			 + param_name);
@@ -1989,6 +2005,12 @@ int NESTGPU::SetBoolParam(std::string param_name, bool val)
   case i_time_resolution:
     print_time_ = val;
     break;
+  case i_remove_conn_key:
+    remove_conn_key_ = val;
+    break;
+  case i_remote_spike_height_flag:
+      remote_spike_height_ = val;
+    break;    
   default:
     throw ngpu_exception(std::string("Unrecognized kernel boolean parameter ")
 			 + param_name);
@@ -2128,15 +2150,7 @@ int NESTGPU::GetIntParam(std::string param_name)
   case i_max_spike_buffer_size:
     return max_spike_buffer_size_;
   case i_max_node_n_bits:
-    return h_MaxNodeNBits;
-  case i_remote_spike_height_flag:
-    if (remote_spike_height_) {
-      return 1;
-    }
-    else {
-      return 0;
-    }
-    
+    return h_MaxNodeNBits;    
   default:
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")
 			 + param_name);
@@ -2155,17 +2169,6 @@ int NESTGPU::SetIntParam(std::string param_name, int val)
     break;
   case i_max_spike_per_host_fact:
     SetMaxSpikeBufferSize(val);
-    break;
-  case i_remote_spike_height_flag:
-    if (val==0) {
-      remote_spike_height_ = false;
-    }
-    else if (val==1) {
-      remote_spike_height_ = true;
-    }
-    else {
-      throw ngpu_exception("Admissible values of remote_spike_height_flag are only 0 or 1");
-    }
     break;
   default:
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")
