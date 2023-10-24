@@ -75,6 +75,7 @@ enum KernelIntParamIndexes {
   i_rnd_seed = 0,
   i_verbosity_level,
   i_max_spike_buffer_size,
+  i_max_node_n_bits,
   i_remote_spike_height_flag,
   N_KERNEL_INT_PARAM
 };
@@ -95,6 +96,7 @@ const std::string kernel_int_param_name[N_KERNEL_INT_PARAM] = {
   "rnd_seed",
   "verbosity_level",
   "max_spike_buffer_size",
+  "max_node_n_bits",
   "remote_spike_height_flag"
 };
 
@@ -2125,6 +2127,8 @@ int NESTGPU::GetIntParam(std::string param_name)
     return verbosity_level_;
   case i_max_spike_buffer_size:
     return max_spike_buffer_size_;
+  case i_max_node_n_bits:
+    return h_MaxNodeNBits;
   case i_remote_spike_height_flag:
     if (remote_spike_height_) {
       return 1;
@@ -2132,6 +2136,7 @@ int NESTGPU::GetIntParam(std::string param_name)
     else {
       return 0;
     }
+    
   default:
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")
 			 + param_name);
