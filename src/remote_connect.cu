@@ -542,7 +542,7 @@ __global__ void setUsedSourceNodeKernel(uint *key_subarray,
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  int i_source = key_subarray[i_conn] >> MaxPortNBits;
+  int i_source = key_subarray[i_conn] >> MaxPortSynNBits;
   // it is not necessary to use atomic operation. See:
   // https://stackoverflow.com/questions/8416374/several-threads-writing-the-same-value-in-the-same-global-memory-location
 #ifdef CHECKRC
@@ -758,11 +758,11 @@ __global__ void fixConnectionSourceNodeIndexesKernel(uint *key_subarray,
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  int i_source = key_subarray[i_conn] >> MaxPortNBits;
-  int i_delay = key_subarray[i_conn] & PortMask;
+  int i_source = key_subarray[i_conn] >> MaxPortSynNBits;
+  int i_delay = key_subarray[i_conn] & PortSynMask;
   int new_i_source = local_node_index[i_source];
 
-  key_subarray[i_conn] = (new_i_source << MaxPortNBits) | i_delay;
+  key_subarray[i_conn] = (new_i_source << MaxPortSynNBits) | i_delay;
 
 #ifdef CHECKRC
   printf("i_conn: %ld\t new_i_source: %d\n", i_conn, new_i_source);
@@ -851,11 +851,11 @@ __global__ void addOffsetToExternalNodeIdsKernel
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  uint target_port = conn_subarray[i_conn].target_port;
-  if (target_port & (1 << (MaxPortNBits - 1))) {
-    target_port = target_port ^ (1 << (MaxPortNBits - 1));
-    conn_subarray[i_conn].target_port = target_port; 
-    key_subarray[i_conn] += (i_image_node_0 << MaxPortNBits);
+  uint target_port_syn = conn_subarray[i_conn].target_port_syn;
+  if (target_port_syn & (1 << (MaxPortSynNBits - 1))) {
+    target_port_syn = target_port_syn ^ (1 << (MaxPortSynNBits - 1));
+    conn_subarray[i_conn].target_port_syn = target_port_syn; 
+    key_subarray[i_conn] += (i_image_node_0 << MaxPortSynNBits);
   }
 }
 

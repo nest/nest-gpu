@@ -35,7 +35,7 @@ basic plots of the network activity.
 from stimulus_params import stim_dict
 from network_params import net_dict
 from sim_params import sim_dict
-import network_remove_conn_key
+import network_remove_conn_key as network
 #import nestgpu as ngpu
 import numpy as np
 import time

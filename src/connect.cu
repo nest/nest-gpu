@@ -52,13 +52,20 @@ uint h_MaxNodeNBits;
 __device__ uint MaxNodeNBits;
 // maximum number of bits used to represent node index 
 
-uint h_MaxPortNBits;
-__device__ uint MaxPortNBits;
+uint h_MaxPortSynNBits;
+__device__ uint MaxPortSynNBits;
 // maximum number of bits used to represent receptor port index and delays 
 
-uint h_PortMask;
-__device__ uint PortMask;
+uint h_MaxSynNBits;
+__device__ uint MaxSynNBits;
+
+uint h_PortSynMask;
+__device__ uint PortSynMask;
 // bit mask used to extract port index
+
+uint h_SynMask;
+__device__ uint SynMask;
+
 
 uint *d_ConnGroupIdx0;
 __device__ uint *ConnGroupIdx0;
@@ -170,7 +177,7 @@ __global__ void setConnGroupIdx0Compact
     + *idx0_offset;
   conn_group_idx0_compact[i_source_compact] = i_group;
   if (i_conn<n_block_conn) {
-    int source = key_subarray[i_conn] >> MaxPortNBits;
+    int source = key_subarray[i_conn] >> MaxPortSynNBits;
     conn_group_source_compact[i_source_compact] = source;
   }
 }
@@ -190,7 +197,7 @@ __global__ void buildConnGroupMask(uint *key_subarray,
   if (i_conn==0) {
     if (key_subarray_prev != NULL) {
       prev_val = *key_subarray_prev;
-      prev_source = prev_val >> MaxPortNBits; 
+      prev_source = prev_val >> MaxPortSynNBits; 
     }
     else {
       prev_val = -1;      // just to ensure it is different from val
@@ -199,11 +206,11 @@ __global__ void buildConnGroupMask(uint *key_subarray,
   }
   else {
     prev_val = key_subarray[i_conn-1];
-    prev_source = prev_val >> MaxPortNBits;
+    prev_source = prev_val >> MaxPortSynNBits;
   }
   if (val != prev_val) {
     conn_group_iconn0_mask[i_conn] = 1;
-    int source = val >> MaxPortNBits; 
+    int source = val >> MaxPortSynNBits; 
     if (source != prev_source) {
       conn_group_idx0_mask[i_conn] = 1;
     }
@@ -280,7 +287,7 @@ __global__ void setDelays(uint *key_subarray, float *arr_val,
   if (i_conn>=n_conn) return;
   int delay = (int)round(arr_val[i_conn]/time_resolution);
   delay = max(delay,1);
-  key_subarray[i_conn] = (key_subarray[i_conn] << MaxPortNBits) | delay;
+  key_subarray[i_conn] = (key_subarray[i_conn] << MaxPortSynNBits) | delay;
 }
 
 
@@ -291,8 +298,9 @@ __global__ void setDelays(uint *key_subarray, float fdelay,
   if (i_conn>=n_conn) return;
   int delay = (int)round(fdelay/time_resolution);
   delay = max(delay,1);
-  key_subarray[i_conn] = (key_subarray[i_conn] << MaxPortNBits) | delay;
+  key_subarray[i_conn] = (key_subarray[i_conn] << MaxPortSynNBits) | delay;
 }
+
 
 
 __global__ void setPort(connection_struct *conn_subarray, uint port,
@@ -300,8 +308,9 @@ __global__ void setPort(connection_struct *conn_subarray, uint port,
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  conn_subarray[i_conn].target_port =
-    (conn_subarray[i_conn].target_port << MaxPortNBits) | port; 
+  conn_subarray[i_conn].target_port_syn =
+    (conn_subarray[i_conn].target_port_syn << MaxPortSynNBits)
+    | (port << MaxSynNBits); 
 }
 
 
@@ -311,7 +320,21 @@ __global__ void setSynGroup(connection_struct *conn_subarray,
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  conn_subarray[i_conn].syn_group = syn_group; 
+  conn_subarray[i_conn].target_port_syn =
+    conn_subarray[i_conn].target_port_syn | syn_group;
+  //conn_subarray[i_conn].syn_group = syn_group; 
+}
+
+
+__global__ void setPortSynGroup(connection_struct *conn_subarray, uint port,
+				unsigned char syn_group,
+				int64_t n_conn)
+{
+  int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i_conn>=n_conn) return;
+  conn_subarray[i_conn].target_port_syn =
+    (conn_subarray[i_conn].target_port_syn << MaxPortSynNBits)
+    | (port << MaxSynNBits) | syn_group;
 }
 
 __global__ void getConnGroupDelay(int64_t block_size,
@@ -326,7 +349,7 @@ __global__ void getConnGroupDelay(int64_t block_size,
   uint i_block = (uint)(i_conn / block_size);
   int64_t i_block_conn = i_conn % block_size;
   uint source_delay = source_delay_array[i_block][i_block_conn];
-  conn_group_delay[conn_group_idx] = source_delay & PortMask;
+  conn_group_delay[conn_group_idx] = source_delay & PortSynMask;
 }
 
 
@@ -790,20 +813,38 @@ int ConnectInit()
 }
 
 
-__global__ void setMaxNodeNBitsKernel(int max_node_nbits, int max_port_nbits,
-				      int port_mask)
+__global__ void setMaxNodeNBitsKernel(int max_node_nbits,
+				      int max_port_syn_nbits,
+				      int port_syn_mask)
 {
   MaxNodeNBits = max_node_nbits;
-  MaxPortNBits = max_port_nbits;
-  PortMask = port_mask;
+  MaxPortSynNBits = max_port_syn_nbits;
+  PortSynMask = port_syn_mask;
+}
+
+__global__ void setMaxSynNBitsKernel(int max_syn_nbits, int syn_mask)
+{
+  MaxSynNBits = max_syn_nbits;
+  SynMask = syn_mask;
 }
 
 int setMaxNodeNBits(int max_node_nbits)
 {
   h_MaxNodeNBits = max_node_nbits;
-  h_MaxPortNBits = 32 - h_MaxNodeNBits;
-  h_PortMask = (1 << h_MaxPortNBits) - 1;
-  setMaxNodeNBitsKernel<<<1,1>>>(h_MaxNodeNBits, h_MaxPortNBits, h_PortMask);
+  h_MaxPortSynNBits = 32 - h_MaxNodeNBits;
+  h_PortSynMask = (1 << h_MaxPortSynNBits) - 1;
+  setMaxNodeNBitsKernel<<<1,1>>>(h_MaxNodeNBits, h_MaxPortSynNBits,
+				 h_PortSynMask);
+  DBGCUDASYNC
+
+  return 0;
+}  
+
+int setMaxSynNBits(int max_syn_nbits)
+{
+  h_MaxSynNBits = max_syn_nbits;
+  h_SynMask = (1 << h_MaxSynNBits) - 1;
+  setMaxSynNBitsKernel<<<1,1>>>(h_MaxSynNBits, h_SynMask);
   DBGCUDASYNC
 
   return 0;
@@ -862,12 +903,13 @@ __global__ void CountConnectionsKernel(int64_t n_conn, int n_source,
   uint i_block = (uint)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
   connection_struct conn = ConnectionArray[i_block][i_block_conn];
-  if (syn_group==-1 || conn.syn_group == syn_group) {
+  // if (syn_group==-1 || conn.syn_group == syn_group) {
+  if (syn_group==-1 || (conn.target_port_syn & SynMask) == syn_group) {
     // First get target node index
-    uint target_port = conn.target_port;
-    int i_target = target_port >> MaxPortNBits;
+    uint target_port_syn = conn.target_port_syn;
+    int i_target = target_port_syn >> MaxPortSynNBits;
     uint source_delay = SourceDelayArray[i_block][i_block_conn];
-    int i_source = source_delay >> MaxPortNBits;
+    int i_source = source_delay >> MaxPortSynNBits;
     int64_t i_src_tgt = ((int64_t)i_source << 32) | i_target;
     int64_t i_arr = locate(i_src_tgt, src_tgt_arr, n_source*n_target);
     if (src_tgt_arr[i_arr] == i_src_tgt) {
@@ -893,12 +935,13 @@ __global__ void SetConnectionsIndexKernel(int64_t n_conn, int n_source,
   uint i_block = (uint)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
   connection_struct conn = ConnectionArray[i_block][i_block_conn];
-  if (syn_group==-1 || conn.syn_group == syn_group) {
+  // if (syn_group==-1 || conn.syn_group == syn_group) {
+  if (syn_group==-1 || (conn.target_port_syn & SynMask) == syn_group) {
     // First get target node index
-    uint target_port = conn.target_port;
-    int i_target = target_port >> MaxPortNBits;
+    uint target_port_syn = conn.target_port_syn;
+    int i_target = target_port_syn >> MaxPortSynNBits;
     uint source_delay = SourceDelayArray[i_block][i_block_conn];
-    int i_source = source_delay >> MaxPortNBits;
+    int i_source = source_delay >> MaxPortSynNBits;
     int64_t i_src_tgt = ((int64_t)i_source << 32) | i_target;
     int64_t i_arr = locate(i_src_tgt, src_tgt_arr, n_source*n_target);
     if (src_tgt_arr[i_arr] == i_src_tgt) {
@@ -1017,16 +1060,16 @@ __global__ void GetConnectionStatusKernel
   // get connection structure
   connection_struct conn = ConnectionArray[i_block][i_block_conn];
   // Get joined target-port parameter, then target index and port index
-  uint target_port = conn.target_port;
-  i_target[i_arr] = target_port >> MaxPortNBits;
-  port[i_arr] = target_port & PortMask;
+  uint target_port_syn = conn.target_port_syn;
+  i_target[i_arr] = target_port_syn >> MaxPortSynNBits;
+  port[i_arr] = (target_port_syn & PortSynMask) >> MaxSynNBits;
   // Get weight and synapse group
   weight[i_arr] = conn.weight;
-  syn_group[i_arr] = conn.syn_group;
+  syn_group[i_arr] = target_port_syn & SynMask;
   // Get joined source-delay parameter, then source index and delay
   uint source_delay = SourceDelayArray[i_block][i_block_conn];
-  i_source[i_arr] = source_delay >> MaxPortNBits;
-  int i_delay = source_delay & PortMask;
+  i_source[i_arr] = source_delay >> MaxPortSynNBits;
+  int i_delay = source_delay & PortSynMask;
   delay[i_arr] = NESTGPUTimeResolution * i_delay;
 }
 
@@ -1055,7 +1098,7 @@ __global__ void GetConnectionFloatParamKernel
   case i_delay_param: {
     // Get joined source-delay parameter, then delay
     uint source_delay = SourceDelayArray[i_block][i_block_conn];
-    int i_delay = source_delay & PortMask;
+    int i_delay = source_delay & PortSynMask;
     param_arr[i_arr] = NESTGPUTimeResolution * i_delay;
     break;
   }
@@ -1083,22 +1126,22 @@ __global__ void GetConnectionIntParamKernel
   case i_source_param: {
     // Get joined source-delay parameter, then source index and delay
     uint source_delay = SourceDelayArray[i_block][i_block_conn];
-    param_arr[i_arr] = source_delay >> MaxPortNBits;
+    param_arr[i_arr] = source_delay >> MaxPortSynNBits;
     break;
   }
   case i_target_param: {
     // Get joined target-port parameter, then target index
-    param_arr[i_arr] = conn.target_port >> MaxPortNBits;
+    param_arr[i_arr] = conn.target_port_syn >> MaxPortSynNBits;
     break;
   }
   case i_port_param: {
     // Get joined target-port parameter, then port index
-    param_arr[i_arr] = conn.target_port & PortMask;
+    param_arr[i_arr] = (conn.target_port_syn & PortSynMask) >> MaxSynNBits;
     break;
   }
   case i_syn_group_param: {
     // Get synapse group
-    param_arr[i_arr] = conn.syn_group;
+    param_arr[i_arr] = conn.target_port_syn & SynMask;
     break;
   }
   }
@@ -1173,21 +1216,22 @@ __global__ void SetConnectionIntParamKernel
   switch (i_param) {
   case i_target_param: {
     // Get port index from joined target-port parameter
-    int i_port = conn->target_port & PortMask;
+    int i_port_syn = conn->target_port_syn & PortSynMask;
     // Set joined target-port parameter
-    conn->target_port = (param_arr[i_arr] << MaxPortNBits) | i_port;
+    conn->target_port_syn = (param_arr[i_arr] << MaxPortSynNBits) | i_port_syn;
     break;
   }
   case i_port_param: {
     // Get target index from joined target-port parameter
-    int i_target = conn->target_port >> MaxPortNBits;
+    int i_target_syn = conn->target_port_syn & (~PortSynMask | SynMask);
     // Set joined target-port parameter
-    conn->target_port = (i_target << MaxPortNBits) | param_arr[i_arr];
+    conn->target_port_syn = (param_arr[i_arr] << MaxSynNBits) | i_target_syn;
     break;
   }
   case i_syn_group_param: {
+    int i_target_port = conn->target_port_syn & (~SynMask);
     // Set synapse group
-    conn->syn_group = param_arr[i_arr]; 
+    conn->target_port_syn = param_arr[i_arr] | i_target_port; 
     break;
   }
   }
@@ -1212,21 +1256,23 @@ __global__ void SetConnectionIntParamKernel
   switch (i_param) {
   case i_target_param: {
     // Get port index from joined target-port parameter
-    int i_port = conn->target_port & PortMask;
+    int i_port_syn = conn->target_port_syn & PortSynMask;
     // Set joined target-port parameter
-    conn->target_port = (val << MaxPortNBits) | i_port;
+    conn->target_port_syn = (val << MaxPortSynNBits) | i_port_syn;    
     break;
   }
   case i_port_param: {
     // Get target index from joined target-port parameter
-    int i_target = conn->target_port >> MaxPortNBits;
+    int i_target_syn = conn->target_port_syn & (~PortSynMask | SynMask);
     // Set joined target-port parameter
-    conn->target_port = (i_target << MaxPortNBits) | val;
-    break;
+    conn->target_port_syn = (val << MaxSynNBits) | i_target_syn;
+    break;    
   }
   case i_syn_group_param: {
     // Set synapse group
-    conn->syn_group = val; 
+    int i_target_port = conn->target_port_syn & (~SynMask);
+    // Set synapse group
+    conn->target_port_syn = val | i_target_port;  
     break;
   }
   }

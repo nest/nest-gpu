@@ -65,8 +65,8 @@ struct MaxDelay
     //T operator()(const T &source_delay_a, const T &source_delay_b) const {
     uint operator()(const uint &source_delay_a, const uint &source_delay_b)
       const {
-      uint i_delay_a = source_delay_a & PortMask;
-      uint i_delay_b = source_delay_b & PortMask;
+      uint i_delay_a = source_delay_a & PortSynMask;
+      uint i_delay_b = source_delay_b & PortSynMask;
         return (i_delay_b > i_delay_a) ? i_delay_b : i_delay_a;
     }
 };
@@ -108,9 +108,9 @@ __global__ void PoissGenSubstractFirstNodeIndexKernel(int64_t n_conn,
     return;
   }
   uint source_delay = poiss_key_array[i_conn_rel];
-  int i_source_rel = (source_delay >> MaxPortNBits) - i_node_0;
-  int i_delay = source_delay & PortMask;
-  poiss_key_array[i_conn_rel] = (i_source_rel << MaxPortNBits) | i_delay; 
+  int i_source_rel = (source_delay >> MaxPortSynNBits) - i_node_0;
+  int i_delay = source_delay & PortSynMask;
+  poiss_key_array[i_conn_rel] = (i_source_rel << MaxPortSynNBits) | i_delay; 
 }
 
 /*
@@ -162,8 +162,8 @@ __global__ void PoissGenSendSpikeKernel(curandState *curand_state,
     return;
   }
   uint source_delay = poiss_key_array[i_conn_rel];
-  int i_source = source_delay >> MaxPortNBits;
-  int i_delay = source_delay & PortMask;
+  int i_source = source_delay >> MaxPortSynNBits;
+  int i_delay = source_delay & PortSynMask;
   int id = (int)((time_idx - i_delay + 1) % max_delay);
   float mu = mu_arr[id*n_node + i_source];
   int n = curand_poisson(curand_state+i_conn_rel, mu);
@@ -172,9 +172,9 @@ __global__ void PoissGenSendSpikeKernel(curandState *curand_state,
     int i_block = (int)(i_conn / block_size);
     int64_t i_block_conn = i_conn % block_size;
     connection_struct conn = ConnectionArray[i_block][i_block_conn];
-    uint target_port = conn.target_port;
-    int i_target = target_port >> MaxPortNBits;
-    uint port = target_port & PortMask;
+    uint target_port_syn = conn.target_port_syn;
+    int i_target = target_port_syn >> MaxPortSynNBits;
+    uint port = (target_port_syn & PortSynMask) >> MaxSynNBits;
     float weight = conn.weight;
 
     int i_group=NodeGroupMap[i_target];
@@ -363,8 +363,8 @@ int poiss_gen::buildDirectConnections()
   
   poiss_conn::key_t **key_subarray = KeySubarray.data();  
   poiss_conn::key_t h_poiss_thresh[2];
-  h_poiss_thresh[0] = i_node_0_ << h_MaxPortNBits;
-  h_poiss_thresh[1] = (i_node_0_ + n_node_) << h_MaxPortNBits;
+  h_poiss_thresh[0] = i_node_0_ << h_MaxPortSynNBits;
+  h_poiss_thresh[1] = (i_node_0_ + n_node_) << h_MaxPortSynNBits;
   gpuErrchk(cudaMemcpy(poiss_conn::d_poiss_thresh, h_poiss_thresh,
 		       2*sizeof(poiss_conn::key_t),
 		       cudaMemcpyHostToDevice));

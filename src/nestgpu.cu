@@ -199,7 +199,8 @@ NESTGPU::NESTGPU()
   max_spike_per_host_fact_ = 1.0;
   max_remote_spike_num_fact_ = 1.0;
   setMaxNodeNBits(20); // maximum number of nodes is 2^20
-
+  setMaxSynNBits(6); // maximum number of synapse groups is 2^6
+  
   error_flag_ = false;
   error_message_ = "";
   error_code_ = 0;
@@ -423,7 +424,7 @@ int NESTGPU::CreateNodeGroup(int n_nodes, int n_ports)
 {
   int i_node_0 = GetNLocalNodes();
   int max_n_nodes = IntPow(2,h_MaxNodeNBits);
-  int max_n_ports = IntPow(2,h_MaxPortNBits);
+  int max_n_ports = IntPow(2, (h_MaxPortSynNBits-h_MaxSynNBits-1));
   
   if ((i_node_0 + n_nodes) > max_n_nodes) {
     throw ngpu_exception(std::string("Maximum number of nodes ")
