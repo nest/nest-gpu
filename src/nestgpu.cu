@@ -76,13 +76,14 @@ enum KernelIntParamIndexes {
   i_verbosity_level,
   i_max_spike_buffer_size,
   i_max_node_n_bits,
+  i_max_syn_n_bits,
   N_KERNEL_INT_PARAM
 };
 
 enum KernelBoolParamIndexes {
   i_print_time,
   i_remove_conn_key,
-  i_remote_spike_height_flag,
+  i_remote_spike_height,
   N_KERNEL_BOOL_PARAM
 };
 
@@ -97,13 +98,14 @@ const std::string kernel_int_param_name[N_KERNEL_INT_PARAM] = {
   "rnd_seed",
   "verbosity_level",
   "max_spike_buffer_size",
-  "max_node_n_bits"
+  "max_node_n_bits",
+  "max_syn_n_bits"
 };
 
 const std::string kernel_bool_param_name[N_KERNEL_BOOL_PARAM] = {
   "print_time",
   "remove_conn_key",
-  "remote_spike_height_flag"
+  "remote_spike_height"
 };
 
 int NESTGPU::FreeConnRandomGenerator()
@@ -1990,7 +1992,7 @@ bool NESTGPU::GetBoolParam(std::string param_name)
     return print_time_;
   case i_remove_conn_key:
     return remove_conn_key_;
-  case i_remote_spike_height_flag:
+  case i_remote_spike_height:
     return remote_spike_height_;
   default:
     throw ngpu_exception(std::string("Unrecognized kernel boolean parameter ")
@@ -2003,15 +2005,15 @@ int NESTGPU::SetBoolParam(std::string param_name, bool val)
   int i_param =  GetBoolParamIdx(param_name);
 
   switch (i_param) {
-  case i_time_resolution:
+  case i_print_time:
     print_time_ = val;
     break;
   case i_remove_conn_key:
     remove_conn_key_ = val;
     break;
-  case i_remote_spike_height_flag:
+  case i_remote_spike_height:
       remote_spike_height_ = val;
-    break;    
+    break;
   default:
     throw ngpu_exception(std::string("Unrecognized kernel boolean parameter ")
 			 + param_name);
@@ -2152,6 +2154,8 @@ int NESTGPU::GetIntParam(std::string param_name)
     return max_spike_buffer_size_;
   case i_max_node_n_bits:
     return h_MaxNodeNBits;    
+  case i_max_syn_n_bits:
+    return h_MaxSynNBits;    
   default:
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")
 			 + param_name);
@@ -2168,8 +2172,14 @@ int NESTGPU::SetIntParam(std::string param_name, int val)
   case i_verbosity_level:
     SetVerbosityLevel(val);
     break;
-  case i_max_spike_per_host_fact:
+  case i_max_spike_buffer_size:
     SetMaxSpikeBufferSize(val);
+    break;
+  case i_max_node_n_bits:
+    setMaxNodeNBits(val);
+    break;
+  case i_max_syn_n_bits:
+    setMaxSynNBits(val);
     break;
   default:
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")
