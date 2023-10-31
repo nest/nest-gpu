@@ -94,7 +94,8 @@ sim_dict.update({
     't_presim': 0.1,
     't_sim': 10000.,
     'rec_dev': [],
-    'master_seed': args.seed})
+    'master_seed': args.seed,
+    'nl_algo': args.algo})
 
 net_dict.update({
     'N_scaling': 1.,
@@ -103,7 +104,6 @@ net_dict.update({
     'V0_type': 'optimized'})
 
 net = network.Network(sim_dict, net_dict, stim_dict)
-net.set_algo(args.algo)
 time_network = perf_counter_ns()
 
 net.create()
