@@ -46,6 +46,8 @@ In addition to this ongoing external drive, a thalamic stimulation or a stimulat
 The default random initialization of membrane voltages in this simulation uses population-specific means and standard deviations to reduce an initial activity burst in the network: ``'V_type': 'optimized'`` in [network_params.py](network_params.py).
 Previous implementations used the same mean and standard deviation for all populations, which is here achieved by setting ``'V_type': 'original'``.
 
+In NEST GPU we implemented the kernel parameter ``remove_conn_key``, which deletes, if ``True``, connection keys after havning organized them. This procedure is useful for optimizing GPU memory consumption, however, it does not allow to get the connections after calibration (the default is ``False``).
+
 Recommendations for benchmarking
 ################################
 
@@ -57,7 +59,8 @@ You can update the parameters directly in the [run_benchmark.py](run_benchmark.p
    sim_dict.update({
     't_presim': 0.1, # presimulation time equal to the duration of a single time step. This is needed to trigger the Calibration phase.
     't_sim': 10000., # the biological simulation time should be at least `10` s for measuring the state propagation time.
-    'rec_dev': [] # no recording devices.
+    'rec_dev': [], # no recording devices.
+    'nl_algo': 0, #BlockStep nested loop algorithm is the fastest for NVIDIA A100, but algorithm speed depends on the GPU card and the architecture.
    })
 
 Also network parameters can similarly be updated, as can be seen in [L99](run_benchmark.py#L99).
