@@ -1,16 +1,13 @@
-NEST GPU microcircuit
-=====================
+# NEST GPU microcircuit
 
 This is a NEST GPU implementation of the microcircuit model by Potjans and Diesmann [1]_.
 The network model represents four layers of cortex, L2/3, L4, L5, and L6, each consisting of a population of excitatory neurons and a population of inhibitory neurons.
 
-Citing this code
-################
+## Citing this code
 
 If you use this code, we ask you to cite the paper by Potjans and Diesmann [1]_ and the one by Bruno Golosio [2]_.
 
-File structure
-##############
+## File structure
 
 * [run_microcircuit.py](run_microcircuit.py): an example script to try out the microcircuit
 * [run_benchmark.py](run_benchmark.py): an example script for benchmarking purposes, adapted from [3]_
@@ -20,8 +17,7 @@ File structure
 * [stimulus_params.py](stimulus_params.py): parameters for optional external stimulation
 * [sim_params.py](sim_params.py): simulation parameters
 
-Running the simulation
-######################
+## Running the simulation
 
 By default, the variables ``N_scaling`` and ``K_scaling`` in ``network_params.py`` are set to
 `1.0` (i.e., the full-scale network). ``N_scaling`` adjusts the number of neurons and ``K_scaling`` adjusts the indegrees.
@@ -36,8 +32,7 @@ To run a simulation, simply use:
 The output will be saved in the ``data`` directory.
 
 
-Note on parameters
-##################
+## Note on parameters
 
 By default, the simulation uses external Poissonian input to excite all neuronal populations of the microcircuit, i.e., ``poisson_input': True`` in [network_params.py](network_params.py).
 If set to ``False``, the Poissonian input is turned off and compensated approximately by calculated direct current (DC) input.
@@ -48,8 +43,7 @@ Previous implementations used the same mean and standard deviation for all popul
 
 In NEST GPU we implemented the kernel parameter ``remove_conn_key``, which deletes, if ``True``, connection keys after havning organized them. This procedure is useful for optimizing GPU memory consumption, however, it does not allow to get the connections after calibration (the default is ``False``).
 
-Recommendations for benchmarking
-################################
+## Recommendations for benchmarking
 
 For benchmark simulations assessing network-construction and state-propagation times, some simulation parameters changing is recommented.
 You can update the parameters directly in the [run_benchmark.py](run_benchmark.py) script as follows:
@@ -85,8 +79,7 @@ using different seed for random number generation, storing all the data in a fol
 
    bash run_benchmark.sh
 
-Contributions to this NEST GPU microcircuit model implementation
-################################################################
+## Contributions to this NEST GPU microcircuit model implementation
 
 2023: revision of code and documentation by Jose Villamar and Gianmarco Tiddia [3]_
 
@@ -100,21 +93,19 @@ Current communicating author of the NEST version: Johanna Senk
 
 2016: first version implemented by Hendrik Rothe, Hannah Bos and Sacha van Albada
 
-Acknowledgments
-###############
+## Acknowledgments
 
 Funding for the PyNEST microcircuit: This project has received funding from the European Union Seventh Framework Programme ([FP7/2007-2013]) under grant agreement n° 604102 (Human Brain Project, HBP) and the European Union’s Horizon 2020 Framework Programme for Research and Innovation under Specific Grant Agreement No. 720270 (Human Brain Project SGA1) and No. 785907 (Human Brain Project SGA2).
 
 Funding for [1]_: This work was supported by the Helmholtz Alliance on Systems Biology; European Union (FACETS, grant 15879 and BrainScaleS, grant 269921); Deutsch-Israelische Projektkooperation (DIP, grant F1.2); Bundesministerium für Bildung und Forschung, Germany (BMBF, grant 01GQ0420 to BCCN Freiburg), and the Next-Generation Supercomputer Project of the Ministry of education, culture, sports, science and technology (MEXT), Japan. Funding to pay the Open Access publication charges for this article was provided by Research Center Juelich, a member of the Helmholtz Association.
 
-Other implementations of the microcircuit model
-###############################################
+## Other implementations of the microcircuit model
+
 A `SLI version <https://github.com/nest/nest-simulator/tree/master/examples/nest/Potjans_2014>`__  by David Dahmen, Tom Tetzlaff, and Sacha van Albada, based on the original version by Tobias Potjans and Markus Diesmann, is also part of the NEST code base as an example.
 
 A `PyNN version <https://github.com/NeuralEnsemble/PyNN/tree/master/examples/Potjans2014>`__ is part of the PyNN code base as an example.
 
-References
-##########
+## References
 
 .. [1]  Potjans TC. and Diesmann M. 2014. The cell-type specific cortical
         microcircuit: relating structure and activity in a full-scale spiking
