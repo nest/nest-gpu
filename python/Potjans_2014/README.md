@@ -1,16 +1,16 @@
 # NEST GPU microcircuit
 
-This is a NEST GPU implementation of the microcircuit model by Potjans and Diesmann [1]_.
+This is a NEST GPU implementation of the microcircuit model by Potjans and Diesmann [1].
 The network model represents four layers of cortex, L2/3, L4, L5, and L6, each consisting of a population of excitatory neurons and a population of inhibitory neurons.
 
 ## Citing this code
 
-If you use this code, we ask you to cite the paper by Potjans and Diesmann [1]_ and the one by Bruno Golosio [2]_.
+If you use this code, we ask you to cite the paper by Potjans and Diesmann [1] and the one by Bruno Golosio [2].
 
 ## File structure
 
 * [run_microcircuit.py](run_microcircuit.py): an example script to try out the microcircuit
-* [run_benchmark.py](run_benchmark.py): an example script for benchmarking purposes, adapted from [3]_
+* [run_benchmark.py](run_benchmark.py): an example script for benchmarking purposes, adapted from [3]
 * [network.py](network.py): the main Network class with functions to build and simulate the network
 * [helpers.py](helpers.py): helper functions for network construction, simulation and evaluation
 * [network_params.py](network_params.py): network and neuron parameters
@@ -59,7 +59,7 @@ You can update the parameters directly in the [run_benchmark.py](run_benchmark.p
 
 Also network parameters can similarly be updated, as can be seen in [L99](run_benchmark.py#L99).
 
-The benchmarking scripts are adapted from [3]_. See also the [GitHub repository](https://github.com/gmtiddia/ngpu_dynamic_network_creation/tree/main/ngpu_microcircuit)
+The benchmarking scripts are adapted from [3]. See also the [GitHub repository](https://github.com/gmtiddia/ngpu_dynamic_network_creation/tree/main/ngpu_microcircuit)
 for a detailed description of the simulation files. To run the benchmarking script you should write:
 
 .. code-block:: bash
@@ -81,9 +81,9 @@ using different seed for random number generation, storing all the data in a fol
 
 ## Contributions to this NEST GPU microcircuit model implementation
 
-2023: revision of code and documentation by Jose Villamar and Gianmarco Tiddia [3]_
+2023: revision of code and documentation by Jose Villamar and Gianmarco Tiddia [3]
 
-2020: adapted for NEST GPU by Bruno Golosio [2]_
+2020: adapted for NEST GPU by Bruno Golosio [2]
 
 Current communicating author of the NEST version: Johanna Senk
 
@@ -97,7 +97,7 @@ Current communicating author of the NEST version: Johanna Senk
 
 Funding for the PyNEST microcircuit: This project has received funding from the European Union Seventh Framework Programme ([FP7/2007-2013]) under grant agreement n° 604102 (Human Brain Project, HBP) and the European Union’s Horizon 2020 Framework Programme for Research and Innovation under Specific Grant Agreement No. 720270 (Human Brain Project SGA1) and No. 785907 (Human Brain Project SGA2).
 
-Funding for [1]_: This work was supported by the Helmholtz Alliance on Systems Biology; European Union (FACETS, grant 15879 and BrainScaleS, grant 269921); Deutsch-Israelische Projektkooperation (DIP, grant F1.2); Bundesministerium für Bildung und Forschung, Germany (BMBF, grant 01GQ0420 to BCCN Freiburg), and the Next-Generation Supercomputer Project of the Ministry of education, culture, sports, science and technology (MEXT), Japan. Funding to pay the Open Access publication charges for this article was provided by Research Center Juelich, a member of the Helmholtz Association.
+Funding for [1]: This work was supported by the Helmholtz Alliance on Systems Biology; European Union (FACETS, grant 15879 and BrainScaleS, grant 269921); Deutsch-Israelische Projektkooperation (DIP, grant F1.2); Bundesministerium für Bildung und Forschung, Germany (BMBF, grant 01GQ0420 to BCCN Freiburg), and the Next-Generation Supercomputer Project of the Ministry of education, culture, sports, science and technology (MEXT), Japan. Funding to pay the Open Access publication charges for this article was provided by Research Center Juelich, a member of the Helmholtz Association.
 
 ## Other implementations of the microcircuit model
 
@@ -107,14 +107,14 @@ A [PyNN version](https://github.com/NeuralEnsemble/PyNN/tree/master/examples/Pot
 
 ## References
 
-.. [1]  Potjans TC. and Diesmann M. 2014. The cell-type specific cortical
+- [1]  Potjans TC. and Diesmann M. 2014. The cell-type specific cortical
         microcircuit: relating structure and activity in a full-scale spiking
-        network model. Cerebral Cortex. 24(3):785–806. DOI: `10.1093/cercor/bhs358 <https://doi.org/10.1093/cercor/bhs358>`__.
+        network model. Cerebral Cortex. 24(3):785–806. DOI: [10.1093/cercor/bhs358](https://doi.org/10.1093/cercor/bhs358).
 
-.. [2]  Golosio B., Tiddia G., De Luca C., Pastorelli E., Simula F. and Paolucci PS. 2021
+- [2]  Golosio B., Tiddia G., De Luca C., Pastorelli E., Simula F. and Paolucci PS. 2021
         Fast Simulations of Highly-Connected Spiking Cortical Models Using GPUs. 
-        Front. Comput. Neurosci. 15:627620. DOI: `10.3389/fncom.2021.627620 <https://doi.org/10.3389/fncom.2021.627620>`__.
+        Front. Comput. Neurosci. 15:627620. DOI: [10.3389/fncom.2021.627620](https://doi.org/10.3389/fncom.2021.627620).
 
-.. [3]  Golosio B., Villamar J., Tiddia G., Pastorelli E., Stapmanns J., Fanti V., Paolucci PS., Morrison A. and Senk J. 2023 
+- [3]  Golosio B., Villamar J., Tiddia G., Pastorelli E., Stapmanns J., Fanti V., Paolucci PS., Morrison A. and Senk J. 2023 
         Runtime Construction of Large-Scale Spiking Neuronal Network Models on GPU Devices. 
-        Applied Sciences; 13(17):9598. DOI: `10.3390/app13179598 <https://doi.org/10.3390/app13179598>`__.
+        Applied Sciences; 13(17):9598. DOI: [10.3390/app13179598](https://doi.org/10.3390/app13179598).
