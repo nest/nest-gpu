@@ -59,7 +59,7 @@ You can update the parameters directly in the [run_benchmark.py](run_benchmark.p
 
 Also network parameters can similarly be updated, as can be seen in [L99](run_benchmark.py#L99).
 
-The benchmarking scripts are adapted from [3]_. See also the `GitHub repository <https://github.com/gmtiddia/ngpu_dynamic_network_creation/tree/main/ngpu_microcircuit>`__ 
+The benchmarking scripts are adapted from [3]_. See also the [GitHub repository](https://github.com/gmtiddia/ngpu_dynamic_network_creation/tree/main/ngpu_microcircuit)
 for a detailed description of the simulation files. To run the benchmarking script you should write:
 
 .. code-block:: bash
@@ -101,9 +101,9 @@ Funding for [1]_: This work was supported by the Helmholtz Alliance on Systems B
 
 ## Other implementations of the microcircuit model
 
-A `SLI version <https://github.com/nest/nest-simulator/tree/master/examples/nest/Potjans_2014>`__  by David Dahmen, Tom Tetzlaff, and Sacha van Albada, based on the original version by Tobias Potjans and Markus Diesmann, is also part of the NEST code base as an example.
+A [SLI version](https://github.com/nest/nest-simulator/tree/master/examples/nest/Potjans_2014)  by David Dahmen, Tom Tetzlaff, and Sacha van Albada, based on the original version by Tobias Potjans and Markus Diesmann, is also part of the NEST code base as an example.
 
-A `PyNN version <https://github.com/NeuralEnsemble/PyNN/tree/master/examples/Potjans2014>`__ is part of the PyNN code base as an example.
+A [PyNN version](https://github.com/NeuralEnsemble/PyNN/tree/master/examples/Potjans2014>) is part of the PyNN code base as an example.
 
 ## References
 
