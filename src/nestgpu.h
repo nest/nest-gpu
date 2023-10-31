@@ -166,7 +166,8 @@ class NESTGPU
 
   int verbosity_level_;
   bool print_time_;
-
+  bool remove_conn_key_;
+  
   int nested_loop_algo_;
 
   //std::vector<RemoteConnection> remote_connection_vect_;

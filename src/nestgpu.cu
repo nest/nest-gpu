@@ -75,12 +75,15 @@ enum KernelIntParamIndexes {
   i_rnd_seed = 0,
   i_verbosity_level,
   i_max_spike_buffer_size,
-  i_remote_spike_height_flag,
+  i_max_node_n_bits,
+  i_max_syn_n_bits,
   N_KERNEL_INT_PARAM
 };
 
 enum KernelBoolParamIndexes {
   i_print_time,
+  i_remove_conn_key,
+  i_remote_spike_height,
   N_KERNEL_BOOL_PARAM
 };
 
@@ -95,11 +98,14 @@ const std::string kernel_int_param_name[N_KERNEL_INT_PARAM] = {
   "rnd_seed",
   "verbosity_level",
   "max_spike_buffer_size",
-  "remote_spike_height_flag"
+  "max_node_n_bits",
+  "max_syn_n_bits"
 };
 
 const std::string kernel_bool_param_name[N_KERNEL_BOOL_PARAM] = {
-  "print_time"
+  "print_time",
+  "remove_conn_key",
+  "remote_spike_height"
 };
 
 int NESTGPU::FreeConnRandomGenerator()
@@ -195,7 +201,8 @@ NESTGPU::NESTGPU()
   max_spike_per_host_fact_ = 1.0;
   max_remote_spike_num_fact_ = 1.0;
   setMaxNodeNBits(20); // maximum number of nodes is 2^20
-
+  setMaxSynNBits(6); // maximum number of synapse groups is 2^6
+  
   error_flag_ = false;
   error_message_ = "";
   error_code_ = 0;
@@ -204,6 +211,7 @@ NESTGPU::NESTGPU()
 
   verbosity_level_ = 4;
   print_time_ = false;
+  remove_conn_key_ = false;
   
   mpi_flag_ = false;
   remote_spike_height_ = false;
@@ -418,7 +426,7 @@ int NESTGPU::CreateNodeGroup(int n_nodes, int n_ports)
 {
   int i_node_0 = GetNLocalNodes();
   int max_n_nodes = IntPow(2,h_MaxNodeNBits);
-  int max_n_ports = IntPow(2,h_MaxPortNBits);
+  int max_n_ports = IntPow(2, (h_MaxPortSynNBits-h_MaxSynNBits-1));
   
   if ((i_node_0 + n_nodes) > max_n_nodes) {
     throw ngpu_exception(std::string("Maximum number of nodes ")
@@ -481,7 +489,16 @@ int NESTGPU::Calibrate()
   ConnectInit();
 
   poiss_conn::OrganizeDirectConnections();
-
+  for (unsigned int i=0; i<node_vect_.size(); i++) {
+    if (node_vect_[i]->has_dir_conn_) {
+      node_vect_[i]->buildDirectConnections();
+    }
+  }
+  
+  if (remove_conn_key_) {
+    freeConnectionKey(KeySubarray);
+  }
+  
   int max_delay_num = h_MaxDelayNum;
   
   unsigned int n_spike_buffers = GetTotalNNodes();
@@ -1973,6 +1990,10 @@ bool NESTGPU::GetBoolParam(std::string param_name)
   switch (i_param) {
   case i_print_time:
     return print_time_;
+  case i_remove_conn_key:
+    return remove_conn_key_;
+  case i_remote_spike_height:
+    return remote_spike_height_;
   default:
     throw ngpu_exception(std::string("Unrecognized kernel boolean parameter ")
 			 + param_name);
@@ -1984,8 +2005,14 @@ int NESTGPU::SetBoolParam(std::string param_name, bool val)
   int i_param =  GetBoolParamIdx(param_name);
 
   switch (i_param) {
-  case i_time_resolution:
+  case i_print_time:
     print_time_ = val;
+    break;
+  case i_remove_conn_key:
+    remove_conn_key_ = val;
+    break;
+  case i_remote_spike_height:
+      remote_spike_height_ = val;
     break;
   default:
     throw ngpu_exception(std::string("Unrecognized kernel boolean parameter ")
@@ -2125,13 +2152,10 @@ int NESTGPU::GetIntParam(std::string param_name)
     return verbosity_level_;
   case i_max_spike_buffer_size:
     return max_spike_buffer_size_;
-  case i_remote_spike_height_flag:
-    if (remote_spike_height_) {
-      return 1;
-    }
-    else {
-      return 0;
-    }
+  case i_max_node_n_bits:
+    return h_MaxNodeNBits;    
+  case i_max_syn_n_bits:
+    return h_MaxSynNBits;    
   default:
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")
 			 + param_name);
@@ -2148,19 +2172,14 @@ int NESTGPU::SetIntParam(std::string param_name, int val)
   case i_verbosity_level:
     SetVerbosityLevel(val);
     break;
-  case i_max_spike_per_host_fact:
+  case i_max_spike_buffer_size:
     SetMaxSpikeBufferSize(val);
     break;
-  case i_remote_spike_height_flag:
-    if (val==0) {
-      remote_spike_height_ = false;
-    }
-    else if (val==1) {
-      remote_spike_height_ = true;
-    }
-    else {
-      throw ngpu_exception("Admissible values of remote_spike_height_flag are only 0 or 1");
-    }
+  case i_max_node_n_bits:
+    setMaxNodeNBits(val);
+    break;
+  case i_max_syn_n_bits:
+    setMaxSynNBits(val);
     break;
   default:
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")

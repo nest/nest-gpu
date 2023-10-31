@@ -288,7 +288,8 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, int n_source,
   // to local spike buffers
   //int spike_buffer_map_i0 = GetNNode();
   int spike_buffer_map_i0 = n_image_nodes_;
-  syn_spec.port_ = syn_spec.port_ | (1 << (h_MaxPortNBits-1));
+  syn_spec.port_ = syn_spec.port_ |
+    (1 << (h_MaxPortSynNBits - h_MaxSynNBits - 1));
     
   // check if the flag UseAllSourceNodes[conn_rule] is false
   // if (!use_all_source_nodes_flag) {

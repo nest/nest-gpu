@@ -32,19 +32,25 @@
 
 struct connection_struct
 {
-  int target_port;
+  int target_port_syn;
   float weight;
-  unsigned char syn_group;
+  // unsigned char syn_group;
 };
 
 extern uint h_MaxNodeNBits;
 extern __device__ uint MaxNodeNBits;
 
-extern uint h_MaxPortNBits;
-extern __device__ uint MaxPortNBits;
+extern uint h_MaxPortSynNBits;
+extern __device__ uint MaxPortSynNBits;
 
-extern uint h_PortMask;
-extern __device__ uint PortMask;
+extern uint h_MaxSynNBits;
+extern __device__ uint MaxSynNBits;
+
+extern uint h_PortSynMask;
+extern __device__ uint PortSynMask;
+
+extern uint h_SynMask;
+extern __device__ uint SynMask;
 
 extern uint *d_ConnGroupIdx0;
 extern __device__ uint *ConnGroupIdx0;
@@ -78,9 +84,13 @@ extern __device__ connection_struct** ConnectionArray;
 
 int setMaxNodeNBits(int max_node_nbits);
 
+int setMaxSynNBits(int max_syn_nbits);
+
 int allocateNewBlocks(std::vector<uint*> &key_subarray,
 		      std::vector<connection_struct*> &conn_subarray,
 		      int64_t block_size, uint new_n_block);
+
+int freeConnectionKey(std::vector<uint*> &key_subarray);
 
 int setConnectionWeights(curandGenerator_t &gen, void *d_storage,
 			 connection_struct *conn_subarray, int64_t n_conn,
@@ -131,7 +141,7 @@ __global__ void setTarget(connection_struct *conn_subarray, uint *rand_val,
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  conn_subarray[i_conn].target_port =
+  conn_subarray[i_conn].target_port_syn =
     GetNodeIndex(target, rand_val[i_conn]%n_target);
 }
 
@@ -148,7 +158,7 @@ __global__ void setOneToOneSourceTarget(uint *key_subarray,
   uint i_source = GetNodeIndex(source, (int)(i_conn));
   uint i_target = GetNodeIndex(target, (int)(i_conn));
   key_subarray[i_block_conn] = i_source;
-  conn_subarray[i_block_conn].target_port = i_target;
+  conn_subarray[i_block_conn].target_port_syn = i_target;
 }
 
 template <class T1, class T2>
@@ -165,7 +175,7 @@ __global__ void setAllToAllSourceTarget(uint *key_subarray,
   uint i_source = GetNodeIndex(source, (int)(i_conn / n_target));
   uint i_target = GetNodeIndex(target, (int)(i_conn % n_target));
   key_subarray[i_block_conn] = i_source;
-  conn_subarray[i_block_conn].target_port = i_target;
+  conn_subarray[i_block_conn].target_port_syn = i_target;
 }
 
 template <class T>
@@ -178,7 +188,7 @@ __global__ void setIndegreeTarget(connection_struct *conn_subarray,
   if (i_block_conn>=n_block_conn) return;
   int64_t i_conn = n_prev_conn + i_block_conn;
   uint i_target = GetNodeIndex(target, (int)(i_conn / indegree));
-  conn_subarray[i_block_conn].target_port = i_target;
+  conn_subarray[i_block_conn].target_port_syn = i_target;
 }
 
 template <class T>

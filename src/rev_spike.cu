@@ -71,10 +71,10 @@ __global__ void CountRevConnectionsKernel
   // REQUIRES REVERSE CONNECTION
   // - Check syn_group of all connections.
   // - If syn_group>0 must create a reverse connection:
-  if (conn.syn_group > 0) {
+  if ((conn.target_port_syn & SynMask) > 0) {
     // First get target node index
-    uint target_port = conn.target_port;
-    int i_target = target_port >> MaxPortNBits;
+    uint target_port_syn = conn.target_port_syn;
+    int i_target = target_port_syn >> MaxPortSynNBits;
     // (atomic)increase the number of reverse connections for target
     atomicAdd((unsigned long long *)&target_rev_connection_size_64[i_target],
 	      1);
@@ -99,10 +99,10 @@ __global__ void SetRevConnectionsIndexKernel
   // REQUIRES REVERSE CONNECTION  
   // - Check syn_group of all connections.
   // - If syn_group>0 must create a reverse connection:
-  if (conn.syn_group > 0) {
+  if ((conn.target_port_syn & SynMask) > 0) {
     // First get target node index
-    uint target_port = conn.target_port;
-    int i_target = target_port >> MaxPortNBits;
+    uint target_port_syn = conn.target_port_syn;
+    int i_target = target_port_syn >> MaxPortSynNBits;
     // (atomic)increase the number of reverse connections for target
     int pos = atomicAdd(&target_rev_connection_size[i_target], 1);
     // Evaluate the pointer to the rev connection position in the
