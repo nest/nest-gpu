@@ -52,10 +52,10 @@ __device__  __forceinline__ void NestedLoopFunction<0>(int i_spike, int i_syn)
   uint i_block = (uint)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
   connection_struct conn = ConnectionArray[i_block][i_block_conn];
-  uint target_port = conn.target_port;
-  int i_target = target_port >> MaxPortNBits;
-  uint port = target_port & PortMask;
-  unsigned char syn_group = conn.syn_group;
+  uint target_port_syn = conn.target_port_syn;
+  int i_target = target_port_syn >> MaxPortSynNBits;
+  uint port = (target_port_syn & PortSynMask) >> MaxSynNBits;
+  unsigned char syn_group = target_port_syn & SynMask;
   float weight = conn.weight;
   //printf("ok target: %d\tport: %d\t syn_group: %d\tweight-0.0005: %.7e\n",
   //	 i_target, port, syn_group, weight-0.0005);

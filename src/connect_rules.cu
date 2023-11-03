@@ -1,5 +1,5 @@
 /*
- *  connect_rules.cpp
+ *  connect_rules.cu
  *
  *  This file is part of NEST GPU.
  *
@@ -331,7 +331,7 @@ int NESTGPU::Connect(int i_source, int n_source, int* target, int n_target,
 		       cudaMemcpyHostToDevice));
   int ret = _Connect<int, int*>(i_source, n_source, d_target, n_target,
 				conn_spec, syn_spec);
-  gpuErrchk(cudaFree(d_target));
+  CUDAFREECTRL("d_target",d_target);
 
   return ret;
 }
@@ -344,7 +344,7 @@ int NESTGPU::Connect(int* source, int n_source, int i_target, int n_target,
 		       cudaMemcpyHostToDevice));
   int ret = _Connect<int*, int>(d_source, n_source, i_target, n_target,
 				conn_spec, syn_spec);
-  gpuErrchk(cudaFree(d_source));
+  CUDAFREECTRL("d_source",d_source);
   
   return ret;
 }
@@ -361,8 +361,8 @@ int NESTGPU::Connect(int* source, int n_source, int* target, int n_target,
 		       cudaMemcpyHostToDevice));
   int ret = _Connect<int*, int*>(d_source, n_source, d_target, n_target,
 				 conn_spec, syn_spec);
-  gpuErrchk(cudaFree(d_source));
-  gpuErrchk(cudaFree(d_target));
+  CUDAFREECTRL("d_source",d_source);
+  CUDAFREECTRL("d_target",d_target);
 
   return ret;
 }
@@ -416,7 +416,7 @@ int NESTGPU::RemoteConnect(int i_source_host, int i_source, int n_source,
   int ret = _RemoteConnect<int, int*>(i_source_host, i_source, n_source,
 				      i_target_host, d_target, n_target,
 				      conn_spec, syn_spec);
-  gpuErrchk(cudaFree(d_target));
+  CUDAFREECTRL("d_target",d_target);
 
   return ret;
 }
@@ -432,7 +432,7 @@ int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
   int ret = _RemoteConnect<int*, int>(i_source_host, d_source, n_source,
 				      i_target_host, i_target, n_target,
 				      conn_spec, syn_spec);
-  gpuErrchk(cudaFree(d_source));
+  CUDAFREECTRL("d_source",d_source);
   
   return ret;
 }
@@ -452,8 +452,8 @@ int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
   int ret = _RemoteConnect<int*, int*>(i_source_host, d_source, n_source,
 				       i_target_host, d_target, n_target,
 				       conn_spec, syn_spec);
-  gpuErrchk(cudaFree(d_source));
-  gpuErrchk(cudaFree(d_target));
+  CUDAFREECTRL("d_source",d_source);
+  CUDAFREECTRL("d_target",d_target);
 
   return ret;
 }

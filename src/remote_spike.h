@@ -1,5 +1,5 @@
 /*
- *  spike_mpi.h
+ *  remote_spike.h
  *
  *  This file is part of NEST GPU.
  *
@@ -24,26 +24,15 @@
 
 
 
-#ifndef SPIKEMPI_H
-#define SPIKEMPI_H
+#ifndef REMOTE_SPIKE_H
+#define REMOTE_SPIKE_H
 
-/*
-Combined version of PushedSpikeFromRemote and AddOffset kernels
-using default values for arguments
-Args:
-	- int n_spikes: number of spikes to push
-	- int* spike_buffer_id: pointer to array of spike buffer ids
-	- float* spike_height: pointer to array of spike heights to send
-		Defaults to NULL, if no spike height given then a height of 1.0 is pushed
-		Must be of length == n_spikes
-	- int offset: Offset to be used for spike_buffer indexes
-		Defaults to 0
-*/
+extern __constant__ bool have_remote_spike_height;
+
+__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id,
+                                    float *spike_height);
+
 __global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id);
-
-#ifdef HAVE_MPI
-
-extern __constant__ bool NESTGPUMpiFlag;
 
 extern __device__ int NExternalTargetHost;
 extern __device__ int MaxSpikePerHost;
@@ -84,11 +73,29 @@ extern __device__ int *ExternalSourceSpikeNodeId;
 extern float *d_ExternalSourceSpikeHeight;
 extern __device__ float *ExternalSourceSpikeHeight;
 
+extern int *d_ExternalTargetSpikeIdx0;
+extern __device__ int *ExternalTargetSpikeIdx0;
+extern int *h_ExternalTargetSpikeIdx0;
+
+extern int *d_ExternalSourceSpikeIdx0;
+
+extern int *h_ExternalTargetSpikeNum;
+extern int *h_ExternalSourceSpikeNum;
+extern int *h_ExternalSourceSpikeIdx0;
+extern int *h_ExternalTargetSpikeNodeId;
+extern int *h_ExternalSourceSpikeNodeId;
+
+//extern int *h_ExternalSpikeNodeId;
+
+extern float *h_ExternalSpikeHeight;
+
 __device__ void PushExternalSpike(int i_source, float height);
 
-__global__ void SendExternalSpike();
+__device__ void PushExternalSpike(int i_source);
 
-__global__ void ExternalSpikeReset();
+__global__ void countExternalSpikesPerTargetHost();
+
+__global__ void organizeExternalSpikesPerTargetHost();
 
 __global__ void DeviceExternalSpikeInit(int n_hosts,
 					int max_spike_per_host,
@@ -96,6 +103,7 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
 					int *ext_spike_source_node,
                                         float *ext_spike_height,
 					int *ext_target_spike_num,
+					int *ext_target_spike_idx0,
 					int *ext_target_spike_node_id,
                                         float *ext_target_spike_height,
 					int *n_ext_node_target_host,
@@ -103,5 +111,18 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
 					int **ext_node_id
 					);
 
+__global__ void DeviceExternalSpikeInit(int n_hosts,
+					int max_spike_per_host,
+		      			int *ext_spike_num,
+					int *ext_spike_source_node,
+					int *ext_target_spike_num,
+					int *ext_target_spike_idx0,
+					int *ext_target_spike_node_id,
+					int *n_ext_node_target_host,
+					int **ext_node_target_host_id,
+					int **ext_node_id
+					);
+
+
 #endif
-#endif
+

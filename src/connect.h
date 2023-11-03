@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef NEW_CONNECT_H
-#define NEW_CONNECT_H
+#ifndef CONNECT_H
+#define CONNECT_H
 
 #include <curand.h>
 #include <vector>
@@ -32,34 +32,36 @@
 
 struct connection_struct
 {
-  int target_port;
+  int target_port_syn;
   float weight;
-  unsigned char syn_group;
+  // unsigned char syn_group;
 };
 
 extern uint h_MaxNodeNBits;
 extern __device__ uint MaxNodeNBits;
 
-extern uint h_MaxPortNBits;
-extern __device__ uint MaxPortNBits;
+extern uint h_MaxPortSynNBits;
+extern __device__ uint MaxPortSynNBits;
 
-extern uint h_PortMask;
-extern __device__ uint PortMask;
+extern uint h_MaxSynNBits;
+extern __device__ uint MaxSynNBits;
+
+extern uint h_PortSynMask;
+extern __device__ uint PortSynMask;
+
+extern uint h_SynMask;
+extern __device__ uint SynMask;
 
 extern uint *d_ConnGroupIdx0;
 extern __device__ uint *ConnGroupIdx0;
 
-extern uint *d_ConnGroupNum;
-extern __device__ uint *ConnGroupNum;
-
 extern int64_t *d_ConnGroupIConn0;
 extern __device__ int64_t *ConnGroupIConn0;
 
-extern int64_t *d_ConnGroupNConn;
-extern __device__ int64_t *ConnGroupNConn;
-
-extern uint *d_ConnGroupDelay;
+//extern uint *d_ConnGroupDelay;
 extern __device__ uint *ConnGroupDelay;
+
+extern uint tot_conn_group_num;
 
 extern int64_t NConn;
 
@@ -68,17 +70,27 @@ extern __device__ int64_t ConnBlockSize;
 
 extern uint h_MaxDelayNum;
 
+// it seems that there is no relevant advantage in using a constant array
+// however better to keep this option ready and commented
 extern std::vector<uint*> KeySubarray;
+extern uint** d_SourceDelayArray;
 extern __device__ uint** SourceDelayArray;
+//extern __constant__ uint* SourceDelayArray[];
 
 extern std::vector<connection_struct*> ConnectionSubarray;
+extern connection_struct** d_ConnectionArray;
 extern __device__ connection_struct** ConnectionArray;
+//extern __constant__ connection_struct* ConnectionArray[];
 
 int setMaxNodeNBits(int max_node_nbits);
+
+int setMaxSynNBits(int max_syn_nbits);
 
 int allocateNewBlocks(std::vector<uint*> &key_subarray,
 		      std::vector<connection_struct*> &conn_subarray,
 		      int64_t block_size, uint new_n_block);
+
+int freeConnectionKey(std::vector<uint*> &key_subarray);
 
 int setConnectionWeights(curandGenerator_t &gen, void *d_storage,
 			 connection_struct *conn_subarray, int64_t n_conn,
@@ -99,7 +111,8 @@ int organizeConnections(float time_resolution, uint n_node, int64_t n_conn,
 			std::vector<uint*> &key_subarray,
 			std::vector<connection_struct*> &conn_subarray);
 
-int NewConnectInit();
+
+int ConnectInit();
 
 __device__ __forceinline__
 uint GetNodeIndex(int i_node_0, int i_node_rel)
@@ -128,7 +141,7 @@ __global__ void setTarget(connection_struct *conn_subarray, uint *rand_val,
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  conn_subarray[i_conn].target_port =
+  conn_subarray[i_conn].target_port_syn =
     GetNodeIndex(target, rand_val[i_conn]%n_target);
 }
 
@@ -145,7 +158,7 @@ __global__ void setOneToOneSourceTarget(uint *key_subarray,
   uint i_source = GetNodeIndex(source, (int)(i_conn));
   uint i_target = GetNodeIndex(target, (int)(i_conn));
   key_subarray[i_block_conn] = i_source;
-  conn_subarray[i_block_conn].target_port = i_target;
+  conn_subarray[i_block_conn].target_port_syn = i_target;
 }
 
 template <class T1, class T2>
@@ -162,7 +175,7 @@ __global__ void setAllToAllSourceTarget(uint *key_subarray,
   uint i_source = GetNodeIndex(source, (int)(i_conn / n_target));
   uint i_target = GetNodeIndex(target, (int)(i_conn % n_target));
   key_subarray[i_block_conn] = i_source;
-  conn_subarray[i_block_conn].target_port = i_target;
+  conn_subarray[i_block_conn].target_port_syn = i_target;
 }
 
 template <class T>
@@ -175,7 +188,7 @@ __global__ void setIndegreeTarget(connection_struct *conn_subarray,
   if (i_block_conn>=n_block_conn) return;
   int64_t i_conn = n_prev_conn + i_block_conn;
   uint i_target = GetNodeIndex(target, (int)(i_conn / indegree));
-  conn_subarray[i_block_conn].target_port = i_target;
+  conn_subarray[i_block_conn].target_port_syn = i_target;
 }
 
 template <class T>
@@ -556,7 +569,7 @@ int NESTGPU::_ConnectOneToOne
   connect_one_to_one(gen, d_storage, time_resolution_,
 		     KeySubarray, ConnectionSubarray, NConn,
 		     h_ConnBlockSize, source, target, n_node, syn_spec);
-  gpuErrchk(cudaFree(d_storage));
+  CUDAFREECTRL("d_storage",d_storage);
 
   return 0;
 }
@@ -575,7 +588,7 @@ int NESTGPU::_ConnectAllToAll
 		     KeySubarray, ConnectionSubarray, NConn,
 		     h_ConnBlockSize, source, n_source,
 		     target, n_target, syn_spec);
-  gpuErrchk(cudaFree(d_storage));
+  CUDAFREECTRL("d_storage",d_storage);
 
   return 0;
 }
@@ -594,7 +607,7 @@ int NESTGPU::_ConnectFixedTotalNumber
 			     KeySubarray, ConnectionSubarray, NConn,
 			     h_ConnBlockSize, total_num, source, n_source,
 			     target, n_target, syn_spec);
-  gpuErrchk(cudaFree(d_storage));
+  CUDAFREECTRL("d_storage",d_storage);
 
   return 0;
 }
@@ -613,7 +626,7 @@ int NESTGPU::_ConnectFixedIndegree
 			 KeySubarray, ConnectionSubarray, NConn,
 			 h_ConnBlockSize, indegree, source, n_source,
 			 target, n_target, syn_spec);
-  gpuErrchk(cudaFree(d_storage));
+  CUDAFREECTRL("d_storage",d_storage);
 
   return 0;
 }
@@ -632,7 +645,7 @@ int NESTGPU::_ConnectFixedOutdegree
 			  KeySubarray, ConnectionSubarray, NConn,
 			  h_ConnBlockSize, outdegree, source, n_source,
 			  target, n_target, syn_spec);
-  gpuErrchk(cudaFree(d_storage));
+  CUDAFREECTRL("d_storage",d_storage);
 
   return 0;
 }

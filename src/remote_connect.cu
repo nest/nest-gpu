@@ -92,6 +92,8 @@ int **d_node_map_index; // [i_node]
 // - false otherwise (fixed_indegree, fixed_total_number, pairwise_bernoulli)
 bool *use_all_source_nodes; // [n_connection_rules]:
 
+__constant__ int n_local_nodes; // number of local nodes
+
 // Allocate GPU memory for new remote-source-node-map blocks
 int allocRemoteSourceNodeMapBlocks(std::vector<int*> &i_remote_src_node_map,
 				   std::vector<int*> &i_local_spike_buf_map,
@@ -379,7 +381,7 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
   ////////////////////////////////////////
 #endif
 
-  int n_nodes = GetNNode(); // number of nodes
+  int n_nodes = GetNLocalNodes(); // number of nodes
   // n_target_hosts[i_node] is the number of remote target hosts
   // on which each local node
   // has outgoing connections
@@ -438,7 +440,7 @@ int  NESTGPU::RemoteConnectionMapCalibrate(int i_host, int n_hosts)
 				d_n_target_hosts,
 				d_n_target_hosts_cumul,
 				n_nodes+1);
-  gpuErrchk(cudaFree(d_temp_storage));
+  CUDAFREECTRL("d_temp_storage",d_temp_storage);
   // The last element is the sum of all elements of n_target_hosts
   int n_target_hosts_sum;
   gpuErrchk(cudaMemcpy(&n_target_hosts_sum, &d_n_target_hosts_cumul[n_nodes],
@@ -540,7 +542,7 @@ __global__ void setUsedSourceNodeKernel(uint *key_subarray,
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  int i_source = key_subarray[i_conn] >> MaxPortNBits;
+  int i_source = key_subarray[i_conn] >> MaxPortSynNBits;
   // it is not necessary to use atomic operation. See:
   // https://stackoverflow.com/questions/8416374/several-threads-writing-the-same-value-in-the-same-global-memory-location
 #ifdef CHECKRC
@@ -756,11 +758,11 @@ __global__ void fixConnectionSourceNodeIndexesKernel(uint *key_subarray,
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  int i_source = key_subarray[i_conn] >> MaxPortNBits;
-  int i_delay = key_subarray[i_conn] & PortMask;
+  int i_source = key_subarray[i_conn] >> MaxPortSynNBits;
+  int i_delay = key_subarray[i_conn] & PortSynMask;
   int new_i_source = local_node_index[i_source];
 
-  key_subarray[i_conn] = (new_i_source << MaxPortNBits) | i_delay;
+  key_subarray[i_conn] = (new_i_source << MaxPortSynNBits) | i_delay;
 
 #ifdef CHECKRC
   printf("i_conn: %ld\t new_i_source: %d\n", i_conn, new_i_source);
@@ -845,15 +847,15 @@ __global__ void MapIndexToSpikeBufferKernel(int n_hosts, int *host_offset,
 
 __global__ void addOffsetToExternalNodeIdsKernel
 (int64_t n_conn, uint *key_subarray, connection_struct *conn_subarray,
- int i_ext_node_0)
+ int i_image_node_0)
 {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) return;
-  uint target_port = conn_subarray[i_conn].target_port;
-  if (target_port & (1 << (MaxPortNBits - 1))) {
-    target_port = target_port ^ (1 << (MaxPortNBits - 1));
-    conn_subarray[i_conn].target_port = target_port; 
-    key_subarray[i_conn] += (i_ext_node_0 << MaxPortNBits);
+  uint target_port_syn = conn_subarray[i_conn].target_port_syn;
+  if (target_port_syn & (1 << (MaxPortSynNBits - 1))) {
+    target_port_syn = target_port_syn ^ (1 << (MaxPortSynNBits - 1));
+    conn_subarray[i_conn].target_port_syn = target_port_syn; 
+    key_subarray[i_conn] += (i_image_node_0 << MaxPortSynNBits);
   }
 }
 
@@ -861,14 +863,15 @@ int NESTGPU::addOffsetToExternalNodeIds()
 {
   int64_t block_size = h_ConnBlockSize;
   int n_blocks = (NConn - 1) / block_size + 1;
-
+  int i_image_node_0 = GetNLocalNodes();
+  
   for (int ib=0; ib<n_blocks; ib++) {
     uint64_t n_block_conn = block_size; // number of connections in the block
     if (ib == n_blocks-1) { // last block
       n_block_conn = (NConn - 1) % block_size + 1;
     }
     addOffsetToExternalNodeIdsKernel<<<(n_block_conn+1023)/1024, 1024>>>
-      (n_block_conn, KeySubarray[ib], ConnectionSubarray[ib], i_ext_node_0_);
+      (n_block_conn, KeySubarray[ib], ConnectionSubarray[ib], i_image_node_0);
     gpuErrchk( cudaPeekAtLastError() );
     gpuErrchk( cudaDeviceSynchronize() );
   }
@@ -897,24 +900,26 @@ int NESTGPU::addOffsetToExternalNodeIds()
 }
 
 __global__ void addOffsetToSpikeBufferMapKernel(int i_host, int n_node_map,
-						int i_ext_node_0)
+						int i_image_node_0)
 {
   int i_node_map = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_node_map>=n_node_map) return;
   
   const int i_block = i_node_map / node_map_block_size;
   const int i = i_node_map % node_map_block_size;
-  local_spike_buffer_map[i_host][i_block][i] += i_ext_node_0;
+  local_spike_buffer_map[i_host][i_block][i] += i_image_node_0;
 }
 
 int NESTGPU::addOffsetToSpikeBufferMap()
 {
+  int i_image_node_0 = GetNLocalNodes();
+
   for (int i_host=0; i_host<n_hosts_; i_host++) {
     if (i_host != this_host_) {
       int n_node_map = h_n_remote_source_node_map[i_host];
       if (n_node_map > 0) {
 	addOffsetToSpikeBufferMapKernel<<<(n_node_map+1023)/1024, 1024>>>
-	  (i_host, n_node_map, i_ext_node_0_);
+	  (i_host, n_node_map, i_image_node_0);
 	gpuErrchk( cudaPeekAtLastError() );
 	gpuErrchk( cudaDeviceSynchronize() );
       }

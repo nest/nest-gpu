@@ -49,8 +49,8 @@ int PrefixScan::Scan(int *d_Output, int *d_Input, int n)
 int PrefixScan::Free()
 {
   //closeScan();
-  //gpuErrchk(cudaFree(d_Output));
-  //gpuErrchk(cudaFree(d_Input));
+  //CUDAFREECTRL("d_Output",d_Output);
+  //CUDAFREECTRL("d_Input",d_Input);
   
   return 0;
 }

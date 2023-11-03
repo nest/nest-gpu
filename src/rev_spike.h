@@ -64,7 +64,7 @@ __device__ __forceinline__ void NestedLoopFunction<1>
   uint i_block = (uint)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
   connection_struct conn = ConnectionArray[i_block][i_block_conn];
-  unsigned char syn_group = conn.syn_group;
+  unsigned char syn_group = conn.target_port_syn & SynMask;
   
   // TO BE IMPROVED BY CHECKING IF THE SYNAPSE TYPE OF THE GROUP
   // REQUIRES AN UPDATE BASED ON POST-PRE SPIKE TIME DIFFERENCE

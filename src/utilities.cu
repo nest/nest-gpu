@@ -1,5 +1,5 @@
 /*
- *  dir_connect.h
+ *  utilities.cu
  *
  *  This file is part of NEST GPU.
  *

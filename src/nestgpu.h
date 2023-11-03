@@ -136,9 +136,11 @@ class NESTGPU
   int max_spike_buffer_size_;
   int max_spike_num_;
   int max_spike_per_host_;
-
+  int max_remote_spike_num_;
+  
   double max_spike_num_fact_;
   double max_spike_per_host_fact_;
+  double max_remote_spike_num_fact_;
 
   double t_min_;
   double neural_time_; // Neural activity time
@@ -148,9 +150,10 @@ class NESTGPU
   long long Nt_; // number of simulation time steps
   //int n_poiss_nodes_;
   std::vector<int> n_remote_nodes_;
-  int n_ext_nodes_;
-  int i_ext_node_0_;
+  //int n_ext_nodes_;
+  //int i_ext_node_0_;
   //int i_remote_node_0_;
+  int n_image_nodes_;
 
   double start_real_time_;
   double build_real_time_;
@@ -163,7 +166,8 @@ class NESTGPU
 
   int verbosity_level_;
   bool print_time_;
-
+  bool remove_conn_key_;
+  
   int nested_loop_algo_;
 
   //std::vector<RemoteConnection> remote_connection_vect_;
@@ -177,13 +181,14 @@ class NESTGPU
   int InitConnRandomGenerator();
   int FreeConnRandomGenerator();
 
-  int CreateNodeGroup(int n_neuron, int n_port);
+  int CreateNodeGroup(int n_nodes, int n_ports);
   int CheckUncalibrated(std::string message);
-  double *InitGetSpikeArray(int n_node, int n_port);
+  double *InitGetSpikeArray(int n_nodes, int n_ports);
   int NodeGroupArrayInit();
   int ClearGetSpikeArrays();
   int FreeGetSpikeArrays();
   int FreeNodeGroupMap();
+  int CheckImageNodes(int n_nodes);
 
   NodeSeq _Create(std::string model_name, int n_nodes, int n_ports);
   
@@ -247,7 +252,7 @@ class NESTGPU
   double poisson_generator_time_;
   double neuron_Update_time_;
   double copy_ext_spike_time_;
-  double SendExternalSpike_time_;
+  double organizeExternalSpike_time_;
   double SendSpikeToRemote_time_;
   double RecvSpikeFromRemote_time_;
   double NestedLoop_time_;
@@ -255,11 +260,10 @@ class NESTGPU
   double SpikeReset_time_;
   double ExternalSpikeReset_time_;
 
-  double SendSpikeToRemote_MPI_time_;
-  double RecvSpikeFromRemote_MPI_time_;
+  double SendSpikeToRemote_comm_time_;
+  double RecvSpikeFromRemote_comm_time_;
   double SendSpikeToRemote_CUDAcp_time_;
   double RecvSpikeFromRemote_CUDAcp_time_;
-  double JoinSpike_time_;
   
   bool first_simulation_flag_;
 
@@ -300,7 +304,9 @@ class NESTGPU
   int SetMaxSpikeBufferSize(int max_size);
   int GetMaxSpikeBufferSize();
   
-  uint GetNNode();
+  uint GetNLocalNodes();
+  
+  uint GetTotalNNodes() { return GetNLocalNodes() + n_image_nodes_; }
 
   int HostNum() {
     return n_hosts_;
@@ -786,16 +792,17 @@ class NESTGPU
   // Calibrate remote connection maps
   int  RemoteConnectionMapCalibrate(int i_host, int n_hosts);
   
-  int ExternalSpikeInit(int n_hosts, int max_spike_per_host);
+  int ExternalSpikeInit();
 
-  int CopySpikeFromRemote(int n_hosts, int max_spike_per_host);
+  int ExternalSpikeReset();
 
-  int JoinSpikes(int n_hosts, int max_spike_per_host);
+  int CopySpikeFromRemote();
 
-  int SendSpikeToRemote(int n_hosts, int max_spike_per_host);
+  int SendSpikeToRemote(int n_ext_spikes);
 
-  int RecvSpikeFromRemote(int n_hosts, int max_spike_per_host);
+  int RecvSpikeFromRemote();
 
+  int organizeExternalSpikes(int n_ext_spikes);
 
 };
 

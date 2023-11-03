@@ -104,7 +104,7 @@ double *NESTGPU::InitGetSpikeArray (int n_node, int n_port)
 
 int NESTGPU::FreeNodeGroupMap()
 {
-  gpuErrchk(cudaFree(d_node_group_map_));
+  CUDAFREECTRL("d_node_group_map_",d_node_group_map_);
 	    
   return 0;
 }

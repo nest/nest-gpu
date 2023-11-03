@@ -281,16 +281,27 @@ class Network:
             print(message)
 
     def __setup_ngpu(self):
-        """ Initializes NEST GPU.
+        """ 
+        Initializes NEST GPU and sets the nested loop algorithm if NEST GPU version < 2.0.
 
         """
 
         # set seeds for random number generation
-
         master_seed = self.sim_dict['master_seed']
         ngpu.SetRandomSeed(master_seed)
-        ngpu.SetKernelStatus({'print_time': self.sim_dict['print_time']})
+        if('remove_conn_key' in ngpu.GetKernelStatus()):
+            ngpu.SetKernelStatus({'print_time': self.sim_dict['print_time'],
+                                  'remove_conn_key': self.sim_dict['remove_conn_key']})
+        else:
+            ngpu.SetKernelStatus({'print_time': self.sim_dict['print_time']})
+            print("Cannot set remove_conn_key in NEST GPU version < 2.0")
+            
         self.sim_resolution = self.sim_dict['sim_resolution']
+
+        if hasattr(ngpu, "SetNestedLoopAlgo"):
+            ngpu.SetNestedLoopAlgo(self.sim_dict['nl_algo'])
+        else:
+            print("Cannot set nested loop algorithm in NEST GPU version < 2.0")
 
     def __create_neuronal_populations(self):
         """ Creates the neuronal populations.

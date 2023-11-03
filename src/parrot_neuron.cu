@@ -140,8 +140,8 @@ int parrot_neuron::Update(long long /*i_time*/, double /*t1*/)
 
 int parrot_neuron::Free()
 {
-  gpuErrchk(cudaFree(var_arr_));
-  gpuErrchk(cudaFree(param_arr_));	    
+  CUDAFREECTRL("var_arr_",var_arr_);
+  CUDAFREECTRL("param_arr_",param_arr_);	    
 
   return 0;
 }
