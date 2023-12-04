@@ -43,13 +43,6 @@ Change parallelization scheme
 +-----------------------------------------------+----------------------------------------------------------------+
 | ``-Dwith-mpi=[OFF|ON]``                       | Build with MPI parallelization. [default=ON]                   |
 +-----------------------------------------------+----------------------------------------------------------------+
-| ``-Dwith-openmp=[OFF|ON|<OpenMP-Flag>]``      | Enable OpenMP multi-threading.                                 |
-|                                               | Optionally set OMP compiler flag. [default=ON]                 |
-+-----------------------------------------------+----------------------------------------------------------------+
-
-.. warning::
-
-    Currently NEST GPU must be installed with MPI to avoid compilation errors.
 
 
 External libraries
