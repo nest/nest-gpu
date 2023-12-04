@@ -47,8 +47,6 @@ endif()
 # select parallelization scheme
 set( with-gpu-arch "80" CACHE STRING "Specify the GPU compute architecture [default=80]." )
 set( with-mpi ON CACHE STRING "Build with MPI parallelization [default=ON]." )
-# Disabled by default due to the mishandling of RNGs in multi-threaded network construction.
-set( with-openmp OFF CACHE BOOL "Build with OpenMP multi-threading [default=OFF]. Optionally set OMP compiler flags." )
 
 # external libraries
 # libltdl not yet needed but will be useful for NESTML
@@ -112,9 +110,7 @@ get_target_triple( NEST_TARGET_TRIPLE NEST_TARGET_ARCH NEST_TARGET_VENDOR NEST_T
 include( GNUInstallDirs )
 nest_post_process_with_python()
 
-nest_process_with_openmp()
 nest_process_with_mpi()
-nest_process_with_mpi4py()
 nestgpu_process_cuda_arch()
 
 nest_process_with_libltdl()
@@ -223,7 +219,6 @@ set( MODULE_LINK_LIBS
   "-lcuda"
   "-lcudart"
   "-lcurand"
-  "${OpenMP_CXX_FLAGS}"
   "${MPI_CXX_LIBRARIES}"
   "${LTDL_LIBRARIES}" )
 
