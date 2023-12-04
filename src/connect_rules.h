@@ -36,14 +36,8 @@
 #include "connect_mpi.h"
 #endif
 
-#ifdef _OPENMP
-#include <omp.h>
-#define THREAD_MAXNUM omp_get_max_threads()
-#define THREAD_IDX omp_get_thread_num()
-#else
 #define THREAD_MAXNUM 1
 #define THREAD_IDX 0
-#endif
 
 template<>
 int RemoteNode<int>::GetINode(int in)
@@ -179,28 +173,12 @@ template <class T1, class T2>
 int NESTGPU::_ConnectAllToAll
 (T1 source, int n_source, T2 target, int n_target, SynSpec &syn_spec)
 {
-#ifdef _OPENMP
-  omp_lock_t *lock = new omp_lock_t[n_source];
-  for (int i=0; i<n_source; i++) {
-    omp_init_lock(&(lock[i]));
-  }
-#pragma omp parallel for default(shared) collapse(2)
-#endif
   for (int itn=0; itn<n_target; itn++) {
     for (int isn=0; isn<n_source; isn++) {
-#ifdef _OPENMP
-      omp_set_lock(&(lock[isn]));
-#endif
       size_t i_array = (size_t)itn*n_source + isn;
       _SingleConnect<T1, T2>(source, isn, target, itn, i_array, syn_spec);
-#ifdef _OPENMP
-      omp_unset_lock(&(lock[isn]));
-#endif
     }
   }
-#ifdef _OPENMP
-  delete[] lock;
-#endif
 
   return 0;
 }
@@ -211,28 +189,12 @@ int NESTGPU::_ConnectFixedTotalNumber
  SynSpec &syn_spec)
 {
   unsigned int *rnd = RandomInt(2*n_conn);
-#ifdef _OPENMP
-  omp_lock_t *lock = new omp_lock_t[n_source];
-  for (int i=0; i<n_source; i++) {
-    omp_init_lock(&(lock[i]));
-  }
-#pragma omp parallel for default(shared)
-#endif
   for (int i_conn=0; i_conn<n_conn; i_conn++) {
     int isn = rnd[2*i_conn] % n_source;
     int itn = rnd[2*i_conn+1] % n_target;
-#ifdef _OPENMP
-    omp_set_lock(&(lock[isn]));
-#endif
     _SingleConnect<T1, T2>(source, isn, target, itn, i_conn, syn_spec);
-#ifdef _OPENMP
-      omp_unset_lock(&(lock[isn]));
-#endif
   }
   delete[] rnd;
-#ifdef _OPENMP
-  delete[] lock;
-#endif
   
   return 0;
 }
@@ -255,16 +217,7 @@ int NESTGPU::_ConnectFixedIndegree
   } 
   unsigned int *rnd = RandomInt(n_rnd);
 
-#ifdef _OPENMP
-  omp_lock_t *lock = new omp_lock_t[n_source];
-  for (int i=0; i<n_source; i++) {
-    omp_init_lock(&(lock[i]));
-  }
-#endif
   for (int k=0; k<n_target; k+=THREAD_MAXNUM) {
-#ifdef _OPENMP
-#pragma omp parallel for default(shared)
-#endif
     for (int ith=0; ith<THREAD_MAXNUM; ith++) {
       int itn = k + ith;
       if (itn < n_target) {
@@ -305,21 +258,12 @@ int NESTGPU::_ConnectFixedIndegree
 	for (int i=0; i<indegree; i++) {
 	  int isn = int_vect[i];
 	  size_t i_array = (size_t)itn*indegree + i;
-#ifdef _OPENMP
-	  omp_set_lock(&(lock[isn]));
-#endif
 	  _SingleConnect<T1, T2>(source, isn, target, itn, i_array, syn_spec);
-#ifdef _OPENMP
-	  omp_unset_lock(&(lock[isn]));
-#endif
 	}
       }
     }
   }
   delete[] rnd;
-#ifdef _OPENMP
-  delete[] lock;
-#endif
   
   return 0;
 }
@@ -342,17 +286,8 @@ int NESTGPU::_ConnectFixedOutdegree
   } 
   unsigned int *rnd = RandomInt(n_rnd);
 
-#ifdef _OPENMP
-  omp_lock_t *lock = new omp_lock_t[n_source];
-  for (int i=0; i<n_source; i++) {
-    omp_init_lock(&(lock[i]));
-  }
-#endif
 
   for (int is0=0; is0<n_source; is0+=THREAD_MAXNUM) {
-#ifdef _OPENMP
-#pragma omp parallel for default(shared)
-#endif
     for (int ith=0; ith<THREAD_MAXNUM; ith++) {
       int isn = is0 + ith;
       if (isn < n_source) {
@@ -392,21 +327,12 @@ int NESTGPU::_ConnectFixedOutdegree
 	for (int k=0; k<outdegree; k++) {
 	  int itn = int_vect[k];
 	  size_t i_array = (size_t)isn*outdegree + k;
-#ifdef _OPENMP
-	  omp_set_lock(&(lock[isn]));
-#endif	  
       _SingleConnect<T1, T2>(source, isn, target, itn, i_array, syn_spec);
-#ifdef _OPENMP
-	  omp_unset_lock(&(lock[isn]));
-#endif
 	}
       }
     }
   }
   delete[] rnd;
-#ifdef _OPENMP
-  delete[] lock;
-#endif
   
   return 0;
 }

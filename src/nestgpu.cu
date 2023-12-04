@@ -52,14 +52,8 @@
 #include <mpi.h>
 #endif
 
-#ifdef _OPENMP
-#include <omp.h>
-#define THREAD_MAXNUM omp_get_max_threads()
-#define THREAD_IDX omp_get_thread_num()
-#else
 #define THREAD_MAXNUM 1
 #define THREAD_IDX 0
-#endif
 
 				    //#define VERBOSE_TIME
 
@@ -304,7 +298,9 @@ int NESTGPU::Calibrate()
   calibrate_flag_ = true;
   BuildDirectConnections();
 
+#ifdef HAVE_MPI
   gpuErrchk(cudaMemcpyToSymbolAsync(NESTGPUMpiFlag, &mpi_flag_, sizeof(bool)));
+#endif
 
   if (verbosity_level_>=1) {
     std::cout << MpiRankStr() << "Calibrating ...\n";
@@ -444,6 +440,7 @@ int NESTGPU::EndSimulation()
     std::cout << MpiRankStr() << "  ExternalSpikeReset_time: " <<
       ExternalSpikeReset_time_ << "\n";
   }
+#ifdef HAVE_MPI
   if (mpi_flag_ && verbosity_level_>=4) {
     std::cout << MpiRankStr() << "  SendSpikeToRemote_MPI_time: " <<
       connect_mpi_->SendSpikeToRemote_MPI_time_ << "\n";
@@ -456,6 +453,7 @@ int NESTGPU::EndSimulation()
     std::cout << MpiRankStr() << "  JoinSpike_time: " <<
       connect_mpi_->JoinSpike_time_  << "\n";
   }
+#endif
   
   if (verbosity_level_>=1) {
     std::cout << MpiRankStr() << "Building time: " <<
@@ -1121,6 +1119,7 @@ int NESTGPU::MpiFinalize()
 
 std::string NESTGPU::MpiRankStr()
 {
+#ifdef HAVE_MPI
   if (mpi_flag_) {
     return std::string("MPI rank ") + std::to_string(connect_mpi_->mpi_id_)
       + " : ";
@@ -1128,6 +1127,9 @@ std::string NESTGPU::MpiRankStr()
   else {
     return "";
   }
+#else
+  return "";
+#endif
 }
 
 unsigned int *NESTGPU::RandomInt(size_t n)
