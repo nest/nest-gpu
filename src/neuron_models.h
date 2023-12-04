@@ -29,7 +29,7 @@
 
 enum NeuronModels {
   i_null_model = 0,
-  i_iaf_psc_exp_g_model,  
+  i_iaf_psc_exp_g_model,
   i_iaf_psc_exp_hc_model,
   i_iaf_psc_exp_model,
   i_iaf_psc_alpha_model,

@@ -7,4 +7,3 @@ implement new tests and improve existing ones
 implement other neuron models
 
 Make rk5 dynamic?
-

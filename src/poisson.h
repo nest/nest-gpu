@@ -43,22 +43,22 @@ class PoissonGenerator
   int more_steps_;
   int i_node_0_;
 
-  
+
   int Init(curandGenerator_t *random_generator, unsigned int n);
 
  public:
   curandGenerator_t *random_generator_;
   int n_node_;
-    
+
   PoissonGenerator();
 
   ~PoissonGenerator();
 
   int Free();
-  
+
   int Create(curandGenerator_t *random_generator,
 	     int i_node_0, int n_node, float lambda);
-  
+
   int Generate();
 
   int Generate(int max_n_steps);

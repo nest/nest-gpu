@@ -53,7 +53,7 @@ void NodeInit(int n_var, int n_param, double x, float *y, float *param,
   V_reset = -60.0;
   t_ref = 0.0;
   den_delay = 0.0;
-  
+
   V_m = E_L;
   w = 0.0;
   refractory_step = 0;
@@ -104,7 +104,7 @@ int aeif_psc_alpha::Init(int i_node_0, int n_node, int n_port,
   node_type_ = i_aeif_psc_alpha_model;
   n_scal_var_ = N_SCAL_VAR;
   n_scal_param_ = N_SCAL_PARAM;
-  n_group_param_ = N_GROUP_PARAM; 
+  n_group_param_ = N_GROUP_PARAM;
 
   n_var_ = n_scal_var_;
   n_param_ = n_scal_param_;
@@ -128,7 +128,7 @@ int aeif_psc_alpha::Init(int i_node_0, int n_node, int n_port,
   port_weight_arr_ = GetParamArr()  + GetScalParamIdx("I0_ex");
   port_weight_arr_step_ = n_param_;
   port_weight_port_step_ = 1;
-  
+
   port_input_arr_ = GetVarArr() + GetScalVarIdx("I1_syn_ex");
   port_input_arr_step_ = n_var_;
   port_input_port_step_ = 1;
@@ -142,7 +142,7 @@ int aeif_psc_alpha::Calibrate(double time_min, float time_resolution)
   h_min_ = h_min_rel_* time_resolution;
   h_ = h0_rel_* time_resolution;
   rk5_.Calibrate(time_min, h_, rk5_data_struct_);
-  
+
   return 0;
 }
 

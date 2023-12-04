@@ -89,7 +89,7 @@ int spike_detector::Init(int i_node_0, int n_node, int /*n_port*/,
   n_scal_var_ = N_SPIKE_DETECTOR_SCAL_VAR;
   n_var_ = n_scal_var_;
   scal_var_name_ = spike_detector_scal_var_name;
-  
+
   n_scal_param_ = N_SPIKE_DETECTOR_SCAL_PARAM;
   n_param_ = n_scal_param_;
   scal_param_name_ = spike_detector_scal_param_name;
@@ -111,12 +111,12 @@ int spike_detector::Init(int i_node_0, int n_node, int /*n_port*/,
 			 sizeof(float), cudaMemcpyHostToDevice));
   port_weight_arr_step_ = 0;
   port_weight_port_step_ = 0;
-  
+
   // input signal is stored in input_spike_height
   port_input_arr_ = GetVarArr() + GetScalVarIdx("input_spike_height");
   port_input_arr_step_ = n_var_;
   port_input_port_step_ = n_port_var_;
-  
+
   return 0;
 }
 
@@ -133,7 +133,7 @@ int spike_detector::Update(long long /*i_time*/, double /*t1*/)
 int spike_detector::Free()
 {
   gpuErrchk(cudaFree(var_arr_));
-  gpuErrchk(cudaFree(param_arr_));	    
+  gpuErrchk(cudaFree(param_arr_));
 
   return 0;
 }

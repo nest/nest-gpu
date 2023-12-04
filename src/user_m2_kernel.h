@@ -115,7 +115,7 @@ const std::string user_m2_port_param_name[N_PORT_PARAM] = {
   "E_rev",
   "tau_rise",
   "tau_decay",
-  "g0"  
+  "g0"
 };
 
 const std::string user_m2_group_param_name[N_GROUP_PARAM] = {
@@ -161,7 +161,7 @@ const std::string user_m2_group_param_name[N_GROUP_PARAM] = {
 #define h_min_rel_ group_param_[i_h_min_rel]
 #define h0_rel_ group_param_[i_h0_rel]
 
- 
+
  template<int NVAR, int NPARAM> //, class DataStruct>
 __device__
     void Derivatives(double x, float *y, float *dydx, float *param,

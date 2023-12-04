@@ -64,7 +64,7 @@ int NESTGPU::_Connect(T1 source, int n_source, T2 target, int n_target,
   // if (syn_spec.delay_distr_ != NULL) {
   //   syn_spec.delay_array_ = Distribution(syn_spec.delay_distr, n);
   // }
-  
+
   switch (conn_spec.rule_) {
   case ONE_TO_ONE:
     if (n_source != n_target) {
@@ -160,7 +160,7 @@ int NESTGPU::_RemoteSingleConnect(int i_source, T target, int i_target,
 
 template <class T1, class T2>
 int NESTGPU::_ConnectOneToOne(T1 source, T2 target, int n_node,
-				SynSpec &syn_spec)	       
+				SynSpec &syn_spec)
 {
   for (int in=0; in<n_node; in++) {
     _SingleConnect<T1, T2>(source, in, target, in, in, syn_spec);
@@ -195,7 +195,7 @@ int NESTGPU::_ConnectFixedTotalNumber
     _SingleConnect<T1, T2>(source, isn, target, itn, i_conn, syn_spec);
   }
   delete[] rnd;
-  
+
   return 0;
 }
 
@@ -213,8 +213,8 @@ int NESTGPU::_ConnectFixedIndegree
   }
   int n_rnd = indegree*THREAD_MAXNUM;
   if (n_source>=method_thresh*indegree) { // nuovo metodo
-    n_rnd *= 5; 
-  } 
+    n_rnd *= 5;
+  }
   unsigned int *rnd = RandomInt(n_rnd);
 
   for (int k=0; k<n_target; k+=THREAD_MAXNUM) {
@@ -250,7 +250,7 @@ int NESTGPU::_ConnectFixedIndegree
 	      iter = std::lower_bound(sorted_vect.begin(),
 				      sorted_vect.end(), j);
 	      i1++;
-	    } while (iter != sorted_vect.end() && *iter == j); // we found j 
+	    } while (iter != sorted_vect.end() && *iter == j); // we found j
 	    sorted_vect.insert(iter, j);
 	    int_vect.push_back(j);
 	  }
@@ -264,7 +264,7 @@ int NESTGPU::_ConnectFixedIndegree
     }
   }
   delete[] rnd;
-  
+
   return 0;
 }
 
@@ -282,8 +282,8 @@ int NESTGPU::_ConnectFixedOutdegree
   }
   int n_rnd = outdegree*THREAD_MAXNUM;
   if (n_target>=method_thresh*outdegree) { // choose method
-    n_rnd *= 5; 
-  } 
+    n_rnd *= 5;
+  }
   unsigned int *rnd = RandomInt(n_rnd);
 
 
@@ -319,11 +319,11 @@ int NESTGPU::_ConnectFixedOutdegree
 	      iter = std::lower_bound(sorted_vect.begin(),
 				      sorted_vect.end(), j);
 	      i1++;
-	    } while (iter != sorted_vect.end() && *iter == j); // we found j 
+	    } while (iter != sorted_vect.end() && *iter == j); // we found j
 	    sorted_vect.insert(iter, j);
 	    int_vect.push_back(j);
 	  }
-	}	
+	}
 	for (int k=0; k<outdegree; k++) {
 	  int itn = int_vect[k];
 	  size_t i_array = (size_t)isn*outdegree + k;
@@ -333,7 +333,7 @@ int NESTGPU::_ConnectFixedOutdegree
     }
   }
   delete[] rnd;
-  
+
   return 0;
 }
 
@@ -468,7 +468,7 @@ template <class T1, class T2>
       connect_mpi_->MPI_Recv_int(&i_new_remote_node, 1, target.i_host_);
       for (int k=0; k<n_target; k++) {
 	for (int i=0; i<n_source; i++) {
-	  int i_source_node = source.GetINode(i);	  
+	  int i_source_node = source.GetINode(i);
 	  int i_remote_node = -1;
 	  for (std::vector<ExternalConnectionNode >::iterator it =
 		 connect_mpi_->extern_connection_[i_source_node].begin();
@@ -515,7 +515,7 @@ template <class T1, class T2>
       connect_mpi_->MPI_Send_int(&n_remote_node_, 1, source.i_host_);
       connect_mpi_->MPI_Recv_int(&n_remote_node_, 1, source.i_host_);
       connect_mpi_->MPI_Recv_int(i_remote_node_arr, n_conn, source.i_host_);
-      
+
       for (int i_conn=0; i_conn<n_conn; i_conn++) {
 	int i_remote_node = i_remote_node_arr[i_conn];
 	int itn = rnd[2*i_conn+1] % n_target;
@@ -528,7 +528,7 @@ template <class T1, class T2>
       connect_mpi_->MPI_Recv_int(&i_new_remote_node, 1, target.i_host_);
       for (int i_conn=0; i_conn<n_conn; i_conn++) {
 	int isn = rnd[2*i_conn] % n_source;
-	int i_source_node = source.GetINode(isn);	  
+	int i_source_node = source.GetINode(isn);
 	int i_remote_node = -1;
 	for (std::vector<ExternalConnectionNode >::iterator it =
 	       connect_mpi_->extern_connection_[i_source_node].begin();
@@ -586,7 +586,7 @@ template <class T1, class T2>
 	  size_t i_array = (size_t)k*indegree + i;
 	  _RemoteSingleConnect<T2>(i_remote_node, target.i_node_, k,
 				   i_array, syn_spec);
-	  
+
 	}
       }
     }
@@ -595,8 +595,8 @@ template <class T1, class T2>
       connect_mpi_->MPI_Recv_int(&i_new_remote_node, 1, target.i_host_);
       int n_rnd = indegree;
       if (n_source>=method_thresh*indegree) { // choose method
-	n_rnd *= 5; 
-      } 
+	n_rnd *= 5;
+      }
       unsigned int *rnd = RandomInt(n_rnd);
 
       //std::vector<int> input_array;
@@ -632,7 +632,7 @@ template <class T1, class T2>
 	      iter = std::lower_bound(sorted_vect.begin(),
 				      sorted_vect.end(), j);
 	      i1++;
-	    } while (iter != sorted_vect.end() && *iter == j); // we found j 
+	    } while (iter != sorted_vect.end() && *iter == j); // we found j
 	    sorted_vect.insert(iter, j);
 	    int_vect.push_back(j);
 	  }
@@ -695,7 +695,7 @@ template <class T1, class T2>
 
       int n_rnd = outdegree;
       if (n_target>=method_thresh*outdegree) { // choose method
-	n_rnd *= 5; 
+	n_rnd *= 5;
       }
       unsigned int *rnd = RandomInt(n_rnd);
 
@@ -727,11 +727,11 @@ template <class T1, class T2>
 	      iter = std::lower_bound(sorted_vect.begin(),
 				      sorted_vect.end(), j);
 	      i1++;
-	    } while (iter != sorted_vect.end() && *iter == j); // we found j 
+	    } while (iter != sorted_vect.end() && *iter == j); // we found j
 	    sorted_vect.insert(iter, j);
 	    int_vect.push_back(j);
 	  }
-	}	
+	}
 	for (int k=0; k<outdegree; k++) {
       	  int i_remote_node = i_remote_node_arr[isn];
 	  int itn = int_vect[k];

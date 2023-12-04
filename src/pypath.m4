@@ -1,4 +1,4 @@
-AC_DEFUN([adl_CHECK_PYTHON], 
+AC_DEFUN([adl_CHECK_PYTHON],
  [AM_PATH_PYTHON([2.0])
   AC_CACHE_CHECK([for $am_display_PYTHON includes directory],
     [adl_cv_python_inc],

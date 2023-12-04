@@ -12,4 +12,3 @@ scal_param_name_ = aeif_cond_alpha_scal_param_name;
 
   port_input_arr_ = GetVarArr() + n_scal_var_
     + GetPortVarIdx("g1");
-

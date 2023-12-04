@@ -35,7 +35,7 @@ int PrefixScan::Init()
 {
   //printf("Initializing CUDA-C scan...\n\n");
   //initScan();
-  
+
   return 0;
 }
 
@@ -51,6 +51,6 @@ int PrefixScan::Free()
   //closeScan();
   //gpuErrchk(cudaFree(d_Output));
   //gpuErrchk(cudaFree(d_Input));
-  
+
   return 0;
 }

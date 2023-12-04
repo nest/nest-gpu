@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
   cout << "Building ...\n";
 
   ngpu.SetRandomSeed(1234ULL); // seed for GPU random numbers
-  
+
   int n_receptors = 2;
 
   int order = arg1/5;
@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
   ngpu.SetNeuronParam(neuron_vect, "E_rev", E_rev, 2);
   ngpu.SetNeuronParam(neuron_vect, "tau_decay", tau_decay, 2);
   ngpu.SetNeuronParam(neuron_vect, "tau_rise", tau_rise, 2);
-  
+
   float mean_delay = 0.5;
   float std_delay = 0.25;
   float min_delay = 0.1;
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
   float *exc_delays = ngpu.RandomNormalClipped(CE*n_neurons, mean_delay,
   						     std_delay, min_delay,
   						     mean_delay+3*std_delay);
-  
+
   ConnSpec conn_spec1(FIXED_INDEGREE, CE);
   SynSpec syn_spec1;
   syn_spec1.SetParam("receptor", 0);
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
   // connect poisson generator to port 0 of all neurons
   ngpu.Connect(pg_vect, neuron_vect, conn_spec3, syn_spec3);
   char filename[] = "test_brunel_vect.dat";
-  
+
   int i_neuron_arr[] = {neuron[0], neuron[rand()%n_neurons],
 		     neuron[n_neurons-1]}; // any set of neuron indexes
   // create multimeter record of V_m

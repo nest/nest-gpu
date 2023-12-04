@@ -32,13 +32,16 @@ basic plots of the network activity.
 ###############################################################################
 # Import the necessary modules and start the time measurements.
 
-from stimulus_params import stim_dict
+import time
+
+import network
+
+# import nestgpu as ngpu
+import numpy as np
 from network_params import net_dict
 from sim_params_norec import sim_dict
-import network
-#import nestgpu as ngpu
-import numpy as np
-import time
+from stimulus_params import stim_dict
+
 time_start = time.time()
 
 ###############################################################################
@@ -60,10 +63,10 @@ time_create = time.time()
 net.connect()
 time_connect = time.time()
 
-net.simulate(sim_dict['t_presim'])
+net.simulate(sim_dict["t_presim"])
 time_presimulate = time.time()
 
-net.simulate(sim_dict['t_sim'])
+net.simulate(sim_dict["t_sim"])
 time_simulate = time.time()
 
 
@@ -72,22 +75,11 @@ time_simulate = time.time()
 # data evaluation and print calls.
 
 print(
-    '\nTimes:\n' + # of Rank {}:\n'.format( .Rank()) +
-    '  Total time:          {:.3f} s\n'.format(
-        time_simulate -
-        time_start) +
-    '  Time to initialize:  {:.3f} s\n'.format(
-        time_network -
-        time_start) +
-    '  Time to create:      {:.3f} s\n'.format(
-        time_create -
-        time_network) +
-    '  Time to connect:     {:.3f} s\n'.format(
-        time_connect -
-        time_create) +
-    '  Time to calibrate: {:.3f} s\n'.format(
-        time_presimulate -
-        time_connect) +
-    '  Time to simulate:    {:.3f} s\n'.format(
-        time_simulate -
-        time_presimulate) )
+    "\nTimes:\n"
+    + "  Total time:          {:.3f} s\n".format(time_simulate - time_start)  # of Rank {}:\n'.format( .Rank()) +
+    + "  Time to initialize:  {:.3f} s\n".format(time_network - time_start)
+    + "  Time to create:      {:.3f} s\n".format(time_create - time_network)
+    + "  Time to connect:     {:.3f} s\n".format(time_connect - time_create)
+    + "  Time to calibrate: {:.3f} s\n".format(time_presimulate - time_connect)
+    + "  Time to simulate:    {:.3f} s\n".format(time_simulate - time_presimulate)
+)

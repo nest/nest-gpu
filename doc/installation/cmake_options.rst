@@ -23,7 +23,7 @@ NEST GPU allows for several configuration options for custom builds:
 
     +-----------------------------------------------+----------------------------------------------------------------+
     | ``-Dcythonize-pynestpgu=[OFF|ON]``            | Use Cython to cythonize pynestgpukernel.pyx.                   |
-    |                                               | If OFF, NEST GPU Python interface has to be build from a       | 
+    |                                               | If OFF, NEST GPU Python interface has to be build from a       |
     |                                               | pre-cythonized pynestgpukernel.pyx. [default=ON]               |
     +-----------------------------------------------+----------------------------------------------------------------+
 
@@ -99,4 +99,3 @@ Generic build configuration
 +-----------------------------------------------+----------------------------------------------------------------+
 | ``-Dwith-version-suffix=[str]``               | Set a user defined version suffix. [default='']                |
 +-----------------------------------------------+----------------------------------------------------------------+
-

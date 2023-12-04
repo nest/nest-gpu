@@ -84,19 +84,19 @@ void RK5Step(double &x, float *y, float &h, float h_min, float h_max,
   for (int i=0; i<NVAR; i++) {
     y_scal[i] = fabs(y[i]) + fabs(k1[i]*h) + scal_min;
   }
-  
+
   float err;
   for(;;) {
     if (h > h_max) h = h_max;
     if (h < h_min) h = h_min;
-    
+
     for (int i=0; i<NVAR; i++) {
       y_new[i] = y[i] + h*a21*k1[i];
     }
 
     Derivatives<NVAR, NPARAM>(x+c2*h, y_new, k2, param,
 			      data_struct);
-  
+
     for (int i=0; i<NVAR; i++) {
       y_new[i] = y[i] + h*(a31*k1[i] + a32*k2[i]);
     }
@@ -108,23 +108,23 @@ void RK5Step(double &x, float *y, float &h, float h_min, float h_max,
     }
     Derivatives<NVAR, NPARAM>(x+c4*h, y_new, k4, param,
 			      data_struct);
-  
+
     for (int i=0; i<NVAR; i++) {
       y_new[i] = y[i] + h*(a51*k1[i] + a52*k2[i] + a53*k3[i] + a54*k4[i]);
     }
     Derivatives<NVAR, NPARAM>(x+c5*h, y_new, k5, param,
 			      data_struct);
-  
+
     for (int i=0; i<NVAR; i++) {
       y_new[i] = y[i] + h*(a61*k1[i] + a62*k2[i] + a63*k3[i] + a64*k4[i]
 			  + a65*k5[i]);
     }
     Derivatives<NVAR, NPARAM>(x+c6*h, y_new, k6, param, data_struct);
-    
+
     for (int i=0; i<NVAR; i++) {
       y_new[i] = y[i] + h*(a71*k1[i] + a73*k3[i] + a74*k4[i] + a76*k6[i]);
     }
-  
+
     err = 0.0;
     for (int i=0; i<NVAR; i++) {
       float val = h*(e1*k1[i] + e3*k3[i] + e4*k4[i] + e5*k5[i] + e6*k6[i]);
@@ -136,14 +136,14 @@ void RK5Step(double &x, float *y, float &h, float h_min, float h_max,
 
     float h_new = h*coeff*pow(err,exp_dec);
     h = MAX(h_new, 0.1*h);
-    
+
     //if (h <= h_min) {
     //  h = h_min;
     //}
     //x_new = x + h;
   }
 
-  x += h;  
+  x += h;
 
   if (err > err_min) {
     h = h*coeff*pow(err,exp_inc);
@@ -151,7 +151,7 @@ void RK5Step(double &x, float *y, float &h, float h_min, float h_max,
   else {
     h = 5.0*h;
   }
-  
+
   for (int i=0; i<NVAR; i++) {
     y[i] = y_new[i];
   }
@@ -201,7 +201,7 @@ void ArrayUpdate(int array_size, double *x_arr, float *h_arr, float *y_arr,
       y_arr[ArrayIdx*NVAR + i] = y[i];
     }
     for(int j=0; j<NPARAM; j++) {
-      par_arr[ArrayIdx*NPARAM + j] = param[j]; 
+      par_arr[ArrayIdx*NPARAM + j] = param[j];
     }
   }
 }
@@ -212,7 +212,7 @@ class RungeKutta5
   int array_size_;
   int n_var_;
   int n_param_;
-    
+
   double *d_XArr;
   float *d_HArr;
   float *d_YArr;
@@ -221,7 +221,7 @@ class RungeKutta5
   public:
 
   ~RungeKutta5();
- 
+
   double *GetXArr() {return d_XArr;}
   float *GetHArr() {return d_HArr;}
   float *GetYArr() {return d_YArr;}
@@ -280,7 +280,7 @@ int RungeKutta5<DataStruct>::Init(int array_size, int n_var, int n_param,
 {
   array_size_ = array_size;
   n_var_ = n_var;
-  n_param_ = n_param; 
+  n_param_ = n_param;
 
   gpuErrchk(cudaMalloc(&d_XArr, array_size_*sizeof(double)));
   gpuErrchk(cudaMalloc(&d_HArr, array_size_*sizeof(float)));
@@ -292,7 +292,7 @@ int RungeKutta5<DataStruct>::Init(int array_size, int n_var, int n_param,
      x_min, h, data_struct);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-  
+
   return 0;
 }
 
@@ -335,7 +335,7 @@ int RungeKutta5<DataStruct>::SetParam(int i_param, int i_array, int n_param,
     (&d_ParamArr[i_array*n_param_ + i_param], n_elem, n_param, val);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-  
+
   return 0;
 }
 

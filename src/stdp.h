@@ -41,7 +41,7 @@ Description
 
 The STDP class is a type of synapse model used to create
 synapses that enable spike timing dependent plasticity
-(as defined in [1]_). 
+(as defined in [1]_).
 Here the weight dependence exponent can be set separately
 for potentiation and depression.
 

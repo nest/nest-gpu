@@ -103,7 +103,7 @@ int ConnectMpi::MpiInit(int argc, char *argv[])
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_np_);
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_id_);
   mpi_master_ = 0;
-  
+
   return 0;
 }
 
@@ -120,7 +120,7 @@ int ConnectMpi::RemoteConnect(int i_source_host, int i_source_node,
 			      float weight, float delay)
 {
   int i_remote_node;
-  
+
   if (mpi_id_==i_source_host && i_source_host==i_target_host) {
     return net_connection_->Connect(i_source_node, i_target_node, port,
 				    syn_group, weight, delay);

@@ -14,8 +14,8 @@ neurons. Can be used in Python, in C++ and in C.
    workflow.
 
 With this library it is possible to run relatively fast simulations of
-large-scale networks of spiking neurons employing GPUs. 
-For instance, on a single NVIDIA GeForce RTX 2080 Ti GPU board it is 
+large-scale networks of spiking neurons employing GPUs.
+For instance, on a single NVIDIA GeForce RTX 2080 Ti GPU board it is
 possible to simulate the activity of 1 million multisynapse AdEx neurons
 with 1000 synapse per neuron in little more than 70 seconds per second
 of neural activity using the fifth-order Runge-Kutta method with adaptive

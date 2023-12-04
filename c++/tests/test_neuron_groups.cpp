@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 
   NESTGPU ngpu;
   cout << "Building ...\n";
-  
+
   ngpu.SetRandomSeed(1234ULL); // seed for GPU random numbers
 
   // poisson generator parameters
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
   int n_neur3 = 50; // number of neurons
   int n_recept3 = 2; // number of receptors
   NodeSeq neur_group3 = ngpu.Create("aeif_cond_beta", n_neur3, n_recept3);
-  
+
   // neuron parameters
   float E_rev[] = {0.0, 0.0, 0.0};
   float tau_decay[] = {1.0, 1.0, 1.0};
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
   int it1 = neur_group1[rand()%n_neur1];
   int it2 = neur_group2[rand()%n_neur2];
   int it3 = neur_group3[rand()%n_neur3];
-  
+
   // connect poisson generator to port 0 of all neurons
   ngpu.Connect(pg[0], i11, 0, 0, poiss_weight, poiss_delay);
   ngpu.Connect(pg[0], i12, 0, 0, poiss_weight, poiss_delay);
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
     // connect neurons to target neuron n. 3
   ngpu.Connect(i31, it3, 0, 0, weight, delay);
   ngpu.Connect(i32, it3, 1, 0, weight, delay);
-  
+
   // create multimeter record n.1
   string filename1 = "test_neuron_groups_voltage.dat";
   int i_neuron_arr1[] = {i11, i12, i13, i14, i21, i31, i32, it1, it2, it3};
@@ -157,6 +157,6 @@ int main(int argc, char *argv[])
     fprintf(fp,"%f\n", vect[vect.size()-1]);
   }
   fclose(fp);
-  
+
   return 0;
 }

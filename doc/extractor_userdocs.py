@@ -19,23 +19,27 @@
 # along with NEST GPU.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from tqdm import tqdm
 from pprint import pformat
+
+from tqdm import tqdm
+
 try:
-    from math import comb   # breaks in Python < 3.8
+    from math import comb  # breaks in Python < 3.8
 except ImportError:
     from math import factorial as fac
 
     def comb(n, k):
         return fac(n) / (fac(k) * fac(n - k))
 
-import os
-import sys
+
 import glob
 import json
-from itertools import chain, combinations
 import logging
+import os
+import sys
 from collections import Counter
+from itertools import chain, combinations
+
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
@@ -46,15 +50,10 @@ def relative_glob(*pattern, basedir=os.curdir, **kwargs):
     # prefix all patterns with basedir and expand
     names = chain(*[glob.glob(os.path.join(tobase, pat), **kwargs) for pat in pattern])
     # remove prefix from all expanded names
-    return [name[len(tobase)+1:] for name in names]
+    return [name[len(tobase) + 1 :] for name in names]
 
 
-def UserDocExtractor(
-        filenames,
-        basedir="..",
-        replace_ext='.rst',
-        outdir="userdocs/"
-        ):
+def UserDocExtractor(filenames, basedir="..", replace_ext=".rst", outdir="userdocs/"):
     """
     Extract all user documentation from given files.
     This method searches for "BeginUserDocs" and "EndUserDocs" keywords and
@@ -88,10 +87,10 @@ def UserDocExtractor(
        mapping tags to lists of documentation filenames (relative to `outdir`).
     """
     if not os.path.exists(outdir):
-        log.info("creating output directory "+outdir)
+        log.info("creating output directory " + outdir)
         os.mkdir(outdir)
-    userdoc_re = re.compile(r'BeginUserDocs:?\s*(?P<tags>([\w -]+(,\s*)?)*)\n+(?P<doc>(.|\n)*)EndUserDocs')
-    tagdict = dict()    # map tags to lists of documents
+    userdoc_re = re.compile(r"BeginUserDocs:?\s*(?P<tags>([\w -]+(,\s*)?)*)\n+(?P<doc>(.|\n)*)EndUserDocs")
+    tagdict = dict()  # map tags to lists of documents
     nfiles_total = 0
     with tqdm(unit="files", total=len(filenames)) as progress:
         for filename in filenames:
@@ -100,16 +99,16 @@ def UserDocExtractor(
             log.warning("extracting user documentation from %s...", filename)
             nfiles_total += 1
             match = None
-            with open(os.path.join(basedir, filename), 'r', encoding='utf8') as infile:
+            with open(os.path.join(basedir, filename), "r", encoding="utf8") as infile:
                 match = userdoc_re.search(infile.read())
             if not match:
                 log.warning("No user documentation found in " + filename)
                 continue
             outname = os.path.basename(os.path.splitext(filename)[0]) + replace_ext
-            tags = [t.strip() for t in match.group('tags').split(',')]
+            tags = [t.strip() for t in match.group("tags").split(",")]
             for tag in tags:
                 tagdict.setdefault(tag, list()).append(outname)
-            doc = match.group('doc')
+            doc = match.group("doc")
             try:
                 doc = rewrite_short_description(doc, filename)
             except ValueError as e:
@@ -128,7 +127,7 @@ def UserDocExtractor(
 
 
 def rewrite_short_description(doc, filename, short_description="Short description"):
-    '''
+    """
     Modify a given text by replacing the first section named as given in
     `short_description` by the filename and content of that section.
     Parameters
@@ -144,31 +143,27 @@ def rewrite_short_description(doc, filename, short_description="Short descriptio
     -------
     str
         original parameter doc with short_description section replaced
-    '''
+    """
 
     titles = getTitles(doc)
     if not titles:
         raise ValueError("No sections found in '%s'!" % filename)
     name = os.path.splitext(os.path.basename(filename))[0]
-    for title, nexttitle in zip(titles, titles[1:]+[None]):
+    for title, nexttitle in zip(titles, titles[1:] + [None]):
         if title.group(1) != short_description:
             continue
         secstart = title.end()
         secend = len(doc) + 1  # last section ends at end of document
         if nexttitle:
             secend = nexttitle.start()
-        sdesc = doc[secstart:secend].strip().replace('\n', ' ')
+        sdesc = doc[secstart:secend].strip().replace("\n", " ")
         fixed_title = "%s – %s" % (name, sdesc)
-        return (
-            doc[:title.start()] +
-            fixed_title + "\n" + "=" * len(fixed_title) + "\n\n" +
-            doc[secend:]
-            )
+        return doc[: title.start()] + fixed_title + "\n" + "=" * len(fixed_title) + "\n\n" + doc[secend:]
     raise ValueError("No section '%s' found in %s!" % (short_description, filename))
 
 
 def rewrite_see_also(doc, filename, tags, see_also="See also"):
-    '''
+    """
     Replace the content of a section named `see_also` in the document `doc`
     with links to indices of all its tags.
     The original content of the section -if not empty- will discarded and
@@ -189,14 +184,14 @@ def rewrite_see_also(doc, filename, tags, see_also="See also"):
     -------
     str
         original parameter doc with see_also section replaced
-    '''
+    """
 
     titles = getTitles(doc)
     if not titles:
         raise ValueError("No sections found in '%s'!" % filename)
 
     def rightcase(text):
-        '''
+        """
         Make text title-case except for acronyms, where an acronym is
         identified simply by being all upper-case.
         This function operates on the whole string, so a text with mixed
@@ -211,27 +206,32 @@ def rewrite_see_also(doc, filename, tags, see_also="See also"):
         str
           original text with poentially different characters being
           upper-/lower-case.
-        '''
+        """
         if text != text.upper():
             return text.title()  # title-case any tag that is not an acronym
-        return text   # return acronyms unmodified
+        return text  # return acronyms unmodified
 
-    for title, nexttitle in zip(titles, titles[1:]+[None]):
+    for title, nexttitle in zip(titles, titles[1:] + [None]):
         if title.group(1) != see_also:
             continue
         secstart = title.end()
         secend = len(doc) + 1  # last section ends at end of document
         if nexttitle:
             secend = nexttitle.start()
-        original = doc[secstart:secend].strip().replace('\n', ' ')
+        original = doc[secstart:secend].strip().replace("\n", " ")
         if original:
-            log.warning("dropping manual 'see also' list in %s user docs: '%s'", filename, original)
-        return (
-            doc[:secstart] +
-            "\n" + ", ".join([":doc:`{taglabel} <index_{tag}>`".format(tag=tag, taglabel=rightcase(tag))
-                             for tag in tags]) + "\n\n" +
-            doc[secend:]
+            log.warning(
+                "dropping manual 'see also' list in %s user docs: '%s'",
+                filename,
+                original,
             )
+        return (
+            doc[:secstart]
+            + "\n"
+            + ", ".join([":doc:`{taglabel} <index_{tag}>`".format(tag=tag, taglabel=rightcase(tag)) for tag in tags])
+            + "\n\n"
+            + doc[secend:]
+        )
     raise ValueError("No section '%s' found in %s!" % (see_also, filename))
 
 
@@ -277,11 +277,11 @@ def make_hierarchy(tags, *basetags):
     if tree.values():
         remaining = baseitems.difference(set.union(*tree.values()))
     if remaining:
-        tree[''] = remaining
+        tree[""] = remaining
     return {basetags: tree}
 
 
-def rst_index(hierarchy, current_tags=[], underlines='=-~', top=True):
+def rst_index(hierarchy, current_tags=[], underlines="=-~", top=True):
     """
     Create an index page from a given hierarchical dict of documents.
     The given `hierarchy` is pretty-printed and returned as a string.
@@ -303,14 +303,13 @@ def rst_index(hierarchy, current_tags=[], underlines='=-~', top=True):
     str
        formatted pretty index.
     """
+
     def mktitle(t, ul, link=None):
         text = t
         if t != t.upper():
             text = t.title()  # title-case any tag that is not an acronym
-        title = ':doc:`{text} <{filename}>`'.format(
-            text=text,
-            filename=link or "index_"+t)
-        text = title+'\n'+ul*len(title)+'\n'
+        title = ":doc:`{text} <{filename}>`".format(text=text, filename=link or "index_" + t)
+        text = title + "\n" + ul * len(title) + "\n"
         return text
 
     def mkitem(t):
@@ -322,19 +321,18 @@ def rst_index(hierarchy, current_tags=[], underlines='=-~', top=True):
         if len(hierarchy.keys()) == 1:
             page_title += ": " + ", ".join(current_tags)
         output.append(page_title)
-        output.append(underlines[0]*len(page_title)+"\n")
+        output.append(underlines[0] * len(page_title) + "\n")
         if len(hierarchy.keys()) != 1:
             underlines = underlines[1:]
 
     for tags, items in sorted(hierarchy.items()):
-
         if "NOINDEX" in tags:
             continue
         if isinstance(tags, str):
             title = tags
         else:
             title = " & ".join(tags)
-        if title and not len(hierarchy) == 1:   # not print title if already selected by current_tags
+        if title and not len(hierarchy) == 1:  # not print title if already selected by current_tags
             output.append(mktitle(title, underlines[0]))
         if isinstance(items, dict):
             output.append(rst_index(items, current_tags, underlines[1:], top=False))
@@ -388,15 +386,19 @@ def CreateTagIndices(tags, outdir="userdocs/"):
     for tag, count in sorted([(tag, len(lst)) for tag, lst in tags.items()], key=lambda x: x[1]):
         log.info("    %%%ds tag in %%d files" % maxtaglen, tag, count)
     if "" in taglist:
-        taglist.remove('')
+        taglist.remove("")
     indexfiles = list()
-    depth = min(4, len(taglist))    # how many levels of indices to create at most
-    nindices = sum([comb(len(taglist), L) for L in range(depth-1)])
+    depth = min(4, len(taglist))  # how many levels of indices to create at most
+    nindices = sum([comb(len(taglist), L) for L in range(depth - 1)])
     log.info("indices down to level %d → %d possible keyword combinations", depth, nindices)
-    for current_tags in tqdm(chain(*[combinations(taglist, L) for L in range(depth-1)]), unit="idx",
-                             desc="keyword indices", total=nindices):
+    for current_tags in tqdm(
+        chain(*[combinations(taglist, L) for L in range(depth - 1)]),
+        unit="idx",
+        desc="keyword indices",
+        total=nindices,
+    ):
         current_tags = sorted(current_tags)
-        indexname = "index%s.rst" % "".join(["_"+x for x in current_tags])
+        indexname = "index%s.rst" % "".join(["_" + x for x in current_tags])
 
         hier = make_hierarchy(tags.copy(), *current_tags)
         if not any(hier.values()):
@@ -404,11 +406,15 @@ def CreateTagIndices(tags, outdir="userdocs/"):
             continue
         nfiles = len(set.union(*chain([set(subtag) for subtag in hier.values()])))
         if nfiles < 2:
-            log.warning("skipping index for %s, as it links only to %d distinct file(s)", set(hier.keys()), nfiles)
+            log.warning(
+                "skipping index for %s, as it links only to %d distinct file(s)",
+                set(hier.keys()),
+                nfiles,
+            )
             continue
         log.debug("generating index for %s...", str(current_tags))
         indextext = rst_index(hier, current_tags)
-        with open(os.path.join(outdir, indexname), 'w') as outfile:
+        with open(os.path.join(outdir, indexname), "w") as outfile:
             outfile.write(indextext)
         indexfiles.append(indexname)
     log.info("%4d non-empty index files generated", len(indexfiles))
@@ -419,6 +425,7 @@ class JsonWriter(object):
     """
     Helper class to have a unified data output interface.
     """
+
     def __init__(self, outdir):
         self.outdir = outdir
         log.info("writing JSON files to %s", self.outdir)
@@ -428,13 +435,13 @@ class JsonWriter(object):
         Store the given object with the given name.
         """
         outname = os.path.join(self.outdir, name + ".json")
-        with open(outname, 'w') as outfile:
+        with open(outname, "w") as outfile:
             json.dump(obj, outfile)
             log.info("data saved as " + outname)
 
 
 def getTitles(text):
-    '''
+    """
     extract all sections from the given RST file
     Parameters
     ----------
@@ -444,24 +451,31 @@ def getTitles(text):
     -------
     list
       elements are the section title re.match objects
-    '''
-    titlechar = r'\+'
-    title_re = re.compile(r'^(?P<title>.+)\n(?P<underline>'+titlechar+r'+)$', re.MULTILINE)
+    """
+    titlechar = r"\+"
+    title_re = re.compile(r"^(?P<title>.+)\n(?P<underline>" + titlechar + r"+)$", re.MULTILINE)
     titles = []
     # extract all titles
     for match in title_re.finditer(text):
-        log.debug("MATCH from %s to %s: %s", match.start(), match.end(), pformat(match.groupdict()))
-        if len(match.group('title')) != len(match.group('underline')):
-            log.warning("Length of section title '%s' (%d) does not match length of underline (%d)",
-                        match.group('title'),
-                        len(match.group('title')),
-                        len(match.group('underline')))
+        log.debug(
+            "MATCH from %s to %s: %s",
+            match.start(),
+            match.end(),
+            pformat(match.groupdict()),
+        )
+        if len(match.group("title")) != len(match.group("underline")):
+            log.warning(
+                "Length of section title '%s' (%d) does not match length of underline (%d)",
+                match.group("title"),
+                len(match.group("title")),
+                len(match.group("underline")),
+            )
         titles.append(match)
     return titles
 
 
 def getSections(text, titles=None):
-    '''
+    """
     Extract sections between titles
     Parameters
     ----------
@@ -474,22 +488,22 @@ def getSections(text, titles=None):
     -------
     list
       tuples of each title re.match object and the text of the following section.
-    '''
+    """
     if titles is None:
         titles = getTitles(text)
     sections = list()
-    for title, following in zip(titles, titles[1:]+[None]):
+    for title, following in zip(titles, titles[1:] + [None]):
         secstart = title.end()
-        secend = None   # None = end of string
+        secend = None  # None = end of string
         if following:
             secend = following.start()
-        if title.group('title') in sections:
-            log.warning('Duplicate title in user documentation of %s', filename)
-        sections.append((title.group('title'), text[secstart:secend].strip()))
+        if title.group("title") in sections:
+            log.warning("Duplicate title in user documentation of %s", filename)
+        sections.append((title.group("title"), text[secstart:secend].strip()))
     return sections
 
 
-def ExtractUserDocs(listoffiles, basedir='..', outdir='doc_build/'):
+def ExtractUserDocs(listoffiles, basedir="..", outdir="doc_build/"):
     """
     Extract and build all user documentation and build tag indices.
     Writes extracted information to JSON files in outdir. In particular the
@@ -515,8 +529,6 @@ def ExtractUserDocs(listoffiles, basedir='..', outdir='doc_build/'):
     with open(os.path.join(outdir, "toc-tree.json"), "w") as tocfile:
         json.dump(list(set(toc_list)) + list(set(idx_list)), tocfile)
 
-if __name__ == '__main__':
-    ExtractUserDocs(
-        relative_glob("src/*.h", basedir='..'),
-        outdir="models/"
-    )
+
+if __name__ == "__main__":
+    ExtractUserDocs(relative_glob("src/*.h", basedir=".."), outdir="models/")

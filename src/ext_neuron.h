@@ -81,13 +81,13 @@ class ext_neuron : public BaseNeuron
 	   unsigned long long *seed);
 
   //int Calibrate(double time_min, float time_resolution);
-		
+
   int Update(long long it, double t1);
 
   int Free();
 
   float *GetExtNeuronInputSpikes(int *n_node, int *n_port);
-  
+
 };
 
 

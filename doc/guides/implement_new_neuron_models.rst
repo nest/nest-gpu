@@ -149,7 +149,7 @@ editor. In the file user_m1.h, in the lines:
      N_SCAL_PARAM
    };
 
-    
+
    const std::string user_m1_scal_var_name[N_SCAL_VAR] = {
      "I_syn_ex",
      "I_syn_in",

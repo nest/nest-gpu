@@ -47,8 +47,8 @@ __device__ double atomicAddDouble(double* address, double val)
     unsigned long long int old = *address_as_ull, assumed;
     do {
         assumed = old;
-        old = atomicCAS(address_as_ull, assumed, 
-                        __double_as_longlong(val + 
+        old = atomicCAS(address_as_ull, assumed,
+                        __double_as_longlong(val +
                         __longlong_as_double(assumed)));
     } while (assumed != old);
     return __longlong_as_double(old);
@@ -74,7 +74,7 @@ __device__ void CollectSpikeFunction(int i_spike, int i_syn)
   //" port %d weight %f\n",
   //i_spike, i_source, i_conn, i_syn, i_target,
   //port, weight);
-  
+
   /////////////////////////////////////////////////////////////////
   int i_group=NodeGroupMap[i_target];
   int i = port*NodeGroupArray[i_group].n_node_ + i_target
@@ -85,7 +85,7 @@ __device__ void CollectSpikeFunction(int i_spike, int i_syn)
   if (syn_group>0) {
     ConnectionGroupTargetSpikeTime[i_conn*NSpikeBuffer+i_source][i_syn]
       = (unsigned short)(NESTGPUTimeIdx & 0xffff);
-    
+
     long long Dt_int = NESTGPUTimeIdx - LastRevSpikeTimeIdx[i_target];
      if (Dt_int>0 && Dt_int<MAX_SYN_DT) {
        SynapseUpdate(syn_group, &ConnectionGroupTargetWeight
@@ -160,7 +160,7 @@ __global__ void GetSpikes(double *spike_array, int array_size, int n_port,
     double d_val = (double)port_input_arr[port_input]
       + spike_array[i_array]
       * port_weight_arr[port_weight];
-    
+
     port_input_arr[port_input] = (float)d_val;
   }
 }
@@ -175,7 +175,7 @@ int NESTGPU::ClearGetSpikeArrays()
 			   *sizeof(double)));
     }
   }
-  
+
   return 0;
 }
 
@@ -187,6 +187,6 @@ int NESTGPU::FreeGetSpikeArrays()
       gpuErrchk(cudaFree(bn->get_spike_array_));
     }
   }
-  
+
   return 0;
 }

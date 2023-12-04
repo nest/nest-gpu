@@ -46,7 +46,7 @@ The ``spike_detector`` collects and records all spikes it receives
 from neurons that are connected to it.
 
 Any neuron from which spikes have to be recorded must be connected to
-the spike recorder using the standard ``Connect`` command. 
+the spike recorder using the standard ``Connect`` command.
 
 .. warning::
 
@@ -70,17 +70,17 @@ Here follows an example:
   recorder = nestgpu.CreateRecord("", ["spike_height"], [spike_det[0]], [0])
 
   nestgpu.Simulate()
-   
+
   recorded_data = nestgpu.GetRecordData(record)
   time = [row[0] for row in recorded_data]
   spike_height = [row[1] for row in recorded_data]
 
 The output is thus a continuous variable, which is 0 when no spikes are emitted
-by the neuron, and is ``weights`` when a spike is emitted. 
+by the neuron, and is ``weights`` when a spike is emitted.
 
 .. note::
 
-  A faster implementation for spike recording, which is also similar to 
+  A faster implementation for spike recording, which is also similar to
   the one of NEST in terms of output, is described in the guide of
   :doc:`how to record spikes <../guides/how_to_record_spikes>`.
 
@@ -101,7 +101,7 @@ class spike_detector : public BaseNeuron
 	   unsigned long long *seed);
 
   int Free();
-  
+
   int Update(long long it, double t1);
 
 };

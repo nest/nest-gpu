@@ -30,9 +30,10 @@
 # documentation root, use str(Path().resolve()) to make it absolute.
 #
 
-import sys
 import json
+import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path().resolve()))
 
 source_dir = Path(__file__).resolve().parent.resolve()
@@ -44,15 +45,15 @@ print("source_dir", str(source_dir))
 
 # -- Project information -----------------------------------------------------
 
-project = u'NEST GPU Documentation'
-copyright = u'2004, nest-simulator'
-author = u'nest-simulator'
+project = "NEST GPU Documentation"
+copyright = "2004, nest-simulator"
+author = "nest-simulator"
 
 # The full version, including alpha/beta/rc tags
-release = '1'
+release = "1"
 
-source_suffix = '.rst'
-master_doc = 'contents'
+source_suffix = ".rst"
+master_doc = "contents"
 
 # -- General configuration ---------------------------------------------------
 
@@ -60,78 +61,83 @@ master_doc = 'contents'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx_rtd_theme',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.napoleon',
-    'sphinx_tabs.tabs',
-    'nbsphinx'
+    "sphinx_rtd_theme",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.napoleon",
+    "sphinx_tabs.tabs",
+    "nbsphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'manni'
+pygments_style = "manni"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', None),
-    'nest': ('https://nest-simulator.readthedocs.io/en/latest/', None),
-    'nestml': ('https://nestml.readthedocs.io/en/latest/', None),
-    'pynn': ('http://neuralensemble.org/docs/PyNN/', None),
-    'elephant': ('https://elephant.readthedocs.io/en/latest/', None),
-    'desktop': ('https://nest-desktop.readthedocs.io/en/latest/', None),
-    'neuromorph': ('https://electronicvisions.github.io/hbp-sp9-guidebook/', None),
-    'arbor': ('https://arbor.readthedocs.io/en/latest/', None),
-    'tvb': ('http://docs.thevirtualbrain.org/', None),
-    'extmod': ('https://nest-extension-module.readthedocs.io/en/latest/', None),
+    "python": ("https://docs.python.org/3", None),
+    "nest": ("https://nest-simulator.readthedocs.io/en/latest/", None),
+    "nestml": ("https://nestml.readthedocs.io/en/latest/", None),
+    "pynn": ("http://neuralensemble.org/docs/PyNN/", None),
+    "elephant": ("https://elephant.readthedocs.io/en/latest/", None),
+    "desktop": ("https://nest-desktop.readthedocs.io/en/latest/", None),
+    "neuromorph": ("https://electronicvisions.github.io/hbp-sp9-guidebook/", None),
+    "arbor": ("https://arbor.readthedocs.io/en/latest/", None),
+    "tvb": ("http://docs.thevirtualbrain.org/", None),
+    "extmod": ("https://nest-extension-module.readthedocs.io/en/latest/", None),
 }
 
 
 # Extract documentation from header files in src/
 
-from extractor_userdocs import relative_glob, ExtractUserDocs
+from extractor_userdocs import ExtractUserDocs, relative_glob
+
 
 def config_inited_handler(app, config):
     ExtractUserDocs(
         listoffiles=relative_glob("../src/*.h", basedir=source_dir),
         basedir=source_dir,
-        outdir=str(doc_build_dir)
+        outdir=str(doc_build_dir),
     )
+
 
 def setup(app):
     # for events see
     # https://www.sphinx-doc.org/en/master/extdev/appapi.html#sphinx-core-events
-    app.connect('config-inited', config_inited_handler)
+    app.connect("config-inited", config_inited_handler)
+
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 html_show_sphinx = False
 html_show_copyright = False
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 html_css_files = [
-    'css/custom.css',
-    'css/pygments.css',
+    "css/custom.css",
+    "css/pygments.css",
 ]
 
-html_logo =  'logo/nestgpu-logo.png'
-html_theme_options = {'logo_only': True,
-                      'display_version': True}
+html_logo = "logo/nestgpu-logo.png"
+html_theme_options = {"logo_only": True, "display_version": True}
+
 
 def setup(app):
-    app.connect('config-inited', config_inited_handler)
+    app.connect("config-inited", config_inited_handler)
+
+
 #    app.add_css_file('css/custom.css')
 #    app.add_css_file('css/pygments.css')

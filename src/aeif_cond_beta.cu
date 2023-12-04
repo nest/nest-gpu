@@ -39,7 +39,7 @@ void NodeInit(int n_var, int n_param, double x, float *y, float *param,
 	      aeif_cond_beta_rk5 data_struct)
 {
   //int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
-  
+
   V_th = -50.4;
   Delta_T = 2.0;
   g_L = 30.0;
@@ -59,7 +59,7 @@ void NodeInit(int n_var, int n_param, double x, float *y, float *param,
   tau_decay_in = 20.0;
   tau_rise_ex = 2.0;
   tau_rise_in = 2.0;
-  
+
   V_m = E_L;
   w = 0;
   refractory_step = 0;
@@ -74,9 +74,9 @@ void NodeCalibrate(int n_var, int n_param, double x, float *y,
 		       float *param, aeif_cond_beta_rk5 data_struct)
 {
   //int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
-  
+
   refractory_step = 0;
-  
+
   // denominator is computed here to check that it is != 0
   float denom1 = tau_decay_ex - tau_rise_ex;
   float denom2 = 0;
@@ -113,7 +113,7 @@ void NodeCalibrate(int n_var, int n_param, double x, float *y,
   }
 }
 }
-			    
+
 __device__
 void NodeInit(int n_var, int n_param, double x, float *y,
 	     float *param, aeif_cond_beta_rk5 data_struct)
@@ -153,7 +153,7 @@ int aeif_cond_beta::Init(int i_node_0, int n_node, int n_port,
   SetGroupParam("h_min_rel", 1.0e-3);
   SetGroupParam("h0_rel",  1.0e-2);
   h_ = h0_rel_* 0.1;
-  
+
   rk5_.Init(n_node, n_var_, n_param_, 0.0, h_, rk5_data_struct_);
   var_arr_ = rk5_.GetYArr();
   param_arr_ = rk5_.GetParamArr();
@@ -175,7 +175,7 @@ int aeif_cond_beta::Calibrate(double time_min, float time_resolution)
   h_min_ = h_min_rel_* time_resolution;
   h_ = h0_rel_* time_resolution;
   rk5_.Calibrate(time_min, h_, rk5_data_struct_);
-  
+
   return 0;
 }
 

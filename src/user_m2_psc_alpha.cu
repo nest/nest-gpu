@@ -54,7 +54,7 @@ void NodeInit(int n_var, int n_param, double x, float *y, float *param,
   V_reset = -60.0;
   t_ref = 0.0;
   den_delay = 0.0;
-  
+
   V_m = E_L;
   w = 0.0;
   refractory_step = 0;
@@ -136,7 +136,7 @@ int user_m2::Init(int i_node_0, int n_node, int n_port,
     + GetPortParamIdx("I0");
   port_weight_arr_step_ = n_param_;
   port_weight_port_step_ = n_port_param_;
-  
+
   port_input_arr_ = GetVarArr() + n_scal_var_
     + GetPortVarIdx("I1_syn");
   port_input_arr_step_ = n_var_;
@@ -151,7 +151,7 @@ int user_m2::Calibrate(double time_min, float time_resolution)
   h_min_ = h_min_rel_* time_resolution;
   h_ = h0_rel_* time_resolution;
   rk5_.Calibrate(time_min, h_, rk5_data_struct_);
-  
+
   return 0;
 }
 

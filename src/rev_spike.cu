@@ -145,10 +145,10 @@ __global__ void RevSpikeReset()
 {
   *RevSpikeNum = 0;
 }
-  
+
 
 int ResetConnectionSpikeTimeUp(NetConnection *net_connection)
-{  
+{
   ResetConnectionSpikeTimeUpKernel
     <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
     (net_connection->StoredNConnections());
@@ -158,7 +158,7 @@ int ResetConnectionSpikeTimeUp(NetConnection *net_connection)
 }
 
 int ResetConnectionSpikeTimeDown(NetConnection *net_connection)
-{  
+{
   ResetConnectionSpikeTimeDownKernel
     <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
     (net_connection->StoredNConnections());
@@ -170,14 +170,14 @@ int ResetConnectionSpikeTimeDown(NetConnection *net_connection)
 int RevSpikeInit(NetConnection *net_connection)
 {
   int n_spike_buffers = net_connection->connection_.size();
-  
+
   SetConnectionSpikeTime
     <<<(net_connection->StoredNConnections()+1023)/1024, 1024>>>
     (net_connection->StoredNConnections(), 0x8000);
   gpuErrchk( cudaPeekAtLastError() );
 
   gpuErrchk(cudaMalloc(&d_RevSpikeNum, sizeof(unsigned int)));
-  
+
   gpuErrchk(cudaMalloc(&d_RevSpikeTarget,
 		       n_spike_buffers*sizeof(unsigned int)));
   gpuErrchk(cudaMalloc(&d_RevSpikeNConn,

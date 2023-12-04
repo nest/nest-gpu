@@ -27,13 +27,14 @@ build and simulate the network.
 """
 
 import os
-import numpy as np
-import nestgpu as ngpu
+
 import helpers
+import nestgpu as ngpu
+import numpy as np
 
 
 class Network:
-    """ Provides functions to setup NEST GPU, to create and connect all nodes
+    """Provides functions to setup NEST GPU, to create and connect all nodes
     of the network, to simulate, and to evaluate the resulting spike data.
 
     Instantiating a Network object derives dependent parameters and already
@@ -60,17 +61,16 @@ class Network:
         self.Rank = 0
 
         # data directory
-        self.data_path = sim_dict['data_path']
+        self.data_path = sim_dict["data_path"]
         if self.Rank == 0:
             if os.path.isdir(self.data_path):
-                message = '  Directory already existed.'
-                if self.sim_dict['overwrite_files']:
-                    message += ' Old data will be overwritten.'
+                message = "  Directory already existed."
+                if self.sim_dict["overwrite_files"]:
+                    message += " Old data will be overwritten."
             else:
                 os.mkdir(self.data_path)
-                message = '  Directory has been created.'
-            print('Data will be written to: {}\n{}\n'.format(self.data_path,
-                                                             message))
+                message = "  Directory has been created."
+            print("Data will be written to: {}\n{}\n".format(self.data_path, message))
 
         # derive parameters based on input dictionaries
         self.__derive_parameters()
@@ -79,23 +79,23 @@ class Network:
         self.__setup_ngpu()
 
     def create(self):
-        """ Creates all network nodes.
+        """Creates all network nodes.
 
         Neuronal populations and recording and stimulating devices are created.
 
         """
         self.__create_neuronal_populations()
-        if len(self.sim_dict['rec_dev']) > 0:
+        if len(self.sim_dict["rec_dev"]) > 0:
             self.__create_recording_devices()
-        if self.net_dict['poisson_input']:
+        if self.net_dict["poisson_input"]:
             self.__create_poisson_bg_input()
-        if self.stim_dict['thalamic_input']:
+        if self.stim_dict["thalamic_input"]:
             self.__create_thalamic_stim_input()
-        if self.stim_dict['dc_input']:
+        if self.stim_dict["dc_input"]:
             self.__create_dc_stim_input()
 
     def connect(self):
-        """ Connects the network.
+        """Connects the network.
 
         Recurrent connections among neurons of the neuronal populations are
         established, and recording and stimulating devices are connected.
@@ -113,20 +113,20 @@ class Network:
         """
         self.__connect_neuronal_populations()
 
-        #if len(self.sim_dict['rec_dev']) > 0:
+        # if len(self.sim_dict['rec_dev']) > 0:
         #    self.__connect_recording_devices()
-        if self.net_dict['poisson_input']:
+        if self.net_dict["poisson_input"]:
             self.__connect_poisson_bg_input()
-        if self.stim_dict['thalamic_input']:
+        if self.stim_dict["thalamic_input"]:
             self.__connect_thalamic_stim_input()
-        if self.stim_dict['dc_input']:
+        if self.stim_dict["dc_input"]:
             self.__connect_dc_stim_input()
 
-        #ngpu.Prepare()
-        #ngpu.Cleanup()
+        # ngpu.Prepare()
+        # ngpu.Cleanup()
 
     def simulate(self, t_sim):
-        """ Simulates the microcircuit.
+        """Simulates the microcircuit.
 
         Parameters
         ----------
@@ -135,12 +135,12 @@ class Network:
 
         """
         if self.Rank == 0:
-            print('Simulating {} ms.'.format(t_sim))
+            print("Simulating {} ms.".format(t_sim))
 
         ngpu.Simulate(t_sim)
 
     def evaluate(self, raster_plot_interval, firing_rates_interval):
-        """ Displays simulation results.
+        """Displays simulation results.
 
         Creates a spike raster plot.
         Calculates the firing rate of each population and displays them as a
@@ -160,95 +160,105 @@ class Network:
             None
 
         """
-        
+
         spike_times_net = ngpu.GetRecSpikeTimes(self.neurons)
         popid = 0
         for i_pop in range(len(self.pops)):
             population = self.pops[i_pop]
             data = []
-            spike_times_list = spike_times_net[popid:popid+len(population)]
+            spike_times_list = spike_times_net[popid : popid + len(population)]
             popid += len(population)
             for i_neur in range(len(population)):
                 spike_times = spike_times_list[i_neur]
-                if (len(spike_times) != 0):
+                if len(spike_times) != 0:
                     # print("i_pop:", i_pop, " i_neur:", i_neur, " n_spikes:",
                     #      len(spike_times))
                     for t in spike_times:
                         data.append([population[i_neur], t])
             arr = np.array(data)
-            fn = os.path.join(self.data_path, 'spike_times_' + str(i_pop) +
-                              '.dat')
-            fmt='%d\t%.3f'
-            np.savetxt(fn, arr, fmt=fmt, header="sender time_ms",
-                       comments='')
+            fn = os.path.join(self.data_path, "spike_times_" + str(i_pop) + ".dat")
+            fmt = "%d\t%.3f"
+            np.savetxt(fn, arr, fmt=fmt, header="sender time_ms", comments="")
         if self.Rank == 0:
-            print('Interval to plot spikes: {} ms'.format(raster_plot_interval))
+            print("Interval to plot spikes: {} ms".format(raster_plot_interval))
             helpers.plot_raster(
                 self.data_path,
-                'spike_detector',
+                "spike_detector",
                 raster_plot_interval[0],
                 raster_plot_interval[1],
-                self.net_dict['N_scaling'])
+                self.net_dict["N_scaling"],
+            )
 
-            print('Interval to compute firing rates: {} ms'.format(
-                firing_rates_interval))
+            print("Interval to compute firing rates: {} ms".format(firing_rates_interval))
             helpers.firing_rates(
-                self.data_path, 'spike_detector',
-                firing_rates_interval[0], firing_rates_interval[1])
-            helpers.boxplot(self.data_path, self.net_dict['populations'])
+                self.data_path,
+                "spike_detector",
+                firing_rates_interval[0],
+                firing_rates_interval[1],
+            )
+            helpers.boxplot(self.data_path, self.net_dict["populations"])
 
     def __derive_parameters(self):
         """
         Derives and adjusts parameters and stores them as class attributes.
         """
-        self.num_pops = len(self.net_dict['populations'])
+        self.num_pops = len(self.net_dict["populations"])
 
         # total number of synapses between neuronal populations before scaling
         full_num_synapses = helpers.num_synapses_from_conn_probs(
-            self.net_dict['conn_probs'],
-            self.net_dict['full_num_neurons'],
-            self.net_dict['full_num_neurons'])
+            self.net_dict["conn_probs"],
+            self.net_dict["full_num_neurons"],
+            self.net_dict["full_num_neurons"],
+        )
 
         # scaled numbers of neurons and synapses
-        self.num_neurons = np.round((self.net_dict['full_num_neurons'] *
-                                     self.net_dict['N_scaling'])).astype(int)
-        self.num_synapses = np.round((full_num_synapses *
-                                      self.net_dict['N_scaling'] *
-                                      self.net_dict['K_scaling'])).astype(int)
-        self.ext_indegrees = np.round((self.net_dict['K_ext'] *
-                                       self.net_dict['K_scaling'])).astype(int)
+        self.num_neurons = np.round((self.net_dict["full_num_neurons"] * self.net_dict["N_scaling"])).astype(int)
+        self.num_synapses = np.round(
+            (full_num_synapses * self.net_dict["N_scaling"] * self.net_dict["K_scaling"])
+        ).astype(int)
+        self.ext_indegrees = np.round((self.net_dict["K_ext"] * self.net_dict["K_scaling"])).astype(int)
 
         # conversion from PSPs to PSCs
         PSC_over_PSP = helpers.postsynaptic_potential_to_current(
-            self.net_dict['neuron_params']['C_m'],
-            self.net_dict['neuron_params']['tau_m'],
-            self.net_dict['neuron_params']['tau_syn'])
-        PSC_matrix_mean = self.net_dict['PSP_matrix_mean'] * PSC_over_PSP
-        PSC_ext = self.net_dict['PSP_exc_mean'] * PSC_over_PSP
+            self.net_dict["neuron_params"]["C_m"],
+            self.net_dict["neuron_params"]["tau_m"],
+            self.net_dict["neuron_params"]["tau_syn"],
+        )
+        PSC_matrix_mean = self.net_dict["PSP_matrix_mean"] * PSC_over_PSP
+        PSC_ext = self.net_dict["PSP_exc_mean"] * PSC_over_PSP
 
         # DC input compensates for potentially missing Poisson input
-        if self.net_dict['poisson_input']:
+        if self.net_dict["poisson_input"]:
             DC_amp = np.zeros(self.num_pops)
         else:
             if self.Rank == 0:
-                print('DC input compensates for missing Poisson input.\n')
+                print("DC input compensates for missing Poisson input.\n")
             DC_amp = helpers.dc_input_compensating_poisson(
-                self.net_dict['bg_rate'], self.net_dict['K_ext'],
-                self.net_dict['neuron_params']['tau_syn'],
-                PSC_ext)
+                self.net_dict["bg_rate"],
+                self.net_dict["K_ext"],
+                self.net_dict["neuron_params"]["tau_syn"],
+                PSC_ext,
+            )
 
         # adjust weights and DC amplitude if the indegree is scaled
-        if self.net_dict['K_scaling'] != 1:
-            PSC_matrix_mean, PSC_ext, DC_amp = \
-                helpers.adjust_weights_and_input_to_synapse_scaling(
-                    self.net_dict['full_num_neurons'],
-                    full_num_synapses, self.net_dict['K_scaling'],
-                    PSC_matrix_mean, PSC_ext,
-                    self.net_dict['neuron_params']['tau_syn'],
-                    self.net_dict['full_mean_rates'],
-                    DC_amp,
-                    self.net_dict['poisson_input'],
-                    self.net_dict['bg_rate'], self.net_dict['K_ext'])
+        if self.net_dict["K_scaling"] != 1:
+            (
+                PSC_matrix_mean,
+                PSC_ext,
+                DC_amp,
+            ) = helpers.adjust_weights_and_input_to_synapse_scaling(
+                self.net_dict["full_num_neurons"],
+                full_num_synapses,
+                self.net_dict["K_scaling"],
+                PSC_matrix_mean,
+                PSC_ext,
+                self.net_dict["neuron_params"]["tau_syn"],
+                self.net_dict["full_mean_rates"],
+                DC_amp,
+                self.net_dict["poisson_input"],
+                self.net_dict["bg_rate"],
+                self.net_dict["K_ext"],
+            )
 
         # store final parameters as class attributes
         self.weight_matrix_mean = PSC_matrix_mean
@@ -256,44 +266,39 @@ class Network:
         self.DC_amp = DC_amp
 
         # thalamic input
-        if self.stim_dict['thalamic_input']:
+        if self.stim_dict["thalamic_input"]:
             num_th_synapses = helpers.num_synapses_from_conn_probs(
-                self.stim_dict['conn_probs_th'],
-                self.stim_dict['num_th_neurons'],
-                self.net_dict['full_num_neurons'])[0]
-            self.weight_th = self.stim_dict['PSP_th'] * PSC_over_PSP
-            if self.net_dict['K_scaling'] != 1:
-                num_th_synapses *= self.net_dict['K_scaling']
-                self.weight_th /= np.sqrt(self.net_dict['K_scaling'])
+                self.stim_dict["conn_probs_th"],
+                self.stim_dict["num_th_neurons"],
+                self.net_dict["full_num_neurons"],
+            )[0]
+            self.weight_th = self.stim_dict["PSP_th"] * PSC_over_PSP
+            if self.net_dict["K_scaling"] != 1:
+                num_th_synapses *= self.net_dict["K_scaling"]
+                self.weight_th /= np.sqrt(self.net_dict["K_scaling"])
             self.num_th_synapses = np.round(num_th_synapses).astype(int)
 
         if self.Rank == 0:
-            message = ''
-            if self.net_dict['N_scaling'] != 1:
-                message += \
-                    'Neuron numbers are scaled by a factor of {:.3f}.\n'.format(
-                        self.net_dict['N_scaling'])
-            if self.net_dict['K_scaling'] != 1:
-                message += \
-                    'Indegrees are scaled by a factor of {:.3f}.'.format(
-                        self.net_dict['K_scaling'])
-                message += '\n  Weights and DC input are adjusted to compensate.\n'
+            message = ""
+            if self.net_dict["N_scaling"] != 1:
+                message += "Neuron numbers are scaled by a factor of {:.3f}.\n".format(self.net_dict["N_scaling"])
+            if self.net_dict["K_scaling"] != 1:
+                message += "Indegrees are scaled by a factor of {:.3f}.".format(self.net_dict["K_scaling"])
+                message += "\n  Weights and DC input are adjusted to compensate.\n"
             print(message)
 
     def __setup_ngpu(self):
-        """ Initializes NEST GPU.
-
-        """
+        """Initializes NEST GPU."""
 
         # set seeds for random number generation
 
-        master_seed = self.sim_dict['master_seed']
+        master_seed = self.sim_dict["master_seed"]
         ngpu.SetRandomSeed(master_seed)
-        ngpu.SetKernelStatus({'print_time': self.sim_dict['print_time']})
-        self.sim_resolution = self.sim_dict['sim_resolution']
+        ngpu.SetKernelStatus({"print_time": self.sim_dict["print_time"]})
+        self.sim_resolution = self.sim_dict["sim_resolution"]
 
     def __create_neuronal_populations(self):
-        """ Creates the neuronal populations.
+        """Creates the neuronal populations.
 
         The neuronal populations are created and the parameters are assigned
         to them. The initial membrane potential of the neurons is drawn from
@@ -302,90 +307,95 @@ class Network:
         The first and last neuron id of each population is written to file.
         """
         if self.Rank == 0:
-            print('Creating neuronal populations.')
+            print("Creating neuronal populations.")
 
         self.n_tot_neurons = 0
         for i in np.arange(self.num_pops):
             self.n_tot_neurons = self.n_tot_neurons + self.num_neurons[i]
 
-        self.neurons = ngpu.Create(self.net_dict['neuron_model'],
-                              self.n_tot_neurons)
+        self.neurons = ngpu.Create(self.net_dict["neuron_model"], self.n_tot_neurons)
 
-        tau_syn=self.net_dict['neuron_params']['tau_syn']
-        E_L=self.net_dict['neuron_params']['E_L']
-        V_th=self.net_dict['neuron_params']['V_th']
-        V_reset=self.net_dict['neuron_params']['V_reset']
-        t_ref=self.net_dict['neuron_params']['t_ref']
-        ngpu.SetStatus(self.neurons, {"tau_syn":tau_syn,
-                                      "E_L":E_L,
-                                      "Theta_rel":V_th - E_L,
-                                      "V_reset_rel":V_reset - E_L,
-                                      "t_ref":t_ref})
-                                     
+        tau_syn = self.net_dict["neuron_params"]["tau_syn"]
+        E_L = self.net_dict["neuron_params"]["E_L"]
+        V_th = self.net_dict["neuron_params"]["V_th"]
+        V_reset = self.net_dict["neuron_params"]["V_reset"]
+        t_ref = self.net_dict["neuron_params"]["t_ref"]
+        ngpu.SetStatus(
+            self.neurons,
+            {
+                "tau_syn": tau_syn,
+                "E_L": E_L,
+                "Theta_rel": V_th - E_L,
+                "V_reset_rel": V_reset - E_L,
+                "t_ref": t_ref,
+            },
+        )
+
         self.pops = []
         for i in np.arange(self.num_pops):
-            if i==0:
+            if i == 0:
                 i_node_0 = 0
             i_node_1 = i_node_0 + self.num_neurons[i]
-            #print("i_node_1 ", i_node_1)
+            # print("i_node_1 ", i_node_1)
             population = self.neurons[i_node_0:i_node_1]
             i_node_0 = i_node_1
-            
-            I_e=self.DC_amp[i]
-            ngpu.SetStatus(population, {"I_e":I_e})
-            
-            #print(population.i0)
-            #print(population.n)
 
-            if self.net_dict['V0_type'] == 'optimized':
-                V_rel_mean = self.net_dict['neuron_params']['V0_mean'] \
-                ['optimized'][i] - E_L
-                V_std = self.net_dict['neuron_params']['V0_std'] \
-                        ['optimized'][i]
-            elif self.net_dict['V0_type'] == 'original':
-                V_rel_mean = self.net_dict['neuron_params']['V0_mean'] \
-                             ['original'] - E_L,
-                V_std = self.net_dict['neuron_params']['V0_std']['original']
+            I_e = self.DC_amp[i]
+            ngpu.SetStatus(population, {"I_e": I_e})
+
+            # print(population.i0)
+            # print(population.n)
+
+            if self.net_dict["V0_type"] == "optimized":
+                V_rel_mean = self.net_dict["neuron_params"]["V0_mean"]["optimized"][i] - E_L
+                V_std = self.net_dict["neuron_params"]["V0_std"]["optimized"][i]
+            elif self.net_dict["V0_type"] == "original":
+                V_rel_mean = (self.net_dict["neuron_params"]["V0_mean"]["original"] - E_L,)
+                V_std = self.net_dict["neuron_params"]["V0_std"]["original"]
             else:
-                raise Exception(
-                    'V0_type incorrect. ' +
-                    'Valid options are "optimized" and "original".')
+                raise Exception("V0_type incorrect. " + 'Valid options are "optimized" and "original".')
 
-            #print("V_rel_mean", V_rel_mean)
-            #print("V_std", V_std)
-            #print("pop size: ", len(population))
-            ngpu.SetStatus(population, {"V_m_rel": {"distribution":"normal",
-                                                    "mu":V_rel_mean,
-                                                    "sigma":V_std } } )
+            # print("V_rel_mean", V_rel_mean)
+            # print("V_std", V_std)
+            # print("pop size: ", len(population))
+            ngpu.SetStatus(
+                population,
+                {
+                    "V_m_rel": {
+                        "distribution": "normal",
+                        "mu": V_rel_mean,
+                        "sigma": V_std,
+                    }
+                },
+            )
 
             self.pops.append(population)
 
         # write node ids to file
         if self.Rank == 0:
-            fn = os.path.join(self.data_path, 'population_nodeids.dat')
-            with open(fn, 'w+') as f:
+            fn = os.path.join(self.data_path, "population_nodeids.dat")
+            with open(fn, "w+") as f:
                 for pop in self.pops:
-                    f.write('{} {}\n'.format(pop[0],
-                                             pop[len(pop)-1]))
+                    f.write("{} {}\n".format(pop[0], pop[len(pop) - 1]))
 
     def __create_recording_devices(self):
-        """ Creates one recording device of each kind per population.
+        """Creates one recording device of each kind per population.
 
         Only devices which are given in ``sim_dict['rec_dev']`` are created.
 
         """
         if self.Rank == 0:
-            print('Creating recording devices.')
+            print("Creating recording devices.")
 
-        if 'spike_detector' in self.sim_dict['rec_dev']:
+        if "spike_detector" in self.sim_dict["rec_dev"]:
             if self.Rank == 0:
-                print('  Activating spike time recording.')
-                #for pop in self.pops:
+                print("  Activating spike time recording.")
+                # for pop in self.pops:
                 ngpu.ActivateRecSpikeTimes(self.neurons, 1000)
-                    
-            #self.spike_detectors = ngpu.Create('spike_detector',
+
+            # self.spike_detectors = ngpu.Create('spike_detector',
             #                                   self.num_pops)
-        #if 'voltmeter' in self.sim_dict['rec_dev']:
+        # if 'voltmeter' in self.sim_dict['rec_dev']:
         #    if self.Rank == 0:
         #        print('  Creating voltmeters.')
         #    self.voltmeters = ngpu.CreateRecord('V_m_rel',
@@ -393,7 +403,7 @@ class Network:
         #                                  params=vm_dict)
 
     def __create_poisson_bg_input(self):
-        """ Creates the Poisson generators for ongoing background input if
+        """Creates the Poisson generators for ongoing background input if
         specified in ``network_params.py``.
 
         If ``poisson_input`` is ``False``, DC input is applied for compensation
@@ -401,17 +411,15 @@ class Network:
 
         """
         if self.Rank == 0:
-            print('Creating Poisson generators for background input.')
+            print("Creating Poisson generators for background input.")
 
-        self.poisson_bg_input = ngpu.Create('poisson_generator',
-                                            self.num_pops)
-        rate_list = self.net_dict['bg_rate'] * self.ext_indegrees
+        self.poisson_bg_input = ngpu.Create("poisson_generator", self.num_pops)
+        rate_list = self.net_dict["bg_rate"] * self.ext_indegrees
         for i_pop in range(self.num_pops):
-            ngpu.SetStatus([self.poisson_bg_input[i_pop]],
-                           "rate", rate_list[i_pop]) 
+            ngpu.SetStatus([self.poisson_bg_input[i_pop]], "rate", rate_list[i_pop])
 
     def __create_thalamic_stim_input(self):
-        """ Creates the thalamic neuronal population if specified in
+        """Creates the thalamic neuronal population if specified in
         ``stim_dict``.
 
         Thalamic neurons are of type ``parrot_neuron`` and receive input from a
@@ -421,63 +429,68 @@ class Network:
 
         """
         if self.Rank == 0:
-            print('Creating thalamic input for external stimulation.')
+            print("Creating thalamic input for external stimulation.")
 
-        self.thalamic_population = ngpu.Create(
-            'parrot_neuron', n=self.stim_dict['num_th_neurons'])
+        self.thalamic_population = ngpu.Create("parrot_neuron", n=self.stim_dict["num_th_neurons"])
 
-        self.poisson_th = ngpu.Create('poisson_generator')
+        self.poisson_th = ngpu.Create("poisson_generator")
         self.poisson_th.set(
-            rate=self.stim_dict['th_rate'],
-            start=self.stim_dict['th_start'],
-            stop=(self.stim_dict['th_start'] + self.stim_dict['th_duration']))
+            rate=self.stim_dict["th_rate"],
+            start=self.stim_dict["th_start"],
+            stop=(self.stim_dict["th_start"] + self.stim_dict["th_duration"]),
+        )
 
     def __connect_neuronal_populations(self):
-        """ Creates the recurrent connections between neuronal populations. """
+        """Creates the recurrent connections between neuronal populations."""
         if self.Rank == 0:
-            print('Connecting neuronal populations recurrently.')
+            print("Connecting neuronal populations recurrently.")
 
         for i, target_pop in enumerate(self.pops):
             for j, source_pop in enumerate(self.pops):
-                if self.num_synapses[i][j] >= 0.:
+                if self.num_synapses[i][j] >= 0.0:
                     conn_dict_rec = {
-                        'rule': 'fixed_total_number',
-                        'total_num': self.num_synapses[i][j]}
+                        "rule": "fixed_total_number",
+                        "total_num": self.num_synapses[i][j],
+                    }
 
                     w_mean = self.weight_matrix_mean[i][j]
-                    w_std = abs(self.weight_matrix_mean[i][j] *
-                                self.net_dict['weight_rel_std'])
-                    
+                    w_std = abs(self.weight_matrix_mean[i][j] * self.net_dict["weight_rel_std"])
+
                     if w_mean < 0:
-                        w_min = w_mean-3.0*w_std
+                        w_min = w_mean - 3.0 * w_std
                         w_max = 0.0
                         # i_receptor = 1
                     else:
                         w_min = 0.0
-                        w_max = w_mean+3.0*w_std
+                        w_max = w_mean + 3.0 * w_std
                         # i_receptor = 0
-                        
-                    d_mean = self.net_dict['delay_matrix_mean'][i][j]
-                    d_std = (self.net_dict['delay_matrix_mean'][i][j] *
-                             self.net_dict['delay_rel_std'])
+
+                    d_mean = self.net_dict["delay_matrix_mean"][i][j]
+                    d_std = self.net_dict["delay_matrix_mean"][i][j] * self.net_dict["delay_rel_std"]
                     d_min = self.sim_resolution
-                    d_max = d_mean+3.0*d_std
+                    d_max = d_mean + 3.0 * d_std
 
                     syn_dict = {
-                        'weight': {'distribution':'normal_clipped',
-                                   'mu':w_mean, 'low':w_min,
-                                   'high':w_max,
-                                   'sigma':w_std},
-                        'delay': {'distribution':'normal_clipped',
-                                       'mu':d_mean, 'low':d_min,
-                                       'high':d_max,
-                                       'sigma':d_std}}
-                        #'receptor':i_receptor}
+                        "weight": {
+                            "distribution": "normal_clipped",
+                            "mu": w_mean,
+                            "low": w_min,
+                            "high": w_max,
+                            "sigma": w_std,
+                        },
+                        "delay": {
+                            "distribution": "normal_clipped",
+                            "mu": d_mean,
+                            "low": d_min,
+                            "high": d_max,
+                            "sigma": d_std,
+                        },
+                    }
+                    #'receptor':i_receptor}
 
-                    ngpu.Connect(
-                        source_pop, target_pop, conn_dict_rec, syn_dict)
+                    ngpu.Connect(source_pop, target_pop, conn_dict_rec, syn_dict)
 
-    #def __connect_recording_devices(self):
+    # def __connect_recording_devices(self):
     #    """ Connects the recording devices to the microcircuit."""
     #    if self.Rank == 0:
     #        print('Connecting recording devices.')
@@ -490,57 +503,67 @@ class Network:
     #                         conn_dict, syn_dict)
 
     def __connect_poisson_bg_input(self):
-        """ Connects the Poisson generators to the microcircuit."""
+        """Connects the Poisson generators to the microcircuit."""
         if self.Rank == 0:
-            print('Connecting Poisson generators for background input.')
+            print("Connecting Poisson generators for background input.")
 
         for i, target_pop in enumerate(self.pops):
-            conn_dict_poisson = {'rule': 'all_to_all'}
+            conn_dict_poisson = {"rule": "all_to_all"}
 
             syn_dict_poisson = {
-                'weight': self.weight_ext,
-                'delay': self.net_dict['delay_poisson']}
+                "weight": self.weight_ext,
+                "delay": self.net_dict["delay_poisson"],
+            }
 
             ngpu.Connect(
-                [self.poisson_bg_input[i]], target_pop,
-                conn_dict_poisson, syn_dict_poisson)
+                [self.poisson_bg_input[i]],
+                target_pop,
+                conn_dict_poisson,
+                syn_dict_poisson,
+            )
 
     def __connect_thalamic_stim_input(self):
-        """ Connects the thalamic input to the neuronal populations."""
+        """Connects the thalamic input to the neuronal populations."""
         if self.Rank == 0:
-            print('Connecting thalamic input.')
+            print("Connecting thalamic input.")
 
         # connect Poisson input to thalamic population
         ngpu.Connect(self.poisson_th, self.thalamic_population)
 
         # connect thalamic population to neuronal populations
         for i, target_pop in enumerate(self.pops):
-            conn_dict_th = {
-                'rule': 'fixed_total_number',
-                'N': self.num_th_synapses[i]}
+            conn_dict_th = {"rule": "fixed_total_number", "N": self.num_th_synapses[i]}
 
-            w_mean = self.weight_th,
-            w_std = self.weight_th * self.net_dict['weight_rel_std']
-            w_min = 0.0,
-            w_max = w_mean + 3.0*w_std
+            w_mean = (self.weight_th,)
+            w_std = self.weight_th * self.net_dict["weight_rel_std"]
+            w_min = (0.0,)
+            w_max = w_mean + 3.0 * w_std
 
-            d_mean = self.stim_dict['delay_th_mean']
-            d_std = (self.stim_dict['delay_th_mean'] *
-                     self.stim_dict['delay_th_rel_std'])
+            d_mean = self.stim_dict["delay_th_mean"]
+            d_std = self.stim_dict["delay_th_mean"] * self.stim_dict["delay_th_rel_std"]
             d_min = self.sim_resolution
-            d_max = d_mean + 3.0*d_std
+            d_max = d_mean + 3.0 * d_std
 
             syn_dict_th = {
-                'weight': {"distribution":"normal_clipped",
-                           "mu":w_mean, "low":w_min,
-                           "high":w_max,
-                           "sigma":w_std},
-                'delay': {"distribution":"normal_clipped",
-                          "mu":d_mean, "low":d_min,
-                          "high":d_max,
-                          "sigma":d_std}}
- 
-            ngpu.Connect(
-                self.thalamic_population, target_pop,
-                conn_spec=conn_dict_th, syn_spec=syn_dict_th)
+                "weight": {
+                    "distribution": "normal_clipped",
+                    "mu": w_mean,
+                    "low": w_min,
+                    "high": w_max,
+                    "sigma": w_std,
+                },
+                "delay": {
+                    "distribution": "normal_clipped",
+                    "mu": d_mean,
+                    "low": d_min,
+                    "high": d_max,
+                    "sigma": d_std,
+                },
+            }
 
+            ngpu.Connect(
+                self.thalamic_population,
+                target_pop,
+                conn_spec=conn_dict_th,
+                syn_spec=syn_dict_th,
+            )

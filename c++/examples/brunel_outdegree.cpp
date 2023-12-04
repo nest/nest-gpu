@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
   cout << "Building ...\n";
 
   ngpu.SetRandomSeed(12345ULL); // seed for GPU random numbers
-  
+
   int n_receptors = 2;
 
   int order = arg1/5;
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
   int n_neurons = NE + NI; // number of neurons in total
 
   int CPN = 1000; // number of output connections per neuron
-  
+
   float Wex = 0.05;
   float Win = 0.35;
 
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
   ngpu.SetNeuronParam(neuron, "E_rev", E_rev, 2);
   ngpu.SetNeuronParam(neuron, "tau_decay", tau_decay, 2);
   ngpu.SetNeuronParam(neuron, "tau_rise", tau_rise, 2);
-  
+
   float mean_delay = 0.5;
   float std_delay = 0.25;
   float min_delay = 0.1;
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
   float *exc_delays = ngpu.RandomNormalClipped(CPN*NE, mean_delay,
   						     std_delay, min_delay,
   						     mean_delay+3*std_delay);
-  
+
   ConnSpec conn_spec1(FIXED_OUTDEGREE, CPN);
   SynSpec syn_spec1;
   syn_spec1.SetParam("receptor", 0);

@@ -33,7 +33,7 @@
 int main(int argc, char *argv[])
 {
   const int N = 5;
-  
+
   NESTGPU ngpu;
 
   NodeSeq neuron = ngpu.Create("aeif_cond_beta", 2*N);
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
   SynSpec odd_to_even_syn_spec;
   odd_to_even_syn_spec.SetParam("weight_array", odd_to_even_weight);
   odd_to_even_syn_spec.SetParam("delay_array", odd_to_even_delay);
-  
+
   ngpu.Connect(neuron_even, neuron_odd, conn_spec, even_to_odd_syn_spec);
   ngpu.Connect(neuron_odd, neuron_even, conn_spec, odd_to_even_syn_spec);
 
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
   }
   std::cout << "########################################\n";
 
-  
+
   // All to odd
   conn_id = ngpu.GetConnections(neuron, neuron_odd);
   conn_stat_vect = ngpu.GetConnectionStatus(conn_id);
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
   }
   std::cout << "########################################\n";
 
-  
+
   // Even to 3,4,5,6
   NodeSeq neuron_3_6 = neuron.Subseq(3,6);
   conn_id = ngpu.GetConnections(neuron_even, neuron_3_6);
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
   }
   std::cout << "########################################\n";
 
-  
+
   // 3,4,5,6 to odd
   conn_id = ngpu.GetConnections(neuron_3_6, neuron_odd);
   conn_stat_vect = ngpu.GetConnectionStatus(conn_id);
@@ -165,6 +165,6 @@ int main(int argc, char *argv[])
   }
   std::cout << "########################################\n";
 
-  
+
   return 0;
 }

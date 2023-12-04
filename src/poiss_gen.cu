@@ -78,7 +78,7 @@ __global__ void PoissGenSendSpikeKernel(curandState *curand_state, double t,
 	int i = port*NodeGroupArray[i_group].n_node_ + i_target
 	  - NodeGroupArray[i_group].i_node_0_;
 	double d_val = (double)(weight*n);
-	atomicAddDouble(&NodeGroupArray[i_group].get_spike_array_[i], d_val); 
+	atomicAddDouble(&NodeGroupArray[i_group].get_spike_array_[i], d_val);
 	////////////////////////////////////////////////////////////////
       }
     }
@@ -95,14 +95,14 @@ int poiss_gen::Init(int i_node_0, int n_node, int /*n_port*/,
   n_param_ = n_scal_param_;
   scal_param_name_ = poiss_gen_scal_param_name;
   has_dir_conn_ = true;
-  
+
   gpuErrchk(cudaMalloc(&param_arr_, n_node_*n_param_*sizeof(float)));
 
   SetScalParam(0, n_node, "rate", 0.0);
   SetScalParam(0, n_node, "origin", 0.0);
   SetScalParam(0, n_node, "start", 0.0);
   SetScalParam(0, n_node, "stop", 1.0e30);
-  
+
   return 0;
 }
 
@@ -130,7 +130,7 @@ int poiss_gen::Calibrate(double, float)
   SetupPoissKernel<<<numBlocks, 1024>>>(d_curand_state_, n_dir_conn_, *seed_);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-  
+
   return 0;
 }
 
@@ -143,7 +143,7 @@ int poiss_gen::Update(long long it, double t1)
 int poiss_gen::SendDirectSpikes(double t, float time_step)
 {
   unsigned int grid_dim_x, grid_dim_y;
-  
+
   if (n_dir_conn_<65536*1024) { // max grid dim * max block dim
     grid_dim_x = (n_dir_conn_+1023)/1024;
     grid_dim_y = 1;
@@ -162,7 +162,7 @@ int poiss_gen::SendDirectSpikes(double t, float time_step)
   PoissGenSendSpikeKernel<<<numBlocks, 1024>>>(d_curand_state_, t, time_step,
 					       param_arr_, n_param_,
 					       d_dir_conn_array_, n_dir_conn_);
-  
+
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 

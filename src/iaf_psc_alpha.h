@@ -106,7 +106,7 @@ References
        DOI: https://doi.org/10.1007/s004220050570
 .. [2] Potjans TC. and Diesmann M. 2014. The cell-type specific cortical
        microcircuit: relating structure and activity in a full-scale spiking
-       network model. Cerebral Cortex. 24(3):785–806. 
+       network model. Cerebral Cortex. 24(3):785–806.
        DOI: https://doi.org/10.1093/cercor/bhs358.
 
 See also
@@ -162,7 +162,7 @@ enum ScalParamIndexes {
   N_SCAL_PARAM
 };
 
- 
+
 const std::string iaf_psc_alpha_scal_var_name[N_SCAL_VAR] = {
   "I_syn_ex",
   "I_syn_in",
@@ -202,17 +202,17 @@ const std::string iaf_psc_alpha_scal_param_name[N_SCAL_PARAM] = {
 };
 
 } // namespace
- 
+
 class iaf_psc_alpha : public BaseNeuron
 {
  public:
   ~iaf_psc_alpha();
-  
+
   int Init(int i_node_0, int n_neuron, int n_port, int i_group,
 	   unsigned long long *seed);
 
   int Calibrate(double, float time_resolution);
-		
+
   int Update(long long it, double t1);
 
   int Free();

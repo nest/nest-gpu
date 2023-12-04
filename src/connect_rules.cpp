@@ -40,7 +40,7 @@ int ConnSpec::Init()
   outdegree_ = 0;
   return 0;
 }
-			    
+
 ConnSpec::ConnSpec()
 {
   Init();
@@ -66,7 +66,7 @@ int ConnSpec::Init(int rule, int degree /*=0*/)
   else if (rule==FIXED_OUTDEGREE) {
     outdegree_ = degree;
   }
-  
+
   return 0;
 }
 
@@ -194,7 +194,7 @@ int SynSpec::SetParam(std::string param_name, int value)
     port_ = value;
     return 0;
   }
-  
+
   throw ngpu_exception("Unknown synapse int parameter");
 }
 
@@ -234,7 +234,7 @@ bool SynSpec::IsFloatParam(std::string param_name)
     return false;
   }
 }
- 
+
 int SynSpec::SetParam(std::string param_name, float *array_pt)
 {
   if (param_name=="weight_array") {
@@ -246,7 +246,7 @@ int SynSpec::SetParam(std::string param_name, float *array_pt)
   else {
     throw ngpu_exception("Unknown synapse array parameter");
   }
-  
+
   return 0;
 }
 
@@ -328,7 +328,7 @@ int NESTGPU::_RemoteSingleConnect<int>
  int i_target, float weight, float delay,
  int i_array, SynSpec &syn_spec)
 {
-  
+
   RemoteConnection rc = {i_source, i_target0 + i_target,
 			 syn_spec.port_, syn_spec.syn_group_,
 			 weight, delay};
@@ -424,7 +424,7 @@ int NESTGPU::RemoteConnect(int i_source_host, int i_source, int n_source,
 {
 #ifdef HAVE_MPI
   RemoteNode<int> rsource(i_source_host, i_source);
-  RemoteNode<int*> rtarget(i_target_host, target);  
+  RemoteNode<int*> rtarget(i_target_host, target);
   return _RemoteConnect<int, int*>(rsource, n_source, rtarget, n_target,
 				   conn_spec, syn_spec);
 #else
@@ -467,7 +467,7 @@ int NESTGPU::RemoteConnect(int i_source_host, NodeSeq source,
 #ifdef HAVE_MPI
   RemoteNode<int> rsource(i_source_host, source.i0);
   RemoteNode<int> rtarget(i_target_host, target.i0);
-  
+
   return _RemoteConnect<int, int>(rsource, source.n, rtarget, target.n,
 				  conn_spec, syn_spec);
 #else

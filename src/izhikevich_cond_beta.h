@@ -64,9 +64,9 @@ The dynamics are given by:
    &v \text{ jumps on each spike arrival by the weight of the spike}
 
 This implementation uses the standard technique for forward Euler integration.
-This model is multisynapse, so it allows an arbitrary number of synaptic 
-rise time and decay time constants. The number of receptor ports must be specified 
-at neuron creation (default value is 1) and the receptor index starts from 0 
+This model is multisynapse, so it allows an arbitrary number of synaptic
+rise time and decay time constants. The number of receptor ports must be specified
+at neuron creation (default value is 1) and the receptor index starts from 0
 (and not from 1 as in NEST multisynapse models).
 The time constants are supplied by by two arrays, ``tau_rise`` and ``tau_decay`` for
 the synaptic rise time and decay time, respectively. The synaptic
@@ -95,7 +95,7 @@ The following parameters can be set in the status dictionary.
  tau_decay              ms       Decay time constant of synaptic conductance
  h_min_rel              real     Starting step in ODE integration relative to
                                  time resolution
- h0_rel                 real     Minimum step in ODE integration relative to 
+ h0_rel                 real     Minimum step in ODE integration relative to
                                  time resolution
 ======================= =======  ==============================================
 
@@ -131,22 +131,22 @@ class izhikevich_cond_beta : public BaseNeuron
   float h_min_;
   float h_;
   izhikevich_cond_beta_rk5 rk5_data_struct_;
-    
+
   int Init(int i_node_0, int n_neuron, int n_port, int i_group,
 	   unsigned long long *seed);
 
   int Calibrate(double time_min, float time_resolution);
-		
+
   int Update(long long it, double t1);
-  
+
   int GetX(int i_neuron, int n_node, double *x) {
     return rk5_.GetX(i_neuron, n_node, x);
   }
-  
+
   int GetY(int i_var, int i_neuron, int n_node, float *y) {
     return rk5_.GetY(i_var, i_neuron, n_node, y);
   }
-  
+
   template<int N_PORT>
     int UpdateNR(long long it, double t1);
 

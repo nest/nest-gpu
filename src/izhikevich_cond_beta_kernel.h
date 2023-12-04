@@ -78,7 +78,7 @@ enum GroupParamIndexes {
   N_GROUP_PARAM
 };
 
- 
+
 const std::string izhikevich_cond_beta_scal_var_name[N_SCAL_VAR] = {
   "V_m",
   "u"
@@ -105,7 +105,7 @@ const std::string izhikevich_cond_beta_port_param_name[N_PORT_PARAM] = {
   "E_rev",
   "tau_rise",
   "tau_decay",
-  "g0"  
+  "g0"
 };
 
 
@@ -164,7 +164,7 @@ __device__
 
   dVdt = ( refractory_step > 0 ) ? 0 :
     0.04 * V * V + 5.0 * V + 140.0 - u + I_syn + I_e;
-  
+
   dudt = a*(b*V - u);
 
   for (int i=0; i<n_port; i++) {

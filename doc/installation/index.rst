@@ -5,7 +5,7 @@ Requirements
 ------------
 To build NEST GPU you need `CMake <https://cmake.org/install>`_ (version 3.17 or higher).
 You also need the `NVIDIA drivers <https://www.nvidia.com/Download/index.aspx?lang=en-us>`_
-for the GPU card installed in your machine and the 
+for the GPU card installed in your machine and the
 `NVIDIA CUDA development toolkit <https://developer.nvidia.com/cuda-toolkit>`_.
 To use the NEST GPU Python interface you need `Python 3 <https://www.python.org/>`_,
 `Numpy <https://numpy.org/>`_, `Scipy <https://scipy.org/>`_,
@@ -65,7 +65,7 @@ you can find a guide to install the NVIDIA drivers for the GPU card on your mach
 
     cd nest-gpu-x-build
 
-* Configure NEST GPU. For additional ``cmake`` options see the :doc:`CMake Options <cmake_options>` of this docuentation. 
+* Configure NEST GPU. For additional ``cmake`` options see the :doc:`CMake Options <cmake_options>` of this docuentation.
 Without the additional options you can type:
 
 .. code-block:: sh

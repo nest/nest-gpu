@@ -84,7 +84,7 @@ can also be retreived through the commands ``GetRecordDataRows`` and
    print("recorder has {} rows and {} columns".format(rows, columns))
 
    recorded_data = nestgpu.GetRecordData(record)
-   
+
    time = [row[0] for row in recorded_data]
    variable = [row[1] for row in recorded_data]
 
@@ -115,13 +115,13 @@ class Record
 	 std::vector<int> i_neur_vect, std::vector<int> port_vect);
 
   int OpenFile();
-  
+
   int CloseFile();
-  
+
   int WriteRecord(float t);
 
 };
-  
+
 class Multimeter
 {
  public:
@@ -139,7 +139,7 @@ class Multimeter
   int WriteRecords(float t);
 
   std::vector<std::vector<float> > *GetRecordData(int i_record);
-	     
+
 };
 
 #endif

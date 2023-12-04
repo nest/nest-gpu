@@ -56,7 +56,7 @@ __device__ void STDPUpdate(float *weight_pt, float Dt, float *param)
     double fact = -alpha*lambda*exp((double)Dt/tau_minus);
     w1 = w + fact*Wmax*pow(w/Wmax, mu_minus);
   }
-  
+
   w1 = w1 >0.0 ? w1 : 0.0;
   w1 = w1 < Wmax ? w1 : Wmax;
   *weight_pt = (float)w1;

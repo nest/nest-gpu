@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
   cout << "Building on host " << mpi_id << " ..." <<endl;
 
   ngpu.SetRandomSeed(1234ULL + mpi_id); // seed for GPU random numbers
- 
+
   //////////////////////////////////////////////////////////////////////
   // WRITE HERE COMMANDS THAT ARE EXECUTED ON ALL HOSTS
   //////////////////////////////////////////////////////////////////////
@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 					   n_receptors);
   NodeSeq exc_neuron = neuron.Subseq(0,NE-1); // excitatory neuron group
   NodeSeq inh_neuron = neuron.Subseq(NE, n_neurons-1); //inhibitory neuron group
-  
+
   // the following parameters are set to the same values on all hosts
   float E_rev[] = {0.0, -85.0};
   float tau_decay[] = {1.0, 1.0};
