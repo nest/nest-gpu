@@ -187,9 +187,7 @@ class Network:
                 self.net_dict["N_scaling"],
             )
 
-            print(
-                "Interval to compute firing rates: {} ms".format(firing_rates_interval)
-            )
+            print("Interval to compute firing rates: {} ms".format(firing_rates_interval))
             helpers.firing_rates(
                 self.data_path,
                 "spike_detector",
@@ -212,19 +210,11 @@ class Network:
         )
 
         # scaled numbers of neurons and synapses
-        self.num_neurons = np.round(
-            (self.net_dict["full_num_neurons"] * self.net_dict["N_scaling"])
-        ).astype(int)
+        self.num_neurons = np.round((self.net_dict["full_num_neurons"] * self.net_dict["N_scaling"])).astype(int)
         self.num_synapses = np.round(
-            (
-                full_num_synapses
-                * self.net_dict["N_scaling"]
-                * self.net_dict["K_scaling"]
-            )
+            (full_num_synapses * self.net_dict["N_scaling"] * self.net_dict["K_scaling"])
         ).astype(int)
-        self.ext_indegrees = np.round(
-            (self.net_dict["K_ext"] * self.net_dict["K_scaling"])
-        ).astype(int)
+        self.ext_indegrees = np.round((self.net_dict["K_ext"] * self.net_dict["K_scaling"])).astype(int)
 
         # conversion from PSPs to PSCs
         PSC_over_PSP = helpers.postsynaptic_potential_to_current(
@@ -289,13 +279,9 @@ class Network:
         if self.Rank == 0:
             message = ""
             if self.net_dict["N_scaling"] != 1:
-                message += "Neuron numbers are scaled by a factor of {:.3f}.\n".format(
-                    self.net_dict["N_scaling"]
-                )
+                message += "Neuron numbers are scaled by a factor of {:.3f}.\n".format(self.net_dict["N_scaling"])
             if self.net_dict["K_scaling"] != 1:
-                message += "Indegrees are scaled by a factor of {:.3f}.".format(
-                    self.net_dict["K_scaling"]
-                )
+                message += "Indegrees are scaled by a factor of {:.3f}.".format(self.net_dict["K_scaling"])
                 message += "\n  Weights and DC input are adjusted to compensate.\n"
             print(message)
 
@@ -347,20 +333,13 @@ class Network:
             )
 
             if self.net_dict["V0_type"] == "optimized":
-                V_rel_mean = (
-                    self.net_dict["neuron_params"]["V0_mean"]["optimized"][i] - E_L
-                )
+                V_rel_mean = self.net_dict["neuron_params"]["V0_mean"]["optimized"][i] - E_L
                 V_std = self.net_dict["neuron_params"]["V0_std"]["optimized"][i]
             elif self.net_dict["V0_type"] == "original":
-                V_rel_mean = (
-                    self.net_dict["neuron_params"]["V0_mean"]["original"] - E_L,
-                )
+                V_rel_mean = (self.net_dict["neuron_params"]["V0_mean"]["original"] - E_L,)
                 V_std = self.net_dict["neuron_params"]["V0_std"]["original"]
             else:
-                raise Exception(
-                    "V0_type incorrect. "
-                    + 'Valid options are "optimized" and "original".'
-                )
+                raise Exception("V0_type incorrect. " + 'Valid options are "optimized" and "original".')
 
             # print("V_rel_mean", V_rel_mean)
             # print("V_std", V_std)
@@ -438,9 +417,7 @@ class Network:
         if self.Rank == 0:
             print("Creating thalamic input for external stimulation.")
 
-        self.thalamic_population = ngpu.Create(
-            "parrot_neuron", n=self.stim_dict["num_th_neurons"]
-        )
+        self.thalamic_population = ngpu.Create("parrot_neuron", n=self.stim_dict["num_th_neurons"])
 
         self.poisson_th = ngpu.Create("poisson_generator")
         self.poisson_th.set(
@@ -463,9 +440,7 @@ class Network:
                     }
 
                     w_mean = self.weight_matrix_mean[i][j]
-                    w_std = abs(
-                        self.weight_matrix_mean[i][j] * self.net_dict["weight_rel_std"]
-                    )
+                    w_std = abs(self.weight_matrix_mean[i][j] * self.net_dict["weight_rel_std"])
 
                     if w_mean < 0:
                         w_min = w_mean - 3.0 * w_std
@@ -477,10 +452,7 @@ class Network:
                         i_receptor = 0
 
                     d_mean = self.net_dict["delay_matrix_mean"][i][j]
-                    d_std = (
-                        self.net_dict["delay_matrix_mean"][i][j]
-                        * self.net_dict["delay_rel_std"]
-                    )
+                    d_std = self.net_dict["delay_matrix_mean"][i][j] * self.net_dict["delay_rel_std"]
                     d_min = self.sim_resolution
                     d_max = d_mean + 3.0 * d_std
 

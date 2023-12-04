@@ -73,9 +73,7 @@ net_dict = {
     # necessary for the scaling of the network.
     # The values were optained by running this PyNEST microcircuit with 12 MPI
     # processes and both 'N_scaling' and 'K_scaling' set to 1.
-    "full_mean_rates": np.array(
-        [0.943, 3.026, 4.368, 5.882, 7.733, 8.664, 1.096, 7.851]
-    ),
+    "full_mean_rates": np.array([0.943, 3.026, 4.368, 5.882, 7.733, 8.664, 1.096, 7.851]),
     # connection probabilities (the first index corresponds to the targets
     # and the second to the sources)
     "conn_probs": np.array(

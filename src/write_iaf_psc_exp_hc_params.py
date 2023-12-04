@@ -12,16 +12,9 @@ import numpy as np
 
 
 def propagator_32(tau_syn, tau, C, h):
-    P32_linear = (
-        1.0 / (2.0 * C * tau * tau) * h * h * (tau_syn - tau) * np.exp(-h / tau)
-    )
+    P32_linear = 1.0 / (2.0 * C * tau * tau) * h * h * (tau_syn - tau) * np.exp(-h / tau)
     P32_singular = h / C * np.exp(-h / tau)
-    P32 = (
-        -tau
-        / (C * (1 - tau / tau_syn))
-        * np.exp(-h / tau_syn)
-        * np.expm1(h * (1 / tau_syn - 1 / tau))
-    )
+    P32 = -tau / (C * (1 - tau / tau_syn)) * np.exp(-h / tau_syn) * np.expm1(h * (1 / tau_syn - 1 / tau))
 
     dev_P32 = abs(P32 - P32_singular)
 

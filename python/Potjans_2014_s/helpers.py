@@ -240,9 +240,7 @@ def plot_raster(path, name, begin, end, N_scaling):
     last_node_id = node_ids[-1, -1]
     mod_node_ids = np.abs(node_ids - last_node_id) + 1
 
-    label_pos = [
-        (mod_node_ids[i, 0] + mod_node_ids[i + 1, 1]) / 2.0 for i in np.arange(0, 8, 2)
-    ]
+    label_pos = [(mod_node_ids[i, 0] + mod_node_ids[i + 1, 1]) / 2.0 for i in np.arange(0, 8, 2)]
 
     stp = 1
     if N_scaling > 0.1:
@@ -297,11 +295,7 @@ def firing_rates(path, name, begin, end):
         all_mean_rates.append(np.mean(rate_per_neuron))
         all_std_rates.append(np.std(rate_per_neuron))
     print("Mean rates: {} spikes/s".format(np.around(all_mean_rates, decimals=3)))
-    print(
-        "Standard deviation of rates: {} spikes/s".format(
-            np.around(all_std_rates, decimals=3)
-        )
-    )
+    print("Standard deviation of rates: {} spikes/s".format(np.around(all_std_rates, decimals=3)))
 
 
 def boxplot(path, populations):
@@ -331,9 +325,7 @@ def boxplot(path, populations):
 
     rates_per_neuron_rev = []
     for i in np.arange(len(populations))[::-1]:
-        rates_per_neuron_rev.append(
-            np.loadtxt(os.path.join(path, ("rate" + str(i) + ".dat")))
-        )
+        rates_per_neuron_rev.append(np.loadtxt(os.path.join(path, ("rate" + str(i) + ".dat"))))
 
     plt.figure(figsize=(8, 6))
     bp = plt.boxplot(

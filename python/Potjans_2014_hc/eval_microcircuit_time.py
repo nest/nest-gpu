@@ -76,9 +76,7 @@ time_simulate = time.time()
 
 print(
     "\nTimes:\n"
-    + "  Total time:          {:.3f} s\n".format(  # of Rank {}:\n'.format( .Rank()) +
-        time_simulate - time_start
-    )
+    + "  Total time:          {:.3f} s\n".format(time_simulate - time_start)  # of Rank {}:\n'.format( .Rank()) +
     + "  Time to initialize:  {:.3f} s\n".format(time_network - time_start)
     + "  Time to create:      {:.3f} s\n".format(time_create - time_network)
     + "  Time to connect:     {:.3f} s\n".format(time_connect - time_create)

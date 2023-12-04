@@ -77,12 +77,8 @@ time_simulate = time.time()
 # The computation of spike rates discards the presimulation time to exclude
 # initialization artifacts.
 
-raster_plot_interval = np.array(
-    [stim_dict["th_start"] - 100.0, stim_dict["th_start"] + 100.0]
-)
-firing_rates_interval = np.array(
-    [sim_dict["t_presim"], sim_dict["t_presim"] + sim_dict["t_sim"]]
-)
+raster_plot_interval = np.array([stim_dict["th_start"] - 100.0, stim_dict["th_start"] + 100.0])
+firing_rates_interval = np.array([sim_dict["t_presim"], sim_dict["t_presim"] + sim_dict["t_sim"]])
 net.evaluate(raster_plot_interval, firing_rates_interval)
 time_evaluate = time.time()
 
@@ -92,9 +88,7 @@ time_evaluate = time.time()
 
 print(
     "\nTimes:\n"
-    + "  Total time:          {:.3f} s\n".format(  # of Rank {}:\n'.format( .Rank()) +
-        time_evaluate - time_start
-    )
+    + "  Total time:          {:.3f} s\n".format(time_evaluate - time_start)  # of Rank {}:\n'.format( .Rank()) +
     + "  Time to initialize:  {:.3f} s\n".format(time_network - time_start)
     + "  Time to create:      {:.3f} s\n".format(time_create - time_network)
     + "  Time to connect:     {:.3f} s\n".format(time_connect - time_create)

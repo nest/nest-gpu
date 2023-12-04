@@ -89,9 +89,7 @@ def UserDocExtractor(filenames, basedir="..", replace_ext=".rst", outdir="userdo
     if not os.path.exists(outdir):
         log.info("creating output directory " + outdir)
         os.mkdir(outdir)
-    userdoc_re = re.compile(
-        r"BeginUserDocs:?\s*(?P<tags>([\w -]+(,\s*)?)*)\n+(?P<doc>(.|\n)*)EndUserDocs"
-    )
+    userdoc_re = re.compile(r"BeginUserDocs:?\s*(?P<tags>([\w -]+(,\s*)?)*)\n+(?P<doc>(.|\n)*)EndUserDocs")
     tagdict = dict()  # map tags to lists of documents
     nfiles_total = 0
     with tqdm(unit="files", total=len(filenames)) as progress:
@@ -160,14 +158,7 @@ def rewrite_short_description(doc, filename, short_description="Short descriptio
             secend = nexttitle.start()
         sdesc = doc[secstart:secend].strip().replace("\n", " ")
         fixed_title = "%s – %s" % (name, sdesc)
-        return (
-            doc[: title.start()]
-            + fixed_title
-            + "\n"
-            + "=" * len(fixed_title)
-            + "\n\n"
-            + doc[secend:]
-        )
+        return doc[: title.start()] + fixed_title + "\n" + "=" * len(fixed_title) + "\n\n" + doc[secend:]
     raise ValueError("No section '%s' found in %s!" % (short_description, filename))
 
 
@@ -237,14 +228,7 @@ def rewrite_see_also(doc, filename, tags, see_also="See also"):
         return (
             doc[:secstart]
             + "\n"
-            + ", ".join(
-                [
-                    ":doc:`{taglabel} <index_{tag}>`".format(
-                        tag=tag, taglabel=rightcase(tag)
-                    )
-                    for tag in tags
-                ]
-            )
+            + ", ".join([":doc:`{taglabel} <index_{tag}>`".format(tag=tag, taglabel=rightcase(tag)) for tag in tags])
             + "\n\n"
             + doc[secend:]
         )
@@ -282,9 +266,7 @@ def make_hierarchy(tags, *basetags):
         return tags
 
     # items having all given basetags
-    baseitems = set.intersection(
-        *[set(items) for tag, items in tags.items() if tag in basetags]
-    )
+    baseitems = set.intersection(*[set(items) for tag, items in tags.items() if tag in basetags])
     tree = dict()
     subtags = [t for t in tags.keys() if t not in basetags]
     for subtag in subtags:
@@ -326,9 +308,7 @@ def rst_index(hierarchy, current_tags=[], underlines="=-~", top=True):
         text = t
         if t != t.upper():
             text = t.title()  # title-case any tag that is not an acronym
-        title = ":doc:`{text} <{filename}>`".format(
-            text=text, filename=link or "index_" + t
-        )
+        title = ":doc:`{text} <{filename}>`".format(text=text, filename=link or "index_" + t)
         text = title + "\n" + ul * len(title) + "\n"
         return text
 
@@ -352,9 +332,7 @@ def rst_index(hierarchy, current_tags=[], underlines="=-~", top=True):
             title = tags
         else:
             title = " & ".join(tags)
-        if (
-            title and not len(hierarchy) == 1
-        ):  # not print title if already selected by current_tags
+        if title and not len(hierarchy) == 1:  # not print title if already selected by current_tags
             output.append(mktitle(title, underlines[0]))
         if isinstance(items, dict):
             output.append(rst_index(items, current_tags, underlines[1:], top=False))
@@ -405,18 +383,14 @@ def CreateTagIndices(tags, outdir="userdocs/"):
     """
     taglist = list(tags.keys())
     maxtaglen = max([len(t) for t in tags])
-    for tag, count in sorted(
-        [(tag, len(lst)) for tag, lst in tags.items()], key=lambda x: x[1]
-    ):
+    for tag, count in sorted([(tag, len(lst)) for tag, lst in tags.items()], key=lambda x: x[1]):
         log.info("    %%%ds tag in %%d files" % maxtaglen, tag, count)
     if "" in taglist:
         taglist.remove("")
     indexfiles = list()
     depth = min(4, len(taglist))  # how many levels of indices to create at most
     nindices = sum([comb(len(taglist), L) for L in range(depth - 1)])
-    log.info(
-        "indices down to level %d → %d possible keyword combinations", depth, nindices
-    )
+    log.info("indices down to level %d → %d possible keyword combinations", depth, nindices)
     for current_tags in tqdm(
         chain(*[combinations(taglist, L) for L in range(depth - 1)]),
         unit="idx",
@@ -479,9 +453,7 @@ def getTitles(text):
       elements are the section title re.match objects
     """
     titlechar = r"\+"
-    title_re = re.compile(
-        r"^(?P<title>.+)\n(?P<underline>" + titlechar + r"+)$", re.MULTILINE
-    )
+    title_re = re.compile(r"^(?P<title>.+)\n(?P<underline>" + titlechar + r"+)$", re.MULTILINE)
     titles = []
     # extract all titles
     for match in title_re.finditer(text):

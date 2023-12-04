@@ -55,11 +55,7 @@ neuron = []
 exc_neuron = []
 inh_neuron = []
 for i in range(mpi_np):
-    neuron.append(
-        ngpu.RemoteCreate(
-            i, "aeif_cond_beta_multisynapse", n_neurons, n_receptors
-        ).node_seq
-    )
+    neuron.append(ngpu.RemoteCreate(i, "aeif_cond_beta_multisynapse", n_neurons, n_receptors).node_seq)
     exc_neuron.append(neuron[i][0:NE])  # excitatory neurons
     inh_neuron.append(neuron[i][NE:n_neurons])  # inhibitory neurons
 
@@ -67,9 +63,7 @@ for i in range(mpi_np):
 E_rev = [0.0, -85.0]
 tau_decay = [1.0, 1.0]
 tau_rise = [1.0, 1.0]
-ngpu.SetStatus(
-    neuron[mpi_id], {"E_rev": E_rev, "tau_decay": tau_decay, "tau_rise": tau_rise}
-)
+ngpu.SetStatus(neuron[mpi_id], {"E_rev": E_rev, "tau_decay": tau_decay, "tau_rise": tau_rise})
 
 # Excitatory local connections, defined on all hosts
 # connect excitatory neurons to port 0 of all neurons
@@ -137,12 +131,8 @@ ri_syn_dict = {"weight": Win, "delay": delay, "receptor": 1}
 for i in range(mpi_np):
     for j in range(mpi_np):
         if i != j:
-            ngpu.RemoteConnect(
-                i, exc_neuron[i], j, neuron[j], re_conn_dict, re_syn_dict
-            )
-            ngpu.RemoteConnect(
-                i, inh_neuron[i], j, neuron[j], ri_conn_dict, ri_syn_dict
-            )
+            ngpu.RemoteConnect(i, exc_neuron[i], j, neuron[j], re_conn_dict, re_syn_dict)
+            ngpu.RemoteConnect(i, inh_neuron[i], j, neuron[j], ri_conn_dict, ri_syn_dict)
 
 
 ngpu.Simulate()

@@ -158,10 +158,7 @@ def convert_synapse_weight(tau_m, tau_syn, C_m):
     v_max = (
         np.exp(1.0)
         / (tau_syn * C_m * b)
-        * (
-            (np.exp(-t_rise / tau_m) - np.exp(-t_rise / tau_syn)) / b
-            - t_rise * np.exp(-t_rise / tau_syn)
-        )
+        * ((np.exp(-t_rise / tau_m) - np.exp(-t_rise / tau_syn)) / b - t_rise * np.exp(-t_rise / tau_syn))
     )
     return 1.0 / v_max
 
@@ -255,9 +252,7 @@ def build_network():
     I_pops = []
 
     for i in range(mpi_np):
-        neurons.append(
-            ngpu.RemoteCreate(i, "iaf_psc_alpha", NE + NI, 1, model_params).node_seq
-        )
+        neurons.append(ngpu.RemoteCreate(i, "iaf_psc_alpha", NE + NI, 1, model_params).node_seq)
         E_pops.append(neurons[i][0:NE])
         I_pops.append(neurons[i][NE : NE + NI])
 
@@ -289,9 +284,7 @@ def build_network():
     rank_print("Creating excitatory stimulus generator.")
 
     # Convert synapse weight from mV to pA
-    conversion_factor = convert_synapse_weight(
-        model_params["tau_m"], model_params["tau_syn_ex"], model_params["C_m"]
-    )
+    conversion_factor = convert_synapse_weight(model_params["tau_m"], model_params["tau_syn_ex"], model_params["C_m"])
     JE_pA = conversion_factor * brunel_params["JE"]
 
     nu_thresh = model_params["Theta_rel"] / (
@@ -303,9 +296,7 @@ def build_network():
         brunel_params["poisson_rate"] = rate
         E_stim = ngpu.Create("poisson_generator", 1, 1, {"rate": rate})
     else:
-        inh_amp = dc_input_compensating_poisson(
-            rate, CI, tau_syn, brunel_params["g"] * JE_pA
-        )
+        inh_amp = dc_input_compensating_poisson(rate, CI, tau_syn, brunel_params["g"] * JE_pA)
         ex_amp = dc_input_compensating_poisson(rate, CE, tau_syn, JE_pA)
         brunel_params["DC_amp_I"] = inh_amp
         brunel_params["DC_amp_E"] = ex_amp
@@ -338,9 +329,7 @@ def build_network():
         syn_dict_ex = {"weight": JE_pA, "delay": brunel_params["delay"]}
 
     if mpi_id == 0:
-        rank_print(
-            "Synaptic weights: JE={}; JI={}".format(JE_pA, JE_pA * brunel_params["g"])
-        )
+        rank_print("Synaptic weights: JE={}; JI={}".format(JE_pA, JE_pA * brunel_params["g"]))
 
     if not params["use_dc_input"]:
         rank_print("Connecting stimulus generators.")
@@ -373,25 +362,17 @@ def build_network():
     for i in range(mpi_np):
         for j in range(mpi_np):
             if i != j:
-                rank_print(
-                    "Connecting excitatory {} -> excitatory {} population.".format(i, j)
-                )
+                rank_print("Connecting excitatory {} -> excitatory {} population.".format(i, j))
 
                 my_remoteconnect(i, E_pops[i], j, neurons[j], e_conn_rule, syn_dict_ex)
 
-                rank_print(
-                    "Connecting inhibitory {} -> excitatory {} population.".format(i, j)
-                )
+                rank_print("Connecting inhibitory {} -> excitatory {} population.".format(i, j))
 
                 my_remoteconnect(i, I_pops[i], j, neurons[j], i_conn_rule, syn_dict_in)
 
-                rank_print(
-                    "Connecting excitatory {} -> inhibitory {} population.".format(i, j)
-                )
+                rank_print("Connecting excitatory {} -> inhibitory {} population.".format(i, j))
 
-                rank_print(
-                    "Connecting inhibitory {} -> inhibitory {} population.".format(i, j)
-                )
+                rank_print("Connecting inhibitory {} -> inhibitory {} population.".format(i, j))
 
     # read out time used for building
     time_connect_remote = perf_counter_ns()
@@ -501,9 +482,7 @@ def run_simulation():
             raster_plot(e_data, i_data)
 
     if params["check_conns"]:
-        with open(
-            os.path.join(params["path_name"], f"connections_{mpi_id}.json"), "w"
-        ) as f:
+        with open(os.path.join(params["path_name"], f"connections_{mpi_id}.json"), "w") as f:
             json.dump(conns, f, indent=4)
 
     k_status = ngpu.GetKernelStatus()
@@ -511,18 +490,12 @@ def run_simulation():
 
     rank_print(json.dumps(info_dict, indent=4))
 
-    with open(
-        os.path.join(params["path_name"], params["log_file"] + f"_{mpi_id}.json"), "w"
-    ) as f:
+    with open(os.path.join(params["path_name"], params["log_file"] + f"_{mpi_id}.json"), "w") as f:
         json.dump(info_dict, f, indent=4)
 
 
 def my_connect(source, target, conn_dict, syn_dict):
-    rank_print(
-        "MY id {} LOCAL Source {} {} | Target {} {}".format(
-            mpi_id, source.i0, source.n, target.i0, target.n
-        )
-    )
+    rank_print("MY id {} LOCAL Source {} {} | Target {} {}".format(mpi_id, source.i0, source.n, target.i0, target.n))
     ngpu.Connect(source, target, conn_dict, syn_dict)
 
 
@@ -538,10 +511,7 @@ def my_remoteconnect(source_host, source, target_host, target, conn_dict, syn_di
 def get_conn_dict_array(source, target):
     """Retrieve neural connections as an array of dictionaries."""
     connectionIdArray = ngpu.GetConnections(source, target)
-    res = [
-        {"i_source": i.i_source, "i_group": i.i_group, "i_conn": i.i_conn}
-        for i in connectionIdArray
-    ]
+    res = [{"i_source": i.i_source, "i_group": i.i_group, "i_conn": i.i_conn} for i in connectionIdArray]
     return res
 
 
@@ -577,16 +547,12 @@ def get_spike_times(neurons):
     # Save data
     if len(e_data) > 0:
         e_array = np.array(e_data)
-        e_fn = os.path.join(
-            brunel_params["filestem"], brunel_params["recorder_label"] + "_e_pop.dat"
-        )
+        e_fn = os.path.join(brunel_params["filestem"], brunel_params["recorder_label"] + "_e_pop.dat")
         np.savetxt(e_fn, e_array, fmt="%d\t%.3f", header="sender time_ms", comments="")
 
     if len(i_data) > 0:
         i_array = np.array(i_data)
-        i_fn = os.path.join(
-            brunel_params["filestem"], brunel_params["recorder_label"] + "_i_pop.dat"
-        )
+        i_fn = os.path.join(brunel_params["filestem"], brunel_params["recorder_label"] + "_i_pop.dat")
         np.savetxt(i_fn, i_array, fmt="%d\t%.3f", header="sender time_ms", comments="")
 
     return (

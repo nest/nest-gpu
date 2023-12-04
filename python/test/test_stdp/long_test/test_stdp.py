@@ -112,9 +112,7 @@ for j in range(N):
         if (Dt > 1.0e-6) | (Dt < -1.0e-6):
             w1 = weight_stdp
             for ispike in range(n_spikes):
-                w1 = STDPUpdate(
-                    w1, Dt, tau_plus, tau_minus, Wplus, alpha, mu_plus, mu_minus, Wmax
-                )
+                w1 = STDPUpdate(w1, Dt, tau_plus, tau_minus, Wplus, alpha, mu_plus, mu_minus, Wmax)
                 if ispike < n_spikes - 1:
                     w1 = STDPUpdate(
                         w1,

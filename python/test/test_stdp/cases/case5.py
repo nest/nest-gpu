@@ -92,9 +92,7 @@ print("Simulated weight: ", w[0])
 
 Wplus = Wmax * lambd
 Dt = 2.0
-w1 = STDPUpdate(
-    weight_stdp, Dt, tau_plus, tau_minus, Wplus, alpha, mu_plus, mu_minus, Wmax
-)
+w1 = STDPUpdate(weight_stdp, Dt, tau_plus, tau_minus, Wplus, alpha, mu_plus, mu_minus, Wmax)
 
 print("Expected theoretical weight: ", w1)
 
