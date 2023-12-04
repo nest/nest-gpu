@@ -163,7 +163,7 @@ __device__
 {
   enum { n_port = (NVAR-N_SCAL_VAR)/N_PORT_VAR };
   float I_syn_tot = 0.0;
-  
+
 
   float V = ( refractory_step > 0 ) ? V_reset :  MIN(V_m, V_peak);
   for (int i = 0; i<n_port; i++) {

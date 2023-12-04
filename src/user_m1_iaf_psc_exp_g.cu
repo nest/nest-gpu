@@ -56,7 +56,7 @@ __global__ void user_m1_Update
   if (i_neuron<n_node) {
     float *var = var_arr + n_var*i_neuron;
     float *param = param_arr + n_param*i_neuron;
-    
+
     if ( refractory_step > 0.0 ) {
       // neuron is absolute refractory
       refractory_step -= 1.0;
@@ -66,12 +66,12 @@ __global__ void user_m1_Update
     }
     // exponential decaying PSC
     I_syn *= P11;
-    
+
     if (V_m_rel >= Theta_rel ) { // threshold crossing
       PushSpike(i_node_0 + i_neuron, 1.0);
       V_m_rel = V_reset_rel;
       refractory_step = n_refractory_steps;
-    }    
+    }
   }
 }
 
@@ -114,7 +114,7 @@ int user_m1::Init(int i_node_0, int n_node, int /*n_port*/,
   n_scal_param_ = N_SCAL_PARAM;
   n_group_param_ = N_GROUP_PARAM;
   n_param_ = n_scal_param_;
-  
+
   AllocParamArr();
   AllocVarArr();
   group_param_ = new float[N_GROUP_PARAM];
@@ -144,7 +144,7 @@ int user_m1::Init(int i_node_0, int n_node, int /*n_port*/,
 			 sizeof(float), cudaMemcpyHostToDevice));
   port_weight_arr_step_ = 0;
   port_weight_port_step_ = 0;
-  
+
   // input spike signal is stored in I_syn
   port_input_arr_ = GetVarArr() + GetScalVarIdx("I_syn");
   port_input_arr_step_ = n_var_;
@@ -167,15 +167,15 @@ int user_m1::Update(long long it, double t1)
     (n_node_, i_node_0_, var_arr_, param_arr_, n_var_, n_param_,
       Theta_rel_, V_reset_rel_, n_refractory_steps, P11, P22, P21, P20 );
   //gpuErrchk( cudaDeviceSynchronize() );
-  
+
   return 0;
 }
 
 int user_m1::Free()
 {
-  FreeVarArr();  
+  FreeVarArr();
   FreeParamArr();
   delete[] group_param_;
-  
+
   return 0;
 }

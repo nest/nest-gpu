@@ -62,7 +62,7 @@ struct TargetSyn
   unsigned char syn_group;
   float weight;
 };
-  
+
 struct ConnGroup // connections from the same source node with same delay
 {
   int delay;
@@ -90,7 +90,7 @@ class NetConnection
   float time_resolution_;
 
   NetConnection() {n_conn_ = 0;}
-  
+
   std::vector<std::vector<ConnGroup> > connection_;
 
   int Insert(int d_int, int i_source, TargetSyn tg);
@@ -99,13 +99,13 @@ class NetConnection
 	      unsigned char syn_group, float weight, float delay);
 
   int Print();
-  
+
   int ConnGroupPrint(int i_source);
 
   int MaxDelayNum();
-  
+
   unsigned int StoredNConnections();
-  
+
   unsigned int NConnections();
 
   unsigned int NRevConnections() {return n_rev_conn_;}
@@ -119,7 +119,7 @@ class NetConnection
 
   std::vector<ConnectionStatus> GetConnectionStatus(std::vector<ConnectionId>
 						    &conn_id_vect);
-  
+
 
   template<class T>
     std::vector<ConnectionId> GetConnections(T source, int n_source,
@@ -158,7 +158,7 @@ std::vector<ConnectionId> NetConnection::GetConnections(T source,
       }
     }
   }
-  
+
   return conn_id_vect;
 }
 
@@ -171,7 +171,7 @@ std::vector<ConnectionId> NetConnection::GetConnections(T source,
 {
   std::vector<int> target_vect(i_target, i_target+n_target);
   std::sort(target_vect.begin(), target_vect.end());
-  
+
   std::vector<ConnectionId> conn_id_vect;
   for (int is=0; is<n_source; is++) {
     int i_source = GetINode<T>(source, is);
@@ -195,7 +195,7 @@ std::vector<ConnectionId> NetConnection::GetConnections(T source,
       }
     }
   }
-  
+
   return conn_id_vect;
 }
 

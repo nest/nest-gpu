@@ -184,7 +184,7 @@ __device__ void PushSpike(int i_spike_buffer, float height)
     // last time when spike is sent back to dendrites (e.g. for STDP)
     LastRevSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx;
   }
-  
+
 #ifdef HAVE_MPI
   if (NESTGPUMpiFlag) {
     // if MPI is active spike should eventually be sent to remote connections
@@ -248,7 +248,7 @@ __global__ void SpikeBufferUpdate()
 {
   int i_spike_buffer = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_spike_buffer>=NSpikeBuffer) return;
-  
+
   int i_group=NodeGroupMap[i_spike_buffer];
   int den_delay_idx;
   float *den_delay_arr = NodeGroupArray[i_group].den_delay_arr_;
@@ -334,12 +334,12 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
   h_NSpikeBuffer = n_spike_buffers;
   int max_delay_num = net_connection->MaxDelayNum();
   //printf("mdn: %d\n", max_delay_num);
-  
+
   gpuErrchk(cudaMalloc(&d_LastSpikeTimeIdx, n_spike_buffers*sizeof(long long)));
   gpuErrchk(cudaMalloc(&d_LastSpikeHeight, n_spike_buffers*sizeof(float)));
   gpuErrchk(cudaMalloc(&d_LastRevSpikeTimeIdx, n_spike_buffers
 		       *sizeof(long long)));
-  
+
   unsigned int n_conn = net_connection->StoredNConnections();
   unsigned int *h_conn_target = new unsigned int[n_conn];
   unsigned char *h_conn_syn_group = new unsigned char[n_conn];
@@ -395,7 +395,7 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
 			 n_spike_buffers*max_delay_num
 			 *sizeof(unsigned short*)));
   }
-  
+
   unsigned int i_conn = 0;
   for (unsigned int i_source=0; i_source<n_spike_buffers; i_source++) {
     std::vector<ConnGroup> *conn = &(net_connection->connection_[i_source]);
@@ -428,7 +428,7 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
      i_conn += n_target;
    }
   }
-  
+
   cudaMemcpyAsync(d_conn_target, h_conn_target, n_conn*sizeof(unsigned int),
 	     cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_ConnectionSynGroup, h_conn_syn_group,
@@ -447,14 +447,14 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
       rev_connections[target].push_back(i_conn);
     }
   }
-  
+
   net_connection->SetNRevConnections(n_rev_conn);
 
   if (n_rev_conn>0) {
     unsigned int *h_rev_conn = new unsigned int[n_rev_conn];
     int *h_target_rev_conn_size = new int[n_spike_buffers];
     unsigned int **h_target_rev_conn = new unsigned int*[n_spike_buffers];
-    
+
     gpuErrchk(cudaMalloc(&d_RevConnections, n_rev_conn*sizeof(unsigned int)));
     gpuErrchk(cudaMalloc(&d_TargetRevConnectionSize,
 			 n_spike_buffers*sizeof(int)));
@@ -482,7 +482,7 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
     delete[] h_target_rev_conn_size;
     delete[] h_target_rev_conn;
   }
-  
+
   cudaMemcpyAsync(d_ConnectionGroupSize, h_ConnectionGroupSize,
 	     n_spike_buffers*sizeof(int), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_ConnectionGroupDelay, h_ConnectionGroupDelay,
@@ -493,11 +493,11 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
   cudaMemcpyAsync(d_ConnectionGroupTargetNode, h_ConnectionGroupTargetNode,
 	     n_spike_buffers*max_delay_num*sizeof(unsigned int*),
 	     cudaMemcpyHostToDevice);
-  
+
   cudaMemcpyAsync(d_ConnectionGroupTargetSynGroup, h_ConnectionGroupTargetSynGroup,
 	     n_spike_buffers*max_delay_num*sizeof(unsigned char*),
 	     cudaMemcpyHostToDevice);
-  
+
   cudaMemcpyAsync(d_ConnectionGroupTargetWeight, h_ConnectionGroupTargetWeight,
 	     n_spike_buffers*max_delay_num*sizeof(float*),
 	     cudaMemcpyHostToDevice);
@@ -510,7 +510,7 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
 
   DeviceSpikeBufferInit<<<1,1>>>(n_spike_buffers, max_delay_num,
 			   max_spike_buffer_size,
-			   d_LastSpikeTimeIdx, d_LastSpikeHeight,	 
+			   d_LastSpikeTimeIdx, d_LastSpikeHeight,
 			   d_ConnectionWeight, d_ConnectionSynGroup,
 			   d_ConnectionSpikeTime,
 			   d_ConnectionGroupSize, d_ConnectionGroupDelay,
@@ -526,7 +526,7 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
 			   d_TargetRevConnection, d_LastRevSpikeTimeIdx
 				 );
   gpuErrchk( cudaPeekAtLastError() );
-  
+
   InitLastSpikeTimeIdx
     <<<(n_spike_buffers+1023)/1024, 1024>>>
     (n_spike_buffers, LAST_SPIKE_TIME_GUARD);
@@ -548,7 +548,7 @@ int SpikeBufferInit(NetConnection *net_connection, int max_spike_buffer_size)
   if(h_ConnectionGroupTargetSpikeTime != NULL) {
     delete[] h_ConnectionGroupTargetSpikeTime;
   }
-  
+
   return 0;
 }
 
@@ -558,7 +558,7 @@ __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
 				float *last_spike_height,
 				float *conn_weight,
 				unsigned char *conn_syn_group,
-				unsigned short *conn_spike_time,      
+				unsigned short *conn_spike_time,
 				int *conn_group_size, int *conn_group_delay,
 				int *conn_group_target_size,
 				unsigned int **conn_group_target_node,

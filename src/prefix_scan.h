@@ -43,7 +43,7 @@ class PrefixScan
 
   uint *h_OutputGPU;
   */
-  
+
   int Init();
 
   int Scan(int *d_Output, int *d_Input, int n);

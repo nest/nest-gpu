@@ -10,7 +10,7 @@ unsigned int *curand_int(curandGenerator_t &gen, size_t n)
   unsigned int *dev_data;
   // Allocate n integers on host
   unsigned int *host_data = new unsigned int[n];
-  
+
   // Allocate n integers on device
   CUDA_CALL(cudaMalloc((void **)&dev_data, n*sizeof(unsigned int)));
   // Create pseudo-random number generator
@@ -23,7 +23,7 @@ unsigned int *curand_int(curandGenerator_t &gen, size_t n)
                        cudaMemcpyDeviceToHost));
   // Cleanup
   CUDA_CALL(cudaFree(dev_data));
-  
+
   return host_data;
 }
 
@@ -32,7 +32,7 @@ float *curand_uniform(curandGenerator_t &gen, size_t n)
   float *dev_data;
   // Allocate n floats on host
   float *host_data = new float[n];
-  
+
   // Allocate n floats on device
   CUDA_CALL(cudaMalloc((void **)&dev_data, n*sizeof(float)));
   // Create pseudo-random number generator
@@ -45,7 +45,7 @@ float *curand_uniform(curandGenerator_t &gen, size_t n)
                        cudaMemcpyDeviceToHost));
   // Cleanup
   CUDA_CALL(cudaFree(dev_data));
-  
+
   return host_data;
 }
 
@@ -56,7 +56,7 @@ float *curand_normal(curandGenerator_t &gen, size_t n, float mean,
   float *dev_data;
   // Allocate n floats on host
   float *host_data = new float[n];
-  
+
   // Allocate n1 floats on device
   CUDA_CALL(cudaMalloc((void **)&dev_data, n1*sizeof(float)));
   // Create pseudo-random number generator
@@ -71,7 +71,6 @@ float *curand_normal(curandGenerator_t &gen, size_t n, float mean,
                        cudaMemcpyDeviceToHost));
   // Cleanup
   CUDA_CALL(cudaFree(dev_data));
-  
+
   return host_data;
 }
-

@@ -44,7 +44,7 @@ class BaseNeuron
   int n_node_;
   int n_port_;
   int i_group_;
-  unsigned long long *seed_;  
+  unsigned long long *seed_;
 
   int n_int_var_;
   int n_scal_var_;
@@ -54,7 +54,7 @@ class BaseNeuron
   int n_group_param_;
   int n_var_;
   int n_param_;
-  
+
   double *get_spike_array_;
   float *port_weight_arr_;
   int port_weight_arr_step_;
@@ -62,7 +62,7 @@ class BaseNeuron
   float *port_input_arr_;
   int port_input_arr_step_;
   int port_input_port_step_;
-  std::vector<int*> int_var_pt_; 
+  std::vector<int*> int_var_pt_;
   float *var_arr_;
   float *param_arr_;
   float *group_param_;
@@ -74,7 +74,7 @@ class BaseNeuron
   const std::string *group_param_name_;
   std::vector<std::string> array_var_name_;
   std::vector<std::string> array_param_name_;
-  
+
   DirectConnection *d_dir_conn_array_;
   uint64_t n_dir_conn_; // = 0;
   bool has_dir_conn_; // = false;
@@ -97,22 +97,22 @@ class BaseNeuron
   std::vector<float> port_input_vect_;
 
   std::vector<float> ext_neuron_input_spikes_;
-  
+
  public:
   virtual ~BaseNeuron() {}
-  
+
   virtual int Init(int i_node_0, int n_neuron, int n_port,
 		   int i_neuron_group, unsigned long long *seed);
 
 
   virtual int AllocVarArr();
-  
+
   virtual int AllocParamArr();
 
   virtual int FreeVarArr();
-  
+
   virtual int FreeParamArr();
-  
+
   int GetNodeType() {
     return node_type_;
   }
@@ -121,59 +121,59 @@ class BaseNeuron
   {
     return ext_neuron_flag_;
   }
-  
+
   virtual int Calibrate(double time_min, float time_resolution) {return 0;}
-		
+
   virtual int Update(long long it, double t1) {return 0;}
-  
+
   virtual int GetX(int i_neuron, int n_neuron, double *x) {return 0;}
-  
+
   virtual int GetY(int i_var, int i_neuron, int n_neuron, float *y) {return 0;}
-  
-  virtual int SetScalParam(int i_neuron, int n_neuron, std::string param_name, 
+
+  virtual int SetScalParam(int i_neuron, int n_neuron, std::string param_name,
 			   float val);
 
   virtual int SetScalParam(int *i_neuron, int n_neuron, std::string param_name,
 			   float val);
-  
+
   virtual int SetPortParam(int i_neuron, int n_neuron, std::string param_name,
 			   float *param, int vect_size);
-  
+
   virtual int SetPortParam(int *i_neuron, int n_neuron,
 			   std::string param_name, float *param,
 			   int vect_size);
 
   virtual int SetArrayParam(int i_neuron, int n_neuron, std::string param_name,
 			   float *array, int array_size);
-  
+
   virtual int SetArrayParam(int *i_neuron, int n_neuron,
 			   std::string param_name, float *array,
 			   int array_size);
 
   virtual int SetGroupParam(std::string param_name, float val);
 
-  virtual int SetIntVar(int i_neuron, int n_neuron, std::string var_name, 
+  virtual int SetIntVar(int i_neuron, int n_neuron, std::string var_name,
 			int val);
 
   virtual int SetIntVar(int *i_neuron, int n_neuron, std::string var_name,
 			int val);
 
-  virtual int SetScalVar(int i_neuron, int n_neuron, std::string var_name, 
+  virtual int SetScalVar(int i_neuron, int n_neuron, std::string var_name,
 			   float val);
 
   virtual int SetScalVar(int *i_neuron, int n_neuron, std::string var_name,
 			   float val);
-  
+
   virtual int SetPortVar(int i_neuron, int n_neuron, std::string var_name,
 			   float *var, int vect_size);
-  
+
   virtual int SetPortVar(int *i_neuron, int n_neuron,
 			   std::string var_name, float *var,
 			   int vect_size);
 
   virtual int SetArrayVar(int i_neuron, int n_neuron, std::string var_name,
 			   float *array, int array_size);
-  
+
   virtual int SetArrayVar(int *i_neuron, int n_neuron,
 			   std::string var_name, float *array,
 			   int array_size);
@@ -215,7 +215,7 @@ class BaseNeuron
   virtual float *GetArrayVar(int i_neuron, std::string var_name);
 
   virtual int GetIntVarIdx(std::string var_name);
-  
+
   virtual int GetScalVarIdx(std::string var_name);
 
   virtual int GetPortVarIdx(std::string var_name);
@@ -229,7 +229,7 @@ class BaseNeuron
   virtual float *GetParamArr();
 
   virtual int GetArrayVarSize(int i_neuron, std::string var_name);
-  
+
   virtual int GetArrayParamSize(int i_neuron, std::string param_name);
 
   virtual int GetVarSize(std::string var_name);
@@ -243,7 +243,7 @@ class BaseNeuron
   virtual bool IsPortVar(std::string var_name);
 
   virtual bool IsArrayVar(std::string var_name);
-  
+
   virtual bool IsScalParam(std::string param_name);
 
   virtual bool IsPortParam(std::string param_name);
@@ -257,10 +257,10 @@ class BaseNeuron
   int CheckPortIdx(int port);
 
   virtual int *GetIntVarPt(int i_neuron, std::string var_name);
-  
+
   virtual float *GetVarPt(int i_neuron, std::string var_name, int port=0);
 
-  virtual float *GetParamPt(int i_neuron, std::string param_name, 
+  virtual float *GetParamPt(int i_neuron, std::string param_name,
 			    int port=0);
   virtual float GetSpikeActivity(int i_neuron);
 
@@ -269,33 +269,33 @@ class BaseNeuron
   virtual std::vector<std::string> GetIntVarNames();
 
   virtual int GetNIntVar();
-  
+
   virtual std::vector<std::string> GetScalVarNames();
-  
+
   virtual int GetNScalVar();
 
   virtual std::vector<std::string> GetPortVarNames();
-  
+
   virtual int GetNPortVar();
 
   virtual std::vector<std::string> GetScalParamNames();
-  
+
   virtual int GetNScalParam();
 
   virtual std::vector<std::string> GetPortParamNames();
-  
+
   virtual int GetNPortParam();
 
   virtual std::vector<std::string> GetArrayVarNames();
-  
+
   virtual int GetNArrayVar();
 
   virtual std::vector<std::string> GetArrayParamNames();
-  
+
   virtual int GetNArrayParam();
 
   virtual std::vector<std::string> GetGroupParamNames();
-  
+
   virtual int GetNGroupParam();
 
   virtual int ActivateSpikeCount();
@@ -305,7 +305,7 @@ class BaseNeuron
   virtual int GetNRecSpikeTimes(int i_neuron);
 
   virtual int BufferRecSpikeTimes();
-  
+
   virtual int GetRecSpikeTimes(int **n_spike_times_pt, float ***spike_times_pt);
 
   virtual int SetRecSpikeTimesStep(int rec_spike_times_step);

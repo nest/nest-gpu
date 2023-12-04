@@ -177,7 +177,7 @@ int BaseNeuron::Init(int i_node_0, int n_node, int n_port,
   den_delay_arr_ = NULL; // array of dendritic backward delays
 
   return 0;
-}			    
+}
 
 // allocate state-variable array
 int BaseNeuron::AllocVarArr()
@@ -230,7 +230,7 @@ int BaseNeuron::SetScalParam(int i_neuron, int n_neuron,
     (param_pt, n_neuron, n_param_, val);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-  
+
   return 0;
 }
 
@@ -255,7 +255,7 @@ int BaseNeuron::SetScalParam(int *i_neuron, int n_neuron,
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
   gpuErrchk(cudaFree(d_i_neuron));
-  
+
   return 0;
 }
 
@@ -277,7 +277,7 @@ int BaseNeuron::SetPortParam(int i_neuron, int n_neuron,
 			 "to the number of ports.");
   }
   float *param_pt;
-    
+
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
     param_pt = GetParamPt(i_neuron, param_name, i_vect);
     BaseNeuronSetFloatArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -375,7 +375,7 @@ int BaseNeuron::SetIntVar(int i_neuron, int n_neuron,
     (var_pt, n_neuron, 1, val);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-  
+
   return 0;
 }
 
@@ -400,7 +400,7 @@ int BaseNeuron::SetIntVar(int *i_neuron, int n_neuron,
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
   gpuErrchk(cudaFree(d_i_neuron));
-  
+
   return 0;
 }
 
@@ -421,7 +421,7 @@ int BaseNeuron::SetScalVar(int i_neuron, int n_neuron,
     (var_pt, n_neuron, n_var_, val);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-  
+
   return 0;
 }
 
@@ -446,7 +446,7 @@ int BaseNeuron::SetScalVar(int *i_neuron, int n_neuron,
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
   gpuErrchk(cudaFree(d_i_neuron));
-  
+
   return 0;
 }
 
@@ -468,7 +468,7 @@ int BaseNeuron::SetPortVar(int i_neuron, int n_neuron,
 			 "to the number of ports.");
   }
   float *var_pt;
-    
+
   for (int i_vect=0; i_vect<vect_size; i_vect++) {
     var_pt = GetVarPt(i_neuron, var_name, i_vect);
     BaseNeuronSetFloatArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -556,11 +556,11 @@ float *BaseNeuron::GetScalParam(int i_neuron, int n_neuron,
     (param_pt, d_param_arr, n_neuron, n_param_, 1);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-  
+
   gpuErrchk(cudaMemcpy(h_param_arr, d_param_arr, n_neuron*sizeof(float),
 		       cudaMemcpyDeviceToHost));
   gpuErrchk(cudaFree(d_param_arr));
-  
+
   return h_param_arr;
 }
 
@@ -583,7 +583,7 @@ float *BaseNeuron::GetScalParam(int *i_neuron, int n_neuron,
   float *d_param_arr;
   gpuErrchk(cudaMalloc(&d_param_arr, n_neuron*sizeof(float)));
   float *h_param_arr = (float*)malloc(n_neuron*sizeof(float));
-  
+
   BaseNeuronGetFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
     (param_pt, d_param_arr, d_i_neuron, n_neuron, n_param_, 1);
   gpuErrchk( cudaPeekAtLastError() );
@@ -613,7 +613,7 @@ float *BaseNeuron::GetPortParam(int i_neuron, int n_neuron,
   float *d_param_arr;
   gpuErrchk(cudaMalloc(&d_param_arr, n_neuron*n_port_*sizeof(float)));
   float *h_param_arr = (float*)malloc(n_neuron*n_port_*sizeof(float));
-  
+
   for (int port=0; port<n_port_; port++) {
     param_pt = GetParamPt(i_neuron, param_name, port);
     BaseNeuronGetFloatArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -625,7 +625,7 @@ float *BaseNeuron::GetPortParam(int i_neuron, int n_neuron,
   gpuErrchk(cudaMemcpy(h_param_arr, d_param_arr, n_neuron*n_port_
 		       *sizeof(float), cudaMemcpyDeviceToHost));
   gpuErrchk(cudaFree(d_param_arr));
-  
+
   return h_param_arr;
 }
 
@@ -647,7 +647,7 @@ float *BaseNeuron::GetPortParam(int *i_neuron, int n_neuron,
   float *d_param_arr;
   gpuErrchk(cudaMalloc(&d_param_arr, n_neuron*n_port_*sizeof(float)));
   float *h_param_arr = (float*)malloc(n_neuron*n_port_*sizeof(float));
-    
+
   for (int port=0; port<n_port_; port++) {
     float *param_pt = GetParamPt(0, param_name, port);
     BaseNeuronGetFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -657,11 +657,11 @@ float *BaseNeuron::GetPortParam(int *i_neuron, int n_neuron,
     gpuErrchk( cudaDeviceSynchronize() );
   }
   gpuErrchk(cudaFree(d_i_neuron));
-  
+
   gpuErrchk(cudaMemcpy(h_param_arr, d_param_arr, n_neuron*n_port_
 		       *sizeof(float), cudaMemcpyDeviceToHost));
   gpuErrchk(cudaFree(d_param_arr));
-  
+
   return h_param_arr;
 }
 
@@ -682,12 +682,12 @@ float BaseNeuron::GetGroupParam(std::string param_name)
       return group_param_[i_param];
     }
   }
-    
+
   throw ngpu_exception(std::string("Unrecognized group parameter ")
 		       + param_name);
 }
 
- 
+
 // get integer variable var_name of neurons
 // i_neuron, ..., i_neuron + n_neuron -1
 int *BaseNeuron::GetIntVar(int i_neuron, int n_neuron,
@@ -709,11 +709,11 @@ int *BaseNeuron::GetIntVar(int i_neuron, int n_neuron,
     (var_pt, d_var_arr, n_neuron, 1, 1);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-  
+
   gpuErrchk(cudaMemcpy(h_var_arr, d_var_arr, n_neuron*sizeof(int),
 		       cudaMemcpyDeviceToHost));
   gpuErrchk(cudaFree(d_var_arr));
-  
+
   return h_var_arr;
 }
 
@@ -736,7 +736,7 @@ int *BaseNeuron::GetIntVar(int *i_neuron, int n_neuron,
   int *d_var_arr;
   gpuErrchk(cudaMalloc(&d_var_arr, n_neuron*sizeof(int)));
   int *h_var_arr = (int*)malloc(n_neuron*sizeof(int));
-  
+
   BaseNeuronGetIntPtArray<<<(n_neuron+1023)/1024, 1024>>>
     (var_pt, d_var_arr, d_i_neuron, n_neuron, 1, 1);
   gpuErrchk( cudaPeekAtLastError() );
@@ -746,7 +746,7 @@ int *BaseNeuron::GetIntVar(int *i_neuron, int n_neuron,
   gpuErrchk(cudaMemcpy(h_var_arr, d_var_arr, n_neuron*sizeof(int),
 		       cudaMemcpyDeviceToHost));
   gpuErrchk(cudaFree(d_var_arr));
-  
+
   return h_var_arr;
 }
 
@@ -771,11 +771,11 @@ float *BaseNeuron::GetScalVar(int i_neuron, int n_neuron,
     (var_pt, d_var_arr, n_neuron, n_var_, 1);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-  
+
   gpuErrchk(cudaMemcpy(h_var_arr, d_var_arr, n_neuron*sizeof(float),
 		       cudaMemcpyDeviceToHost));
   gpuErrchk(cudaFree(d_var_arr));
-  
+
   return h_var_arr;
 }
 
@@ -798,7 +798,7 @@ float *BaseNeuron::GetScalVar(int *i_neuron, int n_neuron,
   float *d_var_arr;
   gpuErrchk(cudaMalloc(&d_var_arr, n_neuron*sizeof(float)));
   float *h_var_arr = (float*)malloc(n_neuron*sizeof(float));
-  
+
   BaseNeuronGetFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
     (var_pt, d_var_arr, d_i_neuron, n_neuron, n_var_, 1);
   gpuErrchk( cudaPeekAtLastError() );
@@ -828,7 +828,7 @@ float *BaseNeuron::GetPortVar(int i_neuron, int n_neuron,
   float *d_var_arr;
   gpuErrchk(cudaMalloc(&d_var_arr, n_neuron*n_port_*sizeof(float)));
   float *h_var_arr = (float*)malloc(n_neuron*n_port_*sizeof(float));
-  
+
   for (int port=0; port<n_port_; port++) {
     var_pt = GetVarPt(i_neuron, var_name, port);
     BaseNeuronGetFloatArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -840,7 +840,7 @@ float *BaseNeuron::GetPortVar(int i_neuron, int n_neuron,
   gpuErrchk(cudaMemcpy(h_var_arr, d_var_arr, n_neuron*n_port_
 		       *sizeof(float), cudaMemcpyDeviceToHost));
   gpuErrchk(cudaFree(d_var_arr));
-  
+
   return h_var_arr;
 }
 
@@ -862,7 +862,7 @@ float *BaseNeuron::GetPortVar(int *i_neuron, int n_neuron,
   float *d_var_arr;
   gpuErrchk(cudaMalloc(&d_var_arr, n_neuron*n_port_*sizeof(float)));
   float *h_var_arr = (float*)malloc(n_neuron*n_port_*sizeof(float));
-    
+
   for (int port=0; port<n_port_; port++) {
     float *var_pt = GetVarPt(0, var_name, port);
     BaseNeuronGetFloatPtArray<<<(n_neuron+1023)/1024, 1024>>>
@@ -871,11 +871,11 @@ float *BaseNeuron::GetPortVar(int *i_neuron, int n_neuron,
     gpuErrchk( cudaDeviceSynchronize() );
   }
   gpuErrchk(cudaFree(d_i_neuron));
-  
+
   gpuErrchk(cudaMemcpy(h_var_arr, d_var_arr, n_neuron*n_port_
 		       *sizeof(float), cudaMemcpyDeviceToHost));
   gpuErrchk(cudaFree(d_var_arr));
-  
+
   return h_var_arr;
 }
 
@@ -897,7 +897,7 @@ int BaseNeuron::GetIntVarIdx(std::string var_name)
     throw ngpu_exception(std::string("Unrecognized integer variable ")
 			 + var_name);
   }
-  
+
   return i_var;
 }
 
@@ -912,7 +912,7 @@ int BaseNeuron::GetScalVarIdx(std::string var_name)
     throw ngpu_exception(std::string("Unrecognized scalar variable ")
 			 + var_name);
   }
-  
+
   return i_var;
 }
 
@@ -927,7 +927,7 @@ int BaseNeuron::GetPortVarIdx(std::string var_name)
     throw ngpu_exception(std::string("Unrecognized port variable ")
 				     + var_name);
   }
-  
+
   return i_var;
 }
 
@@ -942,13 +942,13 @@ int BaseNeuron::GetScalParamIdx(std::string param_name)
     throw ngpu_exception(std::string("Unrecognized parameter ")
 			 + param_name);
   }
-  
+
   return i_param;
 }
 
 // get index of receptor-port parameter param_name
 int BaseNeuron::GetPortParamIdx(std::string param_name)
-{  
+{
   int i_param;
   for (i_param=0; i_param<n_port_param_; i_param++) {
     if (param_name == port_param_name_[i_param]) break;
@@ -957,7 +957,7 @@ int BaseNeuron::GetPortParamIdx(std::string param_name)
     throw ngpu_exception(std::string("Unrecognized port parameter ")
 			 + param_name);
   }
-  
+
   return i_param;
 }
 
@@ -981,7 +981,7 @@ int BaseNeuron::GetArrayVarSize(int i_neuron, std::string var_name)
 		       + var_name);
 
 }
-  
+
 // return array size for array parameter param_name
 // Must be defined in derived class
 int BaseNeuron::GetArrayParamSize(int i_neuron, std::string param_name)
@@ -1083,7 +1083,7 @@ bool BaseNeuron::IsScalParam(std::string param_name)
 
 // check if param_name is a receptor-port parameter
 bool BaseNeuron::IsPortParam(std::string param_name)
-{  
+{
   int i_param;
   for (i_param=0; i_param<n_port_param_; i_param++) {
     if (param_name == port_param_name_[i_param]) return true;
@@ -1139,10 +1139,10 @@ int BaseNeuron::CheckPortIdx(int port)
 int *BaseNeuron::GetIntVarPt(int i_neuron, std::string var_name)
 {
   CheckNeuronIdx(i_neuron);
-    
+
   if (IsIntVar(var_name)) {
     int i_var =  GetIntVarIdx(var_name);
-    return int_var_pt_[i_var] + i_neuron; 
+    return int_var_pt_[i_var] + i_neuron;
   }
   else {
     throw ngpu_exception(std::string("Unrecognized integer variable ")
@@ -1159,7 +1159,7 @@ float *BaseNeuron::GetVarPt(int i_neuron, std::string var_name,
   if (port!=0) {
     CheckPortIdx(port);
   }
-    
+
   if (IsScalVar(var_name)) {
     int i_var =  GetScalVarIdx(var_name);
     return GetVarArr() + i_neuron*n_var_ + i_var;
@@ -1199,7 +1199,7 @@ float *BaseNeuron::GetParamPt(int i_neuron, std::string param_name,
   }
 }
 
-// return spike multiplicity (spike_height) of neuron i_neuron 
+// return spike multiplicity (spike_height) of neuron i_neuron
 // if neuron emitted a spike in the current time step
 // otherwise return 0
 float BaseNeuron::GetSpikeActivity(int i_neuron)
@@ -1212,7 +1212,7 @@ float BaseNeuron::GetSpikeActivity(int i_neuron)
   if (Ns==0) {
     return 0.0;
   }
-  
+
   int is0;
   gpuErrchk(cudaMemcpy(&is0, d_SpikeBufferIdx0 + i_spike_buffer,
 		       sizeof(int), cudaMemcpyDeviceToHost));
@@ -1245,7 +1245,7 @@ std::vector<std::string> BaseNeuron::GetScalVarNames()
   for (int i=0; i<n_scal_var_; i++) {
     var_name_vect.push_back(scal_var_name_[i]);
   }
-  
+
   return var_name_vect;
 }
 
@@ -1268,11 +1268,11 @@ std::vector<std::string> BaseNeuron::GetPortVarNames()
   for (int i=0; i<n_port_var_; i++) {
     var_name_vect.push_back(port_var_name_[i]);
   }
-  
+
   return var_name_vect;
 }
 
-// get number of receptor-port variables 
+// get number of receptor-port variables
 int BaseNeuron::GetNPortVar()
 {
   return n_port_var_;
@@ -1285,7 +1285,7 @@ std::vector<std::string> BaseNeuron::GetScalParamNames()
   for (int i=0; i<n_scal_param_; i++) {
     param_name_vect.push_back(scal_param_name_[i]);
   }
-  
+
   return param_name_vect;
 }
 
@@ -1302,7 +1302,7 @@ std::vector<std::string> BaseNeuron::GetPortParamNames()
   for (int i=0; i<n_port_param_; i++) {
     param_name_vect.push_back(port_param_name_[i]);
   }
-  
+
   return param_name_vect;
 }
 
@@ -1319,7 +1319,7 @@ std::vector<std::string> BaseNeuron::GetGroupParamNames()
   for (int i=0; i<n_group_param_; i++) {
     param_name_vect.push_back(group_param_name_[i]);
   }
-  
+
   return param_name_vect;
 }
 
@@ -1336,7 +1336,7 @@ std::vector<std::string> BaseNeuron::GetArrayVarNames()
   for (int i=0; i<GetNArrayVar(); i++) {
     var_name_vect.push_back(array_var_name_[i]);
   }
-  
+
   return var_name_vect;
 }
 
@@ -1353,7 +1353,7 @@ std::vector<std::string> BaseNeuron::GetArrayParamNames()
   for (int i=0; i<GetNArrayParam(); i++) {
     param_name_vect.push_back(array_param_name_[i]);
   }
-  
+
   return param_name_vect;
 }
 
@@ -1368,7 +1368,7 @@ int BaseNeuron::ActivateSpikeCount()
 {
   const std::string s = "spike_count";
   if (std::find(int_var_name_.begin(), int_var_name_.end(), s)
-      == int_var_name_.end()) { // add it if not already present 
+      == int_var_name_.end()) { // add it if not already present
     int_var_name_.push_back(s);
 
     gpuErrchk(cudaMalloc(&spike_count_, n_node_*sizeof(int)));
@@ -1392,7 +1392,7 @@ int BaseNeuron::ActivateRecSpikeTimes(int max_n_rec_spike_times)
   }
   const std::string s = "n_rec_spike_times";
   if (std::find(int_var_name_.begin(), int_var_name_.end(), s)
-      == int_var_name_.end()) { // add it if not already present 
+      == int_var_name_.end()) { // add it if not already present
     int_var_name_.push_back(s);
 
     gpuErrchk(cudaMalloc(&n_rec_spike_times_, n_node_*sizeof(int)));
@@ -1400,7 +1400,7 @@ int BaseNeuron::ActivateRecSpikeTimes(int max_n_rec_spike_times)
 			 (n_node_+1)*sizeof(int)));
     gpuErrchk(cudaMemset(n_rec_spike_times_, 0, n_node_*sizeof(int)));
     int_var_pt_.push_back(n_rec_spike_times_);
-    
+
     max_n_rec_spike_times_ = max_n_rec_spike_times;
     gpuErrchk(cudaMalloc(&rec_spike_times_, n_node_*max_n_rec_spike_times
 			 *sizeof(int)));
@@ -1433,7 +1433,7 @@ int BaseNeuron::GetNRecSpikeTimes(int i_neuron)
     throw ngpu_exception("Spike times recording was not activated");
   }
   int n_spikes;
-  
+
   gpuErrchk(cudaMemcpy(&n_spikes, &n_rec_spike_times_[i_neuron], sizeof(int),
 		       cudaMemcpyDeviceToHost));
   return n_spikes;
@@ -1458,12 +1458,12 @@ int BaseNeuron::SetNeuronGroupParam(std::string param_name, float val)
 
 // kernel for packing spike times of neurons
 // i_neuron, ..., i_neuron + n_neuron -1
-// in contiguous locations in GPU memory 
+// in contiguous locations in GPU memory
 __global__ void PackSpikeTimesKernel(int n_neuron, int *n_rec_spike_times_cumul,
 		     float *rec_spike_times, float *rec_spike_times_pack,
 		     int n_spike_tot, int max_n_rec_spike_times)
 {
-  // array_idx: index on one-dimensional packed spike array 
+  // array_idx: index on one-dimensional packed spike array
   int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
   if (array_idx<n_spike_tot) {
     // a locate of array_idx on the cumulative sum of the number of spikes
@@ -1486,7 +1486,7 @@ __global__ void PackSpikeTimesKernel(int n_neuron, int *n_rec_spike_times_cumul,
 // extract recorded spike times
 // and put them in a buffer
 int BaseNeuron::BufferRecSpikeTimes()
-{  
+{
   if(max_n_rec_spike_times_<=0) {
     throw ngpu_exception("Spike times recording was not activated");
   }
@@ -1520,7 +1520,7 @@ int BaseNeuron::BufferRecSpikeTimes()
   else {
     delete[] h_n_rec_spike_times_cumul;
   }
-  
+
   return 0;
 }
 
@@ -1554,12 +1554,12 @@ int BaseNeuron::GetRecSpikeTimes(int **n_spike_times_pt,
       float *spike_times_pack = spike_times_buffer_[i_buf];
       int *n_spike_times_cumul = n_spike_times_cumul_buffer_[i_buf];
       // array_idx: index of the first spike of node i_node
-      // on one-dimensional packed spike array      
+      // on one-dimensional packed spike array
       int array_idx = n_spike_times_cumul[i_node];
       int n_spike = n_spike_times_cumul[i_node+1] - array_idx;
-     
+
       float *pt = spike_times_pack + array_idx;
-      // insert the spikes of node i_node in its spike vector 
+      // insert the spikes of node i_node in its spike vector
       spike_times_vect_[i_node].insert(spike_times_vect_[i_node].begin()+k,
 				       pt, pt+n_spike);
       k += n_spike;
@@ -1570,11 +1570,10 @@ int BaseNeuron::GetRecSpikeTimes(int **n_spike_times_pt,
     spike_times_pt_vect_[i_node] = spike_times_vect_[i_node].data();
   }
   spike_times_buffer_.clear();
-  n_spike_times_cumul_buffer_.clear();                                  
- 
+  n_spike_times_cumul_buffer_.clear();
+
   *n_spike_times_pt = n_spike_times_vect_.data();
   *spike_times_pt = spike_times_pt_vect_.data();
-  
+
   return 0;
 }
-  

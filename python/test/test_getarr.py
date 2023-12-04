@@ -1,4 +1,5 @@
 import sys
+
 import nestgpu as ngpu
 
 spike = ngpu.Create("spike_generator", 4)
@@ -15,14 +16,11 @@ spike_height2 = [0.1, 0.3, 0.2]
 
 
 # set spike times and heights
-ngpu.SetStatus(spike0, {"spike_times": spike_time0,
-                        "spike_heights":spike_height0})
+ngpu.SetStatus(spike0, {"spike_times": spike_time0, "spike_heights": spike_height0})
 
-ngpu.SetStatus(spike1, {"spike_times": spike_time1,
-                        "spike_heights":spike_height1})
+ngpu.SetStatus(spike1, {"spike_times": spike_time1, "spike_heights": spike_height1})
 
-ngpu.SetStatus(spike2, {"spike_times": spike_time2,
-                        "spike_heights":spike_height2})
+ngpu.SetStatus(spike2, {"spike_times": spike_time2, "spike_heights": spike_height2})
 
 print(ngpu.GetStatus(spike0, "spike_times"))
 print(ngpu.GetStatus(spike0, "spike_heights"))
@@ -44,7 +42,3 @@ print(ngpu.GetStatus(spike1))
 print()
 print()
 print(ngpu.GetStatus(neuron_list))
-
-
-      
-      

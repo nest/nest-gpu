@@ -132,7 +132,7 @@ __global__ void SendExternalSpike()
     int i_source = ExternalSpikeSourceNode[i_spike];
     float height = ExternalSpikeHeight[i_spike];
     int Nth = NExternalNodeTargetHost[i_source];
-      
+
     for (int ith=0; ith<Nth; ith++) {
       int target_host_id = ExternalNodeTargetHostId[i_source][ith];
       int remote_node_id = ExternalNodeId[i_source][ith];
@@ -166,7 +166,7 @@ int ConnectMpi::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_hos
   int *h_NExternalNodeTargetHost = new int[n_node];
   int **h_ExternalNodeTargetHostId = new int*[n_node];
   int **h_ExternalNodeId = new int*[n_node];
-  
+
   //h_ExternalSpikeNodeId = new int[max_spike_per_host];
   h_ExternalTargetSpikeNum = new int [n_hosts];
   h_ExternalTargetSpikeCumul = new int[n_hosts+1];
@@ -177,7 +177,7 @@ int ConnectMpi::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_hos
   h_ExternalSpikeHeight = new float[max_spike_per_host];
 
   recv_mpi_request = new MPI_Request[n_hosts];
- 
+
   gpuErrchk(cudaMalloc(&d_ExternalSpikeNum, sizeof(int)));
   gpuErrchk(cudaMalloc(&d_ExternalSpikeSourceNode,
 		       max_spike_per_host*sizeof(int)));
@@ -203,7 +203,7 @@ int ConnectMpi::ExternalSpikeInit(int n_node, int n_hosts, int max_spike_per_hos
   gpuErrchk(cudaMalloc(&d_NExternalNodeTargetHost, n_node*sizeof(int)));
   gpuErrchk(cudaMalloc(&d_ExternalNodeTargetHostId, n_node*sizeof(int*)));
   gpuErrchk(cudaMalloc(&d_ExternalNodeId, n_node*sizeof(int*)));
- 
+
   for (int i_source=0; i_source<n_node; i_source++) {
     std::vector< ExternalConnectionNode > *conn = &extern_connection_[i_source];
     int Nth = conn->size();
@@ -267,7 +267,7 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
 					int **ext_node_target_host_id,
 					int **ext_node_id
 					)
-  
+
 {
   NExternalTargetHost = n_hosts;
   MaxSpikePerHost =  max_spike_per_host;
@@ -283,7 +283,7 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
   *ExternalSpikeNum = 0;
   for (int ith=0; ith<NExternalTargetHost; ith++) {
     ExternalTargetSpikeNum[ith] = 0;
-  }  
+  }
 }
 
 
@@ -320,7 +320,7 @@ int ConnectMpi::SendSpikeToRemote(int n_hosts, int max_spike_per_host)
     int array_idx = h_ExternalTargetSpikeCumul[ih];
     int n_spikes = h_ExternalTargetSpikeCumul[ih+1] - array_idx;
     //printf("MPI_Send (src,tgt,nspike): %d %d %d\n", mpi_id, ih, n_spike);
-    
+
     // nonblocking sent of spike packet to MPI proc ih
     MPI_Isend(&h_ExternalTargetSpikeNodeId[array_idx],
 	      n_spikes, MPI_INT, ih, tag, MPI_COMM_WORLD, &request);
@@ -331,13 +331,13 @@ int ConnectMpi::SendSpikeToRemote(int n_hosts, int max_spike_per_host)
     //	   h_ExternalTargetSpikeNodeId[array_idx]);
   }
   SendSpikeToRemote_MPI_time_ += (getRealTime() - time_mark);
-  
+
   return 0;
 }
 
 // Receive spikes from remote MPI processes
 int ConnectMpi::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
-				    
+
 {
   int tag = 1;
 
@@ -367,7 +367,7 @@ int ConnectMpi::RecvSpikeFromRemote(int n_hosts, int max_spike_per_host)
   }
 
   RecvSpikeFromRemote_MPI_time_ += (getRealTime() - time_mark);
-  
+
   return 0;
 }
 
@@ -399,7 +399,7 @@ int ConnectMpi::CopySpikeFromRemote(int n_hosts, int max_spike_per_host,
 			 n_spike_tot*sizeof(int), cudaMemcpyHostToDevice));
     RecvSpikeFromRemote_CUDAcp_time_ += (getRealTime() - time_mark);
     // convert node group indexes to spike buffer indexes
-    // by adding the index of the first node of the node group  
+    // by adding the index of the first node of the node group
     //AddOffset<<<(n_spike_tot+1023)/1024, 1024>>>
     //  (n_spike_tot, d_ExternalSourceSpikeNodeId, i_remote_node_0);
     //gpuErrchk( cudaPeekAtLastError() );
@@ -410,7 +410,7 @@ int ConnectMpi::CopySpikeFromRemote(int n_hosts, int max_spike_per_host,
     gpuErrchk( cudaPeekAtLastError() );
     //cudaDeviceSynchronize();
   }
-  
+
   return n_spike_tot;
 }
 
@@ -469,7 +469,7 @@ int ConnectMpi::JoinSpikes(int n_hosts, int max_spike_per_host)
   }
 
   JoinSpike_time_ += (getRealTime() - time_mark);
-  
+
   return n_spike_tot;
 }
 

@@ -36,23 +36,23 @@ int main(int argc, char *argv[])
 {
   NESTGPU ngpu;
   cout << "Building ...\n";
-  
+
   srand(12345);
   int n_neurons = 3;
-  
+
   // create n_neurons neurons with 2 receptor ports
   NodeSeq neuron = ngpu.Create("aeif_cond_beta", n_neurons, 2);
   float tau_decay[] = {60.0, 10.0};
   float tau_rise[] = {40.0, 5.0};
   ngpu.SetNeuronParam(neuron, "tau_decay", tau_decay, 2);
   ngpu.SetNeuronParam(neuron, "tau_rise", tau_rise, 2);
-  
+
   NodeSeq neuron0 = neuron.Subseq(0,0);
   NodeSeq neuron1 = neuron.Subseq(1,1);
   NodeSeq neuron2 = neuron.Subseq(2,2);
   float g11[] = {0.0, 0.1};
   float g12[] = {0.1, 0.0};
-  
+
   // neuron variables
   ngpu.SetNeuronVar(neuron0, "V_m", -80.0);
   ngpu.SetNeuronVar(neuron1, "g1", g11, 2);
@@ -68,11 +68,11 @@ int main(int argc, char *argv[])
   for (int in=0; in<3; in++) {
     printf("Neuron n. %d\n", in);
     printf("\tV_m: %f\n", read_Vm[in]);
-    printf("\tV_th: %f\n", read_Vth[in]); 
+    printf("\tV_th: %f\n", read_Vth[in]);
     for (int ip=0; ip<2; ip++) {
       printf("\tg1: %f\n", read_g1[in*2+ip]);
       printf("\ttau_rise: %f\n", read_tr[in*2+ip]);
-      printf("\ttau_decay: %f\n", read_td[in*2+ip]); 
+      printf("\ttau_decay: %f\n", read_td[in*2+ip]);
     }
     printf("\n");
   }

@@ -72,12 +72,12 @@ __global__ void user_m2_Calibrate(int n_node, float *param_arr,
   int i_neuron = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_neuron<n_node) {
     float *param = param_arr + n_param*i_neuron;
-    
+
     P11ex = exp( -h / tau_ex );
     P11in = exp( -h / tau_in );
     P22 = exp( -h / tau_m );
     P21ex = (float)propagator_32( tau_ex, tau_m, C_m, h );
-    P21in = (float)propagator_32( tau_in, tau_m, C_m, h ); 
+    P21in = (float)propagator_32( tau_in, tau_m, C_m, h );
     P20 = tau_m / C_m * ( 1.0 - P22 );
   }
 }
@@ -90,7 +90,7 @@ __global__ void user_m2_Update(int n_node, int i_node_0, float *var_arr,
   if (i_neuron<n_node) {
     float *var = var_arr + n_var*i_neuron;
     float *param = param_arr + n_param*i_neuron;
-    
+
     if ( refractory_step > 0.0 ) {
       // neuron is absolute refractory
       refractory_step -= 1.0;
@@ -101,12 +101,12 @@ __global__ void user_m2_Update(int n_node, int i_node_0, float *var_arr,
     // exponential decaying PSCs
     I_syn_ex *= P11ex;
     I_syn_in *= P11in;
-    
+
     if (V_m_rel >= Theta_rel ) { // threshold crossing
       PushSpike(i_node_0 + i_neuron, 1.0);
       V_m_rel = V_reset_rel;
       refractory_step = (int)round(t_ref/NESTGPUTimeResolution);
-    }    
+    }
   }
 }
 
@@ -126,7 +126,7 @@ int user_m2::Init(int i_node_0, int n_node, int /*n_port*/,
   n_var_ = n_scal_var_;
   n_scal_param_ = N_SCAL_PARAM;
   n_param_ = n_scal_param_;
-  
+
   AllocParamArr();
   AllocVarArr();
 
@@ -164,14 +164,14 @@ int user_m2::Init(int i_node_0, int n_node, int /*n_port*/,
 			 sizeof(float), cudaMemcpyHostToDevice));
   port_weight_arr_step_ = 0;
   port_weight_port_step_ = 0;
-  
+
   // input spike signal is stored in I_syn_ex, I_syn_in
   port_input_arr_ = GetVarArr() + GetScalVarIdx("I_syn_ex");
   port_input_arr_step_ = n_var_;
   port_input_port_step_ = 1;
 
   den_delay_arr_ =  GetParamArr() + GetScalParamIdx("den_delay");
-  
+
   return 0;
 }
 
@@ -181,15 +181,15 @@ int user_m2::Update(long long it, double t1)
   user_m2_Update<<<(n_node_+1023)/1024, 1024>>>
     (n_node_, i_node_0_, var_arr_, param_arr_, n_var_, n_param_);
   // gpuErrchk( cudaDeviceSynchronize() );
-  
+
   return 0;
 }
 
 int user_m2::Free()
 {
-  FreeVarArr();  
+  FreeVarArr();
   FreeParamArr();
-  
+
   return 0;
 }
 

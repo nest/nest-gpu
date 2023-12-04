@@ -36,7 +36,7 @@
 extern bool ConnectionSpikeTimeFlag; // provare a mettere nella classe?
 
 int NetConnection::Connect(int i_source, int i_target, unsigned char port,
-			   unsigned char syn_group, float weight, float delay) 
+			   unsigned char syn_group, float weight, float delay)
 {
   if (delay<time_resolution_) {
     throw ngpu_exception("Delay must be >= time resolution");
@@ -45,11 +45,11 @@ int NetConnection::Connect(int i_source, int i_target, unsigned char port,
   if (syn_group>=1) {
     ConnectionSpikeTimeFlag=true;
   }
-  
+
   int d_int = (int)round(delay/time_resolution_) - 1;
   TargetSyn tg = {i_target, port, syn_group, weight};
   Insert(d_int, i_source, tg);
-  
+
   return 0;
 }
 
@@ -69,7 +69,7 @@ int NetConnection::Insert(int d_int, int i_source, TargetSyn tg)
   else {
     conn[id].target_vect.push_back(tg);
   }
-  
+
   return 0;
 }
 
@@ -97,7 +97,7 @@ int NetConnection::ConnGroupPrint(int i_source)
     }
     std::cout << std::endl;
   }
-  
+
   return 0;
 }
 
@@ -118,7 +118,7 @@ unsigned int NetConnection::StoredNConnections()
   if (n_conn_==0) {
     n_conn_ = NConnections();
   }
-  
+
   return n_conn_;
 }
 
@@ -132,7 +132,7 @@ unsigned int NetConnection::NConnections()
       n_conn += n_target;
     }
   }
-  
+
   return n_conn;
 }
 
@@ -155,7 +155,7 @@ ConnectionStatus NetConnection::GetConnectionStatus(ConnectionId conn_id)
   int i_conn = conn_id.i_conn_;
   std::vector<ConnGroup> &conn = connection_[i_source];
   std::vector<TargetSyn> tv = conn[i_group].target_vect;
-  
+
   ConnectionStatus conn_stat;
   conn_stat.i_source = i_source;
   conn_stat.i_target = tv[i_conn].node;
@@ -171,12 +171,12 @@ std::vector<ConnectionStatus> NetConnection::GetConnectionStatus
   (std::vector<ConnectionId> &conn_id_vect)
 {
   std::vector<ConnectionStatus> conn_stat_vect;
-  
+
   for (unsigned int i=0; i<conn_id_vect.size(); i++) {
     ConnectionId conn_id = conn_id_vect[i];
     ConnectionStatus conn_stat = GetConnectionStatus(conn_id);
     conn_stat_vect.push_back(conn_stat);
   }
-  
+
   return conn_stat_vect;
 }

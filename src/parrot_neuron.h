@@ -59,10 +59,10 @@ Remarks
 - Weights on connections *from* the ``parrot_neuron`` are handled as usual.
 - Delays are honored on incoming and outgoing connections.
 
-Only spikes arriving on connections to port (``receptor``) 0 will 
+Only spikes arriving on connections to port (``receptor``) 0 will
 be repeated. Connections onto port 1 will be accepted, but spikes
 incoming through port 1 will be ignored. This allows setting
-exact pre- and postsynaptic spike times for STDP protocols by 
+exact pre- and postsynaptic spike times for STDP protocols by
 connecting two parrot neurons spiking at desired times by, e.g.,
 a `stdp` onto port 1 on the postsynaptic parrot neuron.
 
@@ -79,7 +79,7 @@ class parrot_neuron : public BaseNeuron
 	   unsigned long long *seed);
 
   int Free();
-  
+
   int Update(long long it, double t1);
 
 };

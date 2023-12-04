@@ -26,4 +26,3 @@ Open video conference
 Every two weeks, we have an open video conference to discuss current issues and developments in NEST. We welcome users with questions regarding their implementations or issues they want help solving to join. This is an opportunity to have discussions in real time with developers.
 
 Information for dates and how to join can be found on the `GitHub wiki <https://github.com/nest/nest-simulator/wiki/Open-NEST-Developer-Video-Conference>`_.
-

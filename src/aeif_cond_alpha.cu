@@ -80,7 +80,7 @@ void NodeCalibrate(int n_var, int n_param, double x, float *y,
 }
 
 }
-			    
+
 __device__
 void NodeInit(int n_var, int n_param, double x, float *y,
 	     float *param, aeif_cond_alpha_rk5 data_struct)
@@ -109,7 +109,7 @@ int aeif_cond_alpha::Init(int i_node_0, int n_node, int n_port,
   n_group_param_ = N_GROUP_PARAM;
 
   group_param_ = new float[N_GROUP_PARAM];
-  
+
   scal_var_name_ = aeif_cond_alpha_scal_var_name;
   scal_param_name_ = aeif_cond_alpha_scal_param_name;
   group_param_name_ = aeif_cond_alpha_group_param_name;
@@ -119,7 +119,7 @@ int aeif_cond_alpha::Init(int i_node_0, int n_node, int n_port,
   SetGroupParam("h_min_rel", 1.0e-3);
   SetGroupParam("h0_rel",  1.0e-2);
   h_ = h0_rel_* 0.1;
-  
+
   rk5_.Init(n_node, n_var_, n_param_, 0.0, h_, rk5_data_struct_);
   var_arr_ = rk5_.GetYArr();
   param_arr_ = rk5_.GetParamArr();
@@ -141,7 +141,7 @@ int aeif_cond_alpha::Calibrate(double time_min, float time_resolution)
   h_min_ = h_min_rel_* time_resolution;
   h_ = h0_rel_* time_resolution;
   rk5_.Calibrate(time_min, h_, rk5_data_struct_);
-  
+
   return 0;
 }
 

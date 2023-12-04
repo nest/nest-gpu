@@ -64,13 +64,13 @@ const std::string user_m2_hc_scal_param_name[N_SCAL_PARAM] = {
 };
 
 } // namespace
- 
+
 
 class user_m2_hc : public BaseNeuron
 {
  public:
   ~user_m2_hc();
-  
+
   int Init(int i_node_0, int n_neuron, int n_port, int i_group,
 	   unsigned long long *seed);
 

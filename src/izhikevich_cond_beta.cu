@@ -49,7 +49,7 @@ void NodeInit(int n_var, int n_param, double x, float *y, float *param,
   I_e = 0.0;
   t_ref = 0.0;
   den_delay = 0.0;
-  
+
   V_m = -70.0;
   u = b*V_m;
   refractory_step = 0;
@@ -94,7 +94,7 @@ void NodeCalibrate(int n_var, int n_param, double x, float *y,
 }
 
 }
-			    
+
 __device__
 void NodeInit(int n_var, int n_param, double x, float *y,
 	     float *param, izhikevich_cond_beta_rk5 data_struct)
@@ -116,14 +116,14 @@ using namespace izhikevich_cond_beta_ns;
 int izhikevich_cond_beta::Init(int i_node_0, int n_node, int n_port,
 			 int i_group, unsigned long long *seed) {
   BaseNeuron::Init(i_node_0, n_node, n_port, i_group, seed);
-  
+
   node_type_ = i_izhikevich_cond_beta_model;
   n_scal_var_ = N_SCAL_VAR;
   n_port_var_ = N_PORT_VAR;
   n_scal_param_ = N_SCAL_PARAM;
   n_port_param_ = N_PORT_PARAM;
   n_group_param_ = N_GROUP_PARAM;
- 
+
   n_var_ = n_scal_var_ + n_port_var_*n_port;
   n_param_ = n_scal_param_ + n_port_param_*n_port;
 
@@ -164,7 +164,7 @@ int izhikevich_cond_beta::Calibrate(double time_min, float time_resolution)
   h_min_ = h_min_rel_* time_resolution;
   h_ = h0_rel_* time_resolution;
   rk5_.Calibrate(time_min, h_, rk5_data_struct_);
-  
+
   return 0;
 }
 

@@ -63,7 +63,7 @@ __global__ void SynGroupInit(int *syn_group_type_map,
 {
   SynGroupTypeMap = syn_group_type_map;
   SynGroupParamMap = syn_group_param_map;
-  
+
 }
 
 int SynModel::GetNParam()
@@ -77,7 +77,7 @@ std::vector<std::string> SynModel::GetParamNames()
   for (int i=0; i<n_param_; i++) {
     param_name_vect.push_back(param_name_[i]);
   }
-  
+
   return param_name_vect;
 }
 
@@ -100,7 +100,7 @@ int SynModel::GetParamIdx(std::string param_name)
     throw ngpu_exception(std::string("Unrecognized parameter ")
 			 + param_name);
   }
-  
+
   return i_param;
 }
 
@@ -132,7 +132,7 @@ int SynModel::SetParam(std::string param_name, float val)
   return 0;
 }
 
-  
+
 int NESTGPU::CreateSynGroup(std::string model_name)
 {
   CheckUncalibrated("Nodes cannot be created after calibration");
@@ -230,7 +230,7 @@ int NESTGPU::SynGroupCalibrate()
   SynGroupInit<<<1,1>>>(d_SynGroupTypeMap, d_SynGroupParamMap);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-  
+
   delete[] h_SynGroupTypeMap;
   delete[] h_SynGroupParamMap;
 

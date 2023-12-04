@@ -106,8 +106,8 @@ NESTGPU::NESTGPU()
   poiss_generator_ = new PoissonGenerator;
   multimeter_ = new Multimeter;
   net_connection_ = new NetConnection;
-  
-  
+
+
   calibrate_flag_ = false;
 
   start_real_time_ = getRealTime();
@@ -119,23 +119,23 @@ NESTGPU::NESTGPU()
   SetTimeResolution(0.1);  // time resolution in ms
   max_spike_num_fact_ = 1.0;
   max_spike_per_host_fact_ = 1.0;
-  
+
   error_flag_ = false;
   error_message_ = "";
   error_code_ = 0;
-  
+
   on_exception_ = ON_EXCEPTION_EXIT;
 
   verbosity_level_ = 4;
   print_time_ = false;
-  
+
   mpi_flag_ = false;
 #ifdef HAVE_MPI
   connect_mpi_ = new ConnectMpi;
   connect_mpi_->net_connection_ = net_connection_;
   connect_mpi_->remote_spike_height_ = false;
 #endif
-  
+
   SetRandomSeed(54321ULL);
 
   SpikeBufferUpdate_time_ = 0;
@@ -199,14 +199,14 @@ int NESTGPU::SetTimeResolution(float time_res)
 {
   time_resolution_ = time_res;
   net_connection_->time_resolution_ = time_res;
-  
+
   return 0;
 }
 
 int NESTGPU::SetMaxSpikeBufferSize(int max_size)
 {
   max_spike_buffer_size_ = max_size;
-  
+
   return 0;
 }
 
@@ -240,7 +240,7 @@ int NESTGPU::CreateNodeGroup(int n_node, int n_port)
   }
   int i_group = node_vect_.size() - 1;
   node_group_map_.insert(node_group_map_.end(), n_node, i_group);
-  
+
   std::vector<ConnGroup> conn;
   std::vector<std::vector<ConnGroup> >::iterator it
     = net_connection_->connection_.end();
@@ -252,10 +252,10 @@ int NESTGPU::CreateNodeGroup(int n_node, int n_port)
     = connect_mpi_->extern_connection_.end();
   connect_mpi_->extern_connection_.insert(it1, n_node, conn_node);
 #endif
-  
+
   node_vect_[i_group]->Init(i_node_0, n_node, n_port, i_group, &kernel_seed_);
   node_vect_[i_group]->get_spike_array_ = InitGetSpikeArray(n_node, n_port);
-  
+
   return i_node_0;
 }
 
@@ -268,16 +268,16 @@ NodeSeq NESTGPU::CreatePoissonGenerator(int n_node, float rate)
   else if (n_node <= 0) {
     throw ngpu_exception("Number of nodes must be greater than zero.");
   }
-  
-  n_poiss_node_ = n_node;               
- 
+
+  n_poiss_node_ = n_node;
+
   BaseNeuron *bn = new BaseNeuron;
   node_vect_.push_back(bn);
   int i_node_0 = CreateNodeGroup( n_node, 0);
-  
+
   float lambda = rate*time_resolution_ / 1000.0; // rate is in Hz, time in ms
   poiss_generator_->Create(random_generator_, i_node_0, n_node, lambda);
-    
+
   return NodeSeq(i_node_0, n_node);
 }
 
@@ -287,7 +287,7 @@ int NESTGPU::CheckUncalibrated(std::string message)
   if (calibrate_flag_ == true) {
     throw ngpu_exception(message);
   }
-  
+
   return 0;
 }
 
@@ -305,11 +305,11 @@ int NESTGPU::Calibrate()
   if (verbosity_level_>=1) {
     std::cout << MpiRankStr() << "Calibrating ...\n";
   }
-  
+
   neural_time_ = t_min_;
-  	    
+
   NodeGroupArrayInit();
-  
+
   max_spike_num_ = (int)round(max_spike_num_fact_
                  * net_connection_->connection_.size()
   		 * net_connection_->MaxDelayNum());
@@ -319,7 +319,7 @@ int NESTGPU::Calibrate()
                  * net_connection_->connection_.size()
   		 * net_connection_->MaxDelayNum());
   max_spike_per_host_ = (max_spike_per_host_>1) ? max_spike_per_host_ : 1;
-  
+
   SpikeInit(max_spike_num_);
   SpikeBufferInit(net_connection_, max_spike_buffer_size_);
 
@@ -331,19 +331,19 @@ int NESTGPU::Calibrate()
 				    max_spike_per_host_);
   }
 #endif
-  
+
   if (net_connection_->NRevConnections()>0) {
-    RevSpikeInit(net_connection_); 
+    RevSpikeInit(net_connection_);
   }
-  
+
   multimeter_->OpenFiles();
-  
+
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     node_vect_[i]->Calibrate(t_min_, time_resolution_);
   }
-  
+
   SynGroupCalibrate();
-  
+
   gpuErrchk(cudaMemcpyToSymbolAsync(NESTGPUTimeResolution, &time_resolution_,
 			       sizeof(float)));
 ///////////////////////////////////
@@ -359,7 +359,7 @@ int NESTGPU::Simulate(float sim_time) {
 int NESTGPU::Simulate()
 {
   StartSimulation();
-  
+
   for (long long it=0; it<Nt_; it++) {
     if (it%100==0 && verbosity_level_>=2 && print_time_==true) {
       printf("\r[%.2lf %%] Model time: %.3lf ms", 100.0*(neural_time_-neur_t0_)/sim_time_, neural_time_);
@@ -376,7 +376,7 @@ int NESTGPU::StartSimulation()
   if (!calibrate_flag_) {
     Calibrate();
   }
-#ifdef HAVE_MPI                                                                                                            
+#ifdef HAVE_MPI
   if (mpi_flag_) {
     MPI_Barrier(MPI_COMM_WORLD);
   }
@@ -391,11 +391,11 @@ int NESTGPU::StartSimulation()
     std::cout << MpiRankStr() << "Simulating ...\n";
     printf("Neural activity simulation time: %.3lf ms\n", sim_time_);
   }
-  
+
   neur_t0_ = neural_time_;
   it_ = 0;
   Nt_ = (long long)round(sim_time_/time_resolution_);
-  
+
   return 0;
 }
 
@@ -404,7 +404,7 @@ int NESTGPU::EndSimulation()
   if (verbosity_level_>=2  && print_time_==true) {
     printf("\r[%.2lf %%] Model time: %.3lf ms", 100.0*(neural_time_-neur_t0_)/sim_time_, neural_time_);
   }
-#ifdef HAVE_MPI                                        
+#ifdef HAVE_MPI
   if (mpi_flag_) {
     MPI_Barrier(MPI_COMM_WORLD);
   }
@@ -454,14 +454,14 @@ int NESTGPU::EndSimulation()
       connect_mpi_->JoinSpike_time_  << "\n";
   }
 #endif
-  
+
   if (verbosity_level_>=1) {
     std::cout << MpiRankStr() << "Building time: " <<
       (build_real_time_ - start_real_time_) << "\n";
     std::cout << MpiRankStr() << "Simulation time: " <<
       (end_real_time_ - build_real_time_) << "\n";
   }
-  
+
   return 0;
 }
 
@@ -497,12 +497,12 @@ int NESTGPU::SimulationStep()
       ResetConnectionSpikeTimeDown(net_connection_);
     }
   }
-    
+
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     node_vect_[i]->Update(it_, neural_time_);
   }
   gpuErrchk( cudaPeekAtLastError() );
-  
+
   neuron_Update_time_ += (getRealTime() - time_mark);
   multimeter_->WriteRecords(neural_time_);
 
@@ -529,7 +529,7 @@ int NESTGPU::SimulationStep()
     time_mark = getRealTime();
     connect_mpi_->RecvSpikeFromRemote(connect_mpi_->mpi_np_,
 				      max_spike_per_host_);
-				      
+
     RecvSpikeFromRemote_time_ += (getRealTime() - time_mark);
     connect_mpi_->CopySpikeFromRemote(connect_mpi_->mpi_np_,
 				      max_spike_per_host_,
@@ -537,7 +537,7 @@ int NESTGPU::SimulationStep()
     MPI_Barrier(MPI_COMM_WORLD);
   }
 #endif
-    
+
   int n_spikes;
   time_mark = getRealTime();
   // Call will get delayed until ClearGetSpikesArrays()
@@ -545,8 +545,8 @@ int NESTGPU::SimulationStep()
   gpuErrchk(cudaMemcpyAsync(&n_spikes, d_SpikeNum, sizeof(int),
 		       cudaMemcpyDeviceToHost));
 
-  ClearGetSpikeArrays(); 
-  gpuErrchk( cudaDeviceSynchronize() );   
+  ClearGetSpikeArrays();
+  gpuErrchk( cudaDeviceSynchronize() );
   if (n_spikes > 0) {
     time_mark = getRealTime();
     CollectSpikeKernel<<<n_spikes, 1024>>>(n_spikes, d_SpikeTargetNum);
@@ -569,7 +569,7 @@ int NESTGPU::SimulationStep()
       int grid_dim_y = node_vect_[i]->n_port_;
       dim3 grid_dim(grid_dim_x, grid_dim_y);
       //dim3 block_dim(1024,1);
-					    
+
       GetSpikes<<<grid_dim, 1024>>> //block_dim>>>
 	(node_vect_[i]->get_spike_array_, node_vect_[i]->n_node_,
 	 node_vect_[i]->n_port_,
@@ -613,7 +613,7 @@ int NESTGPU::SimulationStep()
     if (n_rev_spikes > 0) {
       SynapseUpdateKernel<<<n_rev_spikes, 1024>>>(n_rev_spikes, d_RevSpikeNConn);
       gpuErrchk(cudaPeekAtLastError());
-    }      
+    }
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   }
 
@@ -630,7 +630,7 @@ int NESTGPU::SimulationStep()
   }
 
   it_++;
-  
+
   return 0;
 }
 
@@ -673,14 +673,14 @@ int NESTGPU::GetNodeSequenceOffset(int i_node, int n_node, int &i_group)
   if (i_node<0 || (i_node+n_node > (int)node_group_map_.size())) {
     throw ngpu_exception("Unrecognized node in getting node sequence offset");
   }
-  i_group = node_group_map_[i_node];  
+  i_group = node_group_map_[i_node];
   if (node_group_map_[i_node+n_node-1] != i_group) {
     throw ngpu_exception("Nodes belong to different node groups "
 			 "in setting parameter");
   }
   return node_vect_[i_group]->i_node_0_;
 }
-  
+
 std::vector<int> NESTGPU::GetNodeArrayWithOffset(int *i_node, int n_node,
 						   int &i_group)
 {
@@ -711,7 +711,7 @@ int NESTGPU::SetNeuronParam(int i_node, int n_node,
 {
   int i_group;
   int i_neuron = i_node - GetNodeSequenceOffset(i_node, n_node, i_group);
-  
+
   return node_vect_[i_group]->SetScalParam(i_neuron, n_node, param_name, val);
 }
 
@@ -747,21 +747,21 @@ int NESTGPU::SetNeuronParam( int *i_node, int n_node,
   int i_group;
   std::vector<int> nodes = GetNodeArrayWithOffset(i_node, n_node,
 						  i_group);
-  if (node_vect_[i_group]->IsPortParam(param_name)) {  
+  if (node_vect_[i_group]->IsPortParam(param_name)) {
     return node_vect_[i_group]->SetPortParam(nodes.data(), n_node,
 					     param_name, param, array_size);
   }
   else {
     return node_vect_[i_group]->SetArrayParam(nodes.data(), n_node,
 					      param_name, param, array_size);
-  }    
+  }
 }
 
 int NESTGPU::IsNeuronScalParam(int i_node, std::string param_name)
 {
   int i_group;
   int i_neuron = i_node - GetNodeSequenceOffset(i_node, 1, i_group);
-  
+
   return node_vect_[i_group]->IsScalParam(param_name);
 }
 
@@ -769,7 +769,7 @@ int NESTGPU::IsNeuronPortParam(int i_node, std::string param_name)
 {
   int i_group;
   int i_neuron = i_node - GetNodeSequenceOffset(i_node, 1, i_group);
-  
+
   return node_vect_[i_group]->IsPortParam(param_name);
 }
 
@@ -777,7 +777,7 @@ int NESTGPU::IsNeuronArrayParam(int i_node, std::string param_name)
 {
   int i_group;
   int i_neuron = i_node - GetNodeSequenceOffset(i_node, 1, i_group);
-  
+
   return node_vect_[i_group]->IsArrayParam(param_name);
 }
 
@@ -786,7 +786,7 @@ int NESTGPU::SetNeuronIntVar(int i_node, int n_node,
 {
   int i_group;
   int i_neuron = i_node - GetNodeSequenceOffset(i_node, n_node, i_group);
-  
+
   return node_vect_[i_group]->SetIntVar(i_neuron, n_node, var_name, val);
 }
 
@@ -805,7 +805,7 @@ int NESTGPU::SetNeuronVar(int i_node, int n_node,
 {
   int i_group;
   int i_neuron = i_node - GetNodeSequenceOffset(i_node, n_node, i_group);
-  
+
   return node_vect_[i_group]->SetScalVar(i_neuron, n_node, var_name, val);
 }
 
@@ -841,21 +841,21 @@ int NESTGPU::SetNeuronVar( int *i_node, int n_node,
   int i_group;
   std::vector<int> nodes = GetNodeArrayWithOffset(i_node, n_node,
 						  i_group);
-  if (node_vect_[i_group]->IsPortVar(var_name)) {  
+  if (node_vect_[i_group]->IsPortVar(var_name)) {
     return node_vect_[i_group]->SetPortVar(nodes.data(), n_node,
 					   var_name, var, array_size);
   }
   else {
     return node_vect_[i_group]->SetArrayVar(nodes.data(), n_node,
 					    var_name, var, array_size);
-  }    
+  }
 }
 
 int NESTGPU::IsNeuronIntVar(int i_node, std::string var_name)
 {
   int i_group;
   int i_neuron = i_node - GetNodeSequenceOffset(i_node, 1, i_group);
-  
+
   return node_vect_[i_group]->IsIntVar(var_name);
 }
 
@@ -863,7 +863,7 @@ int NESTGPU::IsNeuronScalVar(int i_node, std::string var_name)
 {
   int i_group;
   int i_neuron = i_node - GetNodeSequenceOffset(i_node, 1, i_group);
-  
+
   return node_vect_[i_group]->IsScalVar(var_name);
 }
 
@@ -871,7 +871,7 @@ int NESTGPU::IsNeuronPortVar(int i_node, std::string var_name)
 {
   int i_group;
   int i_neuron = i_node - GetNodeSequenceOffset(i_node, 1, i_group);
-  
+
   return node_vect_[i_group]->IsPortVar(var_name);
 }
 
@@ -879,7 +879,7 @@ int NESTGPU::IsNeuronArrayVar(int i_node, std::string var_name)
 {
   int i_group;
   int i_neuron = i_node - GetNodeSequenceOffset(i_node, 1, i_group);
-  
+
   return node_vect_[i_group]->IsArrayVar(var_name);
 }
 
@@ -943,7 +943,7 @@ float *NESTGPU::GetNeuronParam( int *i_node, int n_node,
     return node_vect_[i_group]->GetScalParam(nodes.data(), n_node,
 					     param_name);
   }
-  else if (node_vect_[i_group]->IsPortParam(param_name)) {  
+  else if (node_vect_[i_group]->IsPortParam(param_name)) {
     return node_vect_[i_group]->GetPortParam(nodes.data(), n_node,
 					     param_name);
   }
@@ -1032,7 +1032,7 @@ float *NESTGPU::GetNeuronVar(int *i_node, int n_node,
     return node_vect_[i_group]->GetScalVar(nodes.data(), n_node,
 					     var_name);
   }
-  else if (node_vect_[i_group]->IsPortVar(var_name)) {  
+  else if (node_vect_[i_group]->IsPortVar(var_name)) {
     return node_vect_[i_group]->GetPortVar(nodes.data(), n_node,
 					   var_name);
   }
@@ -1065,7 +1065,7 @@ int NESTGPU::ConnectMpiInit(int argc, char *argv[])
   if (err==0) {
     mpi_flag_ = true;
   }
-  
+
   return err;
 #else
   throw ngpu_exception("MPI is not available in your build");
@@ -1097,7 +1097,7 @@ int NESTGPU::ProcMaster()
   return connect_mpi_->ProcMaster();
 #else
   throw ngpu_exception("MPI is not available in your build");
-#endif  
+#endif
 }
 
 int NESTGPU::MpiFinalize()
@@ -1110,7 +1110,7 @@ int NESTGPU::MpiFinalize()
       MPI_Finalize();
     }
   }
-  
+
   return 0;
 #else
   throw ngpu_exception("MPI is not available in your build");
@@ -1151,10 +1151,10 @@ float *NESTGPU::RandomNormalClipped(size_t n, float mean, float stddev,
 				      float vmin, float vmax, float vstep)
 {
   const float epsi = 1.0e-6;
-  
-  n = (n/4 + 1)*4; 
+
+  n = (n/4 + 1)*4;
   int n_extra = n/10;
-  n_extra = (n_extra/4 + 1)*4; 
+  n_extra = (n_extra/4 + 1)*4;
   if (n_extra<1024) {
     n_extra=1024;
   }
@@ -1184,7 +1184,7 @@ float *NESTGPU::RandomNormalClipped(size_t n, float mean, float stddev,
     }
   }
 
-  return arr; 
+  return arr;
 }
 
 int NESTGPU::BuildDirectConnections()
@@ -1211,7 +1211,7 @@ int NESTGPU::BuildDirectConnections()
       }
       uint64_t n_dir_conn = dir_conn_vect.size();
       node_vect_[iv]->n_dir_conn_ = n_dir_conn;
-      
+
       DirectConnection *d_dir_conn_array;
       gpuErrchk(cudaMalloc(&d_dir_conn_array,
 			   n_dir_conn*sizeof(DirectConnection )));
@@ -1231,7 +1231,7 @@ std::vector<std::string> NESTGPU::GetIntVarNames(int i_node)
     throw ngpu_exception("Unrecognized node in reading variable names");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetIntVarNames();
 }
 
@@ -1241,7 +1241,7 @@ std::vector<std::string> NESTGPU::GetScalVarNames(int i_node)
     throw ngpu_exception("Unrecognized node in reading variable names");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetScalVarNames();
 }
 
@@ -1252,7 +1252,7 @@ int NESTGPU::GetNIntVar(int i_node)
 			 "variables");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetNIntVar();
 }
 
@@ -1263,7 +1263,7 @@ int NESTGPU::GetNScalVar(int i_node)
 			 "variables");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetNScalVar();
 }
 
@@ -1273,7 +1273,7 @@ std::vector<std::string> NESTGPU::GetPortVarNames(int i_node)
     throw ngpu_exception("Unrecognized node in reading variable names");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetPortVarNames();
 }
 
@@ -1284,7 +1284,7 @@ int NESTGPU::GetNPortVar(int i_node)
 			 "variables");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetNPortVar();
 }
 
@@ -1295,7 +1295,7 @@ std::vector<std::string> NESTGPU::GetScalParamNames(int i_node)
     throw ngpu_exception("Unrecognized node in reading parameter names");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetScalParamNames();
 }
 
@@ -1306,7 +1306,7 @@ int NESTGPU::GetNScalParam(int i_node)
 			 "parameters");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetNScalParam();
 }
 
@@ -1316,7 +1316,7 @@ std::vector<std::string> NESTGPU::GetPortParamNames(int i_node)
     throw ngpu_exception("Unrecognized node in reading parameter names");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetPortParamNames();
 }
 
@@ -1327,7 +1327,7 @@ int NESTGPU::GetNPortParam(int i_node)
 			 "parameters");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetNPortParam();
 }
 
@@ -1338,7 +1338,7 @@ std::vector<std::string> NESTGPU::GetArrayParamNames(int i_node)
     throw ngpu_exception("Unrecognized node in reading array parameter names");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetArrayParamNames();
 }
 
@@ -1349,7 +1349,7 @@ int NESTGPU::GetNArrayParam(int i_node)
 			 "parameters");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetNArrayParam();
 }
 
@@ -1360,7 +1360,7 @@ std::vector<std::string> NESTGPU::GetArrayVarNames(int i_node)
     throw ngpu_exception("Unrecognized node in reading array variable names");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetArrayVarNames();
 }
 
@@ -1371,7 +1371,7 @@ int NESTGPU::GetNArrayVar(int i_node)
 			 "variables");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetNArrayVar();
 }
 
@@ -1401,7 +1401,7 @@ std::vector<ConnectionStatus> NESTGPU::GetConnectionStatus(std::vector
   }
   return conn_stat_vect;
 }
-  
+
 std::vector<ConnectionId> NESTGPU::GetConnections(int i_source, int n_source,
 						    int i_target, int n_target,
 						    int syn_group) {
@@ -1415,7 +1415,7 @@ std::vector<ConnectionId> NESTGPU::GetConnections(int i_source, int n_source,
   }
 
   return net_connection_->GetConnections<int>(i_source, n_source, i_target,
-					      n_target, syn_group);    
+					      n_target, syn_group);
 }
 
 std::vector<ConnectionId> NESTGPU::GetConnections(int *i_source, int n_source,
@@ -1425,10 +1425,10 @@ std::vector<ConnectionId> NESTGPU::GetConnections(int *i_source, int n_source,
     i_target = 0;
     n_target = net_connection_->connection_.size();
   }
-    
+
   return net_connection_->GetConnections<int*>(i_source, n_source, i_target,
 					       n_target, syn_group);
-  
+
 }
 
 
@@ -1439,18 +1439,18 @@ std::vector<ConnectionId> NESTGPU::GetConnections(int i_source, int n_source,
     i_source = 0;
     n_source = net_connection_->connection_.size();
   }
-  
+
   return net_connection_->GetConnections<int>(i_source, n_source, i_target,
-					      n_target, syn_group);    
+					      n_target, syn_group);
 }
 
 std::vector<ConnectionId> NESTGPU::GetConnections(int *i_source, int n_source,
 						    int *i_target, int n_target,
 						    int syn_group) {
-  
+
   return net_connection_->GetConnections<int*>(i_source, n_source, i_target,
 					       n_target, syn_group);
-  
+
 }
 
 
@@ -1549,10 +1549,10 @@ int NESTGPU::GetRecSpikeTimes(int i_node, int n_node, int **n_spike_times_pt,
     throw ngpu_exception("Spike times must be extracted for all and only "
 			 " the nodes of the same group");
   }
-  
+
   return node_vect_[i_group]->GetRecSpikeTimes(n_spike_times_pt,
 					       spike_times_pt);
-					       
+
 }
 
 int NESTGPU::PushSpikesToNodes(int n_spikes, int *node_id,
@@ -1589,7 +1589,7 @@ int NESTGPU::PushSpikesToNodes(int n_spikes, int *node_id)
   gpuErrchk(cudaMalloc(&d_node_id, n_spikes*sizeof(int)));
   // memcopy data transfer is overlapped with PushSpikeFromRemote kernel
   gpuErrchk(cudaMemcpyAsync(d_node_id, node_id, n_spikes*sizeof(int),
-		       cudaMemcpyHostToDevice));  
+		       cudaMemcpyHostToDevice));
   PushSpikeFromRemote<<<(n_spikes+1023)/1024, 1024>>>(n_spikes, d_node_id);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
@@ -1604,7 +1604,7 @@ int NESTGPU::GetExtNeuronInputSpikes(int *n_spikes, int **node, int **port,
   ext_neuron_input_spike_node_.clear();
   ext_neuron_input_spike_port_.clear();
   ext_neuron_input_spike_height_.clear();
-  
+
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     if (node_vect_[i]->IsExtNeuron()) {
       int n_node;
@@ -1620,14 +1620,14 @@ int NESTGPU::GetExtNeuronInputSpikes(int *n_spikes, int **node, int **port,
 	    ext_neuron_input_spike_height_.push_back(sh[j]);
 	  }
 	}
-      }	
+      }
     }
   }
   *n_spikes = ext_neuron_input_spike_node_.size();
   *node = ext_neuron_input_spike_node_.data();
   *port = ext_neuron_input_spike_port_.data();
   *spike_height = ext_neuron_input_spike_height_.data();
-  
+
   return 0;
 }
 
@@ -1666,7 +1666,7 @@ std::vector<std::string> NESTGPU::GetGroupParamNames(int i_node)
     throw ngpu_exception("Unrecognized node in reading group parameter names");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetGroupParamNames();
 }
 
@@ -1677,7 +1677,7 @@ int NESTGPU::GetNGroupParam(int i_node)
 			 "group parameters");
   }
   int i_group = node_group_map_[i_node];
-  
+
   return node_vect_[i_group]->GetNGroupParam();
 }
 
@@ -1688,8 +1688,8 @@ int NESTGPU::ConnectRemoteNodes()
   if (n_remote_node_>0) {
     i_remote_node_0_ = node_group_map_.size();
     BaseNeuron *bn = new BaseNeuron;
-    node_vect_.push_back(bn);  
-    CreateNodeGroup(n_remote_node_, 0);       
+    node_vect_.push_back(bn);
+    CreateNodeGroup(n_remote_node_, 0);
     for (unsigned int i=0; i<remote_connection_vect_.size(); i++) {
       RemoteConnection rc = remote_connection_vect_[i];
       net_connection_->Connect(i_remote_node_0_ + rc.i_source_rel, rc.i_target,
@@ -1697,7 +1697,7 @@ int NESTGPU::ConnectRemoteNodes()
 
     }
   }
-  
+
   return 0;
 }
 
@@ -1713,7 +1713,7 @@ std::vector<std::string> NESTGPU::GetBoolParamNames()
   for (int i=0; i<N_KERNEL_BOOL_PARAM; i++) {
     param_name_vect.push_back(kernel_bool_param_name[i]);
   }
-  
+
   return param_name_vect;
 }
 
@@ -1736,7 +1736,7 @@ int NESTGPU::GetBoolParamIdx(std::string param_name)
     throw ngpu_exception(std::string("Unrecognized kernel boolean parameter ")
 			 + param_name);
   }
-  
+
   return i_param;
 }
 
@@ -1764,7 +1764,7 @@ int NESTGPU::SetBoolParam(std::string param_name, bool val)
     throw ngpu_exception(std::string("Unrecognized kernel boolean parameter ")
 			 + param_name);
   }
-  
+
   return 0;
 }
 
@@ -1780,7 +1780,7 @@ std::vector<std::string> NESTGPU::GetFloatParamNames()
   for (int i=0; i<N_KERNEL_FLOAT_PARAM; i++) {
     param_name_vect.push_back(kernel_float_param_name[i]);
   }
-  
+
   return param_name_vect;
 }
 
@@ -1803,7 +1803,7 @@ int NESTGPU::GetFloatParamIdx(std::string param_name)
     throw ngpu_exception(std::string("Unrecognized kernel float parameter ")
 			 + param_name);
   }
-  
+
   return i_param;
 }
 
@@ -1841,7 +1841,7 @@ int NESTGPU::SetFloatParam(std::string param_name, float val)
     throw ngpu_exception(std::string("Unrecognized kernel float parameter ")
 			 + param_name);
   }
-  
+
   return 0;
 }
 
@@ -1856,7 +1856,7 @@ std::vector<std::string> NESTGPU::GetIntParamNames()
   for (int i=0; i<N_KERNEL_INT_PARAM; i++) {
     param_name_vect.push_back(kernel_int_param_name[i]);
   }
-  
+
   return param_name_vect;
 }
 
@@ -1879,7 +1879,7 @@ int NESTGPU::GetIntParamIdx(std::string param_name)
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")
 			 + param_name);
   }
-  
+
   return i_param;
 }
 
@@ -1942,7 +1942,7 @@ int NESTGPU::SetIntParam(std::string param_name, int val)
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")
 			 + param_name);
   }
-  
+
   return 0;
 }
 

@@ -50,7 +50,7 @@ Description
 +++++++++++
 
 iaf_psc_exp_g is an implementation of a leaky integrate-and-fire model
-with exponential shaped postsynaptic currents (PSCs) according to 
+with exponential shaped postsynaptic currents (PSCs) according to
 equations 1, 2, 4 and 5 of [1]_ and equation 3 of [2]_.
 Thus, postsynaptic currents have an infinitely short rise time.
 
@@ -116,7 +116,7 @@ References
        DOI: https://doi.org/10.1007/s004220050570
 .. [4] Potjans TC. and Diesmann M. 2014. The cell-type specific cortical
        microcircuit: relating structure and activity in a full-scale spiking
-       network model. Cerebral Cortex. 24(3):785–806. 
+       network model. Cerebral Cortex. 24(3):785–806.
        DOI: https://doi.org/10.1093/cercor/bhs358.
 
 See also
@@ -154,7 +154,7 @@ enum GroupParamIndexes {
 };
 
 
- 
+
 const std::string iaf_psc_exp_g_scal_var_name[N_SCAL_VAR] = {
   "I_syn",
   "V_m_rel",
@@ -174,9 +174,9 @@ const std::string iaf_psc_exp_g_group_param_name[N_GROUP_PARAM] = {
   "tau_syn",
   "t_ref"
 };
- 
+
 } // namespace
- 
+
 
 
 
@@ -186,14 +186,14 @@ class iaf_psc_exp_g : public BaseNeuron
 
  public:
   ~iaf_psc_exp_g();
-  
+
   int Init(int i_node_0, int n_neuron, int n_port, int i_group,
 	   unsigned long long *seed);
   int Calibrate(double /*time_min*/, float time_res) {
     time_resolution_ = time_res;
     return 0;
   }
-  
+
   int Update(long long it, double t1);
 
   int Free();

@@ -44,12 +44,12 @@ int main(int argc, char *argv[])
   }
   int arg1;
   sscanf(argv[1], "%d", &arg1);
-  
+
   int mpi_id = ngpu.MpiId();
   cout << "Building on host " << mpi_id << " ..." <<endl;
 
   ngpu.SetRandomSeed(12345ULL + mpi_id); // seed for GPU random numbers
-  
+
   //////////////////////////////////////////////////////////////////////
   // WRITE HERE COMMANDS THAT ARE EXECUTED ON ALL HOSTS
   //////////////////////////////////////////////////////////////////////
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
   // send their output to neurons of another mpi host
   int NEext = (int)(fext*NE);
   int NEint = NE - NEext;
-  
+
   float Wex = 0.05;
   float Win = 0.35;
 
@@ -88,9 +88,9 @@ int main(int argc, char *argv[])
   // of neurons that project internally
   NodeSeq excext_neuron = neuron.Subseq(NEint,NE-1); // excitatory group
   // of neurons that project externally
-  
+
   NodeSeq inh_neuron = neuron.Subseq(NE, n_neurons-1); //inhibitory neuron group
-  
+
   // the following parameters are set to the same values on all hosts
   float E_rev[] = {0.0, -85.0};
   float tau_decay[] = {1.0, 1.0};

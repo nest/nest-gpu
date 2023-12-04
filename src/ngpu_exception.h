@@ -38,7 +38,7 @@
 class ngpu_exception: public std::exception
 {
   const char *Message; // error message
-  
+
  public:
   // constructors
   ngpu_exception(const char *ch)  {Message=strdup(ch);}

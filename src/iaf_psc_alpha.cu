@@ -81,7 +81,7 @@ __global__ void iaf_psc_alpha_Calibrate(int n_node, float *param_arr,
   int i_neuron = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_neuron<n_node) {
     float *param = param_arr + n_param*i_neuron;
-    
+
     P11ex = P22ex = exp( -h / tau_ex );
     P11in = P22in = exp( -h / tau_in );
     P33 = exp( -h / tau_m );
@@ -119,7 +119,7 @@ __global__ void iaf_psc_alpha_Update(int n_node, int i_node_0, float *var_arr,
       V_m_rel = P30 * I_e + P31ex * dI_ex + P32ex * I_ex
                + P31in * dI_in + P32in * I_in + expm1_tau_m * V_m_rel + V_m_rel;
     }
-  
+
     // alpha shape PSCs
     I_ex = P21ex * dI_ex + P22ex * I_ex;
     dI_ex *= P11ex;
@@ -151,7 +151,7 @@ int iaf_psc_alpha::Init(int i_node_0, int n_node, int /*n_port*/,
   n_var_ = n_scal_var_;
   n_scal_param_ = N_SCAL_PARAM;
   n_param_ = n_scal_param_;
-  
+
   AllocParamArr();
   AllocVarArr();
 
@@ -189,7 +189,7 @@ int iaf_psc_alpha::Init(int i_node_0, int n_node, int /*n_port*/,
   SetScalVar(0, n_node, "dI_in", 0.0 );
   SetScalVar(0, n_node, "V_m_rel", -70.0 - (-70.0) ); // in mV, relative to E_L
   SetScalVar(0, n_node, "refractory_step", 0 );
-  
+
   port_weight_arr_ = GetParamArr() + GetScalParamIdx("EPSCInitialValue");
   port_weight_arr_step_ = n_param_;
   port_weight_port_step_ = 1;
@@ -199,7 +199,7 @@ int iaf_psc_alpha::Init(int i_node_0, int n_node, int /*n_port*/,
   port_input_port_step_ = 1;
 
   den_delay_arr_ =  GetParamArr() + GetScalParamIdx("den_delay");
-  
+
   return 0;
 }
 
@@ -209,15 +209,15 @@ int iaf_psc_alpha::Update(long long it, double t1)
   iaf_psc_alpha_Update<<<(n_node_+1023)/1024, 1024>>>
     (n_node_, i_node_0_, var_arr_, param_arr_, n_var_, n_param_);
   // gpuErrchk( cudaDeviceSynchronize() );
-  
+
   return 0;
 }
 
 int iaf_psc_alpha::Free()
 {
-  FreeVarArr();  
+  FreeVarArr();
   FreeParamArr();
-  
+
   return 0;
 }
 

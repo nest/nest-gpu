@@ -36,10 +36,10 @@ int main(int argc, char *argv[])
 {
   NESTGPU ngpu;
   cout << "Building ...\n";
-  
+
   srand(12345);
   int n_neurons = 10000;
-  
+
   // create n_neurons neurons with 3 receptor ports
   NodeSeq neuron = ngpu.Create("aeif_cond_beta", n_neurons, 3);
 
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
   // set spike times and height
   ngpu.SetNeuronParam(sg, "spike_times", spike_times, n_spikes);
   ngpu.SetNeuronParam(sg, "spike_heights", spike_heights, n_spikes);
-  
+
   float delay[] = {1.0, 100.0, 130.0};
   float weight[] = {0.1, 0.2, 0.5};
 

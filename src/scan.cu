@@ -25,7 +25,7 @@ __global__ void prescan_arbitrary(int *output, int *input, int n, int powerOfTwo
 	int bankOffsetA = CONFLICT_FREE_OFFSET(ai);
 	int bankOffsetB = CONFLICT_FREE_OFFSET(bi);
 
-	
+
 	if (threadID < n) {
 		temp[ai + bankOffsetA] = input[ai];
 		temp[bi + bankOffsetB] = input[bi];
@@ -34,7 +34,7 @@ __global__ void prescan_arbitrary(int *output, int *input, int n, int powerOfTwo
 		temp[ai + bankOffsetA] = 0;
 		temp[bi + bankOffsetB] = 0;
 	}
-	
+
 
 	int offset = 1;
 	for (int d = powerOfTwo >> 1; d > 0; d >>= 1) // build sum in place up the tree
@@ -137,7 +137,7 @@ __global__ void prescan_large(int *output, int *input, int n, int *sums) {
 	int blockID = blockIdx.x;
 	int threadID = threadIdx.x;
 	int blockOffset = blockID * n;
-	
+
 	int ai = threadID;
 	int bi = threadID + (n / 2);
 	int bankOffsetA = CONFLICT_FREE_OFFSET(ai);
@@ -163,11 +163,11 @@ __global__ void prescan_large(int *output, int *input, int n, int *sums) {
 	__syncthreads();
 
 
-	if (threadID == 0) { 
+	if (threadID == 0) {
 		sums[blockID] = temp[n - 1 + CONFLICT_FREE_OFFSET(n - 1)];
 		temp[n - 1 + CONFLICT_FREE_OFFSET(n - 1)] = 0;
-	} 
-	
+	}
+
 	for (int d = 1; d < n; d *= 2) // traverse down tree & build scan
 	{
 		offset >>= 1;

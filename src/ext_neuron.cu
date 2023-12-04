@@ -43,7 +43,7 @@ __global__ void UpdateExtNeuron(float *port_input_pt, float *port_value_pt,
     //printf("port %d node %d pip %f\n", i_port, i_node, *pip);
     port_value_pt[i_node*n_var + n_port_var*i_port]
       = *pip;
-    *pip = 0.0;    
+    *pip = 0.0;
   }
 }
 
@@ -92,7 +92,7 @@ int ext_neuron::Init(int i_node_0, int n_node, int n_port,
   }
   SetPortParam(0, n_node, "port_weight", port_weight_vect_.data(), n_port);
   SetPortVar(0, n_node, "port_input", port_input_vect_.data(), n_port);
-  
+
   return 0;
 }
 
@@ -100,19 +100,19 @@ int ext_neuron::Update(long long it, double t1) {
   // std::cout << "Ext neuron update\n";
   float *port_input_pt =  GetVarPt(0, "port_input", 0);
   float *port_value_pt =  GetVarPt(0, "port_value", 0);
-  
+
   UpdateExtNeuron<<<(n_node_*n_port_+1023)/1024, 1024>>>
     (port_input_pt, port_value_pt, n_node_, n_var_, n_port_var_, n_port_);
   //gpuErrchk( cudaDeviceSynchronize() );
-  
+
   return 0;
 }
 
 int ext_neuron::Free()
 {
-  FreeVarArr();  
+  FreeVarArr();
   FreeParamArr();
-  
+
   return 0;
 }
 
@@ -126,6 +126,6 @@ float *ext_neuron::GetExtNeuronInputSpikes(int *n_node, int *n_port)
   float *var_arr = GetPortVar(0, n_node_, "port_value");
   ext_neuron_input_spikes_.assign(var_arr, var_arr+n_node_*n_port_);
   free(var_arr);
-  
+
   return ext_neuron_input_spikes_.data();
 }

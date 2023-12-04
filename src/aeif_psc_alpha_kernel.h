@@ -161,7 +161,7 @@ __device__
 		     aeif_psc_alpha_rk5 data_struct)
 {
   float I_syn_tot = 0.0;
-  
+
 
   float V = ( refractory_step > 0 ) ? V_reset :  MIN(V_m, V_peak);
   I_syn_tot += I_syn_ex - I_syn_in;

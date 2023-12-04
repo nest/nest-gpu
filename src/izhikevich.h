@@ -119,7 +119,7 @@ enum GroupParamIndexes {
 };
 
 
- 
+
 const std::string izhikevich_scal_var_name[N_SCAL_VAR] = {
   "I_syn",
   "V_m",
@@ -140,9 +140,9 @@ const std::string izhikevich_group_param_name[N_GROUP_PARAM] = {
   "d",
   "t_ref"
 };
- 
+
 } // namespace
- 
+
 
 
 
@@ -152,14 +152,14 @@ class izhikevich : public BaseNeuron
 
  public:
   ~izhikevich();
-  
+
   int Init(int i_node_0, int n_neuron, int n_port, int i_group,
 	   unsigned long long *seed);
   int Calibrate(double /*time_min*/, float time_res) {
     time_resolution_ = time_res;
     return 0;
   }
-  
+
   int Update(long long it, double t1);
 
   int Free();

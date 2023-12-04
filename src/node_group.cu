@@ -60,7 +60,7 @@ int NESTGPU::NodeGroupArrayInit()
     ngs.n_rec_spike_times_ = node_vect_[i]->n_rec_spike_times_;
     ngs.max_n_rec_spike_times_ = node_vect_[i]->max_n_rec_spike_times_;
     ngs.den_delay_arr_ = node_vect_[i]->den_delay_arr_;
-    
+
     ngs_vect.push_back(ngs);
   }
   gpuErrchk(cudaMemcpyToSymbolAsync(NodeGroupArray, ngs_vect.data(),
@@ -83,13 +83,13 @@ double *NESTGPU::InitGetSpikeArray (int n_node, int n_port)
     gpuErrchk(cudaMalloc(&d_get_spike_array, n_node*n_port
 			 *sizeof(double)));
   }
-  
+
   return d_get_spike_array;
 }
 
 int NESTGPU::FreeNodeGroupMap()
 {
   gpuErrchk(cudaFree(d_node_group_map_));
-	    
+
   return 0;
 }

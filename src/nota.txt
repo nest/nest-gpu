@@ -62,7 +62,7 @@ for (unsigned int target=0; target<n_spike_buffers; target++) {
 for (unsigned int target=0; target<n_spike_buffers; target++) {
   if (target.isSpikingNow()) {
     int n_target_rev_conn = TargetRevConnectionSize[target];
-    
+
     for (int i=0; i<n_target_rev_conn; i++) {
       unsigned int i_conn = TargetRevConnection[target][i];
       unsigned char syn_group = ConnectionSynGroup[i_conn];

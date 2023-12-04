@@ -21,7 +21,7 @@ AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_CC_C_O
 
-# AC_CANONICAL_HOST is needed to access the 'host_os' variable    
+# AC_CANONICAL_HOST is needed to access the 'host_os' variable
 AC_CANONICAL_HOST
 
 build_linux=no

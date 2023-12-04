@@ -14,7 +14,7 @@ Table of Contents
    Guides <guides/index>
    Examples <examples/index>
    Model Directory <models/index>
-   
+
 
 .. toctree::
    :maxdepth: 2
@@ -22,4 +22,3 @@ Table of Contents
 
    Community <community>
    Publications <publications>
-

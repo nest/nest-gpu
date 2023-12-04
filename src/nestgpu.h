@@ -57,9 +57,9 @@ class Sequence
  public:
   int i0;
   int n;
-  
+
  Sequence(int i0=0, int n=0) : i0(i0), n(n) {}
-  
+
   inline int operator[](int i) {
     if (i<0) {
       throw ngpu_exception("Sequence index cannot be negative");
@@ -96,7 +96,7 @@ class RemoteNodeSeq
  public:
   int i_host;
   NodeSeq node_seq;
-  
+
   RemoteNodeSeq(int i_host=0, NodeSeq node_seq=NodeSeq(0,0)) :
     i_host(i_host), node_seq(node_seq) {}
 };
@@ -114,14 +114,14 @@ class NESTGPU
   Multimeter *multimeter_;
   std::vector<BaseNeuron*> node_vect_; // -> node_group_vect
   std::vector<SynModel*> syn_group_vect_;
-  
+
   NetConnection *net_connection_;
 
   bool mpi_flag_; // true if MPI is initialized
 #ifdef HAVE_MPI
   ConnectMpi *connect_mpi_;
 #endif
-  
+
   std::vector<signed char> node_group_map_;
   signed char *d_node_group_map_;
 
@@ -172,7 +172,7 @@ class NESTGPU
   template <class T1, class T2>
     int _Connect(T1 source, int n_source, T2 target, int n_target,
 		 ConnSpec &conn_spec, SynSpec &syn_spec);
-  
+
   template<class T1, class T2>
     int _SingleConnect(T1 source, int i_source, T2 target, int i_target,
 		       int i_array, SynSpec &syn_spec);
@@ -220,12 +220,12 @@ class NESTGPU
     int _RemoteConnect(RemoteNode<T1> source, int n_source,
 		       RemoteNode<T2> target, int n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec);
-  
+
   template <class T1, class T2>
     int _RemoteConnectOneToOne
     (RemoteNode<T1> source, RemoteNode<T2> target, int n_node,
      SynSpec &syn_spec);
-  
+
   template <class T1, class T2>
     int _RemoteConnectAllToAll
     (RemoteNode<T1> source, int n_source, RemoteNode<T2> target, int n_target,
@@ -235,7 +235,7 @@ class NESTGPU
     int _RemoteConnectFixedTotalNumber
     (RemoteNode<T1> source, int n_source, RemoteNode<T2> target, int n_target,
      int n_conn, SynSpec &syn_spec);
-  
+
   template <class T1, class T2>
     int _RemoteConnectFixedIndegree
     (RemoteNode<T1> source, int n_source, RemoteNode<T2> target, int n_target,
@@ -270,7 +270,7 @@ class NESTGPU
   int SetRandomSeed(unsigned long long seed);
 
   int SetTimeResolution(float time_res);
-  
+
   inline float GetTimeResolution() {
     return time_resolution_;
   }
@@ -325,7 +325,7 @@ class NESTGPU
 			     int n_node=1, int n_port=1);
 
   int CreateRecord(std::string file_name, std::string *var_name_arr,
-		   int *i_node_arr, int n_node);  
+		   int *i_node_arr, int n_node);
   int CreateRecord(std::string file_name, std::string *var_name_arr,
 		   int *i_node_arr, int *port_arr, int n_node);
   std::vector<std::vector<float> > *GetRecordData(int i_record);
@@ -350,7 +350,7 @@ class NESTGPU
 		      int array_size) {
     return SetNeuronParam(nodes.i0, nodes.n, param_name, param, array_size);
   }
-  
+
   int SetNeuronParam(std::vector<int> nodes, std::string param_name,
 		     float val) {
     return SetNeuronParam(nodes.data(), nodes.size(), param_name, val);
@@ -397,7 +397,7 @@ class NESTGPU
 		      int array_size) {
     return SetNeuronVar(nodes.i0, nodes.n, var_name, var, array_size);
   }
-  
+
   int SetNeuronVar(std::vector<int> nodes, std::string var_name,
 		     float val) {
     return SetNeuronVar(nodes.data(), nodes.size(), var_name, val);
@@ -420,13 +420,13 @@ class NESTGPU
   float *GetNeuronParam(NodeSeq nodes, std::string param_name) {
     return GetNeuronParam(nodes.i0, nodes.n, param_name);
   }
-  
+
   float *GetNeuronParam(std::vector<int> nodes, std::string param_name) {
     return GetNeuronParam(nodes.data(), nodes.size(), param_name);
   }
 
   float *GetArrayParam(int i_node, std::string param_name);
-  
+
   int *GetNeuronIntVar(int i_node, int n_neuron, std::string var_name);
 
   int *GetNeuronIntVar(int *i_node, int n_neuron, std::string var_name);
@@ -434,11 +434,11 @@ class NESTGPU
   int *GetNeuronIntVar(NodeSeq nodes, std::string var_name) {
     return GetNeuronIntVar(nodes.i0, nodes.n, var_name);
   }
-  
+
   int *GetNeuronIntVar(std::vector<int> nodes, std::string var_name) {
     return GetNeuronIntVar(nodes.data(), nodes.size(), var_name);
   }
-  
+
   float *GetNeuronVar(int i_node, int n_neuron, std::string var_name);
 
   float *GetNeuronVar(int *i_node, int n_neuron, std::string var_name);
@@ -446,13 +446,13 @@ class NESTGPU
   float *GetNeuronVar(NodeSeq nodes, std::string var_name) {
     return GetNeuronVar(nodes.i0, nodes.n, var_name);
   }
-  
+
   float *GetNeuronVar(std::vector<int> nodes, std::string var_name) {
     return GetNeuronVar(nodes.data(), nodes.size(), var_name);
   }
 
   float *GetArrayVar(int i_node, std::string param_name);
-  
+
   int GetNodeSequenceOffset(int i_node, int n_node, int &i_group);
 
   std::vector<int> GetNodeArrayWithOffset(int *i_node, int n_node,
@@ -465,18 +465,18 @@ class NESTGPU
   int IsNeuronArrayParam(int i_node, std::string param_name);
 
   int IsNeuronIntVar(int i_node, std::string var_name);
-  
+
   int IsNeuronScalVar(int i_node, std::string var_name);
 
   int IsNeuronPortVar(int i_node, std::string var_name);
 
   int IsNeuronArrayVar(int i_node, std::string var_name);
-  
+
   int SetSpikeGenerator(int i_node, int n_spikes, float *spike_time,
 			float *spike_height);
 
   int Calibrate();
-  
+
   int Simulate();
 
   int Simulate(float sim_time);
@@ -486,7 +486,7 @@ class NESTGPU
   int SimulationStep();
 
   int EndSimulation();
-  
+
   int ConnectMpiInit(int argc, char *argv[]);
 
   int MpiId();
@@ -498,9 +498,9 @@ class NESTGPU
   int MpiFinalize();
 
   std::string MpiRankStr();
-  
+
   void SetErrorFlag(bool error_flag) {error_flag_ = error_flag;}
-  
+
   void SetErrorMessage(std::string error_message) { error_message_
       = error_message; }
 
@@ -517,13 +517,13 @@ class NESTGPU
   int OnException() {return on_exception_;}
 
   unsigned int *RandomInt(size_t n);
-  
+
   float *RandomUniform(size_t n);
 
   float *RandomNormal(size_t n, float mean, float stddev);
 
   float *RandomNormalClipped(size_t n, float mean, float stddev, float vmin,
-			     float vmax, float vstep);  
+			     float vmax, float vstep);
 
   int Connect
     (
@@ -592,23 +592,23 @@ class NESTGPU
   std::vector<std::string> GetScalVarNames(int i_node);
 
   int GetNIntVar(int i_node);
-  
+
   std::vector<std::string> GetIntVarNames(int i_node);
 
   int GetNScalVar(int i_node);
-  
+
   std::vector<std::string> GetPortVarNames(int i_node);
 
   int GetNPortVar(int i_node);
-  
+
   std::vector<std::string> GetScalParamNames(int i_node);
 
   int GetNScalParam(int i_node);
-  
+
   std::vector<std::string> GetPortParamNames(int i_node);
 
   int GetNPortParam(int i_node);
-  
+
   std::vector<std::string> GetArrayParamNames(int i_node);
 
   int GetNArrayParam(int i_node);
@@ -618,11 +618,11 @@ class NESTGPU
   std::vector<std::string> GetGroupParamNames(int i_node);
 
   int GetNGroupParam(int i_node);
-  
+
   int GetNArrayVar(int i_node);
 
   ConnectionStatus GetConnectionStatus(ConnectionId conn_id);
-  
+
   std::vector<ConnectionStatus> GetConnectionStatus(std::vector<ConnectionId>
 						    &conn_id_vect);
 
@@ -641,7 +641,7 @@ class NESTGPU
   std::vector<ConnectionId> GetConnections(int *i_source, int n_source,
 					   int *i_target, int n_target,
 					   int syn_group=-1);
-    
+
   std::vector<ConnectionId> GetConnections(NodeSeq source, NodeSeq target,
 					   int syn_group=-1);
 
@@ -673,13 +673,13 @@ class NESTGPU
   int SynGroupCalibrate();
 
   int ActivateSpikeCount(int i_node, int n_node);
-  
+
   int ActivateSpikeCount(NodeSeq nodes) {
     return ActivateSpikeCount(nodes.i0, nodes.n);
   }
 
   int ActivateRecSpikeTimes(int i_node, int n_node, int max_n_rec_spike_times);
-  
+
   int ActivateRecSpikeTimes(NodeSeq nodes, int max_n_rec_spike_times) {
     return ActivateRecSpikeTimes(nodes.i0, nodes.n, max_n_rec_spike_times);
   }
@@ -702,7 +702,7 @@ class NESTGPU
   }
 
   int PushSpikesToNodes(int n_spikes, int *node_id, float *spike_height);
-  
+
   int PushSpikesToNodes(int n_spikes, int *node_id);
 
   int GetExtNeuronInputSpikes(int *n_spikes, int **node, int **port,
@@ -710,7 +710,7 @@ class NESTGPU
 
   int SetNeuronGroupParam(int i_node, int n_node,
 			  std::string param_name, float val);
-  
+
   int IsNeuronGroupParam(int i_node, std::string param_name);
 
   float GetNeuronGroupParam(int i_node, std::string param_name);

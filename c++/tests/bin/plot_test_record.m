@@ -54,4 +54,3 @@ figure(7);
 plot(t,n7);
 hold on;
 plot(t1,v7);
-

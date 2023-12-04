@@ -29,12 +29,12 @@ int main(int argc, char *argv[])
     cerr << "Usage: mpirun -np <number-of-mpi-hosts> brunel_mpi_nx\n";
     return -1;
   }
-  
+
   int mpi_id = neural_gpu.MpiId();
   cout << "Building on host " << mpi_id << " ..." <<endl;
-  
+
   neural_gpu.max_spike_buffer_num_=10; //reduce it to save GPU memory
-  
+
   //////////////////////////////////////////////////////////////////////
   // WRITE HERE COMMANDS THAT ARE EXECUTED ON ALL HOSTS
   //////////////////////////////////////////////////////////////////////
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
   int neuron = neural_gpu.CreateNeuron(n_neurons, n_receptors);
   int exc_neuron = neuron;      // excitatory neuron id
   int inh_neuron = neuron + NE; // inhibitory neuron id
-  
+
   // the following parameters are set to the same values on all hosts
   float E_rev[] = {0.0, -85.0};
   float tau_decay[] = {1.0, 1.0};
@@ -95,13 +95,13 @@ int main(int argc, char *argv[])
   // connect poisson generator to port 0 of all neurons
   neural_gpu.ConnectAllToAll(pg, n_pg, neuron, n_neurons, 0, poiss_weight,
 			     poiss_delay);
-  
+
   char filename[100];
   sprintf(filename, "test_brunel_mpi_nx_%d.dat", mpi_id);
   int i_neurons[] = {2000, 8000, 9999}; // any set of neuron indexes
   // create multimeter record of V_m
   neural_gpu.CreateRecord(string(filename), "V_m", i_neurons, 3);
-  
+
   //////////////////////////////////////////////////////////////////////
   // WRITE HERE REMOTE CONNECTIONS
   //////////////////////////////////////////////////////////////////////
@@ -120,8 +120,8 @@ int main(int argc, char *argv[])
     neural_gpu.RemoteConnectFixedIndegree(ish2, exc_neuron+NE-NEext/2,
 					  NEext/2, ith, neuron, n_neurons,
 					  0, Wex, delay, CE/4);
-    
-    
+
+
     // Inhibitory remote connections
     // connect inhibitory neurons to port 1 of all neurons
     // weight Win and fixed indegree CI-CI*3/4
@@ -133,9 +133,9 @@ int main(int argc, char *argv[])
     neural_gpu.RemoteConnectFixedIndegree(ish2, inh_neuron+NI-NIext/2,
 					  NIext/2, ith, neuron, n_neurons,
 					  1, Win, delay, CI/4);
-    
+
   }
-    
+
   neural_gpu.SetRandomSeed(1234ULL); // just to have same results in different simulations
   neural_gpu.Simulate();
 

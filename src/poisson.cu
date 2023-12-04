@@ -121,13 +121,13 @@ int PoissonGenerator::Create(curandGenerator_t *random_generator,
   i_node_0_ = i_node_0;
   n_node_ = n_node;
   lambda_ = lambda;
-  
+
   n_steps_ = (buffer_size_ - 1)/n_node + 1;
   // with the above formula:
   // buffer_size <= n_node*n_steps <= buffer_size + n_node - 1
   Init(random_generator, n_node_*n_steps_);
   i_step_ = 0;
-       
+
   return 0;
 }
 
@@ -141,7 +141,7 @@ int PoissonGenerator::Update(int max_n_steps)
     throw ngpu_exception("Step index larger than maximum number of steps "
 			 "in poisson generator");
   }
-  
+
   PoissonUpdate<<<1, 1>>>(&dev_poisson_data_[i_step_*n_node_]);
   gpuErrchk( cudaPeekAtLastError() );
 

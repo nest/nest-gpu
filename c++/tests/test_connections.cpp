@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
   cout << "Building ...\n";
 
   ngpu.SetRandomSeed(1234ULL); // seed for GPU random numbers
-  
+
   // poisson generator parameters
   float poiss_rate = 5000.0; // poisson signal rate in Hz
   float poiss_weight = 1.0;
@@ -58,12 +58,12 @@ int main(int argc, char *argv[])
   int n_neur2 = 20;
   int n_neur3 = 50;
   int n_neurons = n_neur1 + n_neur2 + n_neur3;
-  
+
   NodeSeq neur_group = ngpu.Create("aeif_cond_beta", n_neurons, n_recept);
   NodeSeq neur_group1 = neur_group.Subseq(0, n_neur1 - 1);
   NodeSeq neur_group2 = neur_group.Subseq(n_neur1, n_neur1 + n_neur2 - 1);
   NodeSeq neur_group3 = neur_group.Subseq(n_neur1 + n_neur2, n_neurons - 1);
-  
+
   // neuron parameters
   float E_rev[] = {0.0, 0.0, 0.0};
   float tau_decay[] = {1.0, 1.0, 1.0};
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
   int it1 = neur_group1[rand()%n_neur1];
   int it2 = neur_group2[rand()%n_neur2];
   int it3 = neur_group3[rand()%n_neur3];
-  
+
   // connect poisson generator to port 0 of all neurons
   ngpu.Connect(pg[0], i11, 0, 0, poiss_weight, poiss_delay);
   ngpu.Connect(pg[0], i12, 0, 0, poiss_weight, poiss_delay);
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
     // connect neurons to target neuron n. 3
   ngpu.Connect(i31, it3, 0, 0, weight, delay);
   ngpu.Connect(i32, it3, 1, 0, weight, delay);
-  
+
   // create multimeter record n.1
   string filename1 = "test_connections_voltage.dat";
   int i_neuron_arr1[] = {i11, i12, i13, i14, i21, i31, i32, it1, it2, it3};

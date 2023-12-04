@@ -36,10 +36,10 @@ int main(int argc, char *argv[])
 {
   NESTGPU ngpu;
   cout << "Building ...\n";
-  
+
   srand(12345);
   int n_neurons = 10000;
-  
+
   // create n_neurons neurons with 1 receptor ports
   NodeSeq neuron = ngpu.Create("aeif_cond_beta", n_neurons, 1);
 

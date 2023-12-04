@@ -147,7 +147,7 @@ const std::string aeif_psc_exp_multisynapse_group_param_name[N_GROUP_PARAM] = {
 #define h_min_rel_ group_param_[i_h_min_rel]
 #define h0_rel_ group_param_[i_h0_rel]
 
- 
+
  template<int NVAR, int NPARAM> //, class DataStruct>
 __device__
     void Derivatives(double x, float *y, float *dydx, float *param,
@@ -155,7 +155,7 @@ __device__
 {
   enum { n_port = (NVAR-N_SCAL_VAR)/N_PORT_VAR };
   float I_syn_tot = 0.0;
-  
+
 
   float V = ( refractory_step > 0 ) ? V_reset :  MIN(V_m, V_peak);
   for (int i = 0; i<n_port; i++) {

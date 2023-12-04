@@ -58,7 +58,7 @@ __global__ void izhikevich_psc_exp_Update
   if (i_neuron<n_node) {
     float *var = var_arr + n_var*i_neuron;
     float *param = param_arr + n_param*i_neuron;
-    
+
     if ( refractory_step > 0.0 ) {
       // neuron is absolute refractory
       refractory_step -= 1.0;
@@ -73,7 +73,7 @@ __global__ void izhikevich_psc_exp_Update
     }
     // exponential decaying PSC
     I_syn *= C_syn;
-    
+
     if ( V_m >= V_th ) { // send spike
       PushSpike(i_node_0 + i_neuron, 1.0);
       V_m = c;
@@ -104,7 +104,7 @@ int izhikevich_psc_exp::Init(int i_node_0, int n_node, int /*n_port*/,
   n_scal_param_ = N_SCAL_PARAM;
   n_group_param_ = N_GROUP_PARAM;
   n_param_ = n_scal_param_;
-  
+
   AllocParamArr();
   AllocVarArr();
   group_param_ = new float[N_GROUP_PARAM];
@@ -115,7 +115,7 @@ int izhikevich_psc_exp::Init(int i_node_0, int n_node, int /*n_port*/,
 
   SetScalParam(0, n_node, "I_e", 0.0 );              // in pA
   SetScalParam(0, n_node, "den_delay", 0.0 );        // in ms
-  
+
   SetScalVar(0, n_node, "I_syn", 0.0 );
   SetScalVar(0, n_node, "V_m", -70.0 ); // in mV
   SetScalVar(0, n_node, "u", -70.0*0.2 );
@@ -136,7 +136,7 @@ int izhikevich_psc_exp::Init(int i_node_0, int n_node, int /*n_port*/,
 			 sizeof(float), cudaMemcpyHostToDevice));
   port_weight_arr_step_ = 0;
   port_weight_port_step_ = 0;
-  
+
   // input spike signal is stored in I_syn
   port_input_arr_ = GetVarArr() + GetScalVarIdx("I_syn");
   port_input_arr_step_ = n_var_;
@@ -156,15 +156,15 @@ int izhikevich_psc_exp::Update(long long it, double t1)
     (n_node_, i_node_0_, var_arr_, param_arr_, n_var_, n_param_,
      V_th_, a_, b_, c_, d_, n_refractory_steps, h, C_syn);
   //gpuErrchk( cudaDeviceSynchronize() );
-  
+
   return 0;
 }
 
 int izhikevich_psc_exp::Free()
 {
-  FreeVarArr();  
+  FreeVarArr();
   FreeParamArr();
   delete[] group_param_;
-  
+
   return 0;
 }

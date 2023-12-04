@@ -71,7 +71,7 @@ enum GroupParamIndexes {
   N_GROUP_PARAM
 };
 
- 
+
 const std::string user_m1_scal_var_name[N_SCAL_VAR] = {
   "V_m",
   "w"
@@ -103,7 +103,7 @@ const std::string user_m1_port_param_name[N_PORT_PARAM] = {
   "E_rev",
   "tau_rise",
   "tau_decay",
-  "g0"  
+  "g0"
 };
 
 

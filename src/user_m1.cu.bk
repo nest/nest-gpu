@@ -42,7 +42,7 @@ void NodeInit(int n_var, int n_param, double x, float *y, float *param,
   V_reset = -60.0;
   t_ref = 0.0;
   den_delay = 0.0;
-  
+
   V_m = E_L;
   w = 0;
   refractory_step = 0;
@@ -87,7 +87,7 @@ void NodeCalibrate(int n_var, int n_param, double x, float *y,
 }
 
 }
-			    
+
 __device__
 void NodeInit(int n_var, int n_param, double x, float *y,
 	     float *param, user_m1_rk5 data_struct)
@@ -108,14 +108,14 @@ using namespace user_m1_ns;
 int user_m1::Init(int i_node_0, int n_node, int n_port,
 			 int i_group, unsigned long long *seed) {
   BaseNeuron::Init(i_node_0, n_node, n_port, i_group, seed);
-  
+
   node_type_ = i_user_m1_model;
   n_scal_var_ = N_SCAL_VAR;
   n_port_var_ = N_PORT_VAR;
   n_scal_param_ = N_SCAL_PARAM;
   n_port_param_ = N_PORT_PARAM;
   n_group_param_ = N_GROUP_PARAM;
- 
+
   n_var_ = n_scal_var_ + n_port_var_*n_port;
   n_param_ = n_scal_param_ + n_port_param_*n_port;
 
@@ -156,7 +156,7 @@ int user_m1::Calibrate(double time_min, float time_resolution)
   h_min_ = h_min_rel_* time_resolution;
   h_ = h0_rel_* time_resolution;
   rk5_.Calibrate(time_min, h_, rk5_data_struct_);
-  
+
   return 0;
 }
 
@@ -171,4 +171,3 @@ int user_m1::Update(long long it, double t1) {
 
   return 0;
 }
-

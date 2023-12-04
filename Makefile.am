@@ -175,7 +175,7 @@ libnestgpu.la: $(OBJS)
 
 lib_LTLIBRARIES = libnestgpu.la
 
-%.cu: 
+%.cu:
 
 clean-local:
 	rm -f *.so obj/*.o
