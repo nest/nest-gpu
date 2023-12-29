@@ -126,12 +126,9 @@ float *Distribution::getArray(curandGenerator_t &gen, int64_t n_elem,
 			 cudaMemcpyHostToDevice));    
   }
   else if (distr_idx_==DISTR_TYPE_NORMAL_CLIPPED) {
-    //printf("ok0\n");
     CURAND_CALL(curandGenerateUniform(gen, d_array_pt_, n_elem));
-    //printf("ok1\n");
     randomNormalClipped(d_array_pt_, n_elem, mu_[i_vect], sigma_[i_vect],
 			low_[i_vect], high_[i_vect]);
-    //printf("ok2\n");
   }
   else if (distr_idx_==DISTR_TYPE_NORMAL) {
     float low = mu_[i_vect] - 5.0*sigma_[i_vect];
@@ -176,9 +173,7 @@ int Distribution::SetIntParam(std::string param_name, int val)
 
 int Distribution::SetScalParam(std::string param_name, float val)
 {
-  //printf("dok0\n");
   checkDistributionInitialized();
-  //printf("dok1\n");
   if (vect_size_ <= 0) {
     throw ngpu_exception("Distribution parameter vector dimension "
 			 "was not initialized");
@@ -187,7 +182,6 @@ int Distribution::SetScalParam(std::string param_name, float val)
     throw ngpu_exception("Distribution parameter vector dimension"
 			 " inconsistent for scalar parameter");
   }
-  //printf("dok2\n");
   SetVectParam(param_name, val, 0);
   
   return 0;
@@ -195,9 +189,7 @@ int Distribution::SetScalParam(std::string param_name, float val)
 
 int Distribution::SetVectParam(std::string param_name, float val, int i)
 {
-  //printf("dok3\n");
   checkDistributionInitialized();
-  //printf("dok4\n");
   if (vect_size_ <= 0) {
     throw ngpu_exception("Distribution parameter vector dimension "
 			 "was not initialized");
@@ -206,10 +198,8 @@ int Distribution::SetVectParam(std::string param_name, float val, int i)
     throw ngpu_exception("Vector parameter index for distribution "
 			 "out of range");
   }
-  //printf("dok5\n");
   if (param_name=="mu") {
     // aggiungere && distr_idx==NORMAL || distr_idx==NORMAL_CLIPPED
-    //printf("dok6 i: %d val: %f\n", i, val);
     mu_[i] = val;
   }
   else if (param_name=="sigma") {
@@ -225,7 +215,6 @@ int Distribution::SetVectParam(std::string param_name, float val, int i)
     throw ngpu_exception(std::string("Unrecognized distribution "
 				     "float parameter ") + param_name);
   }
-  //printf("dok7\n");
   
   return 0;
 }

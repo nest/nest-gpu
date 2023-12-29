@@ -620,37 +620,37 @@ extern "C" {
     ret = SynSpec_instance.IsFloatPtParam(param_name_str);
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_ConnectSeqSeq(int i_source, int n_source, int i_target,
-			      int n_target)
+  int NESTGPU_ConnectSeqSeq(uint i_source, uint n_source, uint i_target,
+			    uint n_target)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->Connect(i_source, n_source, i_target, n_target,
 				      ConnSpec_instance, SynSpec_instance); 
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_ConnectSeqGroup(int i_source, int n_source, int *i_target,
-				int n_target)
+  int NESTGPU_ConnectSeqGroup(uint i_source, uint n_source, uint *i_target,
+			      uint n_target)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->Connect(i_source, n_source, i_target, n_target,
 				      ConnSpec_instance, SynSpec_instance); 
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_ConnectGroupSeq(int *i_source, int n_source, int i_target,
-				int n_target)
+  int NESTGPU_ConnectGroupSeq(uint *i_source, uint n_source, uint i_target,
+			      uint n_target)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->Connect(i_source, n_source, i_target, n_target,
 				      ConnSpec_instance, SynSpec_instance);
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_ConnectGroupGroup(int *i_source, int n_source, int *i_target,
-				  int n_target)
+  int NESTGPU_ConnectGroupGroup(uint *i_source, uint n_source, uint *i_target,
+				uint n_target)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->Connect(i_source, n_source, i_target, n_target,
 				      ConnSpec_instance, SynSpec_instance);
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_RemoteConnectSeqSeq(int i_source_host, int i_source,
-				    int n_source, int i_target_host,
-				    int i_target, int n_target)
+  int NESTGPU_RemoteConnectSeqSeq(int i_source_host, uint i_source,
+				  uint n_source, int i_target_host,
+				  uint i_target, uint n_target)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->RemoteConnect(i_source_host, i_source, n_source,
 					    i_target_host, i_target, n_target,
@@ -658,9 +658,9 @@ extern "C" {
 					    SynSpec_instance); 
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_RemoteConnectSeqGroup(int i_source_host, int i_source,
-				      int n_source, int i_target_host,
-				      int *i_target, int n_target)
+  int NESTGPU_RemoteConnectSeqGroup(int i_source_host, uint i_source,
+				    uint n_source, int i_target_host,
+				    uint *i_target, uint n_target)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->RemoteConnect(i_source_host, i_source, n_source,
 					    i_target_host, i_target, n_target,
@@ -668,9 +668,9 @@ extern "C" {
 					    SynSpec_instance); 
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_RemoteConnectGroupSeq(int i_source_host, int *i_source,
-				      int n_source, int i_target_host,
-				      int i_target, int n_target)
+  int NESTGPU_RemoteConnectGroupSeq(int i_source_host, uint *i_source,
+				    uint n_source, int i_target_host,
+				    uint i_target, uint n_target)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->RemoteConnect(i_source_host, i_source, n_source,
 					    i_target_host, i_target, n_target,
@@ -679,9 +679,9 @@ extern "C" {
   } END_ERR_PROP return ret; }
 
 
-  int NESTGPU_RemoteConnectGroupGroup(int i_source_host, int *i_source,
-					int n_source, int i_target_host,
-					int *i_target, int n_target)
+  int NESTGPU_RemoteConnectGroupGroup(int i_source_host, uint *i_source,
+				      uint n_source, int i_target_host,
+				      uint *i_target, uint n_target)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->RemoteConnect(i_source_host, i_source, n_source,
 					    i_target_host, i_target, n_target,
@@ -690,7 +690,7 @@ extern "C" {
   } END_ERR_PROP return ret; }
 
 
-  char **NESTGPU_GetIntVarNames(int i_node)
+  char **NESTGPU_GetIntVarNames(uint i_node)
   { char **ret = NULL; BEGIN_ERR_PROP {
     std::vector<std::string> var_name_vect =
       NESTGPU_instance->GetIntVarNames(i_node);
@@ -707,7 +707,7 @@ extern "C" {
     
   } END_ERR_PROP return ret; }
 
-  char **NESTGPU_GetScalVarNames(int i_node)
+  char **NESTGPU_GetScalVarNames(uint i_node)
   { char **ret = NULL; BEGIN_ERR_PROP {
     std::vector<std::string> var_name_vect =
       NESTGPU_instance->GetScalVarNames(i_node);
@@ -724,18 +724,18 @@ extern "C" {
     
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_GetNIntVar(int i_node)
+  int NESTGPU_GetNIntVar(uint i_node)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->GetNIntVar(i_node);
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_GetNScalVar(int i_node)
+  int NESTGPU_GetNScalVar(uint i_node)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->GetNScalVar(i_node);
   } END_ERR_PROP return ret; }
 
 
-  char **NESTGPU_GetPortVarNames(int i_node)
+  char **NESTGPU_GetPortVarNames(uint i_node)
   { char **ret = NULL; BEGIN_ERR_PROP {
     std::vector<std::string> var_name_vect =
       NESTGPU_instance->GetPortVarNames(i_node);
@@ -753,13 +753,13 @@ extern "C" {
   } END_ERR_PROP return ret; }
 
   
-  int NESTGPU_GetNPortVar(int i_node)
+  int NESTGPU_GetNPortVar(uint i_node)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->GetNPortVar(i_node);
   } END_ERR_PROP return ret; }
 
   
-  char **NESTGPU_GetScalParamNames(int i_node)
+  char **NESTGPU_GetScalParamNames(uint i_node)
   { char **ret = NULL; BEGIN_ERR_PROP {
     std::vector<std::string> var_name_vect =
       NESTGPU_instance->GetScalParamNames(i_node);
@@ -777,13 +777,13 @@ extern "C" {
   } END_ERR_PROP return ret; }
 
   
-  int NESTGPU_GetNScalParam(int i_node)
+  int NESTGPU_GetNScalParam(uint i_node)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->GetNScalParam(i_node);
   } END_ERR_PROP return ret; }
 
 
-  char **NESTGPU_GetGroupParamNames(int i_node)
+  char **NESTGPU_GetGroupParamNames(uint i_node)
   { char **ret = NULL; BEGIN_ERR_PROP {
     std::vector<std::string> var_name_vect =
       NESTGPU_instance->GetGroupParamNames(i_node);
@@ -801,13 +801,13 @@ extern "C" {
   } END_ERR_PROP return ret; }
 
   
-  int NESTGPU_GetNGroupParam(int i_node)
+  int NESTGPU_GetNGroupParam(uint i_node)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->GetNGroupParam(i_node);
   } END_ERR_PROP return ret; }
 
 
-  char **NESTGPU_GetPortParamNames(int i_node)
+  char **NESTGPU_GetPortParamNames(uint i_node)
   { char **ret = NULL; BEGIN_ERR_PROP {
     std::vector<std::string> var_name_vect =
       NESTGPU_instance->GetPortParamNames(i_node);
@@ -825,13 +825,13 @@ extern "C" {
   } END_ERR_PROP return ret; }
 
   
-  int NESTGPU_GetNPortParam(int i_node)
+  int NESTGPU_GetNPortParam(uint i_node)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->GetNPortParam(i_node);
   } END_ERR_PROP return ret; }
 
 
-  char **NESTGPU_GetArrayParamNames(int i_node)
+  char **NESTGPU_GetArrayParamNames(uint i_node)
   { char **ret = NULL; BEGIN_ERR_PROP {
     std::vector<std::string> var_name_vect =
       NESTGPU_instance->GetArrayParamNames(i_node);
@@ -849,12 +849,12 @@ extern "C" {
   } END_ERR_PROP return ret; }
 
   
-  int NESTGPU_GetNArrayParam(int i_node)
+  int NESTGPU_GetNArrayParam(uint i_node)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->GetNArrayParam(i_node);
   } END_ERR_PROP return ret; }
 
-  char **NESTGPU_GetArrayVarNames(int i_node)
+  char **NESTGPU_GetArrayVarNames(uint i_node)
   { char **ret = NULL; BEGIN_ERR_PROP {
     std::vector<std::string> var_name_vect =
       NESTGPU_instance->GetArrayVarNames(i_node);
@@ -871,52 +871,51 @@ extern "C" {
     
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_GetNArrayVar(int i_node)
+  int NESTGPU_GetNArrayVar(uint i_node)
   { int ret = 0; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->GetNArrayVar(i_node);
   } END_ERR_PROP return ret; }
 
 
-  int64_t *NESTGPU_GetSeqSeqConnections(int i_source, int n_source,
-					int i_target, int n_target,
+  int64_t *NESTGPU_GetSeqSeqConnections(uint i_source, uint n_source,
+					uint i_target, uint n_target,
 					int syn_group, int64_t *n_conn)
   { int64_t *ret = NULL; BEGIN_ERR_PROP {
-      ret = NESTGPU_instance->GetConnections(i_source, n_source, i_target,
-					     n_target, syn_group, n_conn);
+      ret = NESTGPU_instance->GetConnections
+	(i_source, n_source, i_target, n_target, syn_group, n_conn);
   } END_ERR_PROP return ret; }
 
-  int64_t *NESTGPU_GetSeqGroupConnections(int i_source, int n_source,
-					  int *i_target_pt, int n_target,
+  int64_t *NESTGPU_GetSeqGroupConnections(uint i_source, uint n_source,
+					  uint *i_target_pt, uint n_target,
 					  int syn_group, int64_t *n_conn)
   { int64_t *ret = NULL; BEGIN_ERR_PROP {
-      ret = NESTGPU_instance->GetConnections(i_source, n_source, i_target_pt,
-					     n_target, syn_group, n_conn);
+      ret = NESTGPU_instance->GetConnections
+	(i_source, n_source, i_target_pt, n_target, syn_group, n_conn);
   } END_ERR_PROP return ret; }
 
-  int64_t *NESTGPU_GetGroupSeqConnections(int *i_source_pt, int n_source,
-					  int i_target, int n_target,
+  int64_t *NESTGPU_GetGroupSeqConnections(uint *i_source_pt, uint n_source,
+					  uint i_target, uint n_target,
 					  int syn_group, int64_t *n_conn)
   { int64_t *ret = NULL; BEGIN_ERR_PROP {
-      ret = NESTGPU_instance->GetConnections(i_source_pt, n_source, i_target,
-					     n_target, syn_group, n_conn);
+      ret = NESTGPU_instance->GetConnections
+	(i_source_pt, n_source, i_target, n_target, syn_group, n_conn);
   } END_ERR_PROP return ret; }
 
-  int64_t *NESTGPU_GetGroupGroupConnections(int *i_source_pt, int n_source,
-					    int *i_target_pt, int n_target,
+  int64_t *NESTGPU_GetGroupGroupConnections(uint *i_source_pt, uint n_source,
+					    uint *i_target_pt, uint n_target,
 					    int syn_group, int64_t *n_conn)
   { int64_t *ret = NULL; BEGIN_ERR_PROP {
-      ret = NESTGPU_instance->GetConnections(i_source_pt, n_source,
-					     i_target_pt, n_target,
-					     syn_group, n_conn);
+      ret = NESTGPU_instance->GetConnections<conn12b_key, conn12b_struct>
+	(i_source_pt, n_source, i_target_pt, n_target, syn_group, n_conn);
   } END_ERR_PROP return ret; }
 
   int NESTGPU_GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
-				  int *i_source, int *i_target,
+				  uint *i_source, uint *i_target,
 				  int *port,
-				  unsigned char *syn_group, float *delay,
+				  int *syn_group, float *delay,
 				  float *weight)
   { int ret = 0; BEGIN_ERR_PROP {
-      ret = NESTGPU_instance->GetConnectionStatus
+      ret = NESTGPU_instance->GetConnectionStatus<conn12b_key, conn12b_struct>
 	(conn_ids, n_conn, i_source, i_target, port, syn_group, delay,
 	 weight);
   } END_ERR_PROP return ret; }
@@ -937,51 +936,56 @@ extern "C" {
 				      float *param_arr, char *param_name)
   { int ret = 0; BEGIN_ERR_PROP {
       std::string param_name_str = std::string(param_name);
-      ret = NESTGPU_instance->GetConnectionFloatParam(conn_ids, n_conn,
-						      param_arr,
-						      param_name_str);
+      ret = NESTGPU_instance->GetConnectionFloatParam
+	<conn12b_key, conn12b_struct>(conn_ids, n_conn, param_arr,
+				      param_name_str);
   } END_ERR_PROP return ret; }
   
   int NESTGPU_GetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
 				    int *param_arr, char *param_name)
   { int ret = 0; BEGIN_ERR_PROP {
       std::string param_name_str = std::string(param_name);
-      ret = NESTGPU_instance->GetConnectionIntParam(conn_ids, n_conn,
-						    param_arr,
-						    param_name_str);
+      ret = NESTGPU_instance->GetConnectionIntParam
+	<conn12b_key, conn12b_struct>(conn_ids, n_conn,
+				      param_arr,
+				      param_name_str);
   } END_ERR_PROP return ret; }
 
   int NESTGPU_SetConnectionFloatParamDistr(int64_t *conn_ids, int64_t n_conn,
 					   char *param_name)
   { int ret = 0; BEGIN_ERR_PROP {
       std::string param_name_str = std::string(param_name);
-      ret = NESTGPU_instance->SetConnectionFloatParamDistr(conn_ids, n_conn,
-							   param_name_str);
+      ret = NESTGPU_instance->SetConnectionFloatParamDistr
+	<conn12b_key, conn12b_struct>(conn_ids, n_conn,
+				      param_name_str);
     } END_ERR_PROP return ret; }
   
   int NESTGPU_SetConnectionIntParamArr(int64_t *conn_ids, int64_t n_conn,
 				       int *param_arr, char *param_name)
   { int ret = 0; BEGIN_ERR_PROP {
       std::string param_name_str = std::string(param_name);
-      ret = NESTGPU_instance->SetConnectionIntParamArr(conn_ids, n_conn,
-						       param_arr,
-						       param_name_str);
+      ret = NESTGPU_instance->SetConnectionIntParamArr
+	<conn12b_key, conn12b_struct>(conn_ids, n_conn,
+				      param_arr,
+				      param_name_str);
   } END_ERR_PROP return ret; }
 
   int NESTGPU_SetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
 				      float val, char *param_name)
   { int ret = 0; BEGIN_ERR_PROP {
       std::string param_name_str = std::string(param_name);
-      ret = NESTGPU_instance->SetConnectionFloatParam(conn_ids, n_conn,
-						      val, param_name_str);
+      ret = NESTGPU_instance->SetConnectionFloatParam
+	<conn12b_key, conn12b_struct>(conn_ids, n_conn,
+				      val, param_name_str);
   } END_ERR_PROP return ret; }
 
   int NESTGPU_SetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
 				    int val, char *param_name)
   { int ret = 0; BEGIN_ERR_PROP {
       std::string param_name_str = std::string(param_name);
-      ret = NESTGPU_instance->SetConnectionIntParam(conn_ids, n_conn,
-						    val, param_name_str);
+      ret = NESTGPU_instance->SetConnectionIntParam
+	<conn12b_key, conn12b_struct>(conn_ids, n_conn,
+				      val, param_name_str);
   } END_ERR_PROP return ret; }
   
   int NESTGPU_CreateSynGroup(char *model_name)
@@ -1048,14 +1052,14 @@ extern "C" {
   } END_ERR_PROP return ret; }
 
   
-  int NESTGPU_ActivateSpikeCount(int i_node, int n_node)
+  int NESTGPU_ActivateSpikeCount(uint i_node, int n_node)
   { int ret = 0; BEGIN_ERR_PROP {
     
     ret = NESTGPU_instance->ActivateSpikeCount(i_node, n_node);
   } END_ERR_PROP return ret; }
 
   
-  int NESTGPU_ActivateRecSpikeTimes(int i_node, int n_node,
+  int NESTGPU_ActivateRecSpikeTimes(uint i_node, int n_node,
 				      int max_n_rec_spike_times)
   { int ret = 0; BEGIN_ERR_PROP {
     
@@ -1063,7 +1067,7 @@ extern "C" {
 						      max_n_rec_spike_times);
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_SetRecSpikeTimesStep(int i_node, int n_node,
+  int NESTGPU_SetRecSpikeTimesStep(uint i_node, int n_node,
 				   int rec_spike_times_step)
   { int ret = 0; BEGIN_ERR_PROP {
     
@@ -1072,13 +1076,13 @@ extern "C" {
   } END_ERR_PROP return ret; }
 
   
-  int NESTGPU_GetNRecSpikeTimes(int i_node)
+  int NESTGPU_GetNRecSpikeTimes(uint i_node)
   { int ret = 0; BEGIN_ERR_PROP {
     
       ret = NESTGPU_instance->GetNRecSpikeTimes(i_node);
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_GetRecSpikeTimes(int i_node, int n_node,
+  int NESTGPU_GetRecSpikeTimes(uint i_node, int n_node,
 			       int **n_spike_times_pt,
 			       float ***spike_times_pt)
   { int ret = 0; BEGIN_ERR_PROP {
@@ -1102,7 +1106,7 @@ extern "C" {
 							include_zeros>0);
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_SetNeuronGroupParam(int i_node, int n_node, char *param_name,
+  int NESTGPU_SetNeuronGroupParam(uint i_node, int n_node, char *param_name,
 				    float val)
   { float ret = 0.0; BEGIN_ERR_PROP {
     
@@ -1112,14 +1116,14 @@ extern "C" {
 						  val);
   } END_ERR_PROP return ret; }
 
-  int NESTGPU_IsNeuronGroupParam(int i_node, char *param_name)
+  int NESTGPU_IsNeuronGroupParam(uint i_node, char *param_name)
   { int ret = 0; BEGIN_ERR_PROP {
     std::string param_name_str = std::string(param_name);
     
     ret = NESTGPU_instance->IsNeuronGroupParam(i_node, param_name_str);
   } END_ERR_PROP return ret; }
 
-  float NESTGPU_GetNeuronGroupParam(int i_node, char *param_name)
+  float NESTGPU_GetNeuronGroupParam(uint i_node, char *param_name)
   { float ret = 0; BEGIN_ERR_PROP {
     std::string param_name_str = std::string(param_name);
     

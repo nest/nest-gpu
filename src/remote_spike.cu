@@ -41,74 +41,74 @@ __constant__ bool have_remote_spike_height;
 
 // Simple kernel for pushing remote spikes in local spike buffers
 // Version without spike multiplicity array (spike_height) 
-__global__ void PushSpikeFromRemote(int n_spikes, int *spike_buffer_id)
+__global__ void PushSpikeFromRemote(uint n_spikes, uint *spike_buffer_id)
 {
-  int i_spike = threadIdx.x + blockIdx.x * blockDim.x;
+  uint i_spike = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_spike<n_spikes) {
-    int isb = spike_buffer_id[i_spike];
+    uint isb = spike_buffer_id[i_spike];
     PushSpike(isb, 1.0);
   }
 }
 
-__device__ int NExternalTargetHost;
-__device__ int MaxSpikePerHost;
+__device__ uint NExternalTargetHost;
+__device__ uint MaxSpikePerHost;
 
-int *d_ExternalSpikeNum;
-__device__ int *ExternalSpikeNum;
+uint *d_ExternalSpikeNum;
+__device__ uint *ExternalSpikeNum;
 
-int *d_ExternalSpikeSourceNode; // [MaxSpikeNum];
-__device__ int *ExternalSpikeSourceNode;
+uint *d_ExternalSpikeSourceNode; // [MaxSpikeNum];
+__device__ uint *ExternalSpikeSourceNode;
 
 float *d_ExternalSpikeHeight; // [MaxSpikeNum];
 __device__ float *ExternalSpikeHeight;
 
-int *d_ExternalTargetSpikeNum;
-__device__ int *ExternalTargetSpikeNum;
+uint *d_ExternalTargetSpikeNum;
+__device__ uint *ExternalTargetSpikeNum;
 
-int *d_ExternalTargetSpikeNodeId;
-__device__ int *ExternalTargetSpikeNodeId;
+uint *d_ExternalTargetSpikeNodeId;
+__device__ uint *ExternalTargetSpikeNodeId;
 
 float *d_ExternalTargetSpikeHeight;
 __device__ float *ExternalTargetSpikeHeight;
 
-//int *d_NExternalNodeTargetHost;
-__device__ int *NExternalNodeTargetHost;
+//uint *d_NExternalNodeTargetHost;
+__device__ uint *NExternalNodeTargetHost;
 
-//int **d_ExternalNodeTargetHostId;
-__device__ int **ExternalNodeTargetHostId;
+//uint **d_ExternalNodeTargetHostId;
+__device__ uint **ExternalNodeTargetHostId;
 
-//int **d_ExternalNodeId;
-__device__ int **ExternalNodeId;
+//uint **d_ExternalNodeId;
+__device__ uint **ExternalNodeId;
 
-//int *d_ExternalSourceSpikeNum;
-//__device__ int *ExternalSourceSpikeNum;
+//uint *d_ExternalSourceSpikeNum;
+//__device__ uint *ExternalSourceSpikeNum;
 
-int *d_ExternalSourceSpikeNodeId;
-__device__ int *ExternalSourceSpikeNodeId;
+uint *d_ExternalSourceSpikeNodeId;
+__device__ uint *ExternalSourceSpikeNodeId;
 
 float *d_ExternalSourceSpikeHeight;
 __device__ float *ExternalSourceSpikeHeight;
 
-int *d_ExternalTargetSpikeIdx0;
-__device__ int *ExternalTargetSpikeIdx0;
-int *h_ExternalTargetSpikeIdx0;
+uint *d_ExternalTargetSpikeIdx0;
+__device__ uint *ExternalTargetSpikeIdx0;
+uint *h_ExternalTargetSpikeIdx0;
 
-int *d_ExternalSourceSpikeIdx0;
+uint *d_ExternalSourceSpikeIdx0;
 
-int *h_ExternalTargetSpikeNum;
-int *h_ExternalSourceSpikeNum;
-int *h_ExternalSourceSpikeIdx0;
-int *h_ExternalTargetSpikeNodeId;
-int *h_ExternalSourceSpikeNodeId;
+uint *h_ExternalTargetSpikeNum;
+uint *h_ExternalSourceSpikeNum;
+uint *h_ExternalSourceSpikeIdx0;
+uint *h_ExternalTargetSpikeNodeId;
+uint *h_ExternalSourceSpikeNodeId;
 
-//int *h_ExternalSpikeNodeId;
+//uint *h_ExternalSpikeNodeId;
 
 float *h_ExternalSpikeHeight;
 
 // Push in a dedicated array the spikes that must be sent externally
-__device__ void PushExternalSpike(int i_source, float height)
+__device__ void PushExternalSpike(uint i_source, float height)
 {
-  int pos = atomicAdd(ExternalSpikeNum, 1);
+  uint pos = atomicAdd(ExternalSpikeNum, 1);
   if (pos>=MaxSpikePerHost) {
     printf("Number of spikes larger than MaxSpikePerHost: %d\n", MaxSpikePerHost);
     *ExternalSpikeNum = MaxSpikePerHost;
@@ -120,9 +120,9 @@ __device__ void PushExternalSpike(int i_source, float height)
 
 // Push in a dedicated array the spikes that must be sent externally
 // (version without spike height)
-__device__ void PushExternalSpike(int i_source)
+__device__ void PushExternalSpike(uint i_source)
 {
-  int pos = atomicAdd(ExternalSpikeNum, 1);
+  uint pos = atomicAdd(ExternalSpikeNum, 1);
   if (pos>=MaxSpikePerHost) {
     printf("Number of spikes larger than MaxSpikePerHost: %d\n", MaxSpikePerHost);
     *ExternalSpikeNum = MaxSpikePerHost;
@@ -134,21 +134,21 @@ __device__ void PushExternalSpike(int i_source)
 // Count the spikes that must be sent externally for each target host
 __global__ void countExternalSpikesPerTargetHost()
 {
-  const int i_spike = blockIdx.x;
+  const uint i_spike = blockIdx.x;
   if (i_spike < *ExternalSpikeNum) {
     //printf("ExternalSpikeNum: %d\ti_spike: %d\n", *ExternalSpikeNum, i_spike);
-    int i_source = ExternalSpikeSourceNode[i_spike];
+    uint i_source = ExternalSpikeSourceNode[i_spike];
     //printf("i_source: %d\n", i_source);
-    int Nth = NExternalNodeTargetHost[i_source];
+    uint Nth = NExternalNodeTargetHost[i_source];
     //printf("Nth: %d\n", Nth);
     
-    for (int ith=threadIdx.x; ith<Nth; ith+=blockDim.x){
+    for (uint ith=threadIdx.x; ith<Nth; ith+=blockDim.x){
       //printf("ith: %d\n", ith);
-      int target_host_id = ExternalNodeTargetHostId[i_source][ith];
+      uint target_host_id = ExternalNodeTargetHostId[i_source][ith];
       //printf("target_host_id: %d\n", target_host_id);
-      //int remote_node_id = ExternalNodeId[i_source][ith];
+      //uint remote_node_id = ExternalNodeId[i_source][ith];
       //printf("remote_node_id: %d\n", remote_node_id);
-      //int pos =
+      //uint pos =
       atomicAdd(&ExternalTargetSpikeNum[target_host_id], 1);
       //printf("pos: %d\n", pos);
     }
@@ -158,23 +158,23 @@ __global__ void countExternalSpikesPerTargetHost()
 // Organize the spikes that must be sent externally for each target host
 __global__ void organizeExternalSpikesPerTargetHost()
 {
-  const int i_spike = blockIdx.x;
+  const uint i_spike = blockIdx.x;
   if (i_spike < *ExternalSpikeNum) {
     //printf("ExternalSpikeNum: %d\ti_spike: %d\n", *ExternalSpikeNum, i_spike);
-    int i_source = ExternalSpikeSourceNode[i_spike];
+    uint i_source = ExternalSpikeSourceNode[i_spike];
     //printf("i_source: %d\n", i_source);
-    int Nth = NExternalNodeTargetHost[i_source];
+    uint Nth = NExternalNodeTargetHost[i_source];
     //printf("Nth: %d\n", Nth);
     
-    for (int ith=threadIdx.x; ith<Nth; ith+=blockDim.x){
+    for (uint ith=threadIdx.x; ith<Nth; ith+=blockDim.x){
       //printf("ith: %d\n", ith);
-      int target_host_id = ExternalNodeTargetHostId[i_source][ith];
+      uint target_host_id = ExternalNodeTargetHostId[i_source][ith];
       //printf("target_host_id: %d\n", target_host_id);
-      int remote_node_id = ExternalNodeId[i_source][ith];
+      uint remote_node_id = ExternalNodeId[i_source][ith];
       //printf("remote_node_id: %d\n", remote_node_id);
-      int pos = atomicAdd(&ExternalTargetSpikeNum[target_host_id], 1);
+      uint pos = atomicAdd(&ExternalTargetSpikeNum[target_host_id], 1);
       //printf("pos: %d\n", pos);
-      int i_arr = ExternalTargetSpikeIdx0[target_host_id] + pos;
+      uint i_arr = ExternalTargetSpikeIdx0[target_host_id] + pos;
       ExternalTargetSpikeNodeId[i_arr] = remote_node_id;
       if (have_remote_spike_height) {
 	float height = ExternalSpikeHeight[i_spike];
@@ -189,8 +189,8 @@ __global__ void organizeExternalSpikesPerTargetHost()
 // reset external spike counters
 int NESTGPU::ExternalSpikeReset()
 {
-  gpuErrchk(cudaMemset(d_ExternalSpikeNum, 0, sizeof(int)));
-  gpuErrchk(cudaMemset(d_ExternalTargetSpikeNum, 0, n_hosts_*sizeof(int)));
+  gpuErrchk(cudaMemset(d_ExternalSpikeNum, 0, sizeof(uint)));
+  gpuErrchk(cudaMemset(d_ExternalTargetSpikeNum, 0, n_hosts_*sizeof(uint)));
   
   return 0;
 }
@@ -204,21 +204,21 @@ int NESTGPU::ExternalSpikeInit()
   SendSpikeToRemote_CUDAcp_time_ = 0;
   RecvSpikeFromRemote_CUDAcp_time_ = 0;
 
-  //int *h_NExternalNodeTargetHost = new int[n_node];
-  //int **h_ExternalNodeTargetHostId = new int*[n_node];
-  //int **h_ExternalNodeId = new int*[n_node];
+  //uint *h_NExternalNodeTargetHost = new uint[n_node];
+  //uint **h_ExternalNodeTargetHostId = new uint*[n_node];
+  //uint **h_ExternalNodeId = new uint*[n_node];
 
-  h_ExternalTargetSpikeIdx0 = new int[n_hosts_+1];
-  //h_ExternalSpikeNodeId = new int[max_spike_per_host_];
-  h_ExternalTargetSpikeNum = new int [n_hosts_];
-  h_ExternalSourceSpikeNum = new int[n_hosts_];
-  h_ExternalSourceSpikeIdx0 = new int[n_hosts_ + 1];
-  h_ExternalTargetSpikeNodeId = new int[max_remote_spike_num_];
-  h_ExternalSourceSpikeNodeId = new int[max_remote_spike_num_];
+  h_ExternalTargetSpikeIdx0 = new uint[n_hosts_+1];
+  //h_ExternalSpikeNodeId = new uint[max_spike_per_host_];
+  h_ExternalTargetSpikeNum = new uint [n_hosts_];
+  h_ExternalSourceSpikeNum = new uint[n_hosts_];
+  h_ExternalSourceSpikeIdx0 = new uint[n_hosts_ + 1];
+  h_ExternalTargetSpikeNodeId = new uint[max_remote_spike_num_];
+  h_ExternalSourceSpikeNodeId = new uint[max_remote_spike_num_];
 
-  CUDAMALLOCCTRL("&d_ExternalSpikeNum",&d_ExternalSpikeNum, sizeof(int));
+  CUDAMALLOCCTRL("&d_ExternalSpikeNum",&d_ExternalSpikeNum, sizeof(uint));
   CUDAMALLOCCTRL("&d_ExternalSpikeSourceNode",&d_ExternalSpikeSourceNode,
-		       max_spike_per_host_*sizeof(int));
+		       max_spike_per_host_*sizeof(uint));
   
   if (remote_spike_height_) {
     h_ExternalSpikeHeight = new float[max_spike_per_host_];
@@ -231,29 +231,29 @@ int NESTGPU::ExternalSpikeInit()
   }
   
   CUDAMALLOCCTRL("&d_ExternalTargetSpikeNum",&d_ExternalTargetSpikeNum,
-		 n_hosts_*sizeof(int));
+		 n_hosts_*sizeof(uint));
 
   //printf("n_hosts, max_spike_per_host: %d %d\n", n_hosts, max_spike_per_host);
 
   CUDAMALLOCCTRL("&d_ExternalTargetSpikeNodeId",
 		 &d_ExternalTargetSpikeNodeId,
-		 max_remote_spike_num_*sizeof(int));
+		 max_remote_spike_num_*sizeof(uint));
   
   //CUDAMALLOCCTRL("&d_ExternalSourceSpikeNum",&d_ExternalSourceSpikeNum,
   //n_hosts*sizeof(int));
   CUDAMALLOCCTRL("&d_ExternalSourceSpikeNodeId",&d_ExternalSourceSpikeNodeId,
-		 max_remote_spike_num_*sizeof(int));
+		 max_remote_spike_num_*sizeof(uint));
   CUDAMALLOCCTRL("&d_ExternalTargetSpikeIdx0",&d_ExternalTargetSpikeIdx0,
-		 (n_hosts_ + 1)*sizeof(int));
+		 (n_hosts_ + 1)*sizeof(uint));
 
   CUDAMALLOCCTRL("&d_ExternalSourceSpikeIdx0",&d_ExternalSourceSpikeIdx0,
-		 (n_hosts_ + 1)*sizeof(int));
+		 (n_hosts_ + 1)*sizeof(uint));
   
   //CUDAMALLOCCTRL("&d_NExternalNodeTargetHost",&d_NExternalNodeTargetHost,
-  //n_node*sizeof(int));
+  //n_node*sizeof(uint));
   //CUDAMALLOCCTRL("&d_ExternalNodeTargetHostId",&d_ExternalNodeTargetHostId,
-  //n_node*sizeof(int*));
-  //CUDAMALLOCCTRL("&d_ExternalNodeId",&d_ExternalNodeId, n_node*sizeof(int*));
+  //n_node*sizeof(uint*));
+  //CUDAMALLOCCTRL("&d_ExternalNodeId",&d_ExternalNodeId, n_node*sizeof(uint*));
 
   if (remote_spike_height_) {
     DeviceExternalSpikeInit<<<1,1>>>(n_hosts_, max_spike_per_host_,
@@ -289,18 +289,18 @@ int NESTGPU::ExternalSpikeInit()
 }
 
 // initialize external spike array pointers in the GPU
-__global__ void DeviceExternalSpikeInit(int n_hosts,
-					int max_spike_per_host,
-					int *ext_spike_num,
-					int *ext_spike_source_node,
+__global__ void DeviceExternalSpikeInit(uint n_hosts,
+					uint max_spike_per_host,
+					uint *ext_spike_num,
+					uint *ext_spike_source_node,
 					float *ext_spike_height,
-					int *ext_target_spike_num,
-					int *ext_target_spike_idx0,
-					int *ext_target_spike_node_id,
+					uint *ext_target_spike_num,
+					uint *ext_target_spike_idx0,
+					uint *ext_target_spike_node_id,
 					float *ext_target_spike_height,
-					int *n_ext_node_target_host,
-					int **ext_node_target_host_id,
-					int **ext_node_id
+					uint *n_ext_node_target_host,
+					uint **ext_node_target_host_id,
+					uint **ext_node_id
 					)
   
 {
@@ -317,23 +317,23 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
   ExternalNodeTargetHostId = ext_node_target_host_id;
   ExternalNodeId = ext_node_id;
   *ExternalSpikeNum = 0;
-  for (int ith=0; ith<NExternalTargetHost; ith++) {
+  for (uint ith=0; ith<NExternalTargetHost; ith++) {
     ExternalTargetSpikeNum[ith] = 0;
   }  
 }
 
 // initialize external spike array pointers in the GPU
 // (version without spike height)
-__global__ void DeviceExternalSpikeInit(int n_hosts,
-					int max_spike_per_host,
-					int *ext_spike_num,
-					int *ext_spike_source_node,
-					int *ext_target_spike_num,
-					int *ext_target_spike_idx0,
-					int *ext_target_spike_node_id,
-					int *n_ext_node_target_host,
-					int **ext_node_target_host_id,
-					int **ext_node_id
+__global__ void DeviceExternalSpikeInit(uint n_hosts,
+					uint max_spike_per_host,
+					uint *ext_spike_num,
+					uint *ext_spike_source_node,
+					uint *ext_target_spike_num,
+					uint *ext_target_spike_idx0,
+					uint *ext_target_spike_node_id,
+					uint *n_ext_node_target_host,
+					uint **ext_node_target_host_id,
+					uint **ext_node_id
 					)
   
 {
@@ -350,19 +350,19 @@ __global__ void DeviceExternalSpikeInit(int n_hosts,
   ExternalNodeTargetHostId = ext_node_target_host_id;
   ExternalNodeId = ext_node_id;
   *ExternalSpikeNum = 0;
-  for (int ith=0; ith<NExternalTargetHost; ith++) {
+  for (uint ith=0; ith<NExternalTargetHost; ith++) {
     ExternalTargetSpikeNum[ith] = 0;
   }  
 }
 
-int NESTGPU::organizeExternalSpikes(int n_ext_spikes)
+int NESTGPU::organizeExternalSpikes(uint n_ext_spikes)
 {
   countExternalSpikesPerTargetHost<<<n_ext_spikes, 1024>>>();
   CUDASYNC;
-  prefix_scan(d_ExternalTargetSpikeIdx0, d_ExternalTargetSpikeNum,
+  prefix_scan((int*)d_ExternalTargetSpikeIdx0, (int*)d_ExternalTargetSpikeNum,
 	      n_hosts_+1, true);
   DBGCUDASYNC;
-  gpuErrchk(cudaMemset(d_ExternalTargetSpikeNum, 0, n_hosts_*sizeof(int)));
+  gpuErrchk(cudaMemset(d_ExternalTargetSpikeNum, 0, n_hosts_*sizeof(uint)));
   organizeExternalSpikesPerTargetHost<<<n_ext_spikes, 1024>>>();
   CUDASYNC;
   
@@ -401,12 +401,14 @@ int NESTGPU::CopySpikeFromRemote()
     // copy to GPU memory cumulative sum of number of spikes per source host
     gpuErrchk(cudaMemcpyAsync(d_ExternalSourceSpikeIdx0,
 			      h_ExternalSourceSpikeIdx0,
-			      (n_hosts_+1)*sizeof(int), cudaMemcpyHostToDevice));
+			      (n_hosts_+1)*sizeof(uint),
+			      cudaMemcpyHostToDevice));
     DBGCUDASYNC;
     // copy to GPU memory packed spikes from remote hosts
     gpuErrchk(cudaMemcpyAsync(d_ExternalSourceSpikeNodeId,
 			      h_ExternalSourceSpikeNodeId,
-			      n_spike_tot*sizeof(int), cudaMemcpyHostToDevice));
+			      n_spike_tot*sizeof(uint),
+			      cudaMemcpyHostToDevice));
     DBGCUDASYNC;
     RecvSpikeFromRemote_CUDAcp_time_ += (getRealTime() - time_mark);
     // convert node map indexes to spike buffer indexes

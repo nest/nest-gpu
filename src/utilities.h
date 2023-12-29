@@ -23,6 +23,9 @@
 #ifndef UTILITIES_H
 #define UTILITIES_H
 
+#include <cub/cub.cuh>
+#include "cuda_error.h"
+
 __device__  __forceinline__ double atomicAddDouble(double* address, double val)
 {
     unsigned long long int* address_as_ull =
@@ -54,5 +57,33 @@ __device__  __forceinline__ T2 locate(T1 val, T1 *data, T2 n)
 }
 
 int IntPow(int x, unsigned int p);
-  
+
+
+template <class T>
+T *sortArray(T *h_arr, int n_elem)
+{
+  // allocate unsorted and sorted array in device memory
+  T *d_arr_unsorted;
+  T *d_arr_sorted;
+  CUDAMALLOCCTRL("&d_arr_unsorted",&d_arr_unsorted, n_elem*sizeof(T));
+  CUDAMALLOCCTRL("&d_arr_sorted",&d_arr_sorted, n_elem*sizeof(T));
+  gpuErrchk(cudaMemcpy(d_arr_unsorted, h_arr, n_elem*sizeof(T),
+		       cudaMemcpyHostToDevice));
+  void *d_storage = NULL;
+  size_t storage_bytes = 0;
+  // Determine temporary storage requirements for sorting source indexes
+  cub::DeviceRadixSort::SortKeys(d_storage, storage_bytes, d_arr_unsorted,
+				 d_arr_sorted, n_elem);
+  // Allocate temporary storage for sorting
+  CUDAMALLOCCTRL("&d_storage",&d_storage, storage_bytes);
+  // Run radix sort
+  cub::DeviceRadixSort::SortKeys(d_storage, storage_bytes, d_arr_unsorted,
+				 d_arr_sorted, n_elem);
+  CUDAFREECTRL("d_storage",d_storage);
+  CUDAFREECTRL("d_arr_unsorted",d_arr_unsorted);
+
+  return d_arr_sorted;
+}
+
+
 #endif

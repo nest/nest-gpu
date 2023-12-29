@@ -49,6 +49,9 @@ class ConnSpec;
 class SynSpec;
 class SynModel;
 
+typedef uint inode_t;
+typedef uint iconngroup_t;
+
 class Sequence
 {
  public:
@@ -175,8 +178,8 @@ class NESTGPU
   std::vector<int> ext_neuron_input_spike_port_;
   std::vector<float> ext_neuron_input_spike_height_;
 
-  int setHostNum(int n_hosts);
-  int setThisHost(int i_host);
+  int setHostNum(uint n_hosts);
+  int setThisHost(uint i_host);
   
   int InitConnRandomGenerator();
   int FreeConnRandomGenerator();
@@ -192,58 +195,60 @@ class NESTGPU
 
   NodeSeq _Create(std::string model_name, int n_nodes, int n_ports);
   
-  template <class T1, class T2>
-  int _Connect(T1 source, int n_source, T2 target, int n_target,
+  template <class T1, class T2, class ConnKeyT, class ConnStructT>
+  int _Connect(T1 source, inode_t n_source, T2 target, inode_t n_target,
 		 ConnSpec &conn_spec, SynSpec &syn_spec);
   
-  template <class T1, class T2>
-  int _Connect(curandGenerator_t &gen, T1 source, int n_source,
-	       T2 target, int n_target,
+  template <class T1, class T2, class ConnKeyT, class ConnStructT>
+  int _Connect(curandGenerator_t &gen, T1 source, inode_t n_source,
+	       T2 target, inode_t n_target,
 	       ConnSpec &conn_spec, SynSpec &syn_spec);
   
-  template <class T1, class T2>
+  template <class T1, class T2, class ConnKeyT, class ConnStructT>
     int _ConnectOneToOne(curandGenerator_t &gen, T1 source, T2 target,
-			 int n_node, SynSpec &syn_spec);
+			 inode_t n_node, SynSpec &syn_spec);
 
-  template <class T1, class T2>
-    int _ConnectAllToAll(curandGenerator_t &gen, T1 source, int n_source,
-			 T2 target, int n_target, SynSpec &syn_spec);
+  template <class T1, class T2, class ConnKeyT, class ConnStructT>
+    int _ConnectAllToAll(curandGenerator_t &gen, T1 source, inode_t n_source,
+			 T2 target, inode_t n_target, SynSpec &syn_spec);
 
-  template <class T1, class T2>
+  template <class T1, class T2, class ConnKeyT, class ConnStructT>
     int _ConnectFixedTotalNumber(curandGenerator_t &gen, T1 source,
-				 int n_source, T2 target, int n_target,
-				 int total_num, SynSpec &syn_spec);
+				 inode_t n_source, T2 target, inode_t n_target,
+				 int64_t total_num, SynSpec &syn_spec);
 
-  template <class T1, class T2>
+  template <class T1, class T2, class ConnKeyT, class ConnStructT>
     int _ConnectFixedIndegree
-    (curandGenerator_t &gen, T1 source, int n_source, T2 target, int n_target,
-     int indegree, SynSpec &syn_spec);
+    (curandGenerator_t &gen, T1 source, inode_t n_source,
+     T2 target, inode_t n_target, int indegree, SynSpec &syn_spec);
 
-  template <class T1, class T2>
+  template <class T1, class T2, class ConnKeyT, class ConnStructT>
     int _ConnectFixedOutdegree
-    (curandGenerator_t &gen, T1 source, int n_source, T2 target, int n_target,
-     int outdegree, SynSpec &syn_spec);
+    (curandGenerator_t &gen, T1 source, inode_t n_source, T2 target,
+     inode_t n_target, int outdegree, SynSpec &syn_spec);
 
-  template <class T1, class T2>
-  int _RemoteConnect(int this_host, int source_host, T1 source, int n_source,
-		     int target_host, T2 target, int n_target,
+  template <class T1, class T2, class ConnKeyT, class ConnStructT>
+  int _RemoteConnect(int this_host, int source_host,
+		     T1 source, inode_t n_source,
+		     int target_host, T2 target, inode_t n_target,
 		     ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  template <class T1, class T2>
-  int _RemoteConnect(int source_host, T1 source, int n_source,
-		     int target_host, T2 target, int n_target,
+  template <class T1, class T2, class ConnKeyT, class ConnStructT>
+  int _RemoteConnect(int source_host, T1 source, inode_t n_source,
+		     int target_host, T2 target, inode_t n_target,
 		     ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  template <class T1, class T2>
-  int _RemoteConnectSource(int source_host, T1 source, int n_source,
-			   T2 target, int n_target,
+  template <class T1, class T2, class ConnKeyT, class ConnStructT>
+  int _RemoteConnectSource(int source_host, T1 source, inode_t n_source,
+			   T2 target, inode_t n_target,
 			   ConnSpec &conn_spec, SynSpec &syn_spec);
   
-  template <class T1, class T2>
-  int _RemoteConnectTarget(int target_host, T1 source, int n_source,
-			   T2 target, int n_target,
+  template <class T1, class T2, class ConnKeyT, class ConnStructT>
+  int _RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
+			   T2 target, inode_t n_target,
 			   ConnSpec &conn_spec, SynSpec &syn_spec);
-  
+
+  template <class ConnKeyT, class ConnStructT>
   int addOffsetToExternalNodeIds();
 
   int addOffsetToSpikeBufferMap();
@@ -308,11 +313,11 @@ class NESTGPU
   
   uint GetTotalNNodes() { return GetNLocalNodes() + n_image_nodes_; }
 
-  int HostNum() {
+  uint HostNum() {
     return n_hosts_;
   }
 
-  int HostId() {
+  uint HostId() {
     return this_host_;
   }
 
@@ -342,7 +347,7 @@ class NESTGPU
   NodeSeq Create(std::string model_name, int n_nodes=1, int n_ports=1);
 
   RemoteNodeSeq RemoteCreate(int i_host, std::string model_name,
-			     int n_nodes=1, int n_ports=1);
+			     inode_t n_nodes=1, int n_ports=1);
 
   int CreateRecord(std::string file_name, std::string *var_name_arr,
 		   int *i_node_arr, int n_node);  
@@ -576,47 +581,48 @@ class NESTGPU
   float *RandomNormalClipped(size_t n, float mean, float stddev, float vmin,
 			     float vmax, float vstep);  
 
-  int Connect(int i_source_node, int i_target_node, int port,
-	      unsigned char syn_group, float weight, float delay);
-
-  int Connect(int i_source, int n_source, int i_target, int n_target,
+  int Connect(inode_t i_source, inode_t n_source,
+	      inode_t i_target, inode_t n_target,
 	      ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int Connect(int i_source, int n_source, int* target, int n_target,
+  int Connect(inode_t i_source, inode_t n_source,
+	      inode_t* target, inode_t n_target,
 	      ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int Connect(int* source, int n_source, int i_target, int n_target,
+  int Connect(inode_t* source, inode_t n_source,
+	      inode_t i_target, inode_t n_target,
 	      ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int Connect(int* source, int n_source, int* target, int n_target,
+  int Connect(inode_t* source, inode_t n_source,
+	      inode_t* target, inode_t n_target,
 	      ConnSpec &conn_spec, SynSpec &syn_spec);
 
   int Connect(NodeSeq source, NodeSeq target,
 	      ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int Connect(NodeSeq source, std::vector<int> target,
+  int Connect(NodeSeq source, std::vector<inode_t> target,
 	      ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int Connect(std::vector<int> source, NodeSeq target,
+  int Connect(std::vector<inode_t> source, NodeSeq target,
 	      ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int Connect(std::vector<int> source, std::vector<int> target,
+  int Connect(std::vector<inode_t> source, std::vector<inode_t> target,
 	      ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int RemoteConnect(int i_source_host, int i_source, int n_source,
-		    int i_target_host, int i_target, int n_target,
+  int RemoteConnect(int i_source_host, inode_t i_source, inode_t n_source,
+		    int i_target_host, inode_t i_target, inode_t n_target,
 		    ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int RemoteConnect(int i_source_host, int i_source, int n_source,
-		    int i_target_host, int* target, int n_target,
+  int RemoteConnect(int i_source_host, inode_t i_source, inode_t n_source,
+		    int i_target_host, inode_t* target, inode_t n_target,
 		    ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int RemoteConnect(int i_source_host, int* source, int n_source,
-		    int i_target_host, int i_target, int n_target,
+  int RemoteConnect(int i_source_host, inode_t* source, inode_t n_source,
+		    int i_target_host, inode_t i_target, inode_t n_target,
 		    ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int RemoteConnect(int i_source_host, int* source, int n_source,
-		    int i_target_host, int* target, int n_target,
+  int RemoteConnect(int i_source_host, inode_t* source, inode_t n_source,
+		    int i_target_host, inode_t* target, inode_t n_target,
 		    ConnSpec &conn_spec, SynSpec &syn_spec);
 
   int RemoteConnect(int i_source_host, NodeSeq source,
@@ -624,15 +630,15 @@ class NESTGPU
 		    ConnSpec &conn_spec, SynSpec &syn_spec);
 
   int RemoteConnect(int i_source_host, NodeSeq source,
-		    int i_target_host, std::vector<int> target,
+		    int i_target_host, std::vector<inode_t> target,
 		    ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int RemoteConnect(int i_source_host, std::vector<int> source,
+  int RemoteConnect(int i_source_host, std::vector<inode_t> source,
 		    int i_target_host, NodeSeq target,
 		    ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  int RemoteConnect(int i_source_host, std::vector<int> source,
-		    int i_target_host, std::vector<int> target,
+  int RemoteConnect(int i_source_host, std::vector<inode_t> source,
+		    int i_target_host, std::vector<inode_t> target,
 		    ConnSpec &conn_spec, SynSpec &syn_spec);
 
 
@@ -668,6 +674,7 @@ class NESTGPU
   
   int GetNArrayVar(int i_node);
 
+  
   int GetConnectionFloatParamIndex(std::string param_name);
   
   int GetConnectionIntParamIndex(std::string param_name);
@@ -675,60 +682,69 @@ class NESTGPU
   int IsConnectionFloatParam(std::string param_name);
   
   int IsConnectionIntParam(std::string param_name);
-  
+
+  template <class ConnKeyT, class ConnStructT>
   int GetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
 			      float *h_param_arr,
 			      std::string param_name);
-  
+
+  template <class ConnKeyT, class ConnStructT>
   int GetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
 			    int *h_param_arr,
 			    std::string param_name);
 
+  template <class ConnKeyT, class ConnStructT>
   int SetConnectionFloatParamDistr(int64_t *conn_ids, int64_t n_conn,
 				   std::string param_name);
 
+  template <class ConnKeyT, class ConnStructT>
   int SetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
 			      float val, std::string param_name);
 
+  template <class ConnKeyT, class ConnStructT>
   int SetConnectionIntParamArr(int64_t *conn_ids, int64_t n_conn,
 			       int *h_param_arr,
 			       std::string param_name);
-
+  
+  template <class ConnKeyT, class ConnStructT>
   int SetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
 			    int val, std::string param_name);
 
+  template <class ConnKeyT, class ConnStructT>
   int GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
-			  int *i_source, int *i_target, int *port,
-			  unsigned char *syn_group, float *delay,
+			  inode_t *source, inode_t *target, int *port,
+			  int *syn_group, float *delay,
 			  float *weight);
 
-  int64_t *GetConnections(int i_source, int n_source,
-			  int i_target, int n_target,
+  int64_t *GetConnections(inode_t i_source, inode_t n_source,
+			  inode_t i_target, inode_t n_target,
 			  int syn_group, int64_t *n_conn);
 
-  int64_t *GetConnections(int *i_source_pt, int n_source,
-			  int i_target, int n_target,
+  int64_t *GetConnections(inode_t *i_source_pt, inode_t n_source,
+			  inode_t i_target, inode_t n_target,
 			  int syn_group, int64_t *n_conn);
 
-  int64_t *GetConnections(int i_source, int n_source,
-			  int *i_target_pt, int n_target,
+  int64_t *GetConnections(inode_t i_source, inode_t n_source,
+			  inode_t *i_target_pt, inode_t n_target,
 			  int syn_group, int64_t *n_conn);
-
-  int64_t *GetConnections(int *i_source_pt, int n_source,
-			  int *i_target_pt, int n_target,
+  
+  template <class ConnKeyT, class ConnStructT>
+  int64_t *GetConnections(inode_t  *i_source_pt, inode_t n_source,
+			  inode_t *i_target_pt, inode_t n_target,
 			  int syn_group, int64_t *n_conn);
     
   int64_t *GetConnections(NodeSeq source, NodeSeq target,
-			  int syn_group, int64_t *n_conn);
+			   int syn_group, int64_t *n_conn);
 
-  int64_t *GetConnections(std::vector<int> source, NodeSeq target,
-			  int syn_group, int64_t *n_conn);
+  int64_t *GetConnections(std::vector<inode_t> source, NodeSeq target,
+			   int syn_group, int64_t *n_conn);
 
-  int64_t *GetConnections(NodeSeq source, std::vector<int> target,
-			  int syn_group, int64_t *n_conn);
+  int64_t *GetConnections(NodeSeq source, std::vector<inode_t> target,
+			   int syn_group, int64_t *n_conn);
 
-  int64_t *GetConnections(std::vector<int> source, std::vector<int> target,
-			  int syn_group, int64_t *n_conn);
+  int64_t *GetConnections(std::vector<inode_t> source,
+			  std::vector<inode_t> target,
+			   int syn_group, int64_t *n_conn);
 
   int CreateSynGroup(std::string model_name);
 
@@ -802,7 +818,7 @@ class NESTGPU
 
   int RecvSpikeFromRemote();
 
-  int organizeExternalSpikes(int n_ext_spikes);
+  int organizeExternalSpikes(uint n_ext_spikes);
 
 };
 

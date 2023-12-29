@@ -28,11 +28,12 @@
 #include <config.h>
 #include <iostream>
 #include "ngpu_exception.h"
-//#include "connect.h"
 #include "nestgpu.h"
 #include "connect_rules.h"
 #include "connect.h"
 #include "distribution.h"
+#include "connect.h"
+#include "remote_connect.h"
 
 int ConnSpec::Init()
 {
@@ -315,52 +316,52 @@ bool SynSpec::IsFloatPtParam(std::string param_name)
 
 
 
-int NESTGPU::Connect(int i_source, int n_source, int i_target, int n_target,
+int NESTGPU::Connect(inode_t i_source, inode_t n_source, inode_t i_target, inode_t n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return _Connect<int, int>(i_source, n_source, i_target, n_target,
-			    conn_spec, syn_spec);
+  return _Connect<inode_t, inode_t, conn12b_key, conn12b_struct>
+    (i_source, n_source, i_target, n_target, conn_spec, syn_spec);
 }
 
-int NESTGPU::Connect(int i_source, int n_source, int* target, int n_target,
+int NESTGPU::Connect(inode_t i_source, inode_t n_source, inode_t* target, inode_t n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  int *d_target;
-  CUDAMALLOCCTRL("&d_target",&d_target, n_target*sizeof(int));
-  gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(int),
+  inode_t *d_target;
+  CUDAMALLOCCTRL("&d_target",&d_target, n_target*sizeof(inode_t));
+  gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(inode_t),
 		       cudaMemcpyHostToDevice));
-  int ret = _Connect<int, int*>(i_source, n_source, d_target, n_target,
-				conn_spec, syn_spec);
+  int ret = _Connect<inode_t, inode_t*, conn12b_key, conn12b_struct>
+    (i_source, n_source, d_target, n_target, conn_spec, syn_spec);
   CUDAFREECTRL("d_target",d_target);
 
   return ret;
 }
-int NESTGPU::Connect(int* source, int n_source, int i_target, int n_target,
+int NESTGPU::Connect(inode_t* source, inode_t n_source, inode_t i_target, inode_t n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  int *d_source;
-  CUDAMALLOCCTRL("&d_source",&d_source, n_source*sizeof(int));
-  gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(int),
+  inode_t *d_source;
+  CUDAMALLOCCTRL("&d_source",&d_source, n_source*sizeof(inode_t));
+  gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(inode_t),
 		       cudaMemcpyHostToDevice));
-  int ret = _Connect<int*, int>(d_source, n_source, i_target, n_target,
-				conn_spec, syn_spec);
+  int ret = _Connect<inode_t*, inode_t, conn12b_key, conn12b_struct>
+    (d_source, n_source, i_target, n_target, conn_spec, syn_spec);
   CUDAFREECTRL("d_source",d_source);
   
   return ret;
 }
-int NESTGPU::Connect(int* source, int n_source, int* target, int n_target,
+int NESTGPU::Connect(inode_t* source, inode_t n_source, inode_t* target, inode_t n_target,
 		       ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  int *d_source;
-  CUDAMALLOCCTRL("&d_source",&d_source, n_source*sizeof(int));
-  gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(int),
+  inode_t *d_source;
+  CUDAMALLOCCTRL("&d_source",&d_source, n_source*sizeof(inode_t));
+  gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(inode_t),
 		       cudaMemcpyHostToDevice));
-  int *d_target;
-  CUDAMALLOCCTRL("&d_target",&d_target, n_target*sizeof(int));
-  gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(int),
+  inode_t *d_target;
+  CUDAMALLOCCTRL("&d_target",&d_target, n_target*sizeof(inode_t));
+  gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(inode_t),
 		       cudaMemcpyHostToDevice));
-  int ret = _Connect<int*, int*>(d_source, n_source, d_target, n_target,
-				 conn_spec, syn_spec);
+  int ret = _Connect<inode_t*, inode_t*, conn12b_key, conn12b_struct>
+    (d_source, n_source, d_target, n_target, conn_spec, syn_spec);
   CUDAFREECTRL("d_source",d_source);
   CUDAFREECTRL("d_target",d_target);
 
@@ -374,21 +375,21 @@ int NESTGPU::Connect(NodeSeq source, NodeSeq target,
 		 conn_spec, syn_spec);
 }
 
-int NESTGPU::Connect(NodeSeq source, std::vector<int> target,
+int NESTGPU::Connect(NodeSeq source, std::vector<inode_t> target,
 		     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   return Connect(source.i0, source.n, target.data(),
 		 target.size(), conn_spec, syn_spec);
 }
 
-int NESTGPU::Connect(std::vector<int> source, NodeSeq target,
+int NESTGPU::Connect(std::vector<inode_t> source, NodeSeq target,
 		     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   return Connect(source.data(), source.size(), target.i0,
 		 target.n, conn_spec, syn_spec);
 }
 
-int NESTGPU::Connect(std::vector<int> source, std::vector<int> target,
+int NESTGPU::Connect(std::vector<inode_t> source, std::vector<inode_t> target,
 		     ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   return Connect(source.data(), source.size(), target.data(),
@@ -396,62 +397,70 @@ int NESTGPU::Connect(std::vector<int> source, std::vector<int> target,
 }
 
 
-int NESTGPU::RemoteConnect(int i_source_host, int i_source, int n_source,
-			   int i_target_host, int i_target, int n_target,
+int NESTGPU::RemoteConnect(int i_source_host,
+			   inode_t i_source, inode_t n_source,
+			   int i_target_host,
+			   inode_t i_target, inode_t n_target,
 			   ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  return _RemoteConnect<int, int>(i_source_host, i_source, n_source,
-				  i_target_host, i_target, n_target,
-				  conn_spec, syn_spec);
+  return _RemoteConnect<inode_t, inode_t, conn12b_key, conn12b_struct>
+    (i_source_host, i_source, n_source, i_target_host, i_target, n_target,
+     conn_spec, syn_spec);
 }
 
-int NESTGPU::RemoteConnect(int i_source_host, int i_source, int n_source,
-			   int i_target_host, int* target, int n_target,
+int NESTGPU::RemoteConnect(int i_source_host,
+			   inode_t i_source, inode_t n_source,
+			   int i_target_host,
+			   inode_t* target, inode_t n_target,
 			   ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  int *d_target;
-  CUDAMALLOCCTRL("&d_target",&d_target, n_target*sizeof(int));
-  gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(int),
+  inode_t *d_target;
+  CUDAMALLOCCTRL("&d_target",&d_target, n_target*sizeof(inode_t));
+  gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(inode_t),
 		       cudaMemcpyHostToDevice));
-  int ret = _RemoteConnect<int, int*>(i_source_host, i_source, n_source,
-				      i_target_host, d_target, n_target,
-				      conn_spec, syn_spec);
+  int ret = _RemoteConnect<inode_t, inode_t*, conn12b_key, conn12b_struct>
+    (i_source_host, i_source, n_source, i_target_host, d_target, n_target,
+     conn_spec, syn_spec);
   CUDAFREECTRL("d_target",d_target);
 
   return ret;
 }
 
-int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
-			   int i_target_host, int i_target, int n_target,
+int NESTGPU::RemoteConnect(int i_source_host,
+			   inode_t* source, inode_t n_source,
+			   int i_target_host,
+			   inode_t i_target, inode_t n_target,
 			   ConnSpec &conn_spec, SynSpec &syn_spec)
 {
-  int *d_source;
-  CUDAMALLOCCTRL("&d_source",&d_source, n_source*sizeof(int));
-  gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(int),
+  inode_t *d_source;
+  CUDAMALLOCCTRL("&d_source",&d_source, n_source*sizeof(inode_t));
+  gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(inode_t),
 		       cudaMemcpyHostToDevice));
-  int ret = _RemoteConnect<int*, int>(i_source_host, d_source, n_source,
-				      i_target_host, i_target, n_target,
-				      conn_spec, syn_spec);
+  int ret = _RemoteConnect<inode_t*, inode_t, conn12b_key, conn12b_struct>
+    (i_source_host, d_source, n_source, i_target_host, i_target, n_target,
+     conn_spec, syn_spec);
   CUDAFREECTRL("d_source",d_source);
   
   return ret;
 }
 
-int NESTGPU::RemoteConnect(int i_source_host, int* source, int n_source,
-			   int i_target_host, int* target, int n_target,
+int NESTGPU::RemoteConnect(int i_source_host,
+			   inode_t* source, inode_t n_source,
+			   int i_target_host,
+			   inode_t* target, inode_t n_target,
 			   ConnSpec &conn_spec, SynSpec &syn_spec)
-{
-  int *d_source;
-  CUDAMALLOCCTRL("&d_source",&d_source, n_source*sizeof(int));
-  gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(int),
+{  
+  inode_t *d_source;
+  CUDAMALLOCCTRL("&d_source",&d_source, n_source*sizeof(inode_t));
+  gpuErrchk(cudaMemcpy(d_source, source, n_source*sizeof(inode_t),
 		       cudaMemcpyHostToDevice));
-  int *d_target;
-  CUDAMALLOCCTRL("&d_target",&d_target, n_target*sizeof(int));
-  gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(int),
+  inode_t *d_target;
+  CUDAMALLOCCTRL("&d_target",&d_target, n_target*sizeof(inode_t));
+  gpuErrchk(cudaMemcpy(d_target, target, n_target*sizeof(inode_t),
 		       cudaMemcpyHostToDevice));
-  int ret = _RemoteConnect<int*, int*>(i_source_host, d_source, n_source,
-				       i_target_host, d_target, n_target,
-				       conn_spec, syn_spec);
+  int ret = _RemoteConnect<inode_t*, inode_t*, conn12b_key, conn12b_struct>
+    (i_source_host, d_source, n_source, i_target_host, d_target, n_target,
+     conn_spec, syn_spec);
   CUDAFREECTRL("d_source",d_source);
   CUDAFREECTRL("d_target",d_target);
 
@@ -468,7 +477,7 @@ int NESTGPU::RemoteConnect(int i_source_host, NodeSeq source,
 }
 
 int NESTGPU::RemoteConnect(int i_source_host, NodeSeq source,
-			   int i_target_host, std::vector<int> target,
+			   int i_target_host, std::vector<inode_t> target,
 			   ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   return RemoteConnect(i_source_host, source.i0, source.n,
@@ -476,7 +485,7 @@ int NESTGPU::RemoteConnect(int i_source_host, NodeSeq source,
 		       conn_spec, syn_spec);
 }
 
-int NESTGPU::RemoteConnect(int i_source_host, std::vector<int> source,
+int NESTGPU::RemoteConnect(int i_source_host, std::vector<inode_t> source,
 			   int i_target_host, NodeSeq target,
 			   ConnSpec &conn_spec, SynSpec &syn_spec)
 {
@@ -485,8 +494,8 @@ int NESTGPU::RemoteConnect(int i_source_host, std::vector<int> source,
 			conn_spec, syn_spec);
 }
 
-int NESTGPU::RemoteConnect(int i_source_host, std::vector<int> source,
-			   int i_target_host, std::vector<int> target,
+int NESTGPU::RemoteConnect(int i_source_host, std::vector<inode_t> source,
+			   int i_target_host, std::vector<inode_t> target,
 			   ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   return RemoteConnect(i_source_host, source.data(), source.size(),

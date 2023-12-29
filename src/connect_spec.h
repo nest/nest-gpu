@@ -77,7 +77,7 @@ public:
 class SynSpec
 {
  public:
-  unsigned char syn_group_;
+  int syn_group_;
   int port_;
   int weight_distr_;
   float *weight_h_array_pt_;

@@ -85,7 +85,7 @@ int NESTGPU::SendSpikeToRemote(int n_ext_spikes)
 
   // loop on remote MPI proc
   for (int ih=0; ih<n_hosts_; ih++) {
-    if (ih == mpi_id) { // skip self MPI proc
+    if ((int)ih == mpi_id) { // skip self MPI proc
       continue;
     }
     // get index and size of spike packet that must be sent to MPI proc ih
@@ -124,7 +124,7 @@ int NESTGPU::RecvSpikeFromRemote()
   
   // loop on remote MPI proc
   for (int i_host=0; i_host<n_hosts_; i_host++) {
-    if (i_host == mpi_id) continue; // skip self MPI proc
+    if ((int)i_host == mpi_id) continue; // skip self MPI proc
     // start nonblocking MPI receive from MPI proc i_host
     MPI_Irecv(&h_ExternalSourceSpikeNodeId[i_host*max_spike_per_host_],
 	      max_spike_per_host_, MPI_INT, i_host, tag, MPI_COMM_WORLD,
@@ -136,7 +136,7 @@ int NESTGPU::RecvSpikeFromRemote()
   MPI_Waitall(n_hosts_, recv_mpi_request, statuses);
 
   for (int i_host=0; i_host<n_hosts_; i_host++) {
-    if (i_host == mpi_id) {
+    if ((int)i_host == mpi_id) {
       h_ExternalSourceSpikeNum[i_host] = 0;
       continue;
     }

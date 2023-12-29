@@ -135,7 +135,7 @@ int NESTGPU::InitConnRandomGenerator()
   return 0;
 }
 
-int NESTGPU::setHostNum(int n_hosts)
+int NESTGPU::setHostNum(uint n_hosts)
 {
   // free previous instances before creating new
   FreeConnRandomGenerator();
@@ -150,7 +150,7 @@ int NESTGPU::setHostNum(int n_hosts)
   return 0;
 }
 
-int NESTGPU::setThisHost(int i_host)
+int NESTGPU::setThisHost(uint i_host)
 {
   this_host_ = i_host;
   SetRandomSeed(kernel_seed_);
@@ -473,22 +473,21 @@ int NESTGPU::Calibrate()
   gpuErrchk(cudaMemcpyToSymbol(n_local_nodes, &n_nodes,
 			       sizeof(int)));
 
-  // std::cout << "n_local_nodes: " << n_nodes << " n_image_nodes_: "
-  // << n_image_nodes_ << "\n";
+  //std::cout << "n_local_nodes: " << n_nodes << " n_image_nodes_: "
+  //	    << n_image_nodes_ << "\n";
   if (n_image_nodes_ > 0) {
     CheckImageNodes(n_image_nodes_);
-    addOffsetToExternalNodeIds();
+    addOffsetToExternalNodeIds<conn12b_key, conn12b_struct>();
   }
   
   calibrate_flag_ = true;
   
-  organizeConnections(time_resolution_, GetTotalNNodes(),
-		      NConn, h_ConnBlockSize,
-		      KeySubarray, ConnectionSubarray);
+  organizeConnections<conn12b_key, conn12b_struct>
+    (time_resolution_, GetTotalNNodes(), NConn, h_ConnBlockSize);
   
   ConnectInit();
 
-  poiss_conn::OrganizeDirectConnections();
+  poiss_conn::OrganizeDirectConnections<conn12b_key>();
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     if (node_vect_[i]->has_dir_conn_) {
       node_vect_[i]->buildDirectConnections();
@@ -496,7 +495,7 @@ int NESTGPU::Calibrate()
   }
   
   if (remove_conn_key_) {
-    freeConnectionKey(KeySubarray);
+    freeConnectionKey<conn12b_key>();
   }
   
   int max_delay_num = h_MaxDelayNum;
@@ -624,7 +623,7 @@ int NESTGPU::Calibrate()
   //#endif
 
   if (rev_conn_flag_) {
-    RevSpikeInit(GetNLocalNodes());
+    RevSpikeInit<conn12b_key, conn12b_struct>(GetNLocalNodes());
   }
  
   multimeter_->OpenFiles();
@@ -812,7 +811,8 @@ int NESTGPU::SimulationStep()
   gpuErrchk( cudaDeviceSynchronize() );
   if (n_spikes > 0) {
     time_mark = getRealTime();
-    NestedLoop::Run<0>(nested_loop_algo_, n_spikes, d_SpikeTargetNum);
+    NestedLoop::Run<conn12b_key, conn12b_struct>
+      (nested_loop_algo_, 0, n_spikes, d_SpikeTargetNum);
     NestedLoop_time_ += (getRealTime() - time_mark);
   }
   time_mark = getRealTime();
@@ -869,7 +869,8 @@ int NESTGPU::SimulationStep()
     gpuErrchk(cudaMemcpy(&n_rev_spikes, d_RevSpikeNum, sizeof(unsigned int),
 			 cudaMemcpyDeviceToHost));
     if (n_rev_spikes > 0) {
-      NestedLoop::Run<1>(nested_loop_algo_, n_rev_spikes, d_RevSpikeNConn);
+      NestedLoop::Run<conn12b_key, conn12b_struct>
+	(nested_loop_algo_, 1,n_rev_spikes, d_RevSpikeNConn);
     }      
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   }
@@ -1640,8 +1641,8 @@ int NESTGPU::GetNArrayVar(int i_node)
   return node_vect_[i_group]->GetNArrayVar();
 }
 
-int64_t *NESTGPU::GetConnections(int i_source, int n_source,
-				 int i_target, int n_target,
+int64_t *NESTGPU::GetConnections(inode_t i_source, inode_t n_source,
+				 inode_t i_target, inode_t n_target,
 				 int syn_group, int64_t *n_conn)
 {
   if (n_source<=0) {
@@ -1653,17 +1654,18 @@ int64_t *NESTGPU::GetConnections(int i_source, int n_source,
     i_target = 0;
     n_target = GetNLocalNodes();
   }
-  int *i_source_pt = new int[n_source];
-  for (int i=0; i<n_source; i++) {
+  inode_t *i_source_pt = new inode_t[n_source];
+  for (inode_t i=0; i<n_source; i++) {
     i_source_pt[i] = i_source + i;
   }
-  int *i_target_pt = new int[n_target];
-  for (int i=0; i<n_target; i++) {
+  inode_t *i_target_pt = new inode_t[n_target];
+  for (inode_t i=0; i<n_target; i++) {
     i_target_pt[i] = i_target + i;
   }
   
   int64_t *conn_ids =
-    GetConnections(i_source_pt, n_source, i_target_pt, n_target, syn_group,
+    GetConnections<conn12b_key, conn12b_struct>
+    (i_source_pt, n_source, i_target_pt, n_target, syn_group,
 		   n_conn);
   delete[] i_source_pt;
   delete[] i_target_pt;
@@ -1671,21 +1673,22 @@ int64_t *NESTGPU::GetConnections(int i_source, int n_source,
   return conn_ids;
 }
 
-int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
-				 int i_target, int n_target,
+int64_t *NESTGPU::GetConnections(inode_t *i_source_pt, inode_t n_source,
+				 inode_t i_target, inode_t n_target,
 				 int syn_group, int64_t *n_conn)
 {
   if (n_target<=0) {
     i_target = 0;
     n_target = GetNLocalNodes();
   }
-  int *i_target_pt = new int[n_target];
-  for (int i=0; i<n_target; i++) {
+  inode_t *i_target_pt = new inode_t[n_target];
+  for (inode_t i=0; i<n_target; i++) {
     i_target_pt[i] = i_target + i;
   }
   
   int64_t *conn_ids =
-    GetConnections(i_source_pt, n_source, i_target_pt, n_target, syn_group,
+    GetConnections<conn12b_key, conn12b_struct>
+    (i_source_pt, n_source, i_target_pt, n_target, syn_group,
 		   n_conn);
   delete[] i_target_pt;
 
@@ -1693,8 +1696,8 @@ int64_t *NESTGPU::GetConnections(int *i_source_pt, int n_source,
 }
 
 
-int64_t *NESTGPU::GetConnections(int i_source, int n_source,
-				 int *i_target_pt, int n_target,
+int64_t *NESTGPU::GetConnections(inode_t i_source, inode_t n_source,
+				 inode_t *i_target_pt, inode_t n_target,
 				 int syn_group, int64_t *n_conn)
 {
   if (n_source<=0) {
@@ -1702,13 +1705,14 @@ int64_t *NESTGPU::GetConnections(int i_source, int n_source,
     //  gets also connections from image neurons
     n_source = GetTotalNNodes();
   }
-  int *i_source_pt = new int[n_source];
-  for (int i=0; i<n_source; i++) {
+  inode_t *i_source_pt = new inode_t[n_source];
+  for (inode_t i=0; i<n_source; i++) {
     i_source_pt[i] = i_source + i;
   }
 
   int64_t *conn_ids =
-    GetConnections(i_source_pt, n_source, i_target_pt, n_target, syn_group,
+    GetConnections<conn12b_key, conn12b_struct>
+    (i_source_pt, n_source, i_target_pt, n_target, syn_group,
 		   n_conn);
   delete[] i_source_pt;
 
@@ -1722,7 +1726,7 @@ int64_t *NESTGPU::GetConnections(NodeSeq source, NodeSeq target,
 			n_conn);
 }
 
-int64_t *NESTGPU::GetConnections(std::vector<int> source, NodeSeq target,
+int64_t *NESTGPU::GetConnections(std::vector<inode_t> source, NodeSeq target,
 				 int syn_group, int64_t *n_conn)
 {
   return GetConnections(source.data(), source.size(), target.i0, target.n,
@@ -1730,20 +1734,20 @@ int64_t *NESTGPU::GetConnections(std::vector<int> source, NodeSeq target,
 }
 
 
-int64_t *NESTGPU::GetConnections(NodeSeq source, std::vector<int> target,
+int64_t *NESTGPU::GetConnections(NodeSeq source, std::vector<inode_t> target,
 				 int syn_group, int64_t *n_conn)
 {
   return GetConnections(source.i0, source.n, target.data(), target.size(),
 			syn_group, n_conn);
 }
 
-int64_t *NESTGPU::GetConnections(std::vector<int> source,
-				 std::vector<int> target,
+int64_t *NESTGPU::GetConnections(std::vector<inode_t> source,
+				 std::vector<inode_t> target,
 				 int syn_group, int64_t *n_conn)
 {
-  return GetConnections(source.data(), source.size(),
-			target.data(), target.size(),
-			syn_group, n_conn);
+  return GetConnections<conn12b_key, conn12b_struct>
+    (source.data(), source.size(), target.data(), target.size(),
+     syn_group, n_conn);
 }
 
 
@@ -2190,14 +2194,14 @@ int NESTGPU::SetIntParam(std::string param_name, int val)
 }
 
 RemoteNodeSeq NESTGPU::RemoteCreate(int i_host, std::string model_name,
-				      int n_nodes /*=1*/, int n_ports /*=1*/)
+				    inode_t n_nodes /*=1*/, int n_ports /*=1*/)
 {
   if (!create_flag_) {
     create_flag_ = true;
     start_real_time_ = getRealTime();
   }
   if (n_hosts_ > 1) {
-    if (i_host<0 || i_host>=n_hosts_) {
+    if (i_host>=n_hosts_) {
       throw ngpu_exception("Invalid host index in RemoteCreate");
     }
     NodeSeq node_seq(n_remote_nodes_[i_host], n_nodes);

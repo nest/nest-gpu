@@ -45,21 +45,34 @@ enum NestedLoopAlgo {
   Smart2DNestedLoopAlgo
 };
 
+template<class ConnKeyT, class ConnStructT>
+__device__ __forceinline__ void NestedLoopFunction(int i_func, int ix, int iy)
+{
+  switch (i_func) {
+  case 0:
+    NestedLoopFunction0<ConnKeyT, ConnStructT>(ix, iy);
+    break;
+  case 1:
+    NestedLoopFunction1<ConnKeyT, ConnStructT>(ix, iy);
+    break;
+  }
+}
+
 //////////////////////////////////////////////////////////////////////
-template<int i_func> 
-__global__ void BlockStepNestedLoopKernel(int Nx, int *Ny)
+template<class ConnKeyT, class ConnStructT> 
+__global__ void BlockStepNestedLoopKernel(int i_func, int Nx, int *Ny)
 {
  const int ix = blockIdx.x;
   if (ix < Nx) {
     const int ny = Ny[ix];
     for (int iy = threadIdx.x; iy < ny; iy += blockDim.x){
-      NestedLoopFunction<i_func>(ix, iy);
+      NestedLoopFunction<ConnKeyT, ConnStructT>(i_func, ix, iy);
     }
   }
 }
 
-template<int i_func> 
-__global__ void CumulSumNestedLoopKernel(int Nx, int *Ny_cumul_sum,
+template<class ConnKeyT, class ConnStructT> 
+__global__ void CumulSumNestedLoopKernel(int i_func, int Nx, int *Ny_cumul_sum,
 					 int Ny_sum)
 {
   int blockId   = blockIdx.y * gridDim.x + blockIdx.x;
@@ -67,47 +80,48 @@ __global__ void CumulSumNestedLoopKernel(int Nx, int *Ny_cumul_sum,
   if (array_idx<Ny_sum) {
     int ix = locate(array_idx, Ny_cumul_sum, Nx + 1);
     int iy = (int)(array_idx - Ny_cumul_sum[ix]);
-    NestedLoopFunction<i_func>(ix, iy);
+    NestedLoopFunction<ConnKeyT, ConnStructT>(i_func, ix, iy);
   }
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func> 
-__global__ void SimpleNestedLoopKernel(int Nx, int *Ny)
+template<class ConnKeyT, class ConnStructT> 
+__global__ void SimpleNestedLoopKernel(int i_func, int Nx, int *Ny)
 {
   int ix = (blockIdx.x * blockDim.x) + threadIdx.x;
   int iy = (blockIdx.y * blockDim.y) + threadIdx.y;
   if (ix<Nx && iy<Ny[ix]) {
-    NestedLoopFunction<i_func>(ix, iy);
+    NestedLoopFunction<ConnKeyT, ConnStructT>(i_func, ix, iy);
   }
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func> 
-__global__ void  ParallelInnerNestedLoopKernel(int ix, int Ny)
+template<class ConnKeyT, class ConnStructT> 
+__global__ void  ParallelInnerNestedLoopKernel(int i_func, int ix, int Ny)
 {
   int iy = threadIdx.x + blockIdx.x * blockDim.x;
   if (iy<Ny) {
-    NestedLoopFunction<i_func>(ix, iy);
+    NestedLoopFunction<ConnKeyT, ConnStructT>(i_func, ix, iy);
   }
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func> 
-__global__ void  ParallelOuterNestedLoopKernel(int Nx, int *d_Ny)
+template<class ConnKeyT, class ConnStructT> 
+__global__ void  ParallelOuterNestedLoopKernel(int i_func, int Nx, int *d_Ny)
 {
   int ix = threadIdx.x + blockIdx.x * blockDim.x;
   if (ix<Nx) {
     for (int iy=0; iy<d_Ny[ix]; iy++) {
-      NestedLoopFunction<i_func>(ix, iy);
+      NestedLoopFunction<ConnKeyT, ConnStructT>(i_func, ix, iy);
     }
   }
 }
 
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func> 
-__global__ void Frame1DNestedLoopKernel(int ix0, int dim_x, int dim_y,
+template<class ConnKeyT, class ConnStructT> 
+__global__ void Frame1DNestedLoopKernel(int i_func, int ix0,
+					int dim_x, int dim_y,
 					int *sorted_idx, int *sorted_Ny)
 {
   int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
@@ -116,28 +130,30 @@ __global__ void Frame1DNestedLoopKernel(int ix0, int dim_x, int dim_y,
     int iy = array_idx / dim_x;
     if (iy<sorted_Ny[ix]) {
       // call here the function that should be called by the nested loop
-      NestedLoopFunction<i_func>(sorted_idx[ix], iy);
+      NestedLoopFunction<ConnKeyT, ConnStructT>(i_func, sorted_idx[ix], iy);
     }
   }
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func> 
-__global__ void Frame2DNestedLoopKernel(int ix0, int dim_x, int dim_y,
+template<class ConnKeyT, class ConnStructT> 
+__global__ void Frame2DNestedLoopKernel(int i_func, int ix0,
+					int dim_x, int dim_y,
 					int *sorted_idx, int *sorted_Ny)
 {
   int ix = (blockIdx.x * blockDim.x) + threadIdx.x;
   int iy = (blockIdx.y * blockDim.y) + threadIdx.y;
   if (ix<dim_x && iy<sorted_Ny[ix+ix0]) {
     // call here the function that should be called by the nested loop
-    NestedLoopFunction<i_func>(sorted_idx[ix+ix0], iy);
+    NestedLoopFunction<ConnKeyT, ConnStructT>(i_func, sorted_idx[ix+ix0], iy);
   }
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func> 
-__global__ void Smart1DNestedLoopKernel(int ix0, int iy0, int dim_x, int dim_y,
-                                 int *sorted_idx, int *sorted_Ny)
+template<class ConnKeyT, class ConnStructT> 
+__global__ void Smart1DNestedLoopKernel(int i_func, int ix0, int iy0,
+					int dim_x, int dim_y,
+					int *sorted_idx, int *sorted_Ny)
 {
   int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
   if (array_idx<dim_x*dim_y) {
@@ -145,22 +161,22 @@ __global__ void Smart1DNestedLoopKernel(int ix0, int iy0, int dim_x, int dim_y,
     int iy = iy0 + array_idx / dim_x;
     if (iy<sorted_Ny[ix]) {
       // call here the function that should be called by the nested loop
-      NestedLoopFunction<i_func>(sorted_idx[ix], iy);
+      NestedLoopFunction<ConnKeyT, ConnStructT>(i_func, sorted_idx[ix], iy);
     }
   }
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func> 
-__global__ void Smart2DNestedLoopKernel(int ix0, int iy0, int dim_x,
-					int dim_y, int *sorted_idx,
+template<class ConnKeyT, class ConnStructT> 
+__global__ void Smart2DNestedLoopKernel(int i_func, int ix0, int iy0,
+					int dim_x, int dim_y, int *sorted_idx,
 					int *sorted_Ny)
 {
   int ix = (blockIdx.x * blockDim.x) + threadIdx.x;
   int iy = iy0 + (blockIdx.y * blockDim.y) + threadIdx.y;
   if (ix<dim_x && iy<sorted_Ny[ix+ix0]) {
     // call here the function that should be called by the nested loop
-    NestedLoopFunction<i_func>(sorted_idx[ix+ix0], iy);
+    NestedLoopFunction<ConnKeyT, ConnStructT>(i_func, sorted_idx[ix+ix0], iy);
   }
 }
 
@@ -195,73 +211,73 @@ namespace NestedLoop
 
   int Init(int Nx_max);
 
-  template<int i_func>
-  int Run(int nested_loop_algo, int Nx, int *d_Ny);
+  template<class ConnKeyT, class ConnStructT>
+  int Run(int nested_loop_algo, int i_func, int Nx, int *d_Ny);
 
-  template<int i_func>
-  int BlockStepNestedLoop(int Nx, int *d_Ny);
+  template<class ConnKeyT, class ConnStructT>
+  int BlockStepNestedLoop(int i_func, int Nx, int *d_Ny);
   
-  template<int i_func>
-  int CumulSumNestedLoop(int Nx, int *d_Ny);  
+  template<class ConnKeyT, class ConnStructT>
+  int CumulSumNestedLoop(int i_func, int Nx, int *d_Ny);  
 
-  template<int i_func>
-  int SimpleNestedLoop(int Nx, int *d_Ny);
+  template<class ConnKeyT, class ConnStructT>
+  int SimpleNestedLoop(int i_func, int Nx, int *d_Ny);
 
-  template<int i_func>
-  int SimpleNestedLoop(int Nx, int *d_Ny, int max_Ny);
+  template<class ConnKeyT, class ConnStructT>
+  int SimpleNestedLoop(int i_func, int Nx, int *d_Ny, int max_Ny);
 
-  template<int i_func>
-  int ParallelInnerNestedLoop(int Nx, int *d_Ny);
+  template<class ConnKeyT, class ConnStructT>
+  int ParallelInnerNestedLoop(int i_func, int Nx, int *d_Ny);
 
-  template<int i_func>
-  int ParallelOuterNestedLoop(int Nx, int *d_Ny);
+  template<class ConnKeyT, class ConnStructT>
+  int ParallelOuterNestedLoop(int i_func, int Nx, int *d_Ny);
 
-  template<int i_func>
-  int Frame1DNestedLoop(int Nx, int *d_Ny);
+  template<class ConnKeyT, class ConnStructT>
+  int Frame1DNestedLoop(int i_func, int Nx, int *d_Ny);
 
-  template<int i_func>
-  int Frame2DNestedLoop(int Nx, int *d_Ny);
+  template<class ConnKeyT, class ConnStructT>
+  int Frame2DNestedLoop(int i_func, int Nx, int *d_Ny);
 
-  template<int i_func>
-  int Smart1DNestedLoop(int Nx, int *d_Ny);
+  template<class ConnKeyT, class ConnStructT>
+  int Smart1DNestedLoop(int i_func, int Nx, int *d_Ny);
 
-  template<int i_func>
-  int Smart2DNestedLoop(int Nx, int *d_Ny);
+  template<class ConnKeyT, class ConnStructT>
+  int Smart2DNestedLoop(int i_func, int Nx, int *d_Ny);
 
   int Free();
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func>
-int NestedLoop::Run(int nested_loop_algo, int Nx, int *d_Ny)
+template<class ConnKeyT, class ConnStructT>
+int NestedLoop::Run(int nested_loop_algo, int i_func, int Nx, int *d_Ny)
 {
   switch(nested_loop_algo) {
   case BlockStepNestedLoopAlgo:
-    return BlockStepNestedLoop<i_func>(Nx, d_Ny);
+    return BlockStepNestedLoop<ConnKeyT, ConnStructT>(i_func, Nx, d_Ny);
     break;
   case CumulSumNestedLoopAlgo:
-    return CumulSumNestedLoop<i_func>(Nx, d_Ny);
+    return CumulSumNestedLoop<ConnKeyT, ConnStructT>(i_func, Nx, d_Ny);
     break;
   case SimpleNestedLoopAlgo:
-    return SimpleNestedLoop<i_func>(Nx, d_Ny);
+    return SimpleNestedLoop<ConnKeyT, ConnStructT>(i_func, Nx, d_Ny);
     break;
   case ParallelInnerNestedLoopAlgo:
-    return ParallelInnerNestedLoop<i_func>(Nx, d_Ny);
+    return ParallelInnerNestedLoop<ConnKeyT, ConnStructT>(i_func, Nx, d_Ny);
     break;
   case ParallelOuterNestedLoopAlgo:
-    return ParallelOuterNestedLoop<i_func>(Nx, d_Ny);
+    return ParallelOuterNestedLoop<ConnKeyT, ConnStructT>(i_func, Nx, d_Ny);
     break;
   case Frame1DNestedLoopAlgo:
-    return Frame1DNestedLoop<i_func>(Nx, d_Ny);
+    return Frame1DNestedLoop<ConnKeyT, ConnStructT>(i_func, Nx, d_Ny);
     break;
   case Frame2DNestedLoopAlgo:
-    return Frame2DNestedLoop<i_func>(Nx, d_Ny);
+    return Frame2DNestedLoop<ConnKeyT, ConnStructT>(i_func, Nx, d_Ny);
     break;
   case Smart1DNestedLoopAlgo:
-    return Smart1DNestedLoop<i_func>(Nx, d_Ny);
+    return Smart1DNestedLoop<ConnKeyT, ConnStructT>(i_func, Nx, d_Ny);
     break;
   case Smart2DNestedLoopAlgo:
-    return Smart2DNestedLoop<i_func>(Nx, d_Ny);
+    return Smart2DNestedLoop<ConnKeyT, ConnStructT>(i_func, Nx, d_Ny);
     break;
   default:
     return -1;
@@ -270,10 +286,11 @@ int NestedLoop::Run(int nested_loop_algo, int Nx, int *d_Ny)
 
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func>
-int NestedLoop::BlockStepNestedLoop(int Nx, int *d_Ny)
+template<class ConnKeyT, class ConnStructT>
+int NestedLoop::BlockStepNestedLoop(int i_func, int Nx, int *d_Ny)
 {
-  BlockStepNestedLoopKernel<i_func><<<Nx, 1024>>>(Nx, d_Ny);
+  BlockStepNestedLoopKernel<ConnKeyT, ConnStructT><<<Nx, 1024>>>
+    (i_func, Nx, d_Ny);
   gpuErrchk(cudaPeekAtLastError());
   //gpuErrchk(cudaDeviceSynchronize());
   
@@ -281,8 +298,8 @@ int NestedLoop::BlockStepNestedLoop(int Nx, int *d_Ny)
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func>
-int NestedLoop::SimpleNestedLoop(int Nx, int *d_Ny)
+template<class ConnKeyT, class ConnStructT>
+int NestedLoop::SimpleNestedLoop(int i_func, int Nx, int *d_Ny)
 {
   // Find max value of Ny
   cub::DeviceReduce::Max(d_reduce_storage_, reduce_storage_bytes_, d_Ny,
@@ -290,18 +307,19 @@ int NestedLoop::SimpleNestedLoop(int Nx, int *d_Ny)
   int max_Ny;
   gpuErrchk(cudaMemcpy(&max_Ny, d_max_Ny_, sizeof(int),
 			  cudaMemcpyDeviceToHost));
-  return SimpleNestedLoop<i_func>(Nx, d_Ny, max_Ny);
+  return SimpleNestedLoop<ConnKeyT, ConnStructT>(i_func, Nx, d_Ny, max_Ny);
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func>
-int NestedLoop::SimpleNestedLoop(int Nx, int *d_Ny, int max_Ny)
+template<class ConnKeyT, class ConnStructT>
+int NestedLoop::SimpleNestedLoop(int i_func, int Nx, int *d_Ny, int max_Ny)
 {
   if (max_Ny < 1) max_Ny = 1;
   dim3 threadsPerBlock(block_dim_x_, block_dim_y_);  // block size
   dim3 numBlocks((Nx - 1)/threadsPerBlock.x + 1,
 		 (max_Ny - 1)/threadsPerBlock.y + 1);
-  SimpleNestedLoopKernel<i_func> <<<numBlocks,threadsPerBlock>>>(Nx, d_Ny);
+  SimpleNestedLoopKernel<ConnKeyT, ConnStructT> <<<numBlocks,threadsPerBlock>>>
+    (i_func, Nx, d_Ny);
   gpuErrchk(cudaPeekAtLastError());
   //gpuErrchk(cudaDeviceSynchronize());
 
@@ -309,15 +327,16 @@ int NestedLoop::SimpleNestedLoop(int Nx, int *d_Ny, int max_Ny)
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func>
-int NestedLoop::ParallelInnerNestedLoop(int Nx, int *d_Ny)
+template<class ConnKeyT, class ConnStructT>
+int NestedLoop::ParallelInnerNestedLoop(int i_func, int Nx, int *d_Ny)
 {
   int h_Ny[Nx];
   gpuErrchk(cudaMemcpy(h_Ny, d_Ny, Nx*sizeof(int),
 		       cudaMemcpyDeviceToHost));
   for (int ix=0; ix<Nx; ix++) {
     int Ny = h_Ny[ix];
-    ParallelInnerNestedLoopKernel<i_func><<<(Ny+1023)/1024, 1024>>>(ix, Ny);
+    ParallelInnerNestedLoopKernel<ConnKeyT, ConnStructT>
+      <<<(Ny+1023)/1024, 1024>>>(i_func, ix, Ny);
     // gpuErrchk(cudaPeekAtLastError()); // uncomment only for debugging
     // gpuErrchk(cudaDeviceSynchronize()); // uncomment only for debugging
   }
@@ -328,10 +347,11 @@ int NestedLoop::ParallelInnerNestedLoop(int Nx, int *d_Ny)
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func>
-int NestedLoop::ParallelOuterNestedLoop(int Nx, int *d_Ny)
+template<class ConnKeyT, class ConnStructT>
+int NestedLoop::ParallelOuterNestedLoop(int i_func, int Nx, int *d_Ny)
 {
-  ParallelOuterNestedLoopKernel<i_func><<<(Nx+1023)/1024, 1024>>>(Nx, d_Ny);
+  ParallelOuterNestedLoopKernel<ConnKeyT, ConnStructT>
+    <<<(Nx+1023)/1024, 1024>>>(i_func, Nx, d_Ny);
   gpuErrchk(cudaPeekAtLastError());
   //gpuErrchk(cudaDeviceSynchronize());
   
@@ -339,8 +359,8 @@ int NestedLoop::ParallelOuterNestedLoop(int Nx, int *d_Ny)
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func>
-int NestedLoop::Frame1DNestedLoop(int Nx, int *d_Ny)
+template<class ConnKeyT, class ConnStructT>
+int NestedLoop::Frame1DNestedLoop(int i_func, int Nx, int *d_Ny)
 {
   if (Nx <= 0) return 0;
   int dim_x, dim_y;
@@ -361,8 +381,9 @@ int NestedLoop::Frame1DNestedLoop(int Nx, int *d_Ny)
       dim_x += ix0;
       ix0 = 0;
     } 
-    Frame1DNestedLoopKernel<i_func><<<(dim_x*dim_y+1023)/1024, 1024>>>
-      (ix0, dim_x, dim_y, d_sorted_idx_, d_sorted_Ny_);
+    Frame1DNestedLoopKernel<ConnKeyT, ConnStructT>
+      <<<(dim_x*dim_y+1023)/1024, 1024>>>
+      (i_func, ix0, dim_x, dim_y, d_sorted_idx_, d_sorted_Ny_);
   }
   gpuErrchk(cudaPeekAtLastError());
   //gpuErrchk(cudaDeviceSynchronize());
@@ -371,8 +392,8 @@ int NestedLoop::Frame1DNestedLoop(int Nx, int *d_Ny)
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func>
-int NestedLoop::Frame2DNestedLoop(int Nx, int *d_Ny)
+template<class ConnKeyT, class ConnStructT>
+int NestedLoop::Frame2DNestedLoop(int i_func, int Nx, int *d_Ny)
 {
   if (Nx <= 0) return 0;
   // Sort the pairs (ix, Ny) with ix=0,..,Nx-1 in ascending order of Ny.
@@ -398,8 +419,9 @@ int NestedLoop::Frame2DNestedLoop(int Nx, int *d_Ny)
     dim3 numBlocks((dim_x - 1)/threadsPerBlock.x + 1,
 		   (dim_y - 1)/threadsPerBlock.y + 1);
     // run a nested loop kernel on the rectangular frame
-    Frame2DNestedLoopKernel<i_func> <<<numBlocks,threadsPerBlock>>>
-      (ix0, dim_x, dim_y, d_sorted_idx_, d_sorted_Ny_);
+    Frame2DNestedLoopKernel<ConnKeyT, ConnStructT>
+      <<<numBlocks,threadsPerBlock>>>
+      (i_func, ix0, dim_x, dim_y, d_sorted_idx_, d_sorted_Ny_);
 
   }
   gpuErrchk(cudaPeekAtLastError());
@@ -409,8 +431,8 @@ int NestedLoop::Frame2DNestedLoop(int Nx, int *d_Ny)
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func>
-int NestedLoop::Smart1DNestedLoop(int Nx, int *d_Ny)
+template<class ConnKeyT, class ConnStructT>
+int NestedLoop::Smart1DNestedLoop(int i_func, int Nx, int *d_Ny)
 {
   // Find max value of Ny
   cub::DeviceReduce::Max(d_reduce_storage_, reduce_storage_bytes_, d_Ny,
@@ -433,7 +455,7 @@ int NestedLoop::Smart1DNestedLoop(int Nx, int *d_Ny)
     Ny_th = Ny_th_arr_[i_Nx]*(1.0 - t) + Ny_th_arr_[i_Nx+1]*t;
   }
   if (max_Ny<Ny_th) {
-    return SimpleNestedLoop<i_func>(Nx, d_Ny, max_Ny);
+    return SimpleNestedLoop<ConnKeyT, ConnStructT>(i_func, Nx, d_Ny, max_Ny);
   }
 
   if(max_Ny < 1) max_Ny = 1;
@@ -459,7 +481,8 @@ int NestedLoop::Smart1DNestedLoop(int Nx, int *d_Ny)
   Ny1 = nby*threadsPerBlock.y;
   
   dim3 numBlocks(nbx, nby);
-  SimpleNestedLoopKernel<i_func> <<<numBlocks,threadsPerBlock>>>(Nx, d_Ny);
+  SimpleNestedLoopKernel<ConnKeyT, ConnStructT>
+    <<<numBlocks,threadsPerBlock>>>(i_func, Nx, d_Ny);
   //CudaCheckError(); // uncomment only for debugging
   
   int ix0 = Nx;
@@ -474,8 +497,9 @@ int NestedLoop::Smart1DNestedLoop(int Nx, int *d_Ny)
       dim_x += ix0 - ix1;
       ix0 = ix1;
     } 
-    Smart1DNestedLoopKernel<i_func><<<(dim_x*dim_y+1023)/1024, 1024>>>
-      (ix0, Ny1, dim_x, dim_y, d_sorted_idx_, d_sorted_Ny_);
+    Smart1DNestedLoopKernel<ConnKeyT, ConnStructT>
+      <<<(dim_x*dim_y+1023)/1024, 1024>>>
+      (i_func, ix0, Ny1, dim_x, dim_y, d_sorted_idx_, d_sorted_Ny_);
     //CudaCheckError(); // uncomment only for debugging
   }
   gpuErrchk(cudaPeekAtLastError());
@@ -485,8 +509,8 @@ int NestedLoop::Smart1DNestedLoop(int Nx, int *d_Ny)
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func>
-int NestedLoop::Smart2DNestedLoop(int Nx, int *d_Ny)
+template<class ConnKeyT, class ConnStructT>
+int NestedLoop::Smart2DNestedLoop(int i_func, int Nx, int *d_Ny)
 {
   // Find max value of Ny
   cub::DeviceReduce::Max(d_reduce_storage_, reduce_storage_bytes_, d_Ny,
@@ -509,7 +533,7 @@ int NestedLoop::Smart2DNestedLoop(int Nx, int *d_Ny)
     Ny_th = Ny_th_arr_[i_Nx]*(1.0 - t) + Ny_th_arr_[i_Nx+1]*t;
   }
   if (max_Ny<Ny_th) {
-    return SimpleNestedLoop<i_func>(Nx, d_Ny, max_Ny);
+    return SimpleNestedLoop<ConnKeyT, ConnStructT>(i_func, Nx, d_Ny, max_Ny);
   }
 
   if(max_Ny < 1) max_Ny = 1;
@@ -535,7 +559,8 @@ int NestedLoop::Smart2DNestedLoop(int Nx, int *d_Ny)
   Ny1 = nby*threadsPerBlock.y;
   
   dim3 numBlocks(nbx, nby);
-  SimpleNestedLoopKernel<i_func> <<<numBlocks,threadsPerBlock>>>(Nx, d_Ny);
+  SimpleNestedLoopKernel<ConnKeyT, ConnStructT>
+    <<<numBlocks,threadsPerBlock>>>(i_func, Nx, d_Ny);
   //CudaCheckError(); // uncomment only for debugging
   
   int ix0 = Nx;
@@ -554,8 +579,9 @@ int NestedLoop::Smart2DNestedLoop(int Nx, int *d_Ny)
     dim3 threadsPerBlock(block_dim_x_, block_dim_y_);  // block size
     dim3 numBlocks((dim_x - 1)/threadsPerBlock.x + 1,
 		   (dim_y - 1)/threadsPerBlock.y + 1);
-    Smart2DNestedLoopKernel<i_func> <<<numBlocks,threadsPerBlock>>>
-      (ix0, Ny1, dim_x, dim_y, d_sorted_idx_, d_sorted_Ny_);
+    Smart2DNestedLoopKernel<ConnKeyT, ConnStructT>
+      <<<numBlocks,threadsPerBlock>>>
+      (i_func, ix0, Ny1, dim_x, dim_y, d_sorted_idx_, d_sorted_Ny_);
     //CudaCheckError(); // uncomment only for debugging      
   }
   gpuErrchk(cudaPeekAtLastError());
@@ -565,8 +591,8 @@ int NestedLoop::Smart2DNestedLoop(int Nx, int *d_Ny)
 }
 
 //////////////////////////////////////////////////////////////////////
-template<int i_func>
-int NestedLoop::CumulSumNestedLoop(int Nx, int *d_Ny)
+template<class ConnKeyT, class ConnStructT>
+int NestedLoop::CumulSumNestedLoop(int i_func, int Nx, int *d_Ny)
 {
   //TMP
   //double time_mark=getRealTime();
@@ -614,8 +640,8 @@ int NestedLoop::CumulSumNestedLoop(int Nx, int *d_Ny)
     //TMP
     //double time_mark=getRealTime();
     //
-    CumulSumNestedLoopKernel<i_func><<<numBlocks, 1024>>>
-    (Nx, d_Ny_cumul_sum_, Ny_sum);
+    CumulSumNestedLoopKernel<ConnKeyT, ConnStructT><<<numBlocks, 1024>>>
+    (i_func, Nx, d_Ny_cumul_sum_, Ny_sum);
     gpuErrchk(cudaPeekAtLastError());
     //gpuErrchk(cudaDeviceSynchronize());
 

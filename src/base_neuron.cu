@@ -613,7 +613,6 @@ int BaseNeuron::SetScalVarDistr(int i_neuron, int n_neuron,
 				  std::string var_name,
 				  Distribution *distribution)
 {
-  //printf("okk0\n");
   if (!IsScalVar(var_name)) {
     throw ngpu_exception(std::string("Unrecognized scalar variable ")
 			 + var_name);
@@ -621,16 +620,12 @@ int BaseNeuron::SetScalVarDistr(int i_neuron, int n_neuron,
   CheckNeuronIdx(i_neuron);
   CheckNeuronIdx(i_neuron + n_neuron - 1);
   float *var_pt = GetVarPt(i_neuron, var_name);
-  //printf("okk1\n");
   float *d_arr = distribution->getArray(*random_generator_, n_neuron);
-  //printf("okk2\n");
   BaseNeuronCopyFloatArray<<<(n_neuron+1023)/1024, 1024>>>
     (var_pt, n_neuron, n_var_, d_arr);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
-  //printf("okk3\n");
   CUDAFREECTRL("d_arr",d_arr);
-  //printf("okk4\n");
   
   return 0;
 }

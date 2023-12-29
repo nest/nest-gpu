@@ -30,6 +30,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct conn12b_struct
+{
+  uint target_port_syn;
+  float weight;
+};
+
+typedef uint conn12b_key;
   
   char *NESTGPU_GetErrorMessage();
 
@@ -222,86 +230,86 @@ extern "C" {
 
   int NESTGPU_SynSpecIsFloatPtParam(char *param_name);
 
-  int NESTGPU_ConnectSeqSeq(int i_source, int n_source, int i_target,
-			      int n_target);
+  int NESTGPU_ConnectSeqSeq(uint i_source, uint n_source, uint i_target,
+			    uint n_target);
 
-  int NESTGPU_ConnectSeqGroup(int i_source, int n_source, int *i_target,
-				int n_target);
+  int NESTGPU_ConnectSeqGroup(uint i_source, uint n_source, uint *i_target,
+			      uint n_target);
 
-  int NESTGPU_ConnectGroupSeq(int *i_source, int n_source, int i_target,
-				int n_target);
+  int NESTGPU_ConnectGroupSeq(uint *i_source, uint n_source, uint i_target,
+			      uint n_target);
 
-  int NESTGPU_ConnectGroupGroup(int *i_source, int n_source, int *i_target,
-				  int n_target);
+  int NESTGPU_ConnectGroupGroup(uint *i_source, uint n_source, uint *i_target,
+				uint n_target);
 
-  int NESTGPU_RemoteConnectSeqSeq(int i_source_host, int i_source,
-				    int n_source, int i_target_host,
-				    int i_target, int n_target);
+  int NESTGPU_RemoteConnectSeqSeq(int i_source_host, uint i_source,
+				  uint n_source, int i_target_host,
+				  uint i_target, uint n_target);
 
-  int NESTGPU_RemoteConnectSeqGroup(int i_source_host, int i_source,
-				      int n_source, int i_target_host,
-				      int *i_target, int n_target);
+  int NESTGPU_RemoteConnectSeqGroup(int i_source_host, uint i_source,
+				    uint n_source, int i_target_host,
+				    uint *i_target, uint n_target);
 
-  int NESTGPU_RemoteConnectGroupSeq(int i_source_host, int *i_source,
-				      int n_source, int i_target_host,
-				      int i_target, int n_target);
+  int NESTGPU_RemoteConnectGroupSeq(int i_source_host, uint *i_source,
+				    uint n_source, int i_target_host,
+				    uint i_target, uint n_target);
 
-  int NESTGPU_RemoteConnectGroupGroup(int i_source_host, int *i_source,
-					int n_source, int i_target_host,
-					int *i_target, int n_target);
+  int NESTGPU_RemoteConnectGroupGroup(int i_source_host, uint *i_source,
+				      uint n_source, int i_target_host,
+				      uint *i_target, uint n_target);
 
-  char **NESTGPU_GetIntVarNames(int i_node);
+  char **NESTGPU_GetIntVarNames(uint i_node);
 
-  char **NESTGPU_GetScalVarNames(int i_node);
+  char **NESTGPU_GetScalVarNames(uint i_node);
   
-  int NESTGPU_GetNIntVar(int i_node);
+  int NESTGPU_GetNIntVar(uint i_node);
 
-  int NESTGPU_GetNScalVar(int i_node);
+  int NESTGPU_GetNScalVar(uint i_node);
     
-  char **NESTGPU_GetPortVarNames(int i_node);
+  char **NESTGPU_GetPortVarNames(uint i_node);
   
-  int NESTGPU_GetNPortVar(int i_node);
+  int NESTGPU_GetNPortVar(uint i_node);
     
-  char **NESTGPU_GetScalParamNames(int i_node);
+  char **NESTGPU_GetScalParamNames(uint i_node);
   
-  int NESTGPU_GetNScalParam(int i_node);
+  int NESTGPU_GetNScalParam(uint i_node);
     
-  char **NESTGPU_GetPortParamNames(int i_node);
+  char **NESTGPU_GetPortParamNames(uint i_node);
 
-  int NESTGPU_GetNGroupParam(int i_node);
+  int NESTGPU_GetNGroupParam(uint i_node);
   
-  char **NESTGPU_GetGroupParamNames(int i_node);
+  char **NESTGPU_GetGroupParamNames(uint i_node);
 
-  int NESTGPU_GetNPortParam(int i_node);
+  int NESTGPU_GetNPortParam(uint i_node);
 
-  char **NESTGPU_GetArrayParamNames(int i_node);
+  char **NESTGPU_GetArrayParamNames(uint i_node);
   
-  int NESTGPU_GetNArrayParam(int i_node);
+  int NESTGPU_GetNArrayParam(uint i_node);
 
-  char **NESTGPU_GetArrayVarNames(int i_node);
+  char **NESTGPU_GetArrayVarNames(uint i_node);
   
-  int NESTGPU_GetNArrayVar(int i_node);
+  int NESTGPU_GetNArrayVar(uint i_node);
     
-  int64_t *NESTGPU_GetSeqSeqConnections(int i_source, int n_source,
-					int i_target, int n_target,
+  int64_t *NESTGPU_GetSeqSeqConnections(uint i_source, uint n_source,
+					uint i_target, uint n_target,
 					int syn_group, int64_t *n_conn);
 
-  int64_t *NESTGPU_GetSeqGroupConnections(int i_source, int n_source,
-					  int *i_target_pt, int n_target,
+  int64_t *NESTGPU_GetSeqGroupConnections(uint i_source, uint n_source,
+					  uint *i_target_pt, uint n_target,
 					  int syn_group, int64_t *n_conn);
 
-  int64_t *NESTGPU_GetGroupSeqConnections(int *i_source_pt, int n_source,
-					  int i_target, int n_target,
+  int64_t *NESTGPU_GetGroupSeqConnections(uint *i_source_pt, uint n_source,
+					  uint i_target, uint n_target,
 					  int syn_group, int64_t *n_conn);
 
-  int64_t *NESTGPU_GetGroupGroupConnections(int *i_source_pt, int n_source,
-					    int *i_target_pt, int n_target,
+  int64_t *NESTGPU_GetGroupGroupConnections(uint *i_source_pt, uint n_source,
+					    uint *i_target_pt, uint n_target,
 					    int syn_group, int64_t *n_conn);
   
   int NESTGPU_GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
-				  int *i_source, int *i_target,
+				  uint *i_source, uint *i_target,
 				  int *port,
-				  unsigned char *syn_group, float *delay,
+				  int *syn_group, float *delay,
 				  float *weight);
   
   int NESTGPU_IsConnectionFloatParam(char *param_name);
@@ -340,17 +348,17 @@ extern "C" {
   
   int NESTGPU_SetSynGroupParam(int i_syn_group, char *param_name, float val);
 
-  int NESTGPU_ActivateSpikeCount(int i_node, int n_node);
+  int NESTGPU_ActivateSpikeCount(uint i_node, int n_node);
 
-  int NESTGPU_ActivateRecSpikeTimes(int i_node, int n_node,
+  int NESTGPU_ActivateRecSpikeTimes(uint i_node, int n_node,
 				      int max_n_rec_spike_times);
   
-  int NESTGPU_SetRecSpikeTimesStep(int i_node, int n_node,
+  int NESTGPU_SetRecSpikeTimesStep(uint i_node, int n_node,
 				   int rec_spike_times_step);
   
-  int NESTGPU_GetNRecSpikeTimes(int i_node);
+  int NESTGPU_GetNRecSpikeTimes(uint i_node);
 
-  int NESTGPU_GetRecSpikeTimes(int i_node, int n_node,
+  int NESTGPU_GetRecSpikeTimes(uint i_node, int n_node,
 			       int **n_spike_times_pt,
 			       float ***spike_times_pt);
 
@@ -360,12 +368,12 @@ extern "C" {
 					float **spike_height,
 					int include_zeros);
 
-  int NESTGPU_SetNeuronGroupParam(int i_node, int n_node, char *param_name,
+  int NESTGPU_SetNeuronGroupParam(uint i_node, int n_node, char *param_name,
 				    float val);
 
-  int NESTGPU_IsNeuronGroupParam(int i_node, char *param_name);
+  int NESTGPU_IsNeuronGroupParam(uint i_node, char *param_name);
 
-  float NESTGPU_GetNeuronGroupParam(int i_node, char *param_name);
+  float NESTGPU_GetNeuronGroupParam(uint i_node, char *param_name);
 
   int NESTGPU_GetNBoolParam();
   

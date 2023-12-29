@@ -48,7 +48,7 @@ class NodeSeq(object):
     def __init__(self, i0, n=1):
         if i0 == None:
             i0 = 0
-            n = -1
+            n = 0 # -1
         self.i0 = i0
         self.n = n
 
@@ -1394,7 +1394,6 @@ def SetNeuronStatus(nodes, var_name, val):
     if (type(nodes)!=list) & (type(nodes)!=tuple) & (type(nodes)!=NodeSeq):
         raise ValueError("Unknown node type")
     if (type(val)==dict):
-        # print("pok0")
         if ((type(nodes)==NodeSeq
              and (IsNeuronScalParam(nodes.i0, var_name)
                   or IsNeuronScalVar(nodes.i0, var_name)
@@ -1404,10 +1403,8 @@ def SetNeuronStatus(nodes, var_name, val):
             or IsNeuronScalVar(nodes[0], var_name)
             or IsNeuronPortParam(nodes[0], var_name)
             or IsNeuronPortVar(nodes[0], var_name)):
-            # print("pok1")
             for dict_param_name in val:
                 pval = val[dict_param_name]
-                # print("pok2 ", dict_param_name, pval) 
                 if dict_param_name=="array":
                     arr = (ctypes.c_float * len(pval))(*pval)
                     array_pt = ctypes.cast(arr, ctypes.c_void_p)
@@ -1417,7 +1414,6 @@ def SetNeuronStatus(nodes, var_name, val):
                 elif dict_param_name=="distribution":
                     distr_idx = distribution_dict[pval]
                     SetDistributionIntParam("distr_idx", distr_idx)
-                    # print("pok3 distr_idx", distr_idx) 
                 else:
                     if IsDistributionFloatParam(dict_param_name):
                         if ((type(nodes)==NodeSeq
@@ -1425,11 +1421,8 @@ def SetNeuronStatus(nodes, var_name, val):
                                  or IsNeuronScalVar(nodes.i0, var_name)))
                             or IsNeuronScalParam(nodes[0], var_name)
                             or IsNeuronScalVar(nodes[0], var_name)):
-                            # print("pok4")
                             SetDistributionIntParam("vect_size", 1)
-                            # print("pok5 ", dict_param_name, pval)
                             SetDistributionScalParam(dict_param_name, pval)
-                            # print("pok6 ", dict_param_name, pval)
                         elif ((type(nodes)==NodeSeq
                             and (IsNeuronPortParam(nodes.i0, var_name)
                                  or IsNeuronPortVar(nodes.i0, var_name)))
@@ -1442,16 +1435,12 @@ def SetNeuronStatus(nodes, var_name, val):
                     else:
                         print("Parameter name: ", dict_param_name)
                         raise ValueError("Unknown distribution parameter")
-                    # print("pok7")
             # set values from array or from distribution
             if type(nodes)==NodeSeq:
-                # print("pok8")
                 if IsNeuronScalParam(nodes.i0, var_name):
                     SetNeuronScalParamDistr(nodes.i0, nodes.n, var_name)
                 elif IsNeuronScalVar(nodes.i0, var_name):
-                    # print("pok9")
                     SetNeuronScalVarDistr(nodes.i0, nodes.n, var_name)
-                    # print("pok10")
                 elif IsNeuronPortParam(nodes.i0, var_name):
                     SetNeuronPortParamDistr(nodes.i0, nodes.n, var_name)
                 elif IsNeuronPortVar(nodes.i0, var_name):
@@ -2220,7 +2209,7 @@ def GetConnections(source=None, target=None, syn_group=-1):
 NESTGPU_GetConnectionStatus = _nestgpu.NESTGPU_GetConnectionStatus
 NESTGPU_GetConnectionStatus.argtypes = (c_int64_p, ctypes.c_int64,
                                         c_int_p, c_int_p,
-                                         c_int_p, c_char_p,
+                                         c_int_p, c_int_p,
                                          c_float_p, c_float_p)
 NESTGPU_GetConnectionStatus.restype = ctypes.c_int
 def GetConnectionStatus(conn):
@@ -2237,14 +2226,13 @@ def GetConnectionStatus(conn):
     i_source = (ctypes.c_int * n_conn)()
     i_target = (ctypes.c_int * n_conn)()
     i_port = (ctypes.c_int * n_conn)()
-    i_syn_group = (ctypes.c_char * n_conn)()
+    i_syn_group = (ctypes.c_int * n_conn)()
     delay = (ctypes.c_float * n_conn)()
     weight = (ctypes.c_float * n_conn)()
     
     NESTGPU_GetConnectionStatus(conn_arr, n_conn, i_source,
                                 i_target, i_port, i_syn_group,
                                 delay, weight)
-        
     status_list = []
     for i in range(n_conn):
         status_dict = {}
@@ -2257,8 +2245,9 @@ def GetConnectionStatus(conn):
         status_dict["weight"] = weight[i]
         
         status_list.append(status_dict)
-
+        
     return status_list
+
 
 NESTGPU_IsConnectionFloatParam = _nestgpu.NESTGPU_IsConnectionFloatParam
 NESTGPU_IsConnectionFloatParam.argtypes = (c_char_p,)
