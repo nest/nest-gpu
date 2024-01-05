@@ -52,6 +52,7 @@
 #include "poiss_gen.h"
 
 #include "remote_connect.h"
+#include "conn12b.h"
 
 ////////////// TEMPORARY
 #include "scan.h"
@@ -108,39 +109,11 @@ const std::string kernel_bool_param_name[N_KERNEL_BOOL_PARAM] = {
   "remote_spike_height"
 };
 
-int NESTGPU::FreeConnRandomGenerator()
+
+int NESTGPU::setNHosts(int n_hosts)
 {
-  for (int i_host=0; i_host<n_hosts_; i_host++) {
-    for (int j_host=0; j_host<n_hosts_; j_host++) {
-      CURAND_CALL(curandDestroyGenerator
-		  (conn_random_generator_[i_host][j_host]));
-    }
-  }
-
-  return 0;
-}
-
-int NESTGPU::InitConnRandomGenerator()
-{
-  conn_random_generator_.resize(n_hosts_);
-  for (int i_host=0; i_host<n_hosts_; i_host++) {
-    conn_random_generator_[i_host].resize(n_hosts_);
-    for (int j_host=0; j_host<n_hosts_; j_host++) {
-      CURAND_CALL(curandCreateGenerator
-		  (&conn_random_generator_[i_host][j_host],
-		   CURAND_RNG_PSEUDO_DEFAULT));
-    }
-  }
-
-  return 0;
-}
-
-int NESTGPU::setHostNum(uint n_hosts)
-{
-  // free previous instances before creating new
-  FreeConnRandomGenerator();
   n_hosts_ = n_hosts;
-  InitConnRandomGenerator();
+  conn_->setNHosts(n_hosts);  
   SetRandomSeed(kernel_seed_);
   n_remote_nodes_.assign(n_hosts_, 0);
   external_spike_flag_ = (n_hosts > 1) ? true : false;
@@ -150,9 +123,10 @@ int NESTGPU::setHostNum(uint n_hosts)
   return 0;
 }
 
-int NESTGPU::setThisHost(uint i_host)
+int NESTGPU::setThisHost(int i_host)
 {
   this_host_ = i_host;
+  conn_->setThisHost(i_host);
   SetRandomSeed(kernel_seed_);
 
   return 0;
@@ -168,7 +142,8 @@ NESTGPU::NESTGPU()
   n_hosts_ = 1;
   this_host_ = 0;
   external_spike_flag_ = false;
-  InitConnRandomGenerator();
+
+  conn_ = new ConnectionTemplate<conn12b_key, conn12b_struct>;
   
   random_generator_ = new curandGenerator_t;
   CURAND_CALL(curandCreateGenerator(random_generator_,
@@ -185,9 +160,6 @@ NESTGPU::NESTGPU()
 
   calibrate_flag_ = false;
   create_flag_ = false;
-  ConnectionSpikeTimeFlag = false;
-  rev_conn_flag_ = false;
-  h_NRevConn = 0;
   
   start_real_time_ = getRealTime();
   max_spike_buffer_size_ = 20;
@@ -195,13 +167,17 @@ NESTGPU::NESTGPU()
   sim_time_ = 1000.0;        //Simulation time in ms
   //n_poiss_nodes_ = 0;
   n_remote_nodes_.assign(1, 0);
-  n_image_nodes_ = 0;
+
+  ////////////// Copy to conn_ object
   SetTimeResolution(0.1);  // time resolution in ms
+  
   max_spike_num_fact_ = 1.0;
   max_spike_per_host_fact_ = 1.0;
   max_remote_spike_num_fact_ = 1.0;
-  setMaxNodeNBits(20); // maximum number of nodes is 2^20
-  setMaxSynNBits(6); // maximum number of synapse groups is 2^6
+
+  // already set in conn_ constructor
+  //conn_->setMaxNodeNBits(20); // maximum number of nodes is 2^20
+  //conn_->setMaxSynNBits(6); // maximum number of synapse groups is 2^6
   
   error_flag_ = false;
   error_message_ = "";
@@ -223,7 +199,7 @@ NESTGPU::NESTGPU()
   setHostNum(5);
   setThisHost(this_host);
   
-  RemoteConnectionMapInit(n_hosts_); // (uint n_hosts)
+  conn_->remoteConnectionMapInit();
 
   int n_neurons = 30;
   int CE = 3;
@@ -252,8 +228,8 @@ NESTGPU::NESTGPU()
 		       n_source*sizeof(int), cudaMemcpyHostToDevice));
 
 
-  _RemoteConnect(this_host, 1, d_source_node_index, 10, 0, 10, 3,
-		 conn_spec1, syn_spec1);
+  RemoteConnect(1, d_source_node_index, 10, 0, 10, 3,
+		conn_spec1, syn_spec1);
 
   //_RemoteConnectSource(1, d_source_node_index, 10, 10, 3,
   //		       conn_spec1, syn_spec1);
@@ -266,7 +242,7 @@ NESTGPU::NESTGPU()
   std::cout << "SECOND CONNECT COMMAND\n";
   std::cout << "##################################################\n";
   std::cout << "##################################################\n";
-  _RemoteConnect(this_host, 1, 20, 10, 0, 10, 3, conn_spec1, syn_spec1);
+  RemoteConnect(1, 20, 10, 0, 10, 3, conn_spec1, syn_spec1);
   //_RemoteConnectSource(1, 20, 10, 10, 3, conn_spec1, syn_spec1);
   //_RemoteConnectTarget(0, 20, 10, 10, 3, conn_spec1, syn_spec1);
 
@@ -279,8 +255,8 @@ NESTGPU::NESTGPU()
   CUDAMALLOCCTRL("&d_source_node_index2",&d_source_node_index2, n_source2*sizeof(int));
   gpuErrchk(cudaMemcpy(d_source_node_index2, h_source_node_index2,
 		       n_source2*sizeof(int), cudaMemcpyHostToDevice));
-  _RemoteConnect(this_host, 1, d_source_node_index2, n_source2, 3, 0, 1,
-  		 conn_spec2, syn_spec1);
+  RemoteConnect(1, d_source_node_index2, n_source2, 3, 0, 1,
+		conn_spec2, syn_spec1);
 
   int n_source3 = 3;
   int h_source_node_index3[n_source3] =
@@ -289,8 +265,8 @@ NESTGPU::NESTGPU()
   CUDAMALLOCCTRL("&d_source_node_index3",&d_source_node_index3, n_source3*sizeof(int));
   gpuErrchk(cudaMemcpy(d_source_node_index3, h_source_node_index3,
 		       n_source3*sizeof(int), cudaMemcpyHostToDevice));
-  _RemoteConnect(this_host, 1, d_source_node_index3, n_source3, 2, 0, 1,
-  		 conn_spec2, syn_spec1);
+  RemoteConnect(1, d_source_node_index3, n_source3, 2, 0, 1,
+		conn_spec2, syn_spec1);
 
   int n_source4 = 2;
   int h_source_node_index4[n_source4] =
@@ -299,8 +275,8 @@ NESTGPU::NESTGPU()
   CUDAMALLOCCTRL("&d_source_node_index4",&d_source_node_index4, n_source4*sizeof(int));
   gpuErrchk(cudaMemcpy(d_source_node_index4, h_source_node_index4,
 		       n_source4*sizeof(int), cudaMemcpyHostToDevice));
-  _RemoteConnect(this_host, 1, d_source_node_index4, n_source4, 4, 0, 1,
-  		 conn_spec2, syn_spec1);
+  RemoteConnect(1, d_source_node_index4, n_source4, 4, 0, 1,
+		conn_spec2, syn_spec1);
 
   int n_source5 = 1;
   int h_source_node_index5[n_source5] = {4};
@@ -308,8 +284,8 @@ NESTGPU::NESTGPU()
   CUDAMALLOCCTRL("&d_source_node_index5",&d_source_node_index5, n_source5*sizeof(int));
   gpuErrchk(cudaMemcpy(d_source_node_index5, h_source_node_index5,
 		       n_source5*sizeof(int), cudaMemcpyHostToDevice));
-  _RemoteConnect(this_host, 1, d_source_node_index5, n_source5, 0, 0, 1,
-  		 conn_spec2, syn_spec1);
+  RemoteConnect(1, d_source_node_index5, n_source5, 0, 0, 1,
+		conn_spec2, syn_spec1);
 
   
   //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -365,15 +341,8 @@ int NESTGPU::SetRandomSeed(unsigned long long seed)
   //				    CURAND_RNG_PSEUDO_DEFAULT));
   CURAND_CALL(curandSetPseudoRandomGeneratorSeed
 	      (*random_generator_, kernel_seed_ + this_host_));
-  
-  for (int i_host=0; i_host<n_hosts_; i_host++) {
-    for (int j_host=0; j_host<n_hosts_; j_host++) {
-      CURAND_CALL(curandSetPseudoRandomGeneratorSeed
-		  (conn_random_generator_[i_host][j_host],
-		   seed + conn_seed_offset_ + i_host*n_hosts_ + j_host));
-    }
-  }
-  
+  conn_->setRandomSeed(seed);
+    
   return 0;
 }
 
@@ -408,10 +377,15 @@ uint NESTGPU::GetNLocalNodes()
   return node_group_map_.size();
 }
 
+uint NESTGPU::GetNTotalNodes()
+{
+  return GetNLocalNodes() + conn_->getNImageNodes();
+}
+
 int NESTGPU::CheckImageNodes(int n_nodes)
 {
   int i_node_0 = GetNLocalNodes();
-  int max_n_nodes = IntPow(2,h_MaxNodeNBits);
+  int max_n_nodes = IntPow(2, conn_->getMaxNodeNBits());
   
   if ((i_node_0 + n_nodes) > max_n_nodes) {
     throw ngpu_exception(std::string("Local plus Image nodes exceed maximum"
@@ -425,8 +399,8 @@ int NESTGPU::CheckImageNodes(int n_nodes)
 int NESTGPU::CreateNodeGroup(int n_nodes, int n_ports)
 {
   int i_node_0 = GetNLocalNodes();
-  int max_n_nodes = IntPow(2,h_MaxNodeNBits);
-  int max_n_ports = IntPow(2, (h_MaxPortSynNBits-h_MaxSynNBits-1));
+  int max_n_nodes = IntPow(2,conn_->getMaxNodeNBits());
+  int max_n_ports = IntPow(2, conn_->getMaxPortNBits());
   
   if ((i_node_0 + n_nodes) > max_n_nodes) {
     throw ngpu_exception(std::string("Maximum number of nodes ")
@@ -473,21 +447,21 @@ int NESTGPU::Calibrate()
   gpuErrchk(cudaMemcpyToSymbol(n_local_nodes, &n_nodes,
 			       sizeof(int)));
 
-  //std::cout << "n_local_nodes: " << n_nodes << " n_image_nodes_: "
-  //	    << n_image_nodes_ << "\n";
-  if (n_image_nodes_ > 0) {
-    CheckImageNodes(n_image_nodes_);
-    addOffsetToExternalNodeIds<conn12b_key, conn12b_struct>();
+  int n_image_nodes = conn_->getNImageNodes();
+  //std::cout << "n_local_nodes: " << n_nodes << " n_image_nodes: "
+  //	    << n_image_nodes << "\n";
+  if (n_image_nodes > 0) {
+    CheckImageNodes(n_image_nodes);
+    conn_->addOffsetToExternalNodeIds(GetNLocalNodes());
   }
   
   calibrate_flag_ = true;
   
-  organizeConnections<conn12b_key, conn12b_struct>
-    (time_resolution_, GetTotalNNodes(), NConn, h_ConnBlockSize);
+  conn_->organizeConnections(GetNTotalNodes());
   
-  ConnectInit();
-
-  poiss_conn::OrganizeDirectConnections<conn12b_key>();
+  conn_->calibrate();
+  
+  poiss_conn::organizeDirectConnections(conn_);
   for (unsigned int i=0; i<node_vect_.size(); i++) {
     if (node_vect_[i]->has_dir_conn_) {
       node_vect_[i]->buildDirectConnections();
@@ -495,12 +469,12 @@ int NESTGPU::Calibrate()
   }
   
   if (remove_conn_key_) {
-    freeConnectionKey<conn12b_key>();
+    conn_->freeConnectionKey();
   }
   
-  int max_delay_num = h_MaxDelayNum;
+  int max_delay_num = conn_->getMaxDelayNum();
   
-  unsigned int n_spike_buffers = GetTotalNNodes();
+  unsigned int n_spike_buffers = GetNTotalNodes();
   NestedLoop::Init(n_spike_buffers);
 		   
   // temporary
@@ -513,7 +487,7 @@ int NESTGPU::Calibrate()
   NodeGroupArrayInit();
   
   max_spike_num_ = (int)round(max_spike_num_fact_
-			      * GetTotalNNodes()
+			      * GetNTotalNodes()
 			      * max_delay_num);
   max_spike_num_ = (max_spike_num_>1) ? max_spike_num_ : 1;
 
@@ -528,12 +502,13 @@ int NESTGPU::Calibrate()
     ? max_remote_spike_num_ : 1;
   
   SpikeInit(max_spike_num_);
-  SpikeBufferInit(GetTotalNNodes(), max_spike_buffer_size_);
+  spikeBufferInit(GetNTotalNodes(), max_spike_buffer_size_,
+		  conn_->getMaxDelayNum());
 
   //#ifndef CHECKRC
   if (n_hosts_ > 1) {
-    RemoteConnectionMapCalibrate(this_host_, n_hosts_);
-    addOffsetToSpikeBufferMap();
+    conn_->remoteConnectionMapCalibrate(GetNLocalNodes());
+
 #ifdef CHECKRC
     // TEMPORARY, FOR TESTING
     std::cout << "////////////////////////////////////////\n";
@@ -622,8 +597,8 @@ int NESTGPU::Calibrate()
   }
   //#endif
 
-  if (rev_conn_flag_) {
-    RevSpikeInit<conn12b_key, conn12b_struct>(GetNLocalNodes());
+  if (conn_->getRevConnFlag()) {
+    conn_->revSpikeInit(GetNLocalNodes());
   }
  
   multimeter_->OpenFiles();
@@ -750,7 +725,7 @@ int NESTGPU::SimulationStep()
   double time_mark;
 
   time_mark = getRealTime();
-  SpikeBufferUpdate<<<(GetTotalNNodes()+1023)/1024, 1024>>>();
+  SpikeBufferUpdate<<<(GetNTotalNodes()+1023)/1024, 1024>>>();
   gpuErrchk( cudaPeekAtLastError() );
   SpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   time_mark = getRealTime();
@@ -811,8 +786,7 @@ int NESTGPU::SimulationStep()
   gpuErrchk( cudaDeviceSynchronize() );
   if (n_spikes > 0) {
     time_mark = getRealTime();
-    NestedLoop::Run<conn12b_key, conn12b_struct>
-      (nested_loop_algo_, 0, n_spikes, d_SpikeTargetNum);
+    NestedLoop::Run<0>(nested_loop_algo_, n_spikes, d_SpikeTargetNum);
     NestedLoop_time_ += (getRealTime() - time_mark);
   }
   time_mark = getRealTime();
@@ -858,19 +832,19 @@ int NESTGPU::SimulationStep()
     ExternalSpikeReset_time_ += (getRealTime() - time_mark);
   }
 
-  if (h_NRevConn > 0) {
+  if (conn_->getNRevConn() > 0) {
     //time_mark = getRealTime();
-    RevSpikeReset<<<1, 1>>>();
+    revSpikeReset<<<1, 1>>>();
     gpuErrchk( cudaPeekAtLastError() );
-    RevSpikeBufferUpdate<<<(GetNLocalNodes()+1023)/1024, 1024>>>
+    revSpikeBufferUpdate<<<(GetNLocalNodes()+1023)/1024, 1024>>>
       (GetNLocalNodes());
     gpuErrchk( cudaPeekAtLastError() );
     unsigned int n_rev_spikes;
-    gpuErrchk(cudaMemcpy(&n_rev_spikes, d_RevSpikeNum, sizeof(unsigned int),
-			 cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(&n_rev_spikes, conn_->getDevRevSpikeNumPt(),
+			 sizeof(unsigned int), cudaMemcpyDeviceToHost));
     if (n_rev_spikes > 0) {
-      NestedLoop::Run<conn12b_key, conn12b_struct>
-	(nested_loop_algo_, 1,n_rev_spikes, d_RevSpikeNConn);
+      NestedLoop::Run<1>(nested_loop_algo_, n_rev_spikes,
+			 conn_->getDevRevSpikeNConnPt());
     }      
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   }
@@ -1641,6 +1615,80 @@ int NESTGPU::GetNArrayVar(int i_node)
   return node_vect_[i_group]->GetNArrayVar();
 }
 
+int NESTGPU::GetConnectionFloatParamIndex(std::string param_name)
+{
+  return conn_->getConnectionFloatParamIndex(param_name);
+}
+  
+int NESTGPU::GetConnectionIntParamIndex(std::string param_name)
+{
+  return conn_->getConnectionIntParamIndex(param_name);
+}
+  
+int NESTGPU::IsConnectionFloatParam(std::string param_name)
+{
+  return conn_->isConnectionFloatParam(param_name);
+}
+  
+int NESTGPU::IsConnectionIntParam(std::string param_name)
+{
+  return conn_->isConnectionIntParam(param_name);
+}
+
+int NESTGPU::GetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+				     float *h_param_arr,
+				     std::string param_name)
+{
+  return conn_->getConnectionFloatParam(conn_ids, n_conn, h_param_arr,
+					param_name);
+}
+
+int NESTGPU::GetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
+				   int *h_param_arr,
+				   std::string param_name)
+{
+  return conn_->getConnectionIntParam(conn_ids, n_conn, h_param_arr,
+				      param_name);
+}
+
+int NESTGPU::SetConnectionFloatParamDistr(int64_t *conn_ids, int64_t n_conn,
+					  std::string param_name)
+{
+  return conn_->setConnectionFloatParamDistr(conn_ids, n_conn,  param_name);
+}
+
+int NESTGPU::SetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+			      float val, std::string param_name)
+{
+  return conn_->setConnectionFloatParam(conn_ids, n_conn, val, param_name);
+}
+  
+
+int NESTGPU::SetConnectionIntParamArr(int64_t *conn_ids, int64_t n_conn,
+				      int *h_param_arr,
+				      std::string param_name)
+{
+  return conn_->setConnectionIntParamArr(conn_ids, n_conn, h_param_arr,
+					 param_name);
+}
+  
+int NESTGPU::SetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
+				   int val, std::string param_name)
+{
+  return conn_->setConnectionIntParam(conn_ids, n_conn, val, param_name);
+}
+
+
+int NESTGPU::GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
+				 inode_t *source, inode_t *target, int *port,
+				 int *syn_group, float *delay,
+				 float *weight)
+{
+  return conn_->getConnectionStatus(conn_ids, n_conn, source, target,
+				    port, syn_group, delay, weight);
+}
+
+
 int64_t *NESTGPU::GetConnections(inode_t i_source, inode_t n_source,
 				 inode_t i_target, inode_t n_target,
 				 int syn_group, int64_t *n_conn)
@@ -1648,7 +1696,7 @@ int64_t *NESTGPU::GetConnections(inode_t i_source, inode_t n_source,
   if (n_source<=0) {
     i_source = 0;
     // gets also connections from image neurons
-    n_source = GetTotalNNodes();
+    n_source = GetNTotalNodes();
   }
   if (n_target<=0) {
     i_target = 0;
@@ -1663,10 +1711,9 @@ int64_t *NESTGPU::GetConnections(inode_t i_source, inode_t n_source,
     i_target_pt[i] = i_target + i;
   }
   
-  int64_t *conn_ids =
-    GetConnections<conn12b_key, conn12b_struct>
-    (i_source_pt, n_source, i_target_pt, n_target, syn_group,
-		   n_conn);
+  int64_t *conn_ids = conn_->getConnections
+    (i_source_pt, n_source, i_target_pt, n_target, syn_group, n_conn);
+  
   delete[] i_source_pt;
   delete[] i_target_pt;
 
@@ -1687,9 +1734,9 @@ int64_t *NESTGPU::GetConnections(inode_t *i_source_pt, inode_t n_source,
   }
   
   int64_t *conn_ids =
-    GetConnections<conn12b_key, conn12b_struct>
-    (i_source_pt, n_source, i_target_pt, n_target, syn_group,
-		   n_conn);
+    conn_->getConnections
+    (i_source_pt, n_source, i_target_pt, n_target, syn_group, n_conn);
+  
   delete[] i_target_pt;
 
   return conn_ids;
@@ -1703,7 +1750,7 @@ int64_t *NESTGPU::GetConnections(inode_t i_source, inode_t n_source,
   if (n_source<=0) {
     i_source = 0;
     //  gets also connections from image neurons
-    n_source = GetTotalNNodes();
+    n_source = GetNTotalNodes();
   }
   inode_t *i_source_pt = new inode_t[n_source];
   for (inode_t i=0; i<n_source; i++) {
@@ -1711,11 +1758,22 @@ int64_t *NESTGPU::GetConnections(inode_t i_source, inode_t n_source,
   }
 
   int64_t *conn_ids =
-    GetConnections<conn12b_key, conn12b_struct>
-    (i_source_pt, n_source, i_target_pt, n_target, syn_group,
-		   n_conn);
+    conn_->getConnections
+    (i_source_pt, n_source, i_target_pt, n_target, syn_group, n_conn);
+  
   delete[] i_source_pt;
 
+  return conn_ids;
+}
+
+int64_t *NESTGPU::GetConnections(inode_t *i_source_pt, inode_t n_source,
+				 inode_t *i_target_pt, inode_t n_target,
+				 int syn_group, int64_t *n_conn)
+{
+  int64_t *conn_ids =
+    conn_->getConnections
+    (i_source_pt, n_source, i_target_pt, n_target, syn_group, n_conn);
+  
   return conn_ids;
 }
 
@@ -1745,7 +1803,7 @@ int64_t *NESTGPU::GetConnections(std::vector<inode_t> source,
 				 std::vector<inode_t> target,
 				 int syn_group, int64_t *n_conn)
 {
-  return GetConnections<conn12b_key, conn12b_struct>
+  return conn_->getConnections
     (source.data(), source.size(), target.data(), target.size(),
      syn_group, n_conn);
 }
@@ -2157,9 +2215,9 @@ int NESTGPU::GetIntParam(std::string param_name)
   case i_max_spike_buffer_size:
     return max_spike_buffer_size_;
   case i_max_node_n_bits:
-    return h_MaxNodeNBits;    
+    return conn_->getMaxNodeNBits();    
   case i_max_syn_n_bits:
-    return h_MaxSynNBits;    
+    return conn_->getMaxSynNBits();    
   default:
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")
 			 + param_name);
@@ -2180,10 +2238,10 @@ int NESTGPU::SetIntParam(std::string param_name, int val)
     SetMaxSpikeBufferSize(val);
     break;
   case i_max_node_n_bits:
-    setMaxNodeNBits(val);
+    conn_->setMaxNodeNBits(val);
     break;
   case i_max_syn_n_bits:
-    setMaxSynNBits(val);
+    conn_->setMaxSynNBits(val);
     break;
   default:
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")

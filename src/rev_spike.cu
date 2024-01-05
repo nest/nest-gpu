@@ -32,31 +32,24 @@
 #define SPIKE_TIME_DIFF_THR 10000 // must be less than GUARD
 
 extern __constant__ long long NESTGPUTimeIdx;
-extern __constant__ float NESTGPUTimeResolution;
 
-unsigned int *d_RevSpikeNum;
-unsigned int *d_RevSpikeTarget;
-int *d_RevSpikeNConn;
+extern __constant__ float NESTGPUTimeResolution;
 
 extern __device__ void SynapseUpdate(int syn_group, float *w, float Dt);
 
 __device__ unsigned int *RevSpikeNum;
+
 __device__ unsigned int *RevSpikeTarget;
+
 __device__ int *RevSpikeNConn;
 
-int64_t h_NRevConn; 
-
-int64_t *d_RevConnections; //[i] i=0,..., n_rev_conn - 1;
 __device__ int64_t *RevConnections;
 
-int *d_TargetRevConnectionSize; //[i] i=0,..., n_neuron-1;
 __device__ int *TargetRevConnectionSize;
 
-int64_t **d_TargetRevConnection; //[i][j] j=0,...,RevConnectionSize[i]-1
 __device__ int64_t **TargetRevConnection;
 
-
-__global__ void SetTargetRevConnectionsPtKernel
+__global__ void setTargetRevConnectionsPtKernel
     (int n_spike_buffer, int64_t *target_rev_connection_cumul,
      int64_t **target_rev_connection, int64_t *rev_connections)
 {
@@ -66,7 +59,7 @@ __global__ void SetTargetRevConnectionsPtKernel
     + target_rev_connection_cumul[i_target];
 }
 
-__global__ void RevConnectionInitKernel(int64_t *rev_conn,
+__global__ void revConnectionInitKernel(int64_t *rev_conn,
 					int *target_rev_conn_size,
 					int64_t **target_rev_conn)
 {
@@ -76,7 +69,7 @@ __global__ void RevConnectionInitKernel(int64_t *rev_conn,
 }
 
 
-__global__ void RevSpikeBufferUpdate(unsigned int n_node)
+__global__ void revSpikeBufferUpdate(unsigned int n_node)
 {
   unsigned int i_node = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_node >= n_node) {
@@ -95,7 +88,7 @@ __global__ void RevSpikeBufferUpdate(unsigned int n_node)
   }
 }
 
-__global__ void SetConnectionSpikeTime(unsigned int n_conn,
+__global__ void setConnectionSpikeTime(unsigned int n_conn,
 				       unsigned short time_idx)
 {
   unsigned int i_conn = threadIdx.x + blockIdx.x * blockDim.x;
@@ -105,7 +98,7 @@ __global__ void SetConnectionSpikeTime(unsigned int n_conn,
   ConnectionSpikeTime[i_conn] = time_idx;
 }
 
-__global__ void ResetConnectionSpikeTimeUpKernel(unsigned int n_conn)
+__global__ void resetConnectionSpikeTimeUpKernel(unsigned int n_conn)
 {
   unsigned int i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) {
@@ -117,7 +110,7 @@ __global__ void ResetConnectionSpikeTimeUpKernel(unsigned int n_conn)
   }
 }
 
-__global__ void ResetConnectionSpikeTimeDownKernel(unsigned int n_conn)
+__global__ void resetConnectionSpikeTimeDownKernel(unsigned int n_conn)
 {
   unsigned int i_conn = threadIdx.x + blockIdx.x * blockDim.x;
   if (i_conn>=n_conn) {
@@ -129,7 +122,7 @@ __global__ void ResetConnectionSpikeTimeDownKernel(unsigned int n_conn)
   }
 }
 
-__global__ void DeviceRevSpikeInit(unsigned int *rev_spike_num,
+__global__ void deviceRevSpikeInit(unsigned int *rev_spike_num,
 				   unsigned int *rev_spike_target,
 				   int *rev_spike_n_conn)
 {
@@ -139,40 +132,13 @@ __global__ void DeviceRevSpikeInit(unsigned int *rev_spike_num,
   *RevSpikeNum = 0;
 }
 
-__global__ void RevSpikeReset()
+__global__ void revSpikeReset()
 {
   *RevSpikeNum = 0;
 }
   
 
-int ResetConnectionSpikeTimeUp()
-{  
-  ResetConnectionSpikeTimeUpKernel
-    <<<(NConn+1023)/1024, 1024>>>
-    (NConn);
-  gpuErrchk( cudaPeekAtLastError() );
-
-  return 0;
-}
-
-int ResetConnectionSpikeTimeDown()
-{  
-  ResetConnectionSpikeTimeDownKernel
-    <<<(NConn+1023)/1024, 1024>>>
-    (NConn);
-  gpuErrchk( cudaPeekAtLastError() );
-
-  return 0;
-}
 
 
 
-int RevSpikeFree()
-{
-  CUDAFREECTRL("&d_RevSpikeNum",&d_RevSpikeNum);
-  CUDAFREECTRL("&d_RevSpikeTarget",&d_RevSpikeTarget);
-  CUDAFREECTRL("&d_RevSpikeNConn",&d_RevSpikeNConn);
-
-  return 0;
-}
 

@@ -57,11 +57,12 @@ const std::string conn_rule_name[N_CONN_RULE] =
 
 class ConnSpec
 {
+public:
   int rule_;
   int total_num_;
   int indegree_;
   int outdegree_;
-public:
+
   ConnSpec();
   ConnSpec(int rule, int degree=0);
   int Init();
@@ -69,8 +70,6 @@ public:
   int SetParam(std::string param_name, int value);
   int GetParam(std::string param_name);
   static bool IsParam(std::string param_name);
-
-  friend class NESTGPU;
 };
 
 

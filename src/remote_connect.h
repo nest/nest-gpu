@@ -4,29 +4,24 @@
 #define REMOTECONNECTH
 #include <vector>
 #include <cub/cub.cuh>
-#include "nestgpu.h"
+//#include "nestgpu.h"
 #include "connect.h"
 #include "copass_sort.h"
 // Arrays that map remote source nodes to local spike buffers
   
 // The map is organized in blocks having block size:
 extern  __constant__ uint node_map_block_size; // = 100000;
-extern uint h_node_map_block_size; // = 100000;
 
 // number of elements in the map for each source host
 // n_remote_source_node_map[i_source_host]
 // with i_source_host = 0, ..., n_hosts-1 excluding this host itself
 extern __device__ uint *n_remote_source_node_map; // [n_hosts];
-extern uint *d_n_remote_source_node_map;
 
 // remote_source_node_map[i_source_host][i_block][i]
-extern std::vector< std::vector<uint*> > h_remote_source_node_map;
 extern __device__ uint ***remote_source_node_map;
 
 // local_spike_buffer_map[i_source_host][i_block][i]
-extern std::vector< std::vector<uint*> > h_local_spike_buffer_map;
 extern __device__ uint ***local_spike_buffer_map;
-extern uint ***d_local_spike_buffer_map;
 
 // Arrays that map local source nodes to remote spike buffers
 
@@ -34,26 +29,9 @@ extern uint ***d_local_spike_buffer_map;
 // n_local_source_node_map[i_target_host]
 // with i_target_host = 0, ..., n_hosts-1 excluding this host itself
 extern __device__ uint *n_local_source_node_map; // [n_hosts]; 
-extern uint *d_n_local_source_node_map;
 
 // local_source_node_map[i_target_host][i_block][i]
-extern std::vector< std::vector<uint*> > h_local_source_node_map;
 extern __device__ uint ***local_source_node_map;
-extern uint ***d_local_source_node_map;
-
-// number of remote target hosts on which each local node
-//has outgoing connections
-extern uint *d_n_target_hosts; // [n_nodes] 
-// target hosts for the node i_node
-extern uint **d_node_target_hosts; // [i_node]
-// target host map indexes for the node i_node
-extern uint **d_node_target_host_i_map; // [i_node]
-
-// Boolean array with one boolean value for each connection rule
-// - true if the rule always creates at least one outgoing connection
-// from each source node (one_to_one, all_to_all, fixed_outdegree)
-// - false otherwise (fixed_indegree, fixed_total_number, pairwise_bernoulli)
-extern bool *use_all_source_nodes; // [n_connection_rules]:
 
 extern __constant__ uint n_local_nodes; // number of local nodes
 
@@ -63,18 +41,6 @@ extern __constant__ uint n_local_nodes; // number of local nodes
 __device__ bool checkIfValueIsIn2DArr(uint value, uint **arr, uint n_elem,
 				      uint block_size, uint *i_block,
 				      uint *i_in_block);
-
-// Initialize the maps
-int RemoteConnectionMapInit(int n_hosts);
-
-// Allocate GPU memory for new remote-source-node-map blocks
-int allocRemoteSourceNodeMapBlocks(std::vector<uint*> &i_remote_src_node_map,
-				   std::vector<uint*> &i_local_spike_buf_map,
-				   int64_t block_size, uint new_n_block);
-
-// Allocate GPU memory for new local-source-node-map blocks
-int allocLocalSourceNodeMapBlocks(std::vector<uint*> &i_local_src_node_map,
-				  int64_t block_size, uint new_n_block);
 
 template <class ConnKeyT>
 // kernel that flags source nodes used in at least one new connection
@@ -94,61 +60,6 @@ __global__ void setUsedSourceNodeKernel(ConnKeyT *conn_key_subarray,
   source_node_flag[i_source] = 1;
 }
 
-template <class ConnKeyT>
-// Loop on all new connections and set source_node_flag[i_source]=true
-int setUsedSourceNodes(std::vector<void*> &conn_key_vect,
-		       int64_t old_n_conn, int64_t n_conn,
-		       int64_t block_size, uint *d_source_node_flag)
-{
-  int64_t n_new_conn = n_conn - old_n_conn; // number of new connections
-
-#ifdef CHECKRC
-  //////////////////////////////////////////////////////////////////////
-  std::cout << "n_new_conn: " << n_new_conn
-	    << "\tn_conn: " << n_conn
-	    << "\told_n_conn: " << old_n_conn << "\n";
-//////////////////////////////////////////////////////////////////////
-#endif
-  
-  uint ib0 = (uint)(old_n_conn / block_size); // first block index
-  uint ib1 = (uint)((n_conn - 1) / block_size); // last block
-  for (uint ib=ib0; ib<=ib1; ib++) { // loop on blocks
-    int64_t n_block_conn; // number of connections in a block
-    int64_t i_conn0; // index of first connection in a block
-    if (ib1 == ib0) {  // all connections are in the same block
-      i_conn0 = old_n_conn % block_size;
-      n_block_conn = n_new_conn;
-    }
-    else if (ib == ib0) { // first block
-      i_conn0 = old_n_conn % block_size;
-      n_block_conn = block_size - i_conn0;
-    }
-    else if (ib == ib1) { // last block
-      i_conn0 = 0;
-      n_block_conn = (n_conn - 1) % block_size + 1;
-    }
-    else {
-      i_conn0 = 0;
-      n_block_conn = block_size;
-    }
-
-    //////////////////////////////////////////////////////////////////////
-#ifdef CHECKRC
-    std::cout << "n_new_conn: " << n_new_conn
-	      << "\ti_conn0: " << i_conn0
-	      << "\tn_block_conn: " << n_block_conn << "\n";
-#endif
-    //////////////////////////////////////////////////////////////////////
-    
-    setUsedSourceNodeKernel<ConnKeyT><<<(n_block_conn+1023)/1024, 1024>>>
-    ((ConnKeyT*)conn_key_vect[ib] + i_conn0, n_block_conn, d_source_node_flag);
-    gpuErrchk( cudaPeekAtLastError() );
-    gpuErrchk( cudaDeviceSynchronize() );
-  }
-  return 0;
-}
-
-
 // kernel that fills the arrays of nodes actually used by new connections 
 template <class T>
 __global__ void getUsedSourceNodeIndexKernel(T source, uint n_source,
@@ -163,7 +74,7 @@ __global__ void getUsedSourceNodeIndexKernel(T source, uint n_source,
   // on n_used_source_nodes
   if (source_node_flag[i_source] != 0) {
     uint pos = atomicAdd(n_used_source_nodes, 1);
-    u_source_node_idx[pos] = GetNodeIndex(source, i_source);
+    u_source_node_idx[pos] = getNodeIndex(source, i_source);
     i_source_arr[pos] = i_source;
   }
 }
@@ -190,7 +101,7 @@ __global__ void setLocalNodeIndexKernel(T source, uint n_source,
   // Count how many source_node_flag are true using atomic increase
   // on n_used_source_nodes
   if (source_node_flag[i_source] != 0) {
-    uint node_index = GetNodeIndex(source, i_source);
+    uint node_index = getNodeIndex(source, i_source);
     uint i_block;
     uint i_in_block;
     bool mapped = checkIfValueIsIn2DArr(node_index, node_map,
@@ -226,168 +137,6 @@ __global__ void fixConnectionSourceNodeIndexesKernel
 #endif
 
 }
-
-// Loops on all new connections and replaces the source node index
-// source_node[i_conn] with the value of the element pointed by the
-// index itself in the array local_node_index
-template <class ConnKeyT>
-int fixConnectionSourceNodeIndexes(std::vector<void*> &conn_key_vect,
-				   int64_t old_n_conn, int64_t n_conn,
-				   int64_t block_size,
-				   uint *d_local_node_index)
-{
-  int64_t n_new_conn = n_conn - old_n_conn; // number of new connections
-
-#ifdef CHECKRC
-  //////////////////////////////////////////////////////////////////////
-  std::cout << "Fixing source node indexes in new remote connections\n";
-  std::cout << "n_new_conn: " << n_new_conn
-	    << "\tn_conn: " << n_conn
-	    << "\told_n_conn: " << old_n_conn << "\n";
-  //////////////////////////////////////////////////////////////////////
-#endif
-  
-  uint ib0 = (uint)(old_n_conn / block_size); // first block index
-  uint ib1 = (uint)((n_conn - 1) / block_size); // last block
-  for (uint ib=ib0; ib<=ib1; ib++) { // loop on blocks
-    int64_t n_block_conn; // number of connections in a block
-    int64_t i_conn0; // index of first connection in a block
-    if (ib1 == ib0) {  // all connections are in the same block
-      i_conn0 = old_n_conn % block_size;
-      n_block_conn = n_new_conn;
-    }
-    else if (ib == ib0) { // first block
-      i_conn0 = old_n_conn % block_size;
-      n_block_conn = block_size - i_conn0;
-    }
-    else if (ib == ib1) { // last block
-      i_conn0 = 0;
-      n_block_conn = (n_conn - 1) % block_size + 1;
-    }
-    else {
-      i_conn0 = 0;
-      n_block_conn = block_size;
-    }
-
-#ifdef CHECKRC
-    //////////////////////////////////////////////////////////////////////
-    std::cout << "n_new_conn: " << n_new_conn
-	      << "\ti_conn0: " << i_conn0
-	      << "\tn_block_conn: " << n_block_conn << "\n";
-    //////////////////////////////////////////////////////////////////////
-#endif
-    
-    
-    fixConnectionSourceNodeIndexesKernel<ConnKeyT>
-      <<<(n_block_conn+1023)/1024, 1024>>>
-      ((ConnKeyT*)conn_key_vect[ib] + i_conn0, n_block_conn,
-       d_local_node_index);
-    gpuErrchk( cudaPeekAtLastError() );
-    gpuErrchk( cudaDeviceSynchronize() );
-  }
-  return 0;
-}
-
-
-// REMOTE CONNECT FUNCTION
-template <class T1, class T2, class ConnKeyT, class ConnStructT>
-int NESTGPU::_RemoteConnect(int this_host,
-			    int source_host, T1 source, inode_t n_source,
-			    int target_host, T2 target, inode_t n_target,
-			    ConnSpec &conn_spec, SynSpec &syn_spec)
-{
-  if (source_host>=n_hosts_) {
-    throw ngpu_exception("Source host index out of range in _RemoteConnect");
-  }
-  if (target_host>=n_hosts_) {
-    throw ngpu_exception("Target host index out of range in _RemoteConnect");
-  }
-  if (this_host>=n_hosts_) {
-    throw ngpu_exception("this_host index out of range in _RemoteConnect");
-  }
-
-  // Check if it is a local connection
-  if (this_host==source_host && source_host==target_host) {
-    _Connect<T1, T2, ConnKeyT, ConnStructT>
-      (source, n_source, target, n_target, conn_spec, syn_spec);
-  }
-  // Check if target_host matches this_host
-  else if (this_host==target_host) {
-    _RemoteConnectSource<T1, T2, ConnKeyT, ConnStructT>
-      (source_host, source, n_source, target, n_target, conn_spec, syn_spec);
-  }
-  // Check if source_host matches this_host
-  else if (this_host==source_host) {
-    _RemoteConnectTarget<T1, T2, ConnKeyT, ConnStructT>
-      (target_host, source, n_source, target, n_target, conn_spec, syn_spec);
-  }
-  
-  return 0;
-}
-
-/*
-template
-int NESTGPU::_RemoteConnect<uint, uint>
-(uint this_host, uint source_host, uint source, uint n_source,
- uint target_host, uint target, uint n_target,
- ConnSpec &conn_spec, SynSpec &syn_spec);
-
-template
-int NESTGPU::_RemoteConnect<uint, uint*>
-(uint this_host, uint source_host, uint source, uint n_source,
- uint target_host, uint *target, uint n_target,
- ConnSpec &conn_spec, SynSpec &syn_spec);
-
-template
-int NESTGPU::_RemoteConnect<uint*, uint>
-(uint this_host, uint source_host, uint *source, uint n_source,
- uint target_host, uint target, uint n_target,
- ConnSpec &conn_spec, SynSpec &syn_spec);
-
-template
-int NESTGPU::_RemoteConnect<uint*, uint*>
-(uint this_host, uint source_host, uint *source, uint n_source,
- uint target_host, uint *target, uint n_target,
- ConnSpec &conn_spec, SynSpec &syn_spec);
-*/
-
-template <class T1, class T2, class ConnKeyT, class ConnStructT>
-int NESTGPU::_RemoteConnect(int source_host, T1 source, inode_t n_source,
-			    int target_host, T2 target, inode_t n_target,
-			    ConnSpec &conn_spec, SynSpec &syn_spec)
-{
-  return _RemoteConnect<T1, T2, ConnKeyT, ConnStructT>
-    (this_host_, source_host, source, n_source,
-			 target_host, target, n_target,
-			 conn_spec, syn_spec);
-}
-
-/*
-template
-int NESTGPU::_RemoteConnect<uint, uint>
-(uint source_host, uint source, uint n_source,
- uint target_host, uint target, uint n_target,
- ConnSpec &conn_spec, SynSpec &syn_spec);
-
-template
-int NESTGPU::_RemoteConnect<uint, uint*>
-(uint source_host, uint source, uint n_source,
- uint target_host, uint *target, uint n_target,
- ConnSpec &conn_spec, SynSpec &syn_spec);
-
-template
-int NESTGPU::_RemoteConnect<uint*, uint>
-(uint source_host, uint *source, uint n_source,
- uint target_host, uint target, uint n_target,
- ConnSpec &conn_spec, SynSpec &syn_spec);
-
-template
-int NESTGPU::_RemoteConnect<uint*, uint*>
-(uint source_host, uint *source, uint n_source,
- uint target_host, uint *target, uint n_target,
- ConnSpec &conn_spec, SynSpec &syn_spec);
-*/
-
 
 
 // kernel that searches node indexes in map
@@ -451,22 +200,639 @@ __global__ void addOffsetToExternalNodeIdsKernel
   }
 }
 
+__global__ void MapIndexToSpikeBufferKernel(uint n_hosts, uint *host_offset,
+					    uint *node_index);
+
+// Allocate GPU memory for new remote-source-node-map blocks
 template <class ConnKeyT, class ConnStructT>
-int NESTGPU::addOffsetToExternalNodeIds()
+int ConnectionTemplate<ConnKeyT, ConnStructT>::allocRemoteSourceNodeMapBlocks
+(std::vector<uint*> &i_remote_src_node_map,
+ std::vector<uint*> &i_local_spike_buf_map,
+ uint new_n_block)
 {
-  int64_t block_size = h_ConnBlockSize;
-  uint n_blocks = (NConn - 1) / block_size + 1;
-  uint i_image_node_0 = GetNLocalNodes();
+  // allocate new blocks if needed
+  for (uint ib=i_remote_src_node_map.size(); ib<new_n_block; ib++) {
+    uint *d_remote_src_node_blk_pt;
+    uint *d_local_spike_buf_blk_pt;
+    // allocate GPU memory for new blocks 
+    CUDAMALLOCCTRL("&d_remote_src_node_blk_pt",&d_remote_src_node_blk_pt,
+		   node_map_block_size_*sizeof(uint));
+    CUDAMALLOCCTRL("&d_local_spike_buf_blk_pt",&d_local_spike_buf_blk_pt,
+		   node_map_block_size_*sizeof(uint));
+      
+    i_remote_src_node_map.push_back(d_remote_src_node_blk_pt);
+    i_local_spike_buf_map.push_back(d_local_spike_buf_blk_pt);
+  }
+    
+  return 0;
+}
+
+// Allocate GPU memory for new local-source-node-map blocks
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::allocLocalSourceNodeMapBlocks
+(std::vector<uint*> &i_local_src_node_map,
+ uint new_n_block)
+{
+  // allocate new blocks if needed
+  for (uint ib=i_local_src_node_map.size(); ib<new_n_block; ib++) {
+    uint *d_local_src_node_blk_pt;
+    // allocate GPU memory for new blocks 
+    CUDAMALLOCCTRL("&d_local_src_node_blk_pt",&d_local_src_node_blk_pt,
+		   node_map_block_size_*sizeof(uint));
+      
+    i_local_src_node_map.push_back(d_local_src_node_blk_pt);
+  }
+    
+  return 0;
+}
+
+
+
+
+
+// Loop on all new connections and set source_node_flag[i_source]=true
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::setUsedSourceNodes
+(int64_t old_n_conn, uint *d_source_node_flag)
+{
+  int64_t n_new_conn = n_conn_ - old_n_conn; // number of new connections
+
+#ifdef CHECKRC
+  //////////////////////////////////////////////////////////////////////
+  std::cout << "n_new_conn: " << n_new_conn
+	    << "\tn_conn: " << n_conn_
+	    << "\told_n_conn: " << old_n_conn << "\n";
+//////////////////////////////////////////////////////////////////////
+#endif
+  
+  uint ib0 = (uint)(old_n_conn / conn_block_size_); // first block index
+  uint ib1 = (uint)((n_conn_ - 1) / conn_block_size_); // last block
+  for (uint ib=ib0; ib<=ib1; ib++) { // loop on blocks
+    int64_t n_block_conn; // number of connections in a block
+    int64_t i_conn0; // index of first connection in a block
+    if (ib1 == ib0) {  // all connections are in the same block
+      i_conn0 = old_n_conn % conn_block_size_;
+      n_block_conn = n_new_conn;
+    }
+    else if (ib == ib0) { // first block
+      i_conn0 = old_n_conn % conn_block_size_;
+      n_block_conn = conn_block_size_ - i_conn0;
+    }
+    else if (ib == ib1) { // last block
+      i_conn0 = 0;
+      n_block_conn = (n_conn_ - 1) % conn_block_size_ + 1;
+    }
+    else {
+      i_conn0 = 0;
+      n_block_conn = conn_block_size_;
+    }
+
+    //////////////////////////////////////////////////////////////////////
+#ifdef CHECKRC
+    std::cout << "n_new_conn: " << n_new_conn
+	      << "\ti_conn0: " << i_conn0
+	      << "\tn_block_conn: " << n_block_conn << "\n";
+#endif
+    //////////////////////////////////////////////////////////////////////
+    
+    setUsedSourceNodeKernel<ConnKeyT><<<(n_block_conn+1023)/1024, 1024>>>
+    (conn_key_vect_[ib] + i_conn0, n_block_conn, d_source_node_flag);
+    gpuErrchk( cudaPeekAtLastError() );
+    gpuErrchk( cudaDeviceSynchronize() );
+  }
+  return 0;
+}
+
+__global__ void setTargetHostArrayNodePointersKernel
+(uint *target_host_array, uint *target_host_i_map, uint *n_target_hosts_cumul,
+ uint **node_target_hosts, uint **node_target_host_i_map, uint n_nodes);
+
+// kernel that fills the arrays target_host_array
+// and target_host_i_map using the node map
+__global__ void fillTargetHostArrayFromMapKernel
+(uint **node_map, uint n_node_map, uint *count_mapped, uint **node_target_hosts,
+ uint **node_target_host_i_map, uint n_nodes, uint i_target_host);
+
+__global__ void addOffsetToSpikeBufferMapKernel(uint i_host, uint n_node_map,
+						uint i_image_node_0);
+
+// Initialize the maps for n_hosts hosts
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::remoteConnectionMapInit()
+{
+#ifdef CHECKRC
+  node_map_block_size_ = 3; // initialize node map block size
+#else
+  node_map_block_size_ = 10000; // initialize node map block size
+#endif
+
+  cudaMemcpyToSymbol(node_map_block_size, &node_map_block_size_, sizeof(uint));
+
+  // allocate and init to 0 n. of elements in the map for each source host
+  CUDAMALLOCCTRL("&d_n_remote_source_node_map_",&d_n_remote_source_node_map_,
+		 n_hosts_*sizeof(uint));
+  gpuErrchk(cudaMemset(d_n_remote_source_node_map_, 0, n_hosts_*sizeof(uint)));
+
+  // allocate and init to 0 n. of elements in the map for each source host
+  CUDAMALLOCCTRL("&d_n_local_source_node_map_",&d_n_local_source_node_map_,
+		 n_hosts_*sizeof(uint));
+  gpuErrchk(cudaMemset(d_n_local_source_node_map_, 0, n_hosts_*sizeof(uint)));
+
+  // initialize maps
+  for (int i_host=0; i_host<n_hosts_; i_host++) {
+    std::vector<uint*> rsn_map;
+    h_remote_source_node_map_.push_back(rsn_map);
+      
+    std::vector<uint*> lsb_map;
+    h_local_spike_buffer_map_.push_back(lsb_map);
+
+    std::vector<uint*> lsn_map;
+    h_local_source_node_map_.push_back(lsn_map);
+  }
+    
+
+  // launch kernel to copy pointers to CUDA variables ?? maybe in calibration?
+  // .....
+  //RemoteConnectionMapInitKernel // <<< , >>>
+  //  (d_n_remote_source_node_map_,
+  //   d_remote_source_node_map,
+  //   d_local_spike_buffer_map,
+  //   d_n_local_source_node_map_,
+  //   d_local_source_node_map);
+    
+  return 0;
+}
+
+// Loops on all new connections and replaces the source node index
+// source_node[i_conn] with the value of the element pointed by the
+// index itself in the array local_node_index
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::fixConnectionSourceNodeIndexes
+(int64_t old_n_conn, uint *d_local_node_index)
+{
+  int64_t n_new_conn = n_conn_ - old_n_conn; // number of new connections
+
+#ifdef CHECKRC
+  //////////////////////////////////////////////////////////////////////
+  std::cout << "Fixing source node indexes in new remote connections\n";
+  std::cout << "n_new_conn: " << n_new_conn
+	    << "\tn_conn: " << n_conn_
+	    << "\told_n_conn: " << old_n_conn << "\n";
+  //////////////////////////////////////////////////////////////////////
+#endif
+  
+  uint ib0 = (uint)(old_n_conn / conn_block_size_); // first block index
+  uint ib1 = (uint)((n_conn_ - 1) / conn_block_size_); // last block
+  for (uint ib=ib0; ib<=ib1; ib++) { // loop on blocks
+    int64_t n_block_conn; // number of connections in a block
+    int64_t i_conn0; // index of first connection in a block
+    if (ib1 == ib0) {  // all connections are in the same block
+      i_conn0 = old_n_conn % conn_block_size_;
+      n_block_conn = n_new_conn;
+    }
+    else if (ib == ib0) { // first block
+      i_conn0 = old_n_conn % conn_block_size_;
+      n_block_conn = conn_block_size_ - i_conn0;
+    }
+    else if (ib == ib1) { // last block
+      i_conn0 = 0;
+      n_block_conn = (n_conn_ - 1) % conn_block_size_ + 1;
+    }
+    else {
+      i_conn0 = 0;
+      n_block_conn = conn_block_size_;
+    }
+
+#ifdef CHECKRC
+    //////////////////////////////////////////////////////////////////////
+    std::cout << "n_new_conn: " << n_new_conn
+	      << "\ti_conn0: " << i_conn0
+	      << "\tn_block_conn: " << n_block_conn << "\n";
+    //////////////////////////////////////////////////////////////////////
+#endif
+    
+    
+    fixConnectionSourceNodeIndexesKernel<ConnKeyT>
+      <<<(n_block_conn+1023)/1024, 1024>>>
+      (conn_key_vect_[ib] + i_conn0, n_block_conn,
+       d_local_node_index);
+    gpuErrchk( cudaPeekAtLastError() );
+    gpuErrchk( cudaDeviceSynchronize() );
+  }
+  return 0;
+}
+
+// Calibrate the maps
+template <class ConnKeyT, class ConnStructT>
+int  ConnectionTemplate<ConnKeyT, ConnStructT>::remoteConnectionMapCalibrate
+(inode_t n_nodes)
+{
+  //std::cout << "In RemoteConnectionMapCalibrate " << i_host << " "
+  //	    << n_hosts_ << "\n";
+  // vector of pointers to local source node maps in device memory
+  // per target host hd_local_source_node_map[target_host]
+  // type std::vector<uint*>
+  // set its size and initialize to NULL
+  hd_local_source_node_map_.resize(n_hosts_, NULL);
+  // number of elements in each local source node map
+  // h_n_local_source_node_map[target_host]
+  // set its size and initialize to 0
+  h_n_local_source_node_map_.resize(n_hosts_, 0);
+  // vector of pointers to local spike buffer maps in device memory
+  // per source host hd_local_spike_buffer_map[source_host]
+  // type std::vector<int*>
+  // set its size and initialize to NULL
+  hd_local_spike_buffer_map_.resize(n_hosts_, NULL);
+  // number of elements in each remote-source-node->local-spike-buffer map
+  // h_n_remote_source_node_map[source_host]
+  // set its size and initialize to 0
+  h_n_remote_source_node_map_.resize(n_hosts_, 0);
+  // loop on target hosts, skip self host
+  for (int tg_host=0; tg_host<n_hosts_; tg_host++) {
+    if (tg_host != this_host_) {
+      // get number of elements in each map from device memory
+      uint n_node_map;
+      gpuErrchk(cudaMemcpy(&n_node_map,
+			   &d_n_local_source_node_map_[tg_host], sizeof(uint),
+			   cudaMemcpyDeviceToHost));
+      // put it in h_n_local_source_node_map[tg_host]
+      h_n_local_source_node_map_[tg_host] = n_node_map;
+      // Allocate array of local source node map blocks
+      // and copy their address from host to device
+      hd_local_source_node_map_[tg_host] = NULL;
+      uint n_blocks = h_local_source_node_map_[tg_host].size();
+      if (n_blocks>0) {
+	CUDAMALLOCCTRL("&hd_local_source_node_map[tg_host]",
+		       &hd_local_source_node_map_[tg_host],
+		       n_blocks*sizeof(uint*));
+	gpuErrchk(cudaMemcpy(hd_local_source_node_map_[tg_host],
+			     &h_local_source_node_map_[tg_host][0],
+			     n_blocks*sizeof(uint*),
+			     cudaMemcpyHostToDevice));
+      }
+    }
+  }
+  // allocate d_local_source_node_map and copy it from host to device
+  CUDAMALLOCCTRL("&d_local_source_node_map",&d_local_source_node_map_,
+		 n_hosts_*sizeof(uint**));
+  gpuErrchk(cudaMemcpy(d_local_source_node_map_, &hd_local_source_node_map_[0],
+		       n_hosts_*sizeof(uint**), cudaMemcpyHostToDevice));
+  gpuErrchk(cudaMemcpyToSymbol(local_source_node_map,
+			       &d_local_source_node_map_, sizeof(uint***)));
+  
+  // loop on source hosts, skip self host
+  for (int src_host=0; src_host<n_hosts_; src_host++) {
+    if (src_host != this_host_) {
+      // get number of elements in each map from device memory
+      uint n_node_map;
+      gpuErrchk(cudaMemcpy(&n_node_map,
+			   &d_n_remote_source_node_map_[src_host],
+			   sizeof(uint), cudaMemcpyDeviceToHost));
+      // put it in h_n_remote_source_node_map[src_host]
+      h_n_remote_source_node_map_[src_host] = n_node_map;
+      // Allocate array of local spike buffer map blocks
+      // and copy their address from host to device
+      uint n_blocks = h_local_spike_buffer_map_[src_host].size();
+      hd_local_spike_buffer_map_[src_host] = NULL;
+      if (n_blocks>0) {
+	CUDAMALLOCCTRL("&hd_local_spike_buffer_map_[src_host]",
+		       &hd_local_spike_buffer_map_[src_host],
+		       n_blocks*sizeof(uint*));
+	gpuErrchk(cudaMemcpy(hd_local_spike_buffer_map_[src_host],
+			     &h_local_spike_buffer_map_[src_host][0],
+			     n_blocks*sizeof(uint*),
+			     cudaMemcpyHostToDevice));
+      }
+    }
+  }
+  // allocate d_local_spike_buffer_map and copy it from host to device
+  CUDAMALLOCCTRL("&d_local_spike_buffer_map_", &d_local_spike_buffer_map_,
+		 n_hosts_*sizeof(uint**));
+  gpuErrchk(cudaMemcpy(d_local_spike_buffer_map_,
+		       &hd_local_spike_buffer_map_[0],
+		       n_hosts_*sizeof(uint**), cudaMemcpyHostToDevice));
+  gpuErrchk(cudaMemcpyToSymbol(local_spike_buffer_map,
+			       &d_local_spike_buffer_map_, sizeof(uint***)));
+
+#ifdef CHECKRC
+  //// TEMPORARY, FOR CHECK
+  std::cout << "////////////////////////////////////////\n";
+  std::cout << "IN MAP CALIBRATION\n";
+  
+  uint tmp_n_hosts = 2;
+  uint tmp_tg_host = 0;
+  uint tmp_src_host = 1;
+  
+  uint **tmp_pt2[tmp_n_hosts];
+  uint tmp_n[tmp_n_hosts];
+  uint tmp_map[node_map_block_size_];
+  uint n_map;
+  uint n_blocks;
+
+  gpuErrchk(cudaMemcpy(tmp_n, d_n_local_source_node_map_,
+		       tmp_n_hosts*sizeof(uint), cudaMemcpyDeviceToHost));
+  n_map = tmp_n[tmp_tg_host];
+  if (n_map>0) {
+    std::cout << "////////////////////////////////////////\n";
+    std::cout << "Local Source Node Map\n";
+    std::cout << "target host: " << tmp_tg_host << "\n";
+    std::cout << "n_local_source_node_map: " << n_map << "\n";
+    gpuErrchk(cudaMemcpy(tmp_pt2, d_local_source_node_map_,
+			 tmp_n_hosts*sizeof(uint**), cudaMemcpyDeviceToHost));
+  
+    n_blocks = (n_map - 1) / node_map_block_size_ + 1;
+    std::cout << "n_blocks: " << n_blocks << "\n";
+    uint *tmp_pt1[n_blocks];
+    gpuErrchk(cudaMemcpy(tmp_pt1, tmp_pt2[tmp_tg_host],
+			 n_blocks*sizeof(uint*), cudaMemcpyDeviceToHost));
+    
+    for (uint ib=0; ib<n_blocks; ib++) {
+      std::cout << "block " << ib << "\n";
+      uint n = node_map_block_size_;
+      if (ib==n_blocks-1) {
+	n = (n_map - 1) % node_map_block_size_ + 1;
+      }
+      gpuErrchk(cudaMemcpy(tmp_map, tmp_pt1[ib],
+			   n*sizeof(uint), cudaMemcpyDeviceToHost));
+      std::cout << "local source node index\n";
+      for (uint i=0; i<n; i++) {
+	std::cout << tmp_map[i] << "\n";
+      }
+    }
+  }
+
+  //gpuErrchk(cudaMemcpy(tmp_n, d_n_local_spike_buffer_map,
+  gpuErrchk(cudaMemcpy(tmp_n, d_n_remote_source_node_map_,
+		       tmp_n_hosts*sizeof(uint), cudaMemcpyDeviceToHost));
+  n_map = tmp_n[tmp_src_host];
+  if (n_map>0) {
+    std::cout << "////////////////////////////////////////\n";
+    std::cout << "Local Spike Buffer Map\n";
+    std::cout << "source host: " << tmp_src_host << "\n";
+    std::cout << "n_local_spike_buffer_map: " << n_map << "\n";
+    gpuErrchk(cudaMemcpy(tmp_pt2, d_local_spike_buffer_map,
+			 tmp_n_hosts*sizeof(uint**), cudaMemcpyDeviceToHost));
+  
+    n_blocks = (n_map - 1) / node_map_block_size_ + 1;
+    std::cout << "n_blocks: " << n_blocks << "\n";
+    uint *tmp_pt1[n_blocks];
+    gpuErrchk(cudaMemcpy(tmp_pt1, tmp_pt2[tmp_src_host],
+			 n_blocks*sizeof(uint*), cudaMemcpyDeviceToHost));
+    
+    for (uint ib=0; ib<n_blocks; ib++) {
+      std::cout << "block " << ib << "\n";
+      uint n = node_map_block_size_;
+      if (ib==n_blocks-1) {
+	n = (n_map - 1) % node_map_block_size_ + 1;
+      }
+      gpuErrchk(cudaMemcpy(tmp_map, tmp_pt1[ib],
+			   n*sizeof(uint), cudaMemcpyDeviceToHost));
+      std::cout << "local spike buffer index\n";
+      for (uint i=0; i<n; i++) {
+	std::cout << tmp_map[i] << "\n";
+      }
+    }
+  }
+
+  ////////////////////////////////////////
+#endif
+
+  //uint n_nodes = GetNLocalNodes(); // number of nodes
+  // n_target_hosts[i_node] is the number of remote target hosts
+  // on which each local node
+  // has outgoing connections
+  // allocate d_n_target_hosts[n_nodes] and init to 0
+  // std::cout << "allocate d_n_target_hosts n_nodes: " << n_nodes << "\n";
+  CUDAMALLOCCTRL("&d_n_target_hosts_",&d_n_target_hosts_,
+		 n_nodes*sizeof(uint));
+  // std::cout << "d_n_target_hosts: " << d_n_target_hosts_ << "\n";
+  gpuErrchk(cudaMemset(d_n_target_hosts_, 0, n_nodes*sizeof(uint)));
+  // allocate d_n_target_hosts_cumul[n_nodes+1]
+  // representing the prefix scan (cumulative sum) of d_n_target_hosts
+  CUDAMALLOCCTRL("&d_n_target_hosts_cumul_",&d_n_target_hosts_cumul_,
+		 (n_nodes+1)*sizeof(uint));
+
+  // For each local node, count the number of remote target hosts
+  // on which it has outgoing connections, i.e. n_target_hosts[i_node] 
+  // Loop on target hosts
+  for (int tg_host=0; tg_host<n_hosts_; tg_host++) {
+    if (tg_host != this_host_) {
+      uint **d_node_map = hd_local_source_node_map_[tg_host];
+      uint n_node_map = h_n_local_source_node_map_[tg_host];
+      // Launch kernel that searches each node in the map
+      // of local source nodes having outgoing connections to target host
+      // if found, increase n_target_hosts[i_node]
+      searchNodeIndexInMapKernel<<<(n_nodes+1023)/1024, 1024>>>
+	(d_node_map, n_node_map, d_n_target_hosts_, n_nodes);
+      gpuErrchk( cudaPeekAtLastError() );
+      gpuErrchk( cudaDeviceSynchronize() );
+    }
+  }
+
+#ifdef CHECKRC  
+  // TEMPORARY, FOR TESTING
+  uint h_n_target_hosts[n_nodes];
+  gpuErrchk(cudaMemcpy(h_n_target_hosts, d_n_target_hosts,
+  		       n_nodes*sizeof(uint), cudaMemcpyDeviceToHost));
+  std::cout << "////////////////////////////////////////\n";
+  std::cout << "i_node, n_target_hosts\n";
+  for (uint i_node=0; i_node<n_nodes; i_node++) {
+    std::cout << i_node << "\t" << h_n_target_hosts[i_node] << "\n";
+  }
+  ////////////////////////////////////////////////
+#endif
+  
+  //////////////////////////////////////////////////////////////////////
+  // Evaluate exclusive sum of reverse connections per target node
+  // Determine temporary device storage requirements
+  void *d_temp_storage = NULL;
+  size_t temp_storage_bytes = 0;
+  cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
+				d_n_target_hosts_,
+				d_n_target_hosts_cumul_,
+				n_nodes+1);
+  // Allocate temporary storage
+  CUDAMALLOCCTRL("&d_temp_storage",&d_temp_storage, temp_storage_bytes);
+  // Run exclusive prefix sum
+  cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
+				d_n_target_hosts_,
+				d_n_target_hosts_cumul_,
+				n_nodes+1);
+  CUDAFREECTRL("d_temp_storage",d_temp_storage);
+  // The last element is the sum of all elements of n_target_hosts
+  uint n_target_hosts_sum;
+  gpuErrchk(cudaMemcpy(&n_target_hosts_sum, &d_n_target_hosts_cumul_[n_nodes],
+		       sizeof(uint), cudaMemcpyDeviceToHost));
+
+#ifdef CHECKRC
+  // TEMPORARY, FOR TESTING
+  uint h_n_target_hosts_cumul[n_nodes+1];
+  gpuErrchk(cudaMemcpy(h_n_target_hosts_cumul, d_n_target_hosts_cumul_,
+  		       (n_nodes+1)*sizeof(uint), cudaMemcpyDeviceToHost));
+  std::cout << "////////////////////////////////////////\n";
+  std::cout << "i_node, n_target_hosts_cumul_\n";
+  for (uint i_node=0; i_node<n_nodes+1; i_node++) {
+    std::cout << i_node << "\t" << h_n_target_hosts_cumul[i_node] << "\n";
+  }
+  ////////////////////////////////////////////////
+#endif
+  
+  //////////////////////////////////////////////////////////////////////
+  // allocate global array with remote target hosts of all nodes
+  CUDAMALLOCCTRL("&d_target_host_array_",&d_target_host_array_,
+		 n_target_hosts_sum*sizeof(uint));
+  // allocate global array with remote target hosts map index
+  CUDAMALLOCCTRL("&d_target_host_i_map_", &d_target_host_i_map_,
+		 n_target_hosts_sum*sizeof(uint));
+  // allocate array of pointers to the starting position in target_host array
+  // of the target hosts for each node
+  CUDAMALLOCCTRL("&d_node_target_hosts_", &d_node_target_hosts_,
+		 n_nodes*sizeof(uint*));
+  // allocate array of pointers to the starting position in target_host_i_map
+  // of the target hosts map indexes for each node
+  CUDAMALLOCCTRL("&d_node_target_host_i_map_", &d_node_target_host_i_map_,
+		 n_nodes*sizeof(uint*));
+  // Launch kernel to evaluate the pointers d_node_target_hosts
+  // and d_node_target_host_i_map from the positions in target_host_array
+  // given by  n_target_hosts_cumul
+  setTargetHostArrayNodePointersKernel<<<(n_nodes+1023)/1024, 1024>>>
+    (d_target_host_array_, d_target_host_i_map_, d_n_target_hosts_cumul_,
+     d_node_target_hosts_, d_node_target_host_i_map_, n_nodes);
+  gpuErrchk( cudaPeekAtLastError() );
+  gpuErrchk( cudaDeviceSynchronize() );
+
+  // reset to 0 d_n_target_hosts[n_nodes] to reuse it in the next kernel
+  gpuErrchk(cudaMemset(d_n_target_hosts_, 0, n_nodes*sizeof(uint)));
+
+  // Loop on target hosts
+  for (int tg_host=0; tg_host<n_hosts_; tg_host++) {
+    if (tg_host != this_host_) {
+      uint **d_node_map = hd_local_source_node_map_[tg_host];
+      uint n_node_map = h_n_local_source_node_map_[tg_host];
+      // Launch kernel to fill the arrays target_host_array
+      // and target_host_i_map using the node map
+      fillTargetHostArrayFromMapKernel<<<(n_nodes+1023)/1024, 1024>>>
+	(d_node_map, n_node_map, d_n_target_hosts_, d_node_target_hosts_,
+	 d_node_target_host_i_map_, n_nodes, tg_host);
+      gpuErrchk( cudaPeekAtLastError() );
+      gpuErrchk( cudaDeviceSynchronize() );
+    }
+  }
+
+#ifdef CHECKRC
+    // TEMPORARY, FOR TESTING
+  std::cout << "////////////////////////////////////////\n";
+  std::cout << "Checking node_target_hosts and node_target_host_i_map\n";
+  uint *hd_node_target_hosts[n_nodes];
+  uint *hd_node_target_host_i_map[n_nodes];
+  uint h_node_target_hosts[n_hosts_];
+  uint h_node_target_host_i_map[n_hosts_];
+  gpuErrchk(cudaMemcpy(h_n_target_hosts, d_n_target_hosts_,
+  		       n_nodes*sizeof(uint), cudaMemcpyDeviceToHost));
+  gpuErrchk(cudaMemcpy(hd_node_target_hosts, d_node_target_hosts_,
+  		       n_nodes*sizeof(uint*), cudaMemcpyDeviceToHost));
+  gpuErrchk(cudaMemcpy(hd_node_target_host_i_map, d_node_target_host_i_map_,
+  		       n_nodes*sizeof(uint*), cudaMemcpyDeviceToHost));
+  for (uint i_node=0; i_node<n_nodes; i_node++) {
+    std::cout << "\ni_node: " << i_node << "\n";
+    uint nth = h_n_target_hosts[i_node];
+    std::cout << "\tn_target_hosts: " << nth << "\n";
+    
+    gpuErrchk(cudaMemcpy(h_node_target_hosts, hd_node_target_hosts[i_node],
+			 nth*sizeof(uint), cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(h_node_target_host_i_map,
+			 hd_node_target_host_i_map[i_node],
+			 nth*sizeof(uint), cudaMemcpyDeviceToHost));
+
+    std::cout << "node_target_hosts\tnode_target_host_i_map\n";
+    for (int ith=0; ith<nth; ith++) {
+      std::cout << h_node_target_hosts[ith] << "\t"
+		<< h_node_target_host_i_map[ith] << "\n";
+    }
+  }
+#endif
+
+  addOffsetToSpikeBufferMap(n_nodes);
+  
+  return 0;
+}
+
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::addOffsetToSpikeBufferMap
+(inode_t n_nodes)
+{
+  uint i_image_node_0 = n_nodes;
+
+  for (int i_host=0; i_host<n_hosts_; i_host++) {
+    if (i_host != this_host_) {
+      uint n_node_map = h_n_remote_source_node_map_[i_host];
+      if (n_node_map > 0) {
+	addOffsetToSpikeBufferMapKernel<<<(n_node_map+1023)/1024, 1024>>>
+	  (i_host, n_node_map, i_image_node_0);
+	gpuErrchk( cudaPeekAtLastError() );
+	gpuErrchk( cudaDeviceSynchronize() );
+      }
+    }
+  }
+    
+  return 0;
+}
+
+// REMOTE CONNECT FUNCTION
+template <class ConnKeyT, class ConnStructT>
+template <class T1, class T2>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::_RemoteConnect
+(int source_host, T1 source, inode_t n_source,
+ int target_host, T2 target, inode_t n_target,
+ ConnSpec &conn_spec, SynSpec &syn_spec)
+{
+  if (source_host>=n_hosts_) {
+    throw ngpu_exception("Source host index out of range in _RemoteConnect");
+  }
+  if (target_host>=n_hosts_) {
+    throw ngpu_exception("Target host index out of range in _RemoteConnect");
+  }
+  if (this_host_>=n_hosts_) {
+    throw ngpu_exception("this_host index out of range in _RemoteConnect");
+  }
+
+  // Check if it is a local connection
+  if (this_host_==source_host && source_host==target_host) {
+    _Connect<T1, T2>
+      (source, n_source, target, n_target, conn_spec, syn_spec);
+  }
+  // Check if target_host matches this_host
+  else if (this_host_==target_host) {
+    remoteConnectSource<T1, T2>
+      (source_host, source, n_source, target, n_target, conn_spec, syn_spec);
+  }
+  // Check if source_host matches this_host
+  else if (this_host_==source_host) {
+    remoteConnectTarget<T1, T2>
+      (target_host, source, n_source, target, n_target, conn_spec, syn_spec);
+  }
+  
+  return 0;
+}
+
+
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::addOffsetToExternalNodeIds
+(uint n_local_nodes)
+{
+  uint n_blocks = (n_conn_ - 1) / conn_block_size_ + 1;
+  //uint i_image_node_0 = getNLocalNodes();
+  uint i_image_node_0 = n_local_nodes;
 
   for (uint ib=0; ib<n_blocks; ib++) {
-    int64_t n_block_conn = block_size; // number of connections in the block
+    int64_t n_block_conn = conn_block_size_; // number of connections in the block
     if (ib == n_blocks-1) { // last block
-      n_block_conn = (NConn - 1) % block_size + 1;
+      n_block_conn = (n_conn_ - 1) % conn_block_size_ + 1;
     }
     addOffsetToExternalNodeIdsKernel<ConnKeyT, ConnStructT>
       <<<(n_block_conn+1023)/1024, 1024>>>
-      (n_block_conn, (ConnKeyT*)ConnKeyVect[ib],
-       (ConnStructT*)ConnStructVect[ib], i_image_node_0);
+      (n_block_conn, conn_key_vect_[ib],
+       (ConnStructT*)conn_struct_vect_[ib], i_image_node_0);
     gpuErrchk( cudaPeekAtLastError() );
     gpuErrchk( cudaDeviceSynchronize() );
   }
@@ -475,12 +841,12 @@ int NESTGPU::addOffsetToExternalNodeIds()
 #ifdef CHECKRC
   /// TEMPORARY for check
   std::cout << "After addOffsetToExternalNodeIds\n";
-  uint h_source_delay[NConn];
-  uint h_source[NConn];
-  uint h_delay[NConn];
-  gpuErrchk(cudaMemcpy(h_source_delay, ConnKeyVect[0],
-		       NConn*sizeof(uint), cudaMemcpyDeviceToHost));
-  for (uint i=0; i<NConn; i++) {
+  uint h_source_delay[n_conn_];
+  uint h_source[n_conn_];
+  uint h_delay[n_conn_];
+  gpuErrchk(cudaMemcpy(h_source_delay, conn_key_vect_[0],
+		       n_conn_*sizeof(uint), cudaMemcpyDeviceToHost));
+  for (uint i=0; i<n_conn_; i++) {
     h_source[i] = h_source_delay[i] >> h_MaxPortNBits;
     h_delay[i] = h_source_delay[i] & h_PortMask;
     std::cout << "i_conn: " << i << " source: " << h_source[i];
@@ -494,21 +860,21 @@ int NESTGPU::addOffsetToExternalNodeIds()
 
 
 
-
-
 // REMOTE CONNECT FUNCTION for target_host matching this_host
-template <class T1, class T2, class ConnKeyT, class ConnStructT>
-int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
-				  T2 target, inode_t n_target,
-				  ConnSpec &conn_spec, SynSpec &syn_spec)
+template <class ConnKeyT, class ConnStructT>
+template <class T1, class T2>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::remoteConnectSource
+(int source_host, T1 source, inode_t n_source,
+ T2 target, inode_t n_target,
+ ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   // n_nodes will be the first index for new mapping of remote source nodes
   // to local spike buffers
   //int spike_buffer_map_i0 = GetNNode();
   uint spike_buffer_map_i0 = n_image_nodes_;
   //syn_spec.port_ = syn_spec.port_ |
-  //  (1 << (h_MaxPortSynNBits - h_MaxSynNBits - 1));
-  syn_spec.syn_group_ = syn_spec.syn_group_ | (1 << h_MaxSynNBits);
+  //  (1 << (h_MaxPortSynNBits - max_syn_nbits_ - 1));
+  syn_spec.syn_group_ = syn_spec.syn_group_ | (1 << max_syn_nbits_);
     
   // check if the flag UseAllSourceNodes[conn_rule] is false
   // if (!use_all_source_nodes_flag) {
@@ -529,26 +895,26 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
   CUDAMALLOCCTRL("&d_local_node_index",&d_local_node_index,
 		 n_source*sizeof(uint));
     
-  int64_t old_n_conn = NConn;
+  int64_t old_n_conn = n_conn_;
   // The connect command is performed on both source and target host using
   // the same initial seed and using as source node indexes the integers
   // from 0 to n_source_nodes - 1
-  _Connect<inode_t, T2, ConnKeyT, ConnStructT>
+  _Connect<inode_t, T2>
     (conn_random_generator_[source_host][this_host_],
      0, n_source, target, n_target,
      conn_spec, syn_spec);
-  if (NConn == old_n_conn) {
+  if (n_conn_ == old_n_conn) {
     return 0;
   }
   /////////////////////////////////////////////////////////////////////
 #ifdef CHECKRC
   /// TEMPORARY for check
-  uint h_source_delay[NConn];
-  uint h_source[NConn];
-  uint h_delay[NConn];
-  gpuErrchk(cudaMemcpy(h_source_delay, ConnKeyVect[0],
-		       NConn*sizeof(uint), cudaMemcpyDeviceToHost));
-  for (uint i=0; i<NConn; i++) {
+  uint h_source_delay[n_conn_];
+  uint h_source[n_conn_];
+  uint h_delay[n_conn_];
+  gpuErrchk(cudaMemcpy(h_source_delay, conn_key_vect_[0],
+		       n_conn_*sizeof(uint), cudaMemcpyDeviceToHost));
+  for (uint i=0; i<n_conn_; i++) {
     h_source[i] = h_source_delay[i] >> h_MaxPortNBits;
     h_delay[i] = h_source_delay[i] & h_PortMask;
   }
@@ -558,8 +924,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
 
   // flag source nodes used in at least one new connection
   // Loop on all new connections and set source_node_flag[i_source]=true
-  setUsedSourceNodes<ConnKeyT>(ConnKeyVect, old_n_conn, NConn, h_ConnBlockSize,
-		     d_source_node_flag);
+  setUsedSourceNodes(old_n_conn, d_source_node_flag);
 
   //////////////////////////////////////////////////////////////////////
 #ifdef CHECKRC
@@ -711,20 +1076,20 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
   //////////////////////////////
   // Allocate array of remote source node map blocks
   // and copy their address from host to device
-  uint n_blocks = h_remote_source_node_map[source_host].size();
+  uint n_blocks = h_remote_source_node_map_[source_host].size();
   uint **d_node_map = NULL;
   uint **d_spike_buffer_map = NULL;
   // get current number of elements in the map
   uint n_node_map;
   gpuErrchk(cudaMemcpy(&n_node_map,
-		       &d_n_remote_source_node_map[source_host], sizeof(uint),
+		       &d_n_remote_source_node_map_[source_host], sizeof(uint),
 		       cudaMemcpyDeviceToHost));
   
     
   if (n_blocks>0) {
     // check for consistency between number of elements
     // and number of blocks in the map
-    uint tmp_n_blocks = (n_node_map - 1) / h_node_map_block_size + 1;
+    uint tmp_n_blocks = (n_node_map - 1) / node_map_block_size_ + 1;
     if (tmp_n_blocks != n_blocks) {
       std::cerr << "Inconsistent number of elements "
 		<< n_node_map << " and number of blocks "
@@ -733,7 +1098,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
     }
     CUDAMALLOCCTRL("&d_node_map",&d_node_map, n_blocks*sizeof(uint*));
     gpuErrchk(cudaMemcpy(d_node_map,
-			 &h_remote_source_node_map[source_host][0],
+			 &h_remote_source_node_map_[source_host][0],
 			 n_blocks*sizeof(uint*),
 			 cudaMemcpyHostToDevice));
   }
@@ -782,7 +1147,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
 
   // Check if new blocks are required for the map
   uint new_n_blocks = (n_node_map + h_n_node_to_map - 1)
-    / h_node_map_block_size + 1;
+    / node_map_block_size_ + 1;
 
 #ifdef CHECKRC
   std::cout << "new_n_blocks: " << new_n_blocks << "\n";
@@ -791,9 +1156,9 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
   // if new blocks are required for the map, allocate them
   if (new_n_blocks != n_blocks) {
     // Allocate GPU memory for new remote-source-node-map blocks
-    allocRemoteSourceNodeMapBlocks(h_remote_source_node_map[source_host],
-				   h_local_spike_buffer_map[source_host],
-				   h_node_map_block_size, new_n_blocks);
+    allocRemoteSourceNodeMapBlocks(h_remote_source_node_map_[source_host],
+				   h_local_spike_buffer_map_[source_host],
+				   new_n_blocks);
     // free d_node_map
     if (n_blocks>0) {
       CUDAFREECTRL("d_node_map",d_node_map);
@@ -804,7 +1169,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
     // reallocate d_node_map and get it from host
     CUDAMALLOCCTRL("&d_node_map",&d_node_map, n_blocks*sizeof(uint*));
     gpuErrchk(cudaMemcpy(d_node_map,
-			 &h_remote_source_node_map[source_host][0],
+			 &h_remote_source_node_map_[source_host][0],
 			 n_blocks*sizeof(uint*),
 			 cudaMemcpyHostToDevice));
   }
@@ -812,7 +1177,7 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
     // allocate d_spike_buffer_map and get it from host
     CUDAMALLOCCTRL("&d_spike_buffer_map",&d_spike_buffer_map, n_blocks*sizeof(uint*));
     gpuErrchk(cudaMemcpy(d_spike_buffer_map,
-			 &h_local_spike_buffer_map[source_host][0],
+			 &h_local_spike_buffer_map_[source_host][0],
 			 n_blocks*sizeof(uint*),
 			 cudaMemcpyHostToDevice));
   }
@@ -840,12 +1205,12 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
 
   // update number of elements in remote source node map
   n_node_map += h_n_node_to_map;
-  gpuErrchk(cudaMemcpy(&d_n_remote_source_node_map[source_host],
+  gpuErrchk(cudaMemcpy(&d_n_remote_source_node_map_[source_host],
 		       &n_node_map, sizeof(uint), cudaMemcpyHostToDevice));
   
   // check for consistency between number of elements
   // and number of blocks in the map
-  uint tmp_n_blocks = (n_node_map - 1) / h_node_map_block_size + 1;
+  uint tmp_n_blocks = (n_node_map - 1) / node_map_block_size_ + 1;
   if (tmp_n_blocks != n_blocks) {
     std::cerr << "Inconsistent number of elements "
 	      << n_node_map << " and number of blocks "
@@ -861,18 +1226,18 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
   std::cout << "OF REMOTE-SOURCE_NODES TO LOCAL-SPIKE-BUFFERS\n";
   std::cout << "n_node_map: " << n_node_map << "\n";
   std::cout << "n_blocks: " << n_blocks << "\n";
-  std::cout << "block_size: " << h_node_map_block_size << "\n";
+  std::cout << "block_size: " << node_map_block_size_ << "\n";
 
-  uint block_size = h_node_map_block_size;
+  uint block_size = node_map_block_size_;
   uint h_node_map_block[block_size];
   uint h_spike_buffer_map_block[block_size];
   for (uint ib=0; ib<n_blocks; ib++) {
     gpuErrchk(cudaMemcpy(h_node_map_block,
-			 h_remote_source_node_map[source_host][ib],
+			 h_remote_source_node_map_[source_host][ib],
 			 block_size*sizeof(uint),
 			 cudaMemcpyDeviceToHost));
     gpuErrchk(cudaMemcpy(h_spike_buffer_map_block,
-			 h_local_spike_buffer_map[source_host][ib],
+			 h_local_spike_buffer_map_[source_host][ib],
 			 block_size*sizeof(uint),
 			 cudaMemcpyDeviceToHost));
     std::cout << "\n";
@@ -900,9 +1265,9 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
   int64_t storage_bytes = 0;
   void *d_storage = NULL;
   copass_sort::sort<uint, uint>
-    (&h_remote_source_node_map[source_host][0],
-     &h_local_spike_buffer_map[source_host][0],
-     n_node_map, h_node_map_block_size, d_storage, storage_bytes);
+    (&h_remote_source_node_map_[source_host][0],
+     &h_local_spike_buffer_map_[source_host][0],
+     n_node_map, node_map_block_size_, d_storage, storage_bytes);
 
 #ifdef CHECKRC
   printf("storage bytes for copass sort: %ld\n", storage_bytes);
@@ -913,9 +1278,9 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
 
   // Run sorting operation
   copass_sort::sort<uint, uint>
-    (&h_remote_source_node_map[source_host][0],
-     &h_local_spike_buffer_map[source_host][0],
-     n_node_map, h_node_map_block_size, d_storage, storage_bytes);
+    (&h_remote_source_node_map_[source_host][0],
+     &h_local_spike_buffer_map_[source_host][0],
+     n_node_map, node_map_block_size_, d_storage, storage_bytes);
   CUDAFREECTRL("d_storage",d_storage);
 
   //////////////////////////////////////////////////////////////////////
@@ -930,11 +1295,11 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
 
   for (uint ib=0; ib<n_blocks; ib++) {
     gpuErrchk(cudaMemcpy(h_node_map_block,
-			 h_remote_source_node_map[source_host][ib],
+			 h_remote_source_node_map_[source_host][ib],
 			 block_size*sizeof(uint),
 			 cudaMemcpyDeviceToHost));
     gpuErrchk(cudaMemcpy(h_spike_buffer_map_block,
-			 h_local_spike_buffer_map[source_host][ib],
+			 h_local_spike_buffer_map_[source_host][ib],
 			 block_size*sizeof(uint),
 			 cudaMemcpyDeviceToHost));
     std::cout << "\n";
@@ -992,11 +1357,9 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
   // similar to setUsedSourceNodes
   // replace source_node_flag[i_source] with local_node_index[i_source]
   // clearly read it instead of writing on it!
-  //setUsedSourceNodes(ConnKeyVect, old_n_conn, NConn, h_ConnBlockSize,
-  //		     d_source_node_flag);
+  //setUsedSourceNodes(old_n_conn, d_source_node_flag);
   // becomes something like
-  fixConnectionSourceNodeIndexes<ConnKeyT>(ConnKeyVect, old_n_conn, NConn,
-					   h_ConnBlockSize, d_local_node_index);
+  fixConnectionSourceNodeIndexes(old_n_conn, d_local_node_index);
 
   // On target host. Create n_nodes_to_map nodes of type image_node
   //std::cout << "h_n_node_to_map " << h_n_node_to_map <<"\n";
@@ -1012,10 +1375,12 @@ int NESTGPU::_RemoteConnectSource(int source_host, T1 source, inode_t n_source,
 
 
 // REMOTE CONNECT FUNCTION for source_host matching this_host
-template <class T1, class T2, class ConnKeyT, class ConnStructT>
-int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
-				  T2 target, inode_t n_target,
-				  ConnSpec &conn_spec, SynSpec &syn_spec)
+template <class ConnKeyT, class ConnStructT>
+template <class T1, class T2>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::remoteConnectTarget
+(int target_host, T1 source, inode_t n_source,
+ T2 target, inode_t n_target,
+ ConnSpec &conn_spec, SynSpec &syn_spec)
 {
   // check if the flag UseAllSourceNodes[conn_rule] is false
   // if (!use_all_source_nodes_flag) {
@@ -1029,27 +1394,27 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
   //std::cout << "d_source_node_flag: " << d_source_node_flag << "\n";
   gpuErrchk(cudaMemset(d_source_node_flag, 0, n_source*sizeof(uint)));  
     
-  int64_t old_n_conn = NConn;
+  int64_t old_n_conn = n_conn_;
   // The connect command is performed on both source and target host using
   // the same initial seed and using as source node indexes the integers
   // from 0 to n_source_nodes - 1
-  _Connect<inode_t, T2, ConnKeyT, ConnStructT>
+  _Connect<inode_t, T2>
     (conn_random_generator_[this_host_][target_host],
      0, n_source, target, n_target,
      conn_spec, syn_spec);
   
-  if (NConn == old_n_conn) {
+  if (n_conn_ == old_n_conn) {
     return 0;
   }
   //////////////////////////////////////////////////////////////////////
 #ifdef CHECKRC
   /// TEMPORARY for check
-  uint h_source_delay[NConn];
-  uint h_source[NConn];
-  uint h_delay[NConn];
-  gpuErrchk(cudaMemcpy(h_source_delay, ConnKeyVect[0],
-		       NConn*sizeof(uint), cudaMemcpyDeviceToHost));
-  for (uint i=0; i<NConn; i++) {
+  uint h_source_delay[n_conn_];
+  uint h_source[n_conn_];
+  uint h_delay[n_conn_];
+  gpuErrchk(cudaMemcpy(h_source_delay, conn_key_vect_[0],
+		       n_conn_*sizeof(uint), cudaMemcpyDeviceToHost));
+  for (uint i=0; i<n_conn_; i++) {
     h_source[i] = h_source_delay[i] >> h_MaxPortNBits;
     h_delay[i] = h_source_delay[i] & h_PortMask;
     std::cout << "i_conn: " << i << " source: " << h_source[i];
@@ -1061,8 +1426,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
 
   // flag source nodes used in at least one new connection
   // Loop on all new connections and set source_node_flag[i_source]=true
-  setUsedSourceNodes<ConnKeyT>(ConnKeyVect, old_n_conn, NConn, h_ConnBlockSize,
-			       d_source_node_flag);
+  setUsedSourceNodes(old_n_conn, d_source_node_flag);
 
   //////////////////////////////////////////////////////////////////////
 #ifdef CHECKRC
@@ -1215,20 +1579,20 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
   // !!!!!!!!!!!!!!!!  >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   // Allocate array of local source node map blocks
   // and copy their address from host to device
-  uint n_blocks = h_local_source_node_map[target_host].size();
+  uint n_blocks = h_local_source_node_map_[target_host].size();
   uint **d_node_map = NULL;
   // get current number of elements in the map
   uint n_node_map;
   //std::cout << "ok2 th " << target_host << "\n"; 
   gpuErrchk(cudaMemcpy(&n_node_map,
-		       &d_n_local_source_node_map[target_host], sizeof(uint),
+		       &d_n_local_source_node_map_[target_host], sizeof(uint),
 		       cudaMemcpyDeviceToHost));
   
     
   if (n_blocks>0) {
     // check for consistency between number of elements
     // and number of blocks in the map
-    uint tmp_n_blocks = (n_node_map - 1) / h_node_map_block_size + 1;
+    uint tmp_n_blocks = (n_node_map - 1) / node_map_block_size_ + 1;
     if (tmp_n_blocks != n_blocks) {
       std::cerr << "Inconsistent number of elements "
 		<< n_node_map << " and number of blocks "
@@ -1237,7 +1601,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
     }
     CUDAMALLOCCTRL("&d_node_map",&d_node_map, n_blocks*sizeof(uint*));
     gpuErrchk(cudaMemcpy(d_node_map,
-			 &h_local_source_node_map[target_host][0],
+			 &h_local_source_node_map_[target_host][0],
 			 n_blocks*sizeof(uint*),
 			 cudaMemcpyHostToDevice));
   }
@@ -1287,7 +1651,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
 
   // Check if new blocks are required for the map
   uint new_n_blocks = (n_node_map + h_n_node_to_map - 1)
-    / h_node_map_block_size + 1;
+    / node_map_block_size_ + 1;
 
 #ifdef CHECKRC
   std::cout << "new_n_blocks: " << new_n_blocks << "\n";
@@ -1296,8 +1660,8 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
   // if new blocks are required for the map, allocate them
   if (new_n_blocks != n_blocks) {
     // Allocate GPU memory for new remote-source-node-map blocks
-    allocLocalSourceNodeMapBlocks(h_local_source_node_map[target_host],
-				   h_node_map_block_size, new_n_blocks);
+    allocLocalSourceNodeMapBlocks(h_local_source_node_map_[target_host],
+				  new_n_blocks);
     // free d_node_map
     if (n_blocks>0) {
       CUDAFREECTRL("d_node_map",d_node_map);
@@ -1308,7 +1672,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
     // reallocate d_node_map and get it from host
     CUDAMALLOCCTRL("&d_node_map",&d_node_map, n_blocks*sizeof(uint*));
     gpuErrchk(cudaMemcpy(d_node_map,
-			 &h_local_source_node_map[target_host][0],
+			 &h_local_source_node_map_[target_host][0],
 			 n_blocks*sizeof(uint*),
 			 cudaMemcpyHostToDevice));
   }
@@ -1336,12 +1700,12 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
   // update number of elements in remote source node map
   n_node_map += h_n_node_to_map;
   //std::cout << "ok1 nnm " << n_node_map << " th " << target_host << "\n";
-  gpuErrchk(cudaMemcpy(&d_n_local_source_node_map[target_host],
+  gpuErrchk(cudaMemcpy(&d_n_local_source_node_map_[target_host],
 		       &n_node_map, sizeof(uint), cudaMemcpyHostToDevice));
   
   // check for consistency between number of elements
   // and number of blocks in the map
-  uint tmp_n_blocks = (n_node_map - 1) / h_node_map_block_size + 1;
+  uint tmp_n_blocks = (n_node_map - 1) / node_map_block_size_ + 1;
   if (tmp_n_blocks != n_blocks) {
     std::cerr << "Inconsistent number of elements "
 	      << n_node_map << " and number of blocks "
@@ -1357,13 +1721,13 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
   std::cout << "OF LOCAL-SOURCE_NODES\n";
   std::cout << "n_node_map: " << n_node_map << "\n";
   std::cout << "n_blocks: " << n_blocks << "\n";
-  std::cout << "block_size: " << h_node_map_block_size << "\n";
+  std::cout << "block_size: " << node_map_block_size_ << "\n";
 
-  uint block_size = h_node_map_block_size;
+  uint block_size = node_map_block_size_;
   uint h_node_map_block[block_size];
   for (uint ib=0; ib<n_blocks; ib++) {
     gpuErrchk(cudaMemcpy(h_node_map_block,
-			 h_local_source_node_map[target_host][ib],
+			 h_local_source_node_map_[target_host][ib],
 			 block_size*sizeof(uint),
 			 cudaMemcpyDeviceToHost));
     std::cout << "\n";
@@ -1390,8 +1754,8 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
   int64_t storage_bytes = 0;
   void *d_storage = NULL;
   copass_sort::sort<uint>
-    (&h_local_source_node_map[target_host][0],
-     n_node_map, h_node_map_block_size, d_storage, storage_bytes);
+    (&h_local_source_node_map_[target_host][0],
+     n_node_map, node_map_block_size_, d_storage, storage_bytes);
 
 #ifdef CHECKRC
   printf("storage bytes for copass sort: %ld\n", storage_bytes);
@@ -1402,8 +1766,8 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
 
   // Run sorting operation
   copass_sort::sort<uint>
-    (&h_local_source_node_map[target_host][0],
-     n_node_map, h_node_map_block_size, d_storage, storage_bytes);
+    (&h_local_source_node_map_[target_host][0],
+     n_node_map, node_map_block_size_, d_storage, storage_bytes);
   CUDAFREECTRL("d_storage",d_storage);
 
   //////////////////////////////////////////////////////////////////////
@@ -1418,7 +1782,7 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
 
   for (uint ib=0; ib<n_blocks; ib++) {
     gpuErrchk(cudaMemcpy(h_node_map_block,
-			 h_local_source_node_map[target_host][ib],
+			 h_local_source_node_map_[target_host][ib],
 			 block_size*sizeof(uint),
 			 cudaMemcpyDeviceToHost));
     std::cout << "\n";
@@ -1438,16 +1802,14 @@ int NESTGPU::_RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
 
   // Remove temporary new connections in source host !!!!!!!!!!!
   // potential problem: check that number of blocks is an independent variable
-  // not calculated from NConn
+  // not calculated from n_conn_
   // connect.cu riga 462. Corrected but better keep an eye
-  // also, hopefully the is no global device variable for NConn
-  NConn = old_n_conn; 
+  // also, hopefully the is no global device variable for n_conn_
+  n_conn_ = old_n_conn; 
 
   return 0;
 }
 
-__global__ void MapIndexToSpikeBufferKernel(uint n_hosts, uint *host_offset,
-					    uint *node_index);
 
 
 #endif // REMOTECONNECTH

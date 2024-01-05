@@ -42,14 +42,21 @@
 //#include "distribution.h"
 
 class Multimeter;
-class NetConnection;
+
 struct curandGenerator_st;
+
 typedef struct curandGenerator_st* curandGenerator_t;
+
 class ConnSpec;
+
 class SynSpec;
+
 class SynModel;
 
+class Connection;
+
 typedef uint inode_t;
+
 typedef uint iconngroup_t;
 
 class Sequence
@@ -105,169 +112,159 @@ enum {ON_EXCEPTION_EXIT=0, ON_EXCEPTION_HANDLE};
 
 class NESTGPU
 {
-  static const int conn_seed_offset_ = 12345;
   float time_resolution_; // time resolution in ms
+  
   curandGenerator_t *random_generator_;
-  //std::vector < std::vector <curandGenerator_t *> > conn_random_generator_;
-  std::vector < std::vector <curandGenerator_t > > conn_random_generator_;
+  
   unsigned long long kernel_seed_;
+  
   bool calibrate_flag_; // becomes true after calibration
+  
   bool create_flag_; // becomes true just before creation of the first node
 
-  bool rev_conn_flag_; // flag for reverse connections
+  Connection *conn_;
   
   Distribution *distribution_;
+  
   Multimeter *multimeter_;
+  
   std::vector<BaseNeuron*> node_vect_; // -> node_group_vect
+  
   std::vector<SynModel*> syn_group_vect_;
   
-  NetConnection *net_connection_;
-
   int this_host_;
+  
   int n_hosts_;
   
   // if true it is possible to send spikes across different hosts
   bool external_spike_flag_;
   
   bool mpi_flag_; // true if MPI is initialized
+  
   bool remote_spike_height_;
   
   std::vector<int16_t> node_group_map_;
+  
   int16_t *d_node_group_map_;
 
 
   int max_spike_buffer_size_;
+  
   int max_spike_num_;
+  
   int max_spike_per_host_;
+  
   int max_remote_spike_num_;
   
   double max_spike_num_fact_;
+  
   double max_spike_per_host_fact_;
+  
   double max_remote_spike_num_fact_;
 
   double t_min_;
+  
   double neural_time_; // Neural activity time
+  
   double sim_time_; // Simulation time in ms
+  
   double neur_t0_; // Neural activity simulation time origin
+  
   long long it_; // simulation time index
+  
   long long Nt_; // number of simulation time steps
+  
   //int n_poiss_nodes_;
+  
   std::vector<int> n_remote_nodes_;
+  
   //int n_ext_nodes_;
+  
   //int i_ext_node_0_;
+  
   //int i_remote_node_0_;
-  int n_image_nodes_;
-
+  
   double start_real_time_;
+  
   double build_real_time_;
+  
   double end_real_time_;
 
   bool error_flag_;
+  
   std::string error_message_;
+  
   unsigned char error_code_;
+  
   int on_exception_;
 
   int verbosity_level_;
+  
   bool print_time_;
+  
   bool remove_conn_key_;
   
   int nested_loop_algo_;
 
-  //std::vector<RemoteConnection> remote_connection_vect_;
   std::vector<int> ext_neuron_input_spike_node_;
+  
   std::vector<int> ext_neuron_input_spike_port_;
+  
   std::vector<float> ext_neuron_input_spike_height_;
 
-  int setHostNum(uint n_hosts);
-  int setThisHost(uint i_host);
+  int setNHosts(int n_hosts);
   
-  int InitConnRandomGenerator();
-  int FreeConnRandomGenerator();
-
+  int setThisHost(int i_host);
+  
   int CreateNodeGroup(int n_nodes, int n_ports);
+  
   int CheckUncalibrated(std::string message);
+  
   double *InitGetSpikeArray(int n_nodes, int n_ports);
+  
   int NodeGroupArrayInit();
+  
   int ClearGetSpikeArrays();
+  
   int FreeGetSpikeArrays();
+  
   int FreeNodeGroupMap();
+  
   int CheckImageNodes(int n_nodes);
 
   NodeSeq _Create(std::string model_name, int n_nodes, int n_ports);
   
-  template <class T1, class T2, class ConnKeyT, class ConnStructT>
-  int _Connect(T1 source, inode_t n_source, T2 target, inode_t n_target,
-		 ConnSpec &conn_spec, SynSpec &syn_spec);
-  
-  template <class T1, class T2, class ConnKeyT, class ConnStructT>
-  int _Connect(curandGenerator_t &gen, T1 source, inode_t n_source,
-	       T2 target, inode_t n_target,
-	       ConnSpec &conn_spec, SynSpec &syn_spec);
-  
-  template <class T1, class T2, class ConnKeyT, class ConnStructT>
-    int _ConnectOneToOne(curandGenerator_t &gen, T1 source, T2 target,
-			 inode_t n_node, SynSpec &syn_spec);
 
-  template <class T1, class T2, class ConnKeyT, class ConnStructT>
-    int _ConnectAllToAll(curandGenerator_t &gen, T1 source, inode_t n_source,
-			 T2 target, inode_t n_target, SynSpec &syn_spec);
-
-  template <class T1, class T2, class ConnKeyT, class ConnStructT>
-    int _ConnectFixedTotalNumber(curandGenerator_t &gen, T1 source,
-				 inode_t n_source, T2 target, inode_t n_target,
-				 int64_t total_num, SynSpec &syn_spec);
-
-  template <class T1, class T2, class ConnKeyT, class ConnStructT>
-    int _ConnectFixedIndegree
-    (curandGenerator_t &gen, T1 source, inode_t n_source,
-     T2 target, inode_t n_target, int indegree, SynSpec &syn_spec);
-
-  template <class T1, class T2, class ConnKeyT, class ConnStructT>
-    int _ConnectFixedOutdegree
-    (curandGenerator_t &gen, T1 source, inode_t n_source, T2 target,
-     inode_t n_target, int outdegree, SynSpec &syn_spec);
-
-  template <class T1, class T2, class ConnKeyT, class ConnStructT>
-  int _RemoteConnect(int this_host, int source_host,
-		     T1 source, inode_t n_source,
-		     int target_host, T2 target, inode_t n_target,
-		     ConnSpec &conn_spec, SynSpec &syn_spec);
-
-  template <class T1, class T2, class ConnKeyT, class ConnStructT>
-  int _RemoteConnect(int source_host, T1 source, inode_t n_source,
-		     int target_host, T2 target, inode_t n_target,
-		     ConnSpec &conn_spec, SynSpec &syn_spec);
-
-  template <class T1, class T2, class ConnKeyT, class ConnStructT>
-  int _RemoteConnectSource(int source_host, T1 source, inode_t n_source,
-			   T2 target, inode_t n_target,
-			   ConnSpec &conn_spec, SynSpec &syn_spec);
-  
-  template <class T1, class T2, class ConnKeyT, class ConnStructT>
-  int _RemoteConnectTarget(int target_host, T1 source, inode_t n_source,
-			   T2 target, inode_t n_target,
-			   ConnSpec &conn_spec, SynSpec &syn_spec);
-
-  template <class ConnKeyT, class ConnStructT>
-  int addOffsetToExternalNodeIds();
-
-  int addOffsetToSpikeBufferMap();
 
   double SpikeBufferUpdate_time_;
+
   double poisson_generator_time_;
+
   double neuron_Update_time_;
+
   double copy_ext_spike_time_;
+
   double organizeExternalSpike_time_;
+
   double SendSpikeToRemote_time_;
+
   double RecvSpikeFromRemote_time_;
+
   double NestedLoop_time_;
+
   double GetSpike_time_;
+
   double SpikeReset_time_;
+
   double ExternalSpikeReset_time_;
 
+
   double SendSpikeToRemote_comm_time_;
+
   double RecvSpikeFromRemote_comm_time_;
+
   double SendSpikeToRemote_CUDAcp_time_;
+
   double RecvSpikeFromRemote_CUDAcp_time_;
   
   bool first_simulation_flag_;
@@ -311,13 +308,13 @@ class NESTGPU
   
   uint GetNLocalNodes();
   
-  uint GetTotalNNodes() { return GetNLocalNodes() + n_image_nodes_; }
+  uint GetNTotalNodes();
 
-  uint HostNum() {
+  int HostNum() {
     return n_hosts_;
   }
 
-  uint HostId() {
+  int HostId() {
     return this_host_;
   }
 
@@ -673,7 +670,6 @@ class NESTGPU
   int GetNGroupParam(int i_node);
   
   int GetNArrayVar(int i_node);
-
   
   int GetConnectionFloatParamIndex(std::string param_name);
   
@@ -683,39 +679,33 @@ class NESTGPU
   
   int IsConnectionIntParam(std::string param_name);
 
-  template <class ConnKeyT, class ConnStructT>
   int GetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
 			      float *h_param_arr,
 			      std::string param_name);
 
-  template <class ConnKeyT, class ConnStructT>
   int GetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
 			    int *h_param_arr,
 			    std::string param_name);
 
-  template <class ConnKeyT, class ConnStructT>
   int SetConnectionFloatParamDistr(int64_t *conn_ids, int64_t n_conn,
 				   std::string param_name);
 
-  template <class ConnKeyT, class ConnStructT>
   int SetConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
 			      float val, std::string param_name);
+  
 
-  template <class ConnKeyT, class ConnStructT>
   int SetConnectionIntParamArr(int64_t *conn_ids, int64_t n_conn,
 			       int *h_param_arr,
 			       std::string param_name);
   
-  template <class ConnKeyT, class ConnStructT>
   int SetConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
 			    int val, std::string param_name);
 
-  template <class ConnKeyT, class ConnStructT>
   int GetConnectionStatus(int64_t *conn_ids, int64_t n_conn,
 			  inode_t *source, inode_t *target, int *port,
 			  int *syn_group, float *delay,
 			  float *weight);
-
+  
   int64_t *GetConnections(inode_t i_source, inode_t n_source,
 			  inode_t i_target, inode_t n_target,
 			  int syn_group, int64_t *n_conn);
@@ -728,8 +718,7 @@ class NESTGPU
 			  inode_t *i_target_pt, inode_t n_target,
 			  int syn_group, int64_t *n_conn);
   
-  template <class ConnKeyT, class ConnStructT>
-  int64_t *GetConnections(inode_t  *i_source_pt, inode_t n_source,
+  int64_t *GetConnections(inode_t *i_source_pt, inode_t n_source,
 			  inode_t *i_target_pt, inode_t n_target,
 			  int syn_group, int64_t *n_conn);
     
@@ -805,9 +794,6 @@ class NESTGPU
 
   float GetNeuronGroupParam(int i_node, std::string param_name);
 
-  // Calibrate remote connection maps
-  int  RemoteConnectionMapCalibrate(int i_host, int n_hosts);
-  
   int ExternalSpikeInit();
 
   int ExternalSpikeReset();
@@ -818,7 +804,7 @@ class NESTGPU
 
   int RecvSpikeFromRemote();
 
-  int organizeExternalSpikes(uint n_ext_spikes);
+  int organizeExternalSpikes(int n_ext_spikes);
 
 };
 

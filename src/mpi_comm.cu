@@ -170,9 +170,9 @@ int NESTGPU::ConnectMpiInit(int argc, char *argv[])
   MPI_Comm_size(MPI_COMM_WORLD, &n_hosts);
   MPI_Comm_rank(MPI_COMM_WORLD, &this_host);
   mpi_flag_ = true;
-  setHostNum(n_hosts);
+  setNHosts(n_hosts);
   setThisHost(this_host);
-  RemoteConnectionMapInit(n_hosts);
+  conn_->remoteConnectionMapInit();
   recv_mpi_request = new MPI_Request[n_hosts_];
   
   return 0;

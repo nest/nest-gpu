@@ -37,7 +37,7 @@ __constant__ bool have_remote_spike_height;
 #include "scan.h"
 #include "utilities.h"
 #include "remote_connect.h"
-
+#include "nestgpu.h"
 
 // Simple kernel for pushing remote spikes in local spike buffers
 // Version without spike multiplicity array (spike_height) 
@@ -264,9 +264,9 @@ int NESTGPU::ExternalSpikeInit()
 				     d_ExternalTargetSpikeIdx0,
 				     d_ExternalTargetSpikeNodeId,
 				     d_ExternalTargetSpikeHeight,
-				     d_n_target_hosts,
-				     d_node_target_hosts,
-				     d_node_target_host_i_map
+				     conn_->getDevNTargetHosts(),
+				     conn_->getDevNodeTargetHosts(),
+				     conn_->getDevNodeTargetHostIMap()
 				     );
   }
   else {
@@ -276,9 +276,9 @@ int NESTGPU::ExternalSpikeInit()
 				     d_ExternalTargetSpikeNum,
 				     d_ExternalTargetSpikeIdx0,
 				     d_ExternalTargetSpikeNodeId,
-				     d_n_target_hosts,
-				     d_node_target_hosts,
-				     d_node_target_host_i_map
+				     conn_->getDevNTargetHosts(),
+				     conn_->getDevNodeTargetHosts(),
+				     conn_->getDevNodeTargetHostIMap()
 				     );  
   }
   //delete[] h_NExternalNodeTargetHost;
@@ -355,7 +355,7 @@ __global__ void DeviceExternalSpikeInit(uint n_hosts,
   }  
 }
 
-int NESTGPU::organizeExternalSpikes(uint n_ext_spikes)
+int NESTGPU::organizeExternalSpikes(int n_ext_spikes)
 {
   countExternalSpikesPerTargetHost<<<n_ext_spikes, 1024>>>();
   CUDASYNC;

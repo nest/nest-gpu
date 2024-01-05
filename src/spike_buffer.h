@@ -34,7 +34,6 @@ extern __device__ int NSpikeBuffer;
 extern __device__ int MaxDelayNum;
 
 extern int h_NSpikeBuffer;
-extern bool ConnectionSpikeTimeFlag;
 
 extern float *d_LastSpikeHeight; // [NSpikeBuffer];
 extern __device__ float *LastSpikeHeight; //
@@ -77,14 +76,14 @@ __global__ void SpikeBufferUpdate();
 __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
 				int max_spike_buffer_size,
 				long long *last_spike_time_idx,
-				float *last_spike_height,
-				unsigned short *conn_spike_time,      
+				float *last_spike_height,      
 				int *spike_buffer_size, int *spike_buffer_idx0,
 				int *spike_buffer_time,
 				int *spike_buffer_conn,
 				float *spike_buffer_height,
                                 long long *last_rev_spike_time_idx);
 
-int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size);
+int spikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size,
+		    int max_delay_num);
 
 #endif

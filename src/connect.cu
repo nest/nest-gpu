@@ -48,92 +48,63 @@ bool print_sort_cfr = false;
 bool compare_with_serial = false;
 uint last_i_sub = 0;
 
-int h_MaxNodeNBits;
-__device__ int MaxNodeNBits;
+
 // maximum number of bits used to represent node index 
+__device__ int MaxNodeNBits;
 
-int h_MaxDelayNBits;
-__device__ int MaxDelayNBits;
 // maximum number of bits used to represent delays
+__device__ int MaxDelayNBits;
 
-int h_MaxSynNBits;
-__device__ int MaxSynNBits;
 // maximum number of bits used to represent synapse group index
+__device__ int MaxSynNBits;
 
-int h_MaxPortNBits;
-__device__ int MaxPortNBits;
 // maximum number of bits used to represent receptor port index
+__device__ int MaxPortNBits;
 
-int h_MaxPortSynNBits;
-__device__ int MaxPortSynNBits;
 // maximum number of bits used to represent receptor port index
 // and synapse group index
+__device__ int MaxPortSynNBits;
 
-
-uint h_SourceMask;
-__device__ uint SourceMask;
 // bit mask used to extract source node index
+__device__ uint SourceMask;
 
-uint h_DelayMask;
-__device__ uint DelayMask;
 // bit mask used to extract delay
+__device__ uint DelayMask;
 
-uint h_TargetMask;
-__device__ uint TargetMask;
 // bit mask used to extract target node index
+__device__ uint TargetMask;
 
-uint h_SynMask;
-__device__ uint SynMask;
 // bit mask used to extract synapse group index
+__device__ uint SynMask;
 
-uint h_PortMask;
-__device__ uint PortMask;
 // bit mask used to extract port index
+__device__ uint PortMask;
 
-uint h_PortSynMask;
-__device__ uint PortSynMask;
 // bit mask used to extract port and synapse group index
+__device__ uint PortSynMask;
 
 
-
-iconngroup_t *d_ConnGroupIdx0;
-__device__ iconngroup_t *ConnGroupIdx0;
 // ig0 = ConnGroupIdx0[i_spike_buffer] is the index in the whole
 // connection-group array of the first connection group outgoing
 // from the node i_spike_buffer
+__device__ iconngroup_t *ConnGroupIdx0;
 
-int64_t *d_ConnGroupIConn0;
-__device__ int64_t *ConnGroupIConn0;
 // i_conn0 = ConnGroupIConn0[ig] with ig = 0, ..., Ng
 //  is the index in the whole connection array of the first connection
 // belonging to the connection group ig
+__device__ int64_t *ConnGroupIConn0;
 
-int *d_ConnGroupDelay;
-__device__ int *ConnGroupDelay;
+
 // ConnGroupDelay[ig]
 // delay associated to all connections of the connection group ig
 // with ig = 0, ..., Ng
+__device__ int *ConnGroupDelay;
 
-iconngroup_t tot_conn_group_num;
-
-int64_t NConn; // total number of connections in the whole network
-
-int64_t h_ConnBlockSize = 10000000; // 160000000; //50000000;
-__device__ int64_t ConnBlockSize;
 // size (i.e. number of connections) of connection blocks 
+//int64_t h_ConnBlockSize = 10000000; // 160000000; //50000000;
+__device__ int64_t ConnBlockSize;
 
-int h_MaxDelayNum;
 
-
-// it seems that there is no relevant advantage in using a constant array
-// however better to keep this option ready and commented
-//std::vector<int*> ConnKeyVect;
-//int** d_ConnKeyArray;
-//__device__ uint** ConnKeyArray;
-//__constant__ uint* ConnKeyArray[1024];
-std::vector<void*> ConnKeyVect;
-void* d_ConnKeyArray;
-__device__ void* ConnKeyArray;
 // Array of source node indexes and delays of all connections
 // Source node indexes and delays are merged in a single integer variable
 // The most significant MaxNodeNBits are used for the node index 
@@ -142,21 +113,20 @@ __device__ void* ConnKeyArray;
 // in ascending order according to the source node index
 // Connections from the same source node are sorted according to
 // the delay
-
 // it seems that there is no relevant advantage in using a constant array
 // however better to keep this option ready and commented
-//std::vector<connection_struct*> ConnStructVect;
-//connection_struct** d_ConnStructArray;
-//__device__ connection_struct** ConnStructArray;
-//__constant__ connection_struct* ConnStructArray[1024];
-std::vector<void*> ConnStructVect;
-void* d_ConnStructArray;
-__device__ void* ConnStructArray;
+//__constant__ uint* ConnKeyArray[1024];
+__device__ void* ConnKeyArray;
+
 // array of target node indexes, receptor port index, synapse type,
 // weight of all connections
 // used as a value for key-value sorting of the connections (see above)
+// it seems that there is no relevant advantage in using a constant array
+// however better to keep this option ready and commented
+//__constant__ connection_struct* ConnStructArray[1024];
+__device__ void* ConnStructArray;
 
-
+__device__ unsigned short *ConnectionSpikeTime;
 
 const std::string ConnectionFloatParamName[N_CONN_FLOAT_PARAM] = {
   "weight",
@@ -200,12 +170,13 @@ __global__ void setConnGroupIConn0(int64_t n_block_conn,
 }
 
 
-__global__ void ConnectInitKernel(iconngroup_t *conn_group_idx0,
-				  int64_t *conn_group_iconn0,
-				  int *conn_group_delay,
-				  int64_t block_size,
-				  void *conn_key_array,
-				  void *conn_struct_array)
+__global__ void connectCalibrateKernel(iconngroup_t *conn_group_idx0,
+				       int64_t *conn_group_iconn0,
+				       int *conn_group_delay,
+				       int64_t block_size,
+				       void *conn_key_array,
+				       void *conn_struct_array,
+				       unsigned short *conn_spike_time)
 {
   ConnGroupIdx0 = conn_group_idx0;
   ConnGroupIConn0 = conn_group_iconn0;
@@ -213,97 +184,8 @@ __global__ void ConnectInitKernel(iconngroup_t *conn_group_idx0,
   ConnBlockSize = block_size;
   ConnKeyArray = conn_key_array;
   ConnStructArray = conn_struct_array;
+  ConnectionSpikeTime = conn_spike_time;
 }
-
-int ConnectInit()
-{
-  /*
-  int k = ConnStructVect.size();
-  int **d_conn_key_array;
-  CUDAMALLOCCTRL("&d_conn_key_array",&d_conn_key_array, k*sizeof(int*));
-  gpuErrchk(cudaMemcpy(d_conn_key_array, ConnKeyVect.data(),
-		       k*sizeof(int*), cudaMemcpyHostToDevice));
-  
-  connection_struct **d_connection_array;
-  CUDAMALLOCCTRL("&d_connection_array",&d_connection_array, k*sizeof(connection_struct*));
-  gpuErrchk(cudaMemcpy(d_connection_array, ConnStructVect.data(),
-		       k*sizeof(connection_struct*), cudaMemcpyHostToDevice));
-
-  */
-  ConnectInitKernel<<<1,1>>>(d_ConnGroupIdx0, d_ConnGroupIConn0,
-			     d_ConnGroupDelay, h_ConnBlockSize,
-			     d_ConnKeyArray,
-			     d_ConnStructArray);
-  DBGCUDASYNC
-    
-    return 0;
-}
-
-
-__global__ void setMaxNodeNBitsKernel(int max_node_nbits,
-				      int max_port_syn_nbits,
-				      int max_delay_nbits,
-				      int max_port_nbits,
-				      uint port_syn_mask,
-				      uint delay_mask,
-				      uint source_mask,
-				      uint target_mask,
-				      uint port_mask)
-{
-  MaxNodeNBits = max_node_nbits;
-  MaxPortSynNBits = max_port_syn_nbits;
-  MaxDelayNBits = max_delay_nbits;
-  MaxPortNBits = max_port_nbits;
-  PortSynMask = port_syn_mask;
-  DelayMask = delay_mask;
-  SourceMask = source_mask;
-  TargetMask = target_mask;
-  PortMask = port_mask;
-}
-
-__global__ void setMaxSynNBitsKernel(int max_syn_nbits,
-				     int max_port_nbits,
-				     uint syn_mask,
-				     uint port_mask)
-{
-  MaxSynNBits = max_syn_nbits;
-  MaxPortNBits = max_port_nbits;
-  SynMask = syn_mask;
-  PortMask = port_mask;
-}
-
-int setMaxNodeNBits(int max_node_nbits)
-{
-  h_MaxNodeNBits = max_node_nbits;
-  h_MaxPortSynNBits = 32 - h_MaxNodeNBits;
-  h_MaxDelayNBits = h_MaxPortSynNBits;
-  h_MaxPortNBits = h_MaxPortSynNBits - h_MaxSynNBits - 1; 
-  h_PortSynMask = (1 << h_MaxPortSynNBits) - 1;
-  h_DelayMask = h_PortSynMask;
-  h_SourceMask = ~h_DelayMask;
-  h_TargetMask = h_SourceMask;
-  h_PortMask = ((1 << h_MaxPortNBits) - 1) << (h_MaxSynNBits + 1);
-  setMaxNodeNBitsKernel<<<1,1>>>
-    (h_MaxNodeNBits, h_MaxPortSynNBits, h_MaxDelayNBits, h_MaxPortNBits,
-     h_PortSynMask, h_DelayMask, h_SourceMask, h_TargetMask, h_PortMask);
-  
-  DBGCUDASYNC
-
-  return 0;
-}  
-
-int setMaxSynNBits(int max_syn_nbits)
-{
-  h_MaxSynNBits = max_syn_nbits;
-  h_MaxPortNBits = h_MaxPortSynNBits - h_MaxSynNBits - 1; 
-  h_SynMask = (1 << h_MaxSynNBits) - 1;
-  h_PortMask = ((1 << h_MaxPortNBits) - 1) << (h_MaxSynNBits + 1);
-  setMaxSynNBitsKernel<<<1,1>>>(h_MaxSynNBits, h_MaxPortNBits,
-				h_SynMask, h_PortMask);
-  DBGCUDASYNC
-
-  return 0;
-}  
 
 
 __global__ void setSourceTargetIndexKernel(uint64_t n_src_tgt, uint n_source,
@@ -325,12 +207,9 @@ __global__ void setSourceTargetIndexKernel(uint64_t n_src_tgt, uint n_source,
 
 
 
-
-
-
 // Get the index of the connection float parameter param_name
 // if param_name is not a float parameter, return -1
-int NESTGPU::GetConnectionFloatParamIndex(std::string param_name)
+int Connection::getConnectionFloatParamIndex(std::string param_name)
 {
   for (int i=0; i<N_CONN_FLOAT_PARAM; i++) {
     if (param_name==ConnectionFloatParamName[i]) {
@@ -343,7 +222,7 @@ int NESTGPU::GetConnectionFloatParamIndex(std::string param_name)
 
 // Get the index of the connection int parameter param_name
 // if param_name is not an int parameter, return -1
-int NESTGPU::GetConnectionIntParamIndex(std::string param_name)
+int Connection::getConnectionIntParamIndex(std::string param_name)
 {
   for (int i=0; i<N_CONN_INT_PARAM; i++) {
     if (param_name==ConnectionIntParamName[i]) {
@@ -355,9 +234,9 @@ int NESTGPU::GetConnectionIntParamIndex(std::string param_name)
 }
 
 // Check if param_name is a connection float parameter
-int NESTGPU::IsConnectionFloatParam(std::string param_name)
+int Connection::isConnectionFloatParam(std::string param_name)
 {
-  if (GetConnectionFloatParamIndex(param_name) >=0 ) {
+  if (getConnectionFloatParamIndex(param_name) >=0 ) {
     return 1;
   }
   else {
@@ -366,9 +245,9 @@ int NESTGPU::IsConnectionFloatParam(std::string param_name)
 }
 
 // Check if param_name is a connection integer parameter
-int NESTGPU::IsConnectionIntParam(std::string param_name)
+int Connection::isConnectionIntParam(std::string param_name)
 {
-  if (GetConnectionIntParamIndex(param_name) >=0 ) {
+  if (getConnectionIntParamIndex(param_name) >=0 ) {
     return 1;
   }
   else {
@@ -376,43 +255,3 @@ int NESTGPU::IsConnectionIntParam(std::string param_name)
   }
 }
 
-template
-int64_t *NESTGPU::GetConnections<conn12b_key, conn12b_struct>
-(inode_t *i_source_pt, inode_t n_source,
- inode_t *i_target_pt, inode_t n_target,
- int syn_group, int64_t *n_conn);
-
-template
-int NESTGPU::GetConnectionStatus<conn12b_key, conn12b_struct>
-(int64_t *conn_ids, int64_t n_conn,
- inode_t *source, inode_t *target, int *port,
- int *syn_group, float *delay,
- float *weight);
-
-template
-int NESTGPU::SetConnectionIntParam<conn12b_key, conn12b_struct>
-(int64_t *conn_ids, int64_t n_conn, int val, std::string param_name);
-
-template
-int NESTGPU::SetConnectionIntParamArr<conn12b_key, conn12b_struct>
-(int64_t *conn_ids, int64_t n_conn, int *h_param_arr,
- std::string param_name);
-
-template
-int NESTGPU::SetConnectionFloatParam<conn12b_key, conn12b_struct>
-(int64_t *conn_ids, int64_t n_conn, float val,
- std::string param_name);
-
-template
-int NESTGPU::SetConnectionFloatParamDistr<conn12b_key, conn12b_struct>
-(int64_t *conn_ids, int64_t n_conn, std::string param_name);
-
-template
-int NESTGPU::GetConnectionIntParam<conn12b_key, conn12b_struct>
-(int64_t *conn_ids, int64_t n_conn, int *h_param_arr,
- std::string param_name);
-
-template
-int NESTGPU::GetConnectionFloatParam<conn12b_key, conn12b_struct>
-(int64_t *conn_ids, int64_t n_conn, float *h_param_arr,
- std::string param_name);

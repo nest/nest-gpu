@@ -49,7 +49,6 @@ __device__ int NSpikeBuffer;
 __device__ int MaxDelayNum;
 
 int h_NSpikeBuffer;
-bool ConnectionSpikeTimeFlag;
 
 float *d_LastSpikeHeight; // [NSpikeBuffer];
 __device__ float *LastSpikeHeight; //
@@ -59,9 +58,6 @@ __device__ long long *LastSpikeTimeIdx; //
 
 long long *d_LastRevSpikeTimeIdx; // [NSpikeBuffer];
 __device__ long long *LastRevSpikeTimeIdx; //
-
-unsigned short *d_ConnectionSpikeTime; // [NConnection];
-__device__ unsigned short *ConnectionSpikeTime; //
 
 extern __constant__ int n_local_nodes;
 
@@ -297,11 +293,12 @@ __global__ void InitLastSpikeTimeIdx(unsigned int n_spike_buffers,
 }
 
 
-int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
+ int spikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size,
+		    int max_delay_num)
 {
   //unsigned int n_spike_buffers = net_connection->connection_.size();
   h_NSpikeBuffer = n_spike_buffers;
-  int max_delay_num = h_MaxDelayNum;
+  //int max_delay_num = h_MaxDelayNum;
   //printf("mdn: %d\n", max_delay_num);
   
   CUDAMALLOCCTRL("&d_LastSpikeTimeIdx",&d_LastSpikeTimeIdx, n_spike_buffers*sizeof(long long));
@@ -319,32 +316,14 @@ int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
 		       n_spike_buffers*max_spike_buffer_size*sizeof(float));
   gpuErrchk(cudaMemsetAsync(d_SpikeBufferSize, 0, n_spike_buffers*sizeof(int)));
   gpuErrchk(cudaMemsetAsync(d_SpikeBufferIdx0, 0, n_spike_buffers*sizeof(int)));
-
-  if (ConnectionSpikeTimeFlag){
-    //h_conn_spike_time = new unsigned short[n_conn];
-    CUDAMALLOCCTRL("&d_ConnectionSpikeTime",&d_ConnectionSpikeTime,
-			 NConn*sizeof(unsigned short));
-    //gpuErrchk(cudaMemset(d_ConnectionSpikeTime, 0,
-    //			 n_conn*sizeof(unsigned short)));
-  }
-
-  /*
-  if(ConnectionSpikeTimeFlag) {
-    cudaMemcpyAsync(d_ConnectionGroupTargetSpikeTime,
-	       h_ConnectionGroupTargetSpikeTime,
-	       n_spike_buffers*max_delay_num*sizeof(unsigned short*),
-	       cudaMemcpyHostToDevice);
-  }
-  */
   
   DeviceSpikeBufferInit<<<1,1>>>(n_spike_buffers, max_delay_num,
-			   max_spike_buffer_size,
-			   d_LastSpikeTimeIdx, d_LastSpikeHeight,	 
-			   d_ConnectionSpikeTime,
-			   d_SpikeBufferSize, d_SpikeBufferIdx0,
-			   d_SpikeBufferTimeIdx,
-			   d_SpikeBufferConnIdx, d_SpikeBufferHeight,
-			   d_LastRevSpikeTimeIdx
+				 max_spike_buffer_size,
+				 d_LastSpikeTimeIdx, d_LastSpikeHeight,
+				 d_SpikeBufferSize, d_SpikeBufferIdx0,
+				 d_SpikeBufferTimeIdx,
+				 d_SpikeBufferConnIdx, d_SpikeBufferHeight,
+				 d_LastRevSpikeTimeIdx
 				 );
   gpuErrchk( cudaPeekAtLastError() );
   
@@ -362,7 +341,6 @@ __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
 				int max_spike_buffer_size,
 				long long *last_spike_time_idx,
 				float *last_spike_height,
-				unsigned short *conn_spike_time,
 				int *spike_buffer_size, int *spike_buffer_idx0,
 				int *spike_buffer_time,
 				int *spike_buffer_conn,
@@ -374,7 +352,6 @@ __global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
   MaxSpikeBufferSize = max_spike_buffer_size;
   LastSpikeTimeIdx = last_spike_time_idx;
   LastSpikeHeight = last_spike_height;
-  ConnectionSpikeTime = conn_spike_time;
   SpikeBufferSize = spike_buffer_size;
   SpikeBufferIdx0 = spike_buffer_idx0;
   SpikeBufferTimeIdx = spike_buffer_time;

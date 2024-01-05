@@ -48,6 +48,7 @@ extern __device__ int16_t *NodeGroupMap;
 
 namespace poiss_conn
 {
+  Connection *conn_;
   //typedef uint key_t;
   //typedef regular_block_array<key_t> array_t;
   //key_t **d_poiss_key_array_data_pt;
@@ -59,6 +60,13 @@ namespace poiss_conn
   int64_t *d_poiss_sum;
   //key_t *d_poiss_thresh;
   void *d_poiss_thresh;
+  int organizeDirectConnections(Connection *conn)
+  {
+    conn_ = conn;
+    return conn->organizeDirectConnections
+      (d_poiss_key_array_data_pt, d_poiss_subarray, d_poiss_num, d_poiss_sum,
+       d_poiss_thresh);
+  }
 };
 
 
@@ -113,34 +121,41 @@ int poiss_gen::Init(int i_node_0, int n_node, int /*n_port*/,
 
 int poiss_gen::buildDirectConnections()
 {
-  return buildDirectConnectionsTemplate<conn12b_key>();
+  //printf("i_node_0_ %d n_node_ %d i_conn0_ %ld n_dir_conn_ %ld
+  // max_delay_ %d\n",
+  //i_node_0_, n_node_, i_conn0_, n_dir_conn_, max_delay_);
+  return poiss_conn::conn_->buildDirectConnections
+    (i_node_0_, n_node_, i_conn0_, n_dir_conn_, max_delay_,
+     d_mu_arr_, d_poiss_key_array_);
 }
 
 int poiss_gen::SendDirectSpikes(long long time_idx)
 {
-  return SendDirectSpikesTemplate<conn12b_key, conn12b_struct>(time_idx);
+  return poiss_conn::conn_->sendDirectSpikes
+    (time_idx, i_conn0_, n_dir_conn_, n_node_, max_delay_,
+     d_mu_arr_, d_poiss_key_array_, d_curand_state_);
 }
 
 int poiss_gen::Calibrate(double, float)
 {
   CUDAMALLOCCTRL("&d_curand_state_",&d_curand_state_,
-		 n_conn_*sizeof(curandState));
+		 n_dir_conn_*sizeof(curandState));
 
   unsigned int grid_dim_x, grid_dim_y;
 
-  if (n_conn_<65536*1024) { // max grid dim * max block dim
-    grid_dim_x = (n_conn_+1023)/1024;
+  if (n_dir_conn_<65536*1024) { // max grid dim * max block dim
+    grid_dim_x = (n_dir_conn_+1023)/1024;
     grid_dim_y = 1;
   }
   else {
     grid_dim_x = 64; // I think it's not necessary to increase it
-    if (n_conn_>grid_dim_x*1024*65535) {
+    if (n_dir_conn_>grid_dim_x*1024*65535) {
       throw ngpu_exception(std::string("Number of direct connections ")
-			   + std::to_string(n_conn_) +
+			   + std::to_string(n_dir_conn_) +
 			   " larger than threshold "
 			   + std::to_string(grid_dim_x*1024*65535));
     }
-    grid_dim_y = (n_conn_ + grid_dim_x*1024 -1) / (grid_dim_x*1024);
+    grid_dim_y = (n_dir_conn_ + grid_dim_x*1024 -1) / (grid_dim_x*1024);
   }
   dim3 numBlocks(grid_dim_x, grid_dim_y);
   
@@ -154,7 +169,7 @@ int poiss_gen::Calibrate(double, float)
   		       cudaMemcpyDeviceToHost));
   //std::cout << "h_seed: " << h_seed << "\n";
 
-  SetupPoissKernel<<<numBlocks, 1024>>>(d_curand_state_, n_conn_, h_seed);
+  SetupPoissKernel<<<numBlocks, 1024>>>(d_curand_state_, n_dir_conn_, h_seed);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
   

@@ -28,14 +28,12 @@
 #include "connect.h"
 #include "node_group.h"
 #include "spike_buffer.h"
+#include "conn12b.h"
 
 extern __constant__ NodeGroupStruct NodeGroupArray[];
 extern __device__ int16_t *NodeGroupMap;
 extern __constant__ float NESTGPUTimeResolution;
 extern __constant__ long long NESTGPUTimeIdx;
-
-//template<int i_func>
-//__device__  __forceinline__ void NestedLoopFunction(int i_spike, int i_syn);
 
 //////////////////////////////////////////////////////////////////////
 // This is the function called by the nested loop
@@ -101,6 +99,20 @@ __device__  __forceinline__ void NestedLoopFunction0(int i_spike, int i_syn)
   ////////////////////////////////////////////////////////////////
 }
 ///////////////
+
+template<int i_func>
+__device__  __forceinline__ void NestedLoopFunction(int i_spike, int i_syn);
+
+//////////////////////////////////////////////////////////////////////
+// This is the function called by the nested loop
+// that collects the spikes
+// Include more integer template specializations
+// for different connection types
+template<>
+__device__  __forceinline__ void NestedLoopFunction<0>(int i_spike, int i_syn)
+{
+  NestedLoopFunction0<conn12b_key, conn12b_struct>(i_spike, i_syn);
+}
 
 
 __global__ void GetSpikes(double *spike_array, int array_size, int n_port,
