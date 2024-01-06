@@ -125,6 +125,15 @@ int ConnectionTemplate<conn12b_key, conn12b_struct>::setMaxNodeNBits
   return 0;
 }  
 
+// Set maximum number of bits used to represent delay
+// and other dependent variables
+template<>
+int ConnectionTemplate<conn12b_key, conn12b_struct>::setMaxDelayNBits
+(int max_delay_nbits)
+{
+  return setMaxNodeNBits(32 - max_delay_nbits);
+}
+
 // Set maximum number of bits used to represent synapse group index
 // and other dependent variables
 template<>

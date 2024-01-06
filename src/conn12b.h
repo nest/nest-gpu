@@ -127,6 +127,10 @@ int ConnectionTemplate<conn12b_key, conn12b_struct>::setMaxNodeNBits
 (int max_node_nbits);
 
 template<>
+int ConnectionTemplate<conn12b_key, conn12b_struct>::setMaxDelayNBits
+(int max_delay_nbits);
+
+template<>
 int ConnectionTemplate<conn12b_key, conn12b_struct>::setMaxSynNBits
 (int max_syn_nbits);
 

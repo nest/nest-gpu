@@ -49,6 +49,8 @@ public:
   virtual int calibrate() = 0;
   
   virtual int setMaxNodeNBits(int max_node_nbits) = 0;
+  
+  virtual int setMaxDelayNBits(int max_node_nbits) = 0;
 
   virtual int setMaxSynNBits(int max_syn_nbits) = 0;
 
@@ -378,6 +380,8 @@ public:
   int setRandomSeed(unsigned long long seed);
   
   int setMaxNodeNBits(int max_node_nbits);
+
+  int setMaxDelayNBits(int max_delay_nbits);
 
   int setMaxSynNBits(int max_syn_nbits);
 
