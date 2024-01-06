@@ -29,6 +29,7 @@
 #include "node_group.h"
 #include "spike_buffer.h"
 #include "conn12b.h"
+#include "conn16b.h"
 
 extern __constant__ NodeGroupStruct NodeGroupArray[];
 extern __device__ int16_t *NodeGroupMap;
@@ -111,7 +112,8 @@ __device__  __forceinline__ void NestedLoopFunction(int i_spike, int i_syn);
 template<>
 __device__  __forceinline__ void NestedLoopFunction<0>(int i_spike, int i_syn)
 {
-  NestedLoopFunction0<conn12b_key, conn12b_struct>(i_spike, i_syn);
+  //NestedLoopFunction0<conn12b_key, conn12b_struct>(i_spike, i_syn);
+  NestedLoopFunction0<conn16b_key, conn16b_struct>(i_spike, i_syn);
 }
 
 

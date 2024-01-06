@@ -14,6 +14,7 @@ LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 HCUSRC=\
 connect.h \
 conn12b.h \
+conn16b.h \
 remote_connect.h \
 connect_rules.h \
 connect_spec.h \
@@ -98,6 +99,7 @@ izhikevich_psc_exp.h
 CUSRC=\
 connect.cu \
 conn12b.cu \
+conn16b.cu \
 remote_connect.cu \
 connect_rules.cu \
 nestgpu.cu \

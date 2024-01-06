@@ -37,7 +37,6 @@
 #include "neuron_models.h"
 #include "copass_kernels.h"
 #include "connect.h"
-#include "conn12b.h"
 
 /*
 const int N_POISS_GEN_SCAL_PARAM = 4;

@@ -28,6 +28,7 @@
 #include "syn_model.h"
 #include "get_spike.h"
 #include "conn12b.h"
+#include "conn16b.h"
 
 extern __constant__ long long NESTGPUTimeIdx;
 extern __constant__ float NESTGPUTimeResolution;
@@ -109,7 +110,9 @@ template<>
 __device__ __forceinline__ void NestedLoopFunction<1>
 (int i_spike, int i_target_rev_conn)
 {
-  NestedLoopFunction1<conn12b_key, conn12b_struct>
+  //NestedLoopFunction1<conn12b_key, conn12b_struct>
+  //  (i_spike, i_target_rev_conn);
+  NestedLoopFunction1<conn16b_key, conn16b_struct>
     (i_spike, i_target_rev_conn);
 }
 

@@ -53,6 +53,7 @@
 
 #include "remote_connect.h"
 #include "conn12b.h"
+#include "conn16b.h"
 
 ////////////// TEMPORARY
 #include "scan.h"
@@ -143,7 +144,8 @@ NESTGPU::NESTGPU()
   this_host_ = 0;
   external_spike_flag_ = false;
 
-  conn_ = new ConnectionTemplate<conn12b_key, conn12b_struct>;
+  //conn_ = new ConnectionTemplate<conn12b_key, conn12b_struct>;
+  conn_ = new ConnectionTemplate<conn16b_key, conn16b_struct>;
   
   random_generator_ = new curandGenerator_t;
   CURAND_CALL(curandCreateGenerator(random_generator_,

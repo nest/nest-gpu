@@ -3070,7 +3070,7 @@ int ConnectionTemplate<ConnKeyT, ConnStructT>::organizeDirectConnections
   CUDAMALLOCCTRL("&d_poiss_sum",&d_poiss_sum, 2*sizeof(int64_t));
   
   
-  CUDAMALLOCCTRL("&d_poiss_thresh",&d_poiss_thresh, 2*sizeof(key_t));
+  CUDAMALLOCCTRL("&d_poiss_thresh",&d_poiss_thresh, 2*sizeof(ConnKeyT));
   
   return 0;
 }

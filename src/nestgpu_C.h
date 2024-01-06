@@ -31,14 +31,6 @@
 extern "C" {
 #endif
 
-struct conn12b_struct
-{
-  uint target_port_syn;
-  float weight;
-};
-
-typedef uint conn12b_key;
-  
   char *NESTGPU_GetErrorMessage();
 
   unsigned char NESTGPU_GetErrorCode();
