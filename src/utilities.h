@@ -56,7 +56,7 @@ __device__  __forceinline__ T2 locate(T1 val, T1 *data, T2 n)
   return i;
 }
 
-int IntPow(int x, unsigned int p);
+int64_t IntPow(int64_t x, unsigned int p);
 
 
 template <class T>

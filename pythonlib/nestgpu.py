@@ -2961,7 +2961,7 @@ def IsIntParam(param_name):
 
     c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
                                                len(param_name)+1)
-    ret = (NESTGPU_IsIntParam(c_param_name)!=0) 
+    ret = (NESTGPU_IsIntParam(c_param_name)!=0)
     if GetErrorCode() != 0:
         raise ValueError(GetErrorMessage())
     return ret

@@ -1266,7 +1266,7 @@ extern "C" {
     
     ret = NESTGPU_instance->IsIntParam(param_name_str);
   } END_ERR_PROP return ret; }
-
+  
   
   int NESTGPU_GetIntParamIdx(char *param_name)
   { int ret = 0; BEGIN_ERR_PROP {

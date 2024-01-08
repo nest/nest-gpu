@@ -65,7 +65,7 @@ int ConnectionTemplate<conn16b_key, conn16b_struct>::setMaxDelayNBits
   delay_mask_ = ((1 << max_delay_nbits_) - 1) << max_port_syn_nbits_;
 
   // bit mask used to extract source node index
-  source_mask_ = 0xFFFF0000LL;
+  source_mask_ = 0xFFFFFFFF; 
   
   // bit mask used to extract port index  
   port_mask_ = ((1 << max_port_nbits_) - 1) << (max_syn_nbits_ + 1);
@@ -109,8 +109,13 @@ int ConnectionTemplate<conn16b_key, conn16b_struct>::setMaxSynNBits
 template <>
 void ConnectionTemplate<conn16b_key, conn16b_struct>::setConnSource
 (conn16b_key &conn_key, inode_t source) {
-  conn_key = (conn_key & (~source_mask_)) |
-    ((uint64_t)source << 32);
+    conn_key = (conn_key & 0xFFFFFFFF) | ((uint64_t)source << 32);
+}
+
+template <>
+int ConnectionTemplate<conn16b_key, conn16b_struct>::getConnDelay 
+(const conn16b_key &conn_key) {
+  return (int)((conn_key & delay_mask_) >> max_port_syn_nbits_);
 }
 
 template <>
@@ -119,7 +124,8 @@ ConnectionTemplate<conn16b_key, conn16b_struct>::ConnectionTemplate()
   //std::cout << "In Connectiontemplate<conn16b_key, conn16b_struct> "
   //"specialized constructor\n";
   init();
-  setMaxDelayNBits(14); // maximum number of nodes is 2^20
+  max_node_nbits_ = 31;
+  setMaxDelayNBits(14); // maximum number of bits for delays
   //std::cout << "max_node_nbits_: " << max_node_nbits_ << "\n";
   setMaxSynNBits(10); // maximum number of synapse groups is 2^10
 }

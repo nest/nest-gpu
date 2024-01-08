@@ -49,6 +49,8 @@ sim_dict = {
     'master_seed': 12349, #55,
     # optimizes GPU memory by removing unnecessary connection keys
     'remove_conn_key': False,
+    # connection structure type (0: 12 byte, 1: 16 byte)
+    #'conn_struct_type': 0,
     # recording interval of the membrane potential (in ms)
     'rec_V_int': 1.0,
     # if True, data will be overwritten,

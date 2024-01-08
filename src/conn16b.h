@@ -46,7 +46,7 @@ template <>
 __device__ __forceinline__ void
 setConnSource<conn16b_key> 
 (conn16b_key &conn_key, inode_t source) {
-  conn_key = (conn_key & 0xFFFF) | ((uint64_t)source << 32);
+  conn_key = (conn_key & 0xFFFFFFFF) | ((uint64_t)source << 32);
 }
 
 template <>
@@ -76,7 +76,7 @@ template <>
 __device__ __forceinline__ int
 getConnDelay<conn16b_key> 
 (const conn16b_key &conn_key) {
-  return (int)(conn_key & DelayMask);
+  return (int)((conn_key & DelayMask) >> MaxPortSynNBits);
 }
 
 template <>

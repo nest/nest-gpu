@@ -127,6 +127,8 @@ class NESTGPU
   Distribution *distribution_;
   
   Multimeter *multimeter_;
+
+  int conn_struct_type_;
   
   std::vector<BaseNeuron*> node_vect_; // -> node_group_vect
   
@@ -309,6 +311,8 @@ class NESTGPU
   uint GetNLocalNodes();
   
   uint GetNTotalNodes();
+
+  int setConnStructType(int conn_struct_type);
 
   int HostNum() {
     return n_hosts_;

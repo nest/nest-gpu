@@ -79,6 +79,8 @@ enum KernelIntParamIndexes {
   i_max_spike_buffer_size,
   i_max_node_n_bits,
   i_max_syn_n_bits,
+  i_max_delay_n_bits,
+  i_conn_struct_type,
   N_KERNEL_INT_PARAM
 };
 
@@ -87,6 +89,12 @@ enum KernelBoolParamIndexes {
   i_remove_conn_key,
   i_remote_spike_height,
   N_KERNEL_BOOL_PARAM
+};
+
+enum ConnStructType {
+  i_conn12b,
+  i_conn16b,
+  N_CONN_STRUCT_TYPE
 };
 
 const std::string kernel_float_param_name[N_KERNEL_FLOAT_PARAM] = {
@@ -101,7 +109,9 @@ const std::string kernel_int_param_name[N_KERNEL_INT_PARAM] = {
   "verbosity_level",
   "max_spike_buffer_size",
   "max_node_n_bits",
-  "max_syn_n_bits"
+  "max_syn_n_bits",
+  "max_delay_n_bits",
+  "conn_struct_type"
 };
 
 const std::string kernel_bool_param_name[N_KERNEL_BOOL_PARAM] = {
@@ -144,8 +154,9 @@ NESTGPU::NESTGPU()
   this_host_ = 0;
   external_spike_flag_ = false;
 
-  //conn_ = new ConnectionTemplate<conn12b_key, conn12b_struct>;
-  conn_ = new ConnectionTemplate<conn16b_key, conn16b_struct>;
+  conn_ = NULL;
+  //setConnStructType(i_conn12b);
+  setConnStructType(i_conn16b);
   
   random_generator_ = new curandGenerator_t;
   CURAND_CALL(curandCreateGenerator(random_generator_,
@@ -387,7 +398,7 @@ uint NESTGPU::GetNTotalNodes()
 int NESTGPU::CheckImageNodes(int n_nodes)
 {
   int i_node_0 = GetNLocalNodes();
-  int max_n_nodes = IntPow(2, conn_->getMaxNodeNBits());
+  int max_n_nodes = (int)(IntPow(2, conn_->getMaxNodeNBits()) - 1);
   
   if ((i_node_0 + n_nodes) > max_n_nodes) {
     throw ngpu_exception(std::string("Local plus Image nodes exceed maximum"
@@ -398,14 +409,39 @@ int NESTGPU::CheckImageNodes(int n_nodes)
   return i_node_0;
 }
 
+int NESTGPU::setConnStructType(int conn_struct_type)
+{
+  //std::cout << "In setConnStructType " << conn_struct_type << "\n";
+  if (conn_!=NULL) {
+    delete conn_;
+  }
+  conn_struct_type_ = conn_struct_type;
+  switch (conn_struct_type) {
+  case i_conn12b:
+    conn_ = new ConnectionTemplate<conn12b_key, conn12b_struct>;
+    break;
+  case i_conn16b:
+    conn_ = new ConnectionTemplate<conn16b_key, conn16b_struct>;
+    break;
+  default:
+    throw ngpu_exception("Unrecognized connection structure type index");
+  }
+  conn_->setRandomSeed(kernel_seed_);
+  // set time resolution in conn!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  
+  return 0;
+}
+
 int NESTGPU::CreateNodeGroup(int n_nodes, int n_ports)
 {
   int i_node_0 = GetNLocalNodes();
-  int max_n_nodes = IntPow(2,conn_->getMaxNodeNBits());
-  int max_n_ports = IntPow(2, conn_->getMaxPortNBits());
+  int max_node_nbits = conn_->getMaxNodeNBits();
+  int max_n_nodes = (int)(IntPow(2, max_node_nbits) - 1);
+  int max_n_ports = (int)(IntPow(2, conn_->getMaxPortNBits()) - 1);
+  //std::cout << "max_node_nbits " << max_node_nbits << "\n";
   
   if ((i_node_0 + n_nodes) > max_n_nodes) {
-    throw ngpu_exception(std::string("Maximum number of nodes ")
+    throw ngpu_exception(std::string("Maximum number of local nodes ")
 			 + std::to_string(max_n_nodes) + " exceeded");
   }
   if (n_ports > max_n_ports) {
@@ -732,6 +768,7 @@ int NESTGPU::SimulationStep()
   SpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   time_mark = getRealTime();
   neural_time_ = neur_t0_ + (double)time_resolution_*(it_+1);
+  //std::cout << "neural_time_: " << neural_time_ << "\n"; 
   gpuErrchk(cudaMemcpyToSymbolAsync(NESTGPUTime, &neural_time_, sizeof(double)));
   long long time_idx = (int)round(neur_t0_/time_resolution_) + it_ + 1;
   gpuErrchk(cudaMemcpyToSymbolAsync(NESTGPUTimeIdx, &time_idx, sizeof(long long)));
@@ -788,7 +825,16 @@ int NESTGPU::SimulationStep()
   gpuErrchk( cudaDeviceSynchronize() );
   if (n_spikes > 0) {
     time_mark = getRealTime();
-    NestedLoop::Run<0>(nested_loop_algo_, n_spikes, d_SpikeTargetNum);
+    switch (conn_struct_type_) {
+    case i_conn12b:
+      NestedLoop::Run<0>(nested_loop_algo_, n_spikes, d_SpikeTargetNum);
+      break;
+    case i_conn16b:
+      NestedLoop::Run<2>(nested_loop_algo_, n_spikes, d_SpikeTargetNum);
+      break;
+    default:
+      throw ngpu_exception("Unrecognized connection structure type index");
+    }
     NestedLoop_time_ += (getRealTime() - time_mark);
   }
   time_mark = getRealTime();
@@ -845,8 +891,18 @@ int NESTGPU::SimulationStep()
     gpuErrchk(cudaMemcpy(&n_rev_spikes, conn_->getDevRevSpikeNumPt(),
 			 sizeof(unsigned int), cudaMemcpyDeviceToHost));
     if (n_rev_spikes > 0) {
-      NestedLoop::Run<1>(nested_loop_algo_, n_rev_spikes,
-			 conn_->getDevRevSpikeNConnPt());
+      switch (conn_struct_type_) {
+      case i_conn12b:
+	NestedLoop::Run<1>(nested_loop_algo_, n_rev_spikes,
+			   conn_->getDevRevSpikeNConnPt());
+	break;
+      case i_conn16b:
+	NestedLoop::Run<3>(nested_loop_algo_, n_rev_spikes,
+			   conn_->getDevRevSpikeNConnPt());
+	break;
+      default:
+	throw ngpu_exception("Unrecognized connection structure type index");
+      }	
     }      
     //RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
   }
@@ -2189,6 +2245,7 @@ bool NESTGPU::IsIntParam(std::string param_name)
   for (i_param=0; i_param<N_KERNEL_INT_PARAM; i_param++) {
     if (param_name == kernel_int_param_name[i_param]) return true;
   }
+  
   return false;
 }
 
@@ -2220,6 +2277,10 @@ int NESTGPU::GetIntParam(std::string param_name)
     return conn_->getMaxNodeNBits();    
   case i_max_syn_n_bits:
     return conn_->getMaxSynNBits();    
+  case i_max_delay_n_bits:
+    return conn_->getMaxDelayNBits();    
+  case i_conn_struct_type:
+    return conn_struct_type_;
   default:
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")
 			 + param_name);
@@ -2244,6 +2305,14 @@ int NESTGPU::SetIntParam(std::string param_name, int val)
     break;
   case i_max_syn_n_bits:
     conn_->setMaxSynNBits(val);
+    break;
+  case i_max_delay_n_bits:
+    conn_->setMaxDelayNBits(val);
+    break;
+  case i_conn_struct_type:
+    if (conn_struct_type_ != val) {
+      setConnStructType(val);
+    }
     break;
   default:
     throw ngpu_exception(std::string("Unrecognized kernel int parameter ")

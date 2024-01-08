@@ -46,6 +46,8 @@ typedef uint iconngroup_t;
 class Connection
 {
 public:
+  virtual ~Connection() {};
+  
   virtual int calibrate() = 0;
   
   virtual int setMaxNodeNBits(int max_node_nbits) = 0;
@@ -55,6 +57,8 @@ public:
   virtual int setMaxSynNBits(int max_syn_nbits) = 0;
 
   virtual int getMaxNodeNBits() = 0;
+
+  virtual int getMaxDelayNBits() = 0;
 
   virtual int getMaxPortNBits() = 0;
 
@@ -387,6 +391,8 @@ public:
 
   int getMaxNodeNBits() {return max_node_nbits_;}
 
+  int getMaxDelayNBits() {return max_delay_nbits_;}
+
   int getMaxPortNBits() {return max_port_nbits_;}
 
   int getMaxSynNBits() {return max_syn_nbits_;}
@@ -422,6 +428,8 @@ public:
 			  int64_t n_conn, SynSpec &syn_spec);
 
   void setConnSource(ConnKeyT &conn_key, inode_t source);
+
+  int getConnDelay(const ConnKeyT &conn_key);
 
   int connect(inode_t source, inode_t n_source,
 	      inode_t target, inode_t n_target,
@@ -1443,7 +1451,11 @@ struct MaxDelay
 		      const ConnKeyT &conn_key_b) const {
     int i_delay_a = getConnDelay<ConnKeyT>(conn_key_a);
     int i_delay_b = getConnDelay<ConnKeyT>(conn_key_b);
-    return (i_delay_b > i_delay_a) ? i_delay_b : i_delay_a;
+    //printf("conn_key_a: %lu\tconn_key_b: %lu\ti_delay_a: %d\ti_delay_b: %d\n",
+    //  conn_key_a, conn_key_b, i_delay_a, i_delay_b);
+    //return (i_delay_b > i_delay_a) ? i_delay_b : i_delay_a;
+    
+    return (i_delay_b > i_delay_a) ? conn_key_b : conn_key_a;
   }
 };
 
@@ -1480,6 +1492,11 @@ __global__ void sendDirectSpikeKernel(curandState *curand_state,
   int i_source = getConnSource<ConnKeyT>(conn_key);
   int i_delay = getConnDelay<ConnKeyT>(conn_key);
   int id = (int)((time_idx - i_delay + 1) % max_delay);
+  
+  if (id < 0) {
+    return;
+  }
+  
   float mu = mu_arr[id*n_node + i_source];
   int n = curand_poisson(curand_state+i_conn_rel, mu);
   if (n>0) {
@@ -3205,27 +3222,35 @@ int ConnectionTemplate<ConnKeyT, ConnStructT>::buildDirectConnections
   }
 
   // Find maximum delay of poisson direct connections
-  int *d_max_delay; // maximum delay pointer in device memory
-  CUDAMALLOCCTRL("&d_max_delay",&d_max_delay, sizeof(int));
+  // int *d_max_delay; // maximum delay pointer in device memory
+  // CUDAMALLOCCTRL("&d_max_delay",&d_max_delay, sizeof(int));
+  // pointer to connection key with maximum delay in device memory
+  ConnKeyT *d_max_delay_key;
+  ConnKeyT h_max_delay_key;
+  CUDAMALLOCCTRL("&d_max_delay_key",&d_max_delay_key, sizeof(ConnKeyT));
+  
   MaxDelay<ConnKeyT> max_op; // comparison operator used by Reduce function 
   // Determine temporary device storage requirements
   void *d_temp_storage = NULL;
   size_t temp_storage_bytes = 0;
+  ConnKeyT init_delay_key = 0;
   cub::DeviceReduce::Reduce(d_temp_storage, temp_storage_bytes,
-			    (ConnKeyT*)d_poiss_key_array, d_max_delay,
-			    n_dir_conn,
-			    max_op, INT_MIN);
+			    (ConnKeyT*)d_poiss_key_array, d_max_delay_key,
+			    n_dir_conn, max_op, init_delay_key);
   // Allocate temporary storage
   CUDAMALLOCCTRL("&d_temp_storage",&d_temp_storage, temp_storage_bytes);
   // Run reduction
   cub::DeviceReduce::Reduce(d_temp_storage, temp_storage_bytes,
-			    (ConnKeyT*)d_poiss_key_array, d_max_delay,
-			    n_dir_conn,
-			    max_op, INT_MIN);
-  gpuErrchk(cudaMemcpy(&max_delay, d_max_delay, sizeof(int),
-		       cudaMemcpyDeviceToHost));
-
-  // max_delay = 200;
+			    (ConnKeyT*)d_poiss_key_array, d_max_delay_key,
+			    n_dir_conn, max_op, init_delay_key);
+  //gpuErrchk(cudaMemcpy(&max_delay, d_max_delay, sizeof(int),
+  //		       cudaMemcpyDeviceToHost));
+  gpuErrchk(cudaMemcpy(&h_max_delay_key, d_max_delay_key, sizeof(ConnKeyT),
+  		       cudaMemcpyDeviceToHost));
+  //std::cout << "Conn key of direct connections having max delay: "
+  //	    << h_max_delay_key << "\n";
+  
+  max_delay = getConnDelay(h_max_delay_key);
   printf("Max delay of direct (poisson generator) connections: %d\n",
 	 max_delay);
   CUDAMALLOCCTRL("&d_mu_arr",&d_mu_arr, n_node*max_delay*sizeof(float));

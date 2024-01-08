@@ -396,7 +396,7 @@ extern "C" {
   char **NESTGPU_GetIntParamNames();
   
   int NESTGPU_IsIntParam(char *param_name);
-  
+
   int NESTGPU_GetIntParamIdx(char *param_name);
   
   int NESTGPU_GetIntParam(char *param_name);

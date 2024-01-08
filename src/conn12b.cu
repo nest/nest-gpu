@@ -1,53 +1,6 @@
 #include <iostream>
 #include "connect.h"
 #include "conn12b.h"
-/*
-#include "remote_connect.h"
-#include "poiss_gen.h"
-#include "rev_spike.h"
-
-template
-int64_t *ConnectionTemplate<conn12b_key, conn12b_struct>::getConnections
-(inode_t *i_source_pt, inode_t n_source,
- inode_t *i_target_pt, inode_t n_target,
- int syn_group, int64_t *n_conn);
-
-template
-int ConnectionTemplate<conn12b_key, conn12b_struct>::getConnectionStatus
-(int64_t *conn_ids, int64_t n_conn,
- inode_t *source, inode_t *target, int *port,
- int *syn_group, float *delay,
- float *weight);
-
-template
-int ConnectionTemplate<conn12b_key, conn12b_struct>::setConnectionIntParam
-(int64_t *conn_ids, int64_t n_conn, int val, std::string param_name);
-
-template
-int ConnectionTemplate<conn12b_key, conn12b_struct>::setConnectionIntParamArr
-(int64_t *conn_ids, int64_t n_conn, int *h_param_arr,
- std::string param_name);
-
-template
-int ConnectionTemplate<conn12b_key, conn12b_struct>::setConnectionFloatParam
-(int64_t *conn_ids, int64_t n_conn, float val,
- std::string param_name);
-
-template
-int ConnectionTemplate<conn12b_key,
-		       conn12b_struct>::setConnectionFloatParamDistr
-(int64_t *conn_ids, int64_t n_conn, std::string param_name);
-
-template
-int ConnectionTemplate<conn12b_key, conn12b_struct>::getConnectionIntParam
-(int64_t *conn_ids, int64_t n_conn, int *h_param_arr,
- std::string param_name);
-
-template
-int ConnectionTemplate<conn12b_key, conn12b_struct>::getConnectionFloatParam
-(int64_t *conn_ids, int64_t n_conn, float *h_param_arr,
- std::string param_name);
-*/
 
 __global__ void setMaxNodeNBitsKernel(int max_node_nbits,
 				      int max_port_syn_nbits,
@@ -164,6 +117,12 @@ template <>
 void ConnectionTemplate<conn12b_key, conn12b_struct>::setConnSource
 (conn12b_key &conn_key, inode_t source) {
   conn_key = (conn_key & (~source_mask_)) | (source << max_delay_nbits_);
+}
+
+template <>
+int ConnectionTemplate<conn12b_key, conn12b_struct>::getConnDelay
+(const conn12b_key &conn_key) {
+  return conn_key & delay_mask_;
 }
 
 template <>
