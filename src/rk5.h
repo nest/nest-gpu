@@ -265,10 +265,10 @@ RungeKutta5<DataStruct>::~RungeKutta5()
 template<class DataStruct>
 int RungeKutta5<DataStruct>::Free()
 {
-  CUDAFREECTRL("d_XArr", d_XArr);
-  CUDAFREECTRL("d_HArr", d_HArr);
-  CUDAFREECTRL("d_YArr", d_YArr);
-  CUDAFREECTRL("d_ParamArr", d_ParamArr);
+  cudaFree(d_XArr);
+  cudaFree(d_HArr);
+  cudaFree(d_YArr);
+  cudaFree(d_ParamArr);
 
   return 0;
 }

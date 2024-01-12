@@ -12,7 +12,8 @@ unsigned int *curand_int(curandGenerator_t &gen, size_t n)
   unsigned int *host_data = new unsigned int[n];
   
   // Allocate n integers on device
-  CUDAMALLOCCTRL("&dev_data",(void **)&dev_data, n*sizeof(unsigned int));
+  CUDA_CALL(cudaMalloc((void **)&dev_data, n*sizeof(unsigned int)));
+  // Create pseudo-random number generator
 
   // Generate n integers on device
   CURAND_CALL(curandGenerate(gen, dev_data, n));
@@ -21,7 +22,7 @@ unsigned int *curand_int(curandGenerator_t &gen, size_t n)
   CUDA_CALL(cudaMemcpy(host_data, dev_data, n*sizeof(unsigned int),
                        cudaMemcpyDeviceToHost));
   // Cleanup
-  CUDAFREECTRL("dev_data",dev_data);
+  CUDA_CALL(cudaFree(dev_data));
   
   return host_data;
 }
@@ -33,7 +34,8 @@ float *curand_uniform(curandGenerator_t &gen, size_t n)
   float *host_data = new float[n];
   
   // Allocate n floats on device
-  CUDAMALLOCCTRL("&dev_data",(void **)&dev_data, n*sizeof(float));
+  CUDA_CALL(cudaMalloc((void **)&dev_data, n*sizeof(float)));
+  // Create pseudo-random number generator
 
   // Generate n integers on device
   CURAND_CALL(curandGenerateUniform(gen, dev_data, n));
@@ -42,7 +44,7 @@ float *curand_uniform(curandGenerator_t &gen, size_t n)
   CUDA_CALL(cudaMemcpy(host_data, dev_data, n*sizeof(float),
                        cudaMemcpyDeviceToHost));
   // Cleanup
-  CUDAFREECTRL("dev_data",dev_data);
+  CUDA_CALL(cudaFree(dev_data));
   
   return host_data;
 }
@@ -56,7 +58,8 @@ float *curand_normal(curandGenerator_t &gen, size_t n, float mean,
   float *host_data = new float[n];
   
   // Allocate n1 floats on device
-  CUDAMALLOCCTRL("&dev_data",(void **)&dev_data, n1*sizeof(float));
+  CUDA_CALL(cudaMalloc((void **)&dev_data, n1*sizeof(float)));
+  // Create pseudo-random number generator
 
   // Generate n1 integers on device
   //printf("curandGenerateNormal n1: %d\tmean: %f\tstd: %f\n", (int)n1, mean,
@@ -67,7 +70,7 @@ float *curand_normal(curandGenerator_t &gen, size_t n, float mean,
   CUDA_CALL(cudaMemcpy(host_data, dev_data, n*sizeof(float),
                        cudaMemcpyDeviceToHost));
   // Cleanup
-  CUDAFREECTRL("dev_data",dev_data);
+  CUDA_CALL(cudaFree(dev_data));
   
   return host_data;
 }

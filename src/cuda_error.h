@@ -20,79 +20,14 @@
  *
  */
 
+
+
+
+
 #ifndef CUDAERROR_H
 #define CUDAERROR_H
-#include <config.h>
-
 #include <stdio.h>
-#include <map>
 #include "ngpu_exception.h"
-
-#ifdef HAVE_MPI
-#include <mpi.h>
-#endif
-
-namespace cuda_error_ns
-{
-  extern std::map<void*, size_t> alloc_map_;
-  extern size_t mem_used_;
-  extern size_t mem_max_;
-  extern int verbose_;
-}
-
-inline int printMPIRank()
-{
-
-#ifdef HAVE_MPI
-  int proc_num;
-  MPI_Comm_size(MPI_COMM_WORLD, &proc_num);
-  if (proc_num > 1) {
-    int mpi_id;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_id);
-    printf("MPI rank: %d\t", mpi_id);
-  }
-#endif
-  
-  return 0;
-}
-
-
-inline void mapCUDAMemAlloc(void *dev_pt, size_t n_bytes)
-{
-  cuda_error_ns::alloc_map_.insert({dev_pt, n_bytes});
-  cuda_error_ns::mem_used_ += n_bytes;
-  
-  if (cuda_error_ns::mem_used_ > cuda_error_ns::mem_max_) {
-    cuda_error_ns::mem_max_ = cuda_error_ns::mem_used_;
-  }
-  if (cuda_error_ns::verbose_ > 0) {
-    printMPIRank();
-    printf("GPU memory usage: used = %.3f, max used = %.3f\n",
-	   (float)cuda_error_ns::mem_used_/1024.0/1024.0,
-	   (float)cuda_error_ns::mem_max_/1024.0/1024.0);
-  }
-}
-
-inline void mapCUDAMemFree(void *dev_pt)
-{
-  if (cuda_error_ns::alloc_map_.find(dev_pt)
-      == cuda_error_ns::alloc_map_.end()) {
-    throw ngpu_exception("CUDA error: pointer not found in mapCUDAMemFree.");
-  }
-  size_t n_bytes = cuda_error_ns::alloc_map_.at(dev_pt);
-  cuda_error_ns::alloc_map_.erase(dev_pt);
-  cuda_error_ns::mem_used_ -= n_bytes;
-  
-  if (cuda_error_ns::verbose_ > 0) {
-    printMPIRank();
-    printf("GPU memory usage: used = %.3f, max used = %.3f\n",
-	   (float)cuda_error_ns::mem_used_/1024.0/1024.0,
-	   (float)cuda_error_ns::mem_max_/1024.0/1024.0);
-  }
-}
-
-
-
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -124,20 +59,22 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
   gpuErrchk(cudaPeekAtLastError());		\
   gpuErrchk(cudaDeviceSynchronize());
 
+//#define DEBUG_CUDAMALLOC
+#ifdef DEBUG_CUDAMALLOC
 #define CUDAMALLOCCTRL(str, dev_pt, n_bytes) {				\
-  if (cuda_error_ns::verbose_ > 0) {					\
-    printMPIRank();							\
-    printf("Allocating %lld bytes pointed by %s in device memory at %s:%d\n", \
-	   (unsigned long long)n_bytes, str, __FILE__,__LINE__);	\
-  }									\
-  gpuAssert(cudaMalloc(dev_pt, n_bytes), __FILE__, __LINE__);		\
-  mapCUDAMemAlloc(*dev_pt, n_bytes); }
-#define CUDAFREECTRL(str, dev_pt) {					\
-  if (cuda_error_ns::verbose_ > 0) {					\
-    printMPIRank();							\
-    printf("Deallocating device memory pointed by %s in at %s:%d\n",	\
-	   str, __FILE__,__LINE__);					\
-  }									\
-  gpuAssert(cudaFree(dev_pt), __FILE__, __LINE__);			\
-  mapCUDAMemFree(dev_pt); }
+  printf("Allocating %lld bytes pointed by %s in device memory at %s:%d\n", \
+         (unsigned long long)n_bytes, str, __FILE__,__LINE__);  \
+  gpuAssert(cudaMalloc(dev_pt, n_bytes), __FILE__, __LINE__); }
+#define CUDAFREECTRL(str, dev_pt) {				\
+  printf("Deallocating device memory pointed by %s in at %s:%d\n", \
+         str, __FILE__,__LINE__);				   \
+  gpuAssert(cudaFree(dev_pt), __FILE__, __LINE__); }
+#else
+#define CUDAMALLOCCTRL(str, dev_pt, n_bytes) {				\
+  gpuAssert(cudaMalloc(dev_pt, n_bytes), __FILE__, __LINE__); }
+#define CUDAFREECTRL(str, dev_pt) {				\
+  gpuAssert(cudaFree(dev_pt), __FILE__, __LINE__); }
+#endif
+
+
 #endif

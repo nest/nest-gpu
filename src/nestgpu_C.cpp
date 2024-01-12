@@ -540,26 +540,6 @@ extern "C" {
     ret = NESTGPU_instance->HostNum();
   } END_ERR_PROP return ret; }
 
-  size_t NESTGPU_getCUDAMemHostUsed()
-  { size_t ret = 0; BEGIN_ERR_PROP {
-    ret = NESTGPU_instance->getCUDAMemHostUsed();
-  } END_ERR_PROP return ret; }
-
-  size_t NESTGPU_getCUDAMemHostPeak()
-  { size_t ret = 0; BEGIN_ERR_PROP {
-    ret = NESTGPU_instance->getCUDAMemHostPeak();
-  } END_ERR_PROP return ret; }
-
-  size_t NESTGPU_getCUDAMemTotal()
-  { size_t ret = 0; BEGIN_ERR_PROP {
-    ret = NESTGPU_instance->getCUDAMemTotal();
-  } END_ERR_PROP return ret; }
-
-  size_t NESTGPU_getCUDAMemFree()
-  { size_t ret = 0; BEGIN_ERR_PROP {
-    ret = NESTGPU_instance->getCUDAMemFree();
-  } END_ERR_PROP return ret; }
-
   unsigned int *NESTGPU_RandomInt(size_t n)
   { unsigned int *ret = NULL; BEGIN_ERR_PROP {
     ret = NESTGPU_instance->RandomInt(n);

@@ -21,7 +21,7 @@ Arguments:
 
 """
 
-from mpi4py import MPI
+
 import nestgpu as ngpu
 
 from argparse import ArgumentParser
@@ -43,9 +43,9 @@ rules_dict = {
 
 assert args.N > 0 and args.C > 0 and args.R in rules_dict
 
+
 ngpu.ConnectMpiInit()
 
-ngpu.SetKernelStatus("verbosity_level", 5)
 
 mpi_id = ngpu.HostId()
 mpi_np = ngpu.HostNum()
@@ -64,56 +64,6 @@ if mpi_id == 0:
     print(f"Creating {args.N} neurons per MPI rank")
     print(f"Connection rule: {rule}")
 
-block_size = 10000000
-bytes_per_conn = 12
-bytes_per_key = 4
-margin = 10 # margin in MB
-
-if args.R==0:
-    cuda_mem_exp = 0
-    cuda_mem_exp_woh = 0
-else:
-    if args.R==1 or args.R==2:
-        n_conn = int(args.C*args.N)
-    elif args.R==3:
-        n_conn = int(args.C)
-    elif args.R==4:
-        n_conn = int(args.N*args.N)
-    else:
-        n_conn = int(0)
-
-    n_blocks = (n_conn*(mpi_np - 1) - 1) // block_size + 1
-
-    n_blocks_woh = (n_conn*mpi_np - 1) // block_size + 1
-
-    cuda_mem_exp = (n_blocks*block_size*bytes_per_conn \
-                    + block_size*bytes_per_key)/1024/1024
-
-    cuda_mem_exp_woh = (n_blocks_woh*block_size*bytes_per_conn \
-                        + block_size*bytes_per_key)/1024/1024
-
-# Total CUDA memory (for all hosts)
-cuda_mem_tot = ngpu.getCUDAMemTotal()/1024/1024
-
-# Free CUDA memory (for all hosts)
-cuda_mem_free = ngpu.getCUDAMemFree()/1024/1024
-
-
-req_mem_str = f"{mpi_np}\t{mpi_id}\t{args.N}\t{args.C}\t{args.R}\t" \
-    f"{cuda_mem_tot:>9.3f}\t{cuda_mem_free:>9.3f}\t" \
-    f"{cuda_mem_exp:>9.3f}\t{cuda_mem_exp_woh:>9.3f}\n"
-
-print(f"CUDA available and requested memory summary\n"
-      f"mpi_np\tmpi_id\tN\tC\tR\ttotal (MB)\tfree (MB)\t"
-      f"exp/hst(no OH)\texp/hst(+OH)\n" + req_mem_str)
-
-req_mem_file_name = f"req_mem_{mpi_id}.dat"
-with open(req_mem_file_name, "w") as req_mem_file:
-    req_mem_file.write(req_mem_str)
-
-
-comm = MPI.COMM_WORLD
-comm.Barrier()
 
 neurons = []
 for i in rank_list:
@@ -126,28 +76,6 @@ if rule is not None:
             if i != j:
                 ngpu.RemoteConnect(i, neurons[i], j, neurons[j], rule[0], {})
 
-cuda_mem_used = ngpu.getCUDAMemHostUsed()/1024/1024
-
-cuda_mem_max = ngpu.getCUDAMemHostPeak()/1024/1024
-
-if cuda_mem_max>=cuda_mem_exp and cuda_mem_max<(cuda_mem_exp_woh+margin):
-    test_passed = 1
-else:
-    test_passed = 0
-    
-out_str = f"{mpi_np}\t{mpi_id}\t{args.N}\t{args.C}\t{args.R}\t" \
-    f"{cuda_mem_used:>9.3f}\t{cuda_mem_max:>9.3f}\t" \
-    f"{cuda_mem_exp:>9.3f}\t{cuda_mem_exp_woh:>9.3f}\t" \
-    f"{test_passed}\n"
-
-print(f"CUDA memory usage summary\n"
-      f"mpi_np\tmpi_id\tN\tC\tR\tused (MB)\tmax (MB)\t"
-      f"exp/hst(no OH)\texp/hst(+OH)\t"
-      f"passed\n" + out_str)
-
-test_file_name = f"test_{mpi_id}.dat"
-with open(test_file_name, "w") as test_file:
-    test_file.write(out_str)
 
 ngpu.MpiFinalize()
 

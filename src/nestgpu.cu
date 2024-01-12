@@ -63,14 +63,6 @@ __constant__ double NESTGPUTime;
 __constant__ long long NESTGPUTimeIdx;
 __constant__ float NESTGPUTimeResolution;
 
-namespace cuda_error_ns
-{
-  std::map<void*, size_t> alloc_map_;
-  size_t mem_used_;
-  size_t mem_max_;
-  int verbose_;
-}
-
 enum KernelFloatParamIndexes {
   i_time_resolution = 0,
   i_max_spike_num_fact,
@@ -196,9 +188,6 @@ NESTGPU::NESTGPU()
   ConnectionSpikeTimeFlag = false;
   rev_conn_flag_ = false;
   h_NRevConn = 0;
-
-  cuda_error_ns::mem_used_ = 0;
-  cuda_error_ns::mem_max_ = 0;
   
   start_real_time_ = getRealTime();
   max_spike_buffer_size_ = 20;
@@ -221,7 +210,6 @@ NESTGPU::NESTGPU()
   on_exception_ = ON_EXCEPTION_EXIT;
 
   verbosity_level_ = 4;
-  cuda_error_ns::verbose_ = 0;
   print_time_ = false;
   remove_conn_key_ = false;
   
@@ -1447,43 +1435,6 @@ std::string NESTGPU::HostIdStr()
   }
 }
 
-size_t NESTGPU::getCUDAMemHostUsed()
-{
-  return cuda_error_ns::mem_used_;
-}
-      
-size_t NESTGPU::getCUDAMemHostPeak()
-{
-  return cuda_error_ns::mem_max_;
-}
-
-size_t NESTGPU::getCUDAMemTotal()
-{
-  size_t mem_free;
-  size_t mem_total;
-  cudaError_t cuda_status = cudaMemGetInfo(&mem_free, &mem_total);
-  if (cuda_status != cudaSuccess) {
-    throw ngpu_exception(std::string("CUDA error in getCUDAMemTotal: ")
-			 + cudaGetErrorString(cuda_status));
-  }
-
-  return mem_total;
-}
-
-size_t NESTGPU::getCUDAMemFree()
-{
-  size_t mem_free;
-  size_t mem_total;
-  cudaError_t cuda_status = cudaMemGetInfo(&mem_free, &mem_total);
-  if (cuda_status != cudaSuccess) {
-    throw ngpu_exception(std::string("CUDA error in getCUDAMemFree: ")
-			 + cudaGetErrorString(cuda_status));
-  }
-
-  return mem_free;
-}
-
-
 unsigned int *NESTGPU::RandomInt(size_t n)
 {
   return curand_int(*random_generator_, n);
@@ -2220,12 +2171,6 @@ int NESTGPU::SetIntParam(std::string param_name, int val)
     break;
   case i_verbosity_level:
     SetVerbosityLevel(val);
-    if (val >= 5) {
-      cuda_error_ns::verbose_ = 1;
-    }
-    else {
-      cuda_error_ns::verbose_ = 0;
-    }
     break;
   case i_max_spike_buffer_size:
     SetMaxSpikeBufferSize(val);
