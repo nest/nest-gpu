@@ -20,9 +20,6 @@
  *
  */
 
-//#define CHECKRC
-
-
 
 #include <config.h>
 #include <stdio.h>
@@ -205,109 +202,6 @@ NESTGPU::NESTGPU()
   mpi_flag_ = false;
   remote_spike_height_ = false;
 
-#ifdef CHECKRC
-    // TEMPORARY, REMOVE!!!!!!!!!!!!!!!!!
-  int this_host = 0;
-  //int this_host = 1;
-  setHostNum(5);
-  setThisHost(this_host);
-  
-  conn_->remoteConnectionMapInit();
-
-  int n_neurons = 30;
-  int CE = 3;
-  Create("iaf_psc_exp", n_neurons);
-
-  float mean_delay = 0.5;
-  float std_delay = 0.25;
-  float min_delay = 0.1;
-  float w = 1.0;
-
-  ConnSpec conn_spec1(FIXED_INDEGREE, CE);
-  SynSpec syn_spec1;
-  syn_spec1.SetParam("receptor", 0);
-  syn_spec1.SetParam("weight", w);
-  syn_spec1.SetParam("delay_distribution", DISTR_TYPE_NORMAL_CLIPPED);
-  syn_spec1.SetParam("delay_mu", mean_delay);
-  syn_spec1.SetParam("delay_low", min_delay);
-  syn_spec1.SetParam("delay_high", mean_delay+3*std_delay);
-  syn_spec1.SetParam("delay_sigma", std_delay);
-
-  const int n_source = 10;
-  int h_source_node_index[n_source] = {21, 24, 21, 24, 22, 21, 23, 25, 26, 22};
-  int *d_source_node_index;
-  CUDAMALLOCCTRL("&d_source_node_index",&d_source_node_index, n_source*sizeof(int));
-  gpuErrchk(cudaMemcpy(d_source_node_index, h_source_node_index,
-		       n_source*sizeof(int), cudaMemcpyHostToDevice));
-
-
-  RemoteConnect(1, d_source_node_index, 10, 0, 10, 3,
-		conn_spec1, syn_spec1);
-
-  //_RemoteConnectSource(1, d_source_node_index, 10, 10, 3,
-  //		       conn_spec1, syn_spec1);
-  //_RemoteConnectTarget(0, d_source_node_index, 10, 10, 3,
-  //		       conn_spec1, syn_spec1);
-  
-
-  std::cout << "##################################################\n";
-  std::cout << "##################################################\n";
-  std::cout << "SECOND CONNECT COMMAND\n";
-  std::cout << "##################################################\n";
-  std::cout << "##################################################\n";
-  RemoteConnect(1, 20, 10, 0, 10, 3, conn_spec1, syn_spec1);
-  //_RemoteConnectSource(1, 20, 10, 10, 3, conn_spec1, syn_spec1);
-  //_RemoteConnectTarget(0, 20, 10, 10, 3, conn_spec1, syn_spec1);
-
-  ConnSpec conn_spec2(ALL_TO_ALL);
-  
-  int n_source2 = 4;
-  int h_source_node_index2[n_source2] =
-    {1, 2, 3, 4};
-  int *d_source_node_index2;
-  CUDAMALLOCCTRL("&d_source_node_index2",&d_source_node_index2, n_source2*sizeof(int));
-  gpuErrchk(cudaMemcpy(d_source_node_index2, h_source_node_index2,
-		       n_source2*sizeof(int), cudaMemcpyHostToDevice));
-  RemoteConnect(1, d_source_node_index2, n_source2, 3, 0, 1,
-		conn_spec2, syn_spec1);
-
-  int n_source3 = 3;
-  int h_source_node_index3[n_source3] =
-    {2, 3, 4};
-  int *d_source_node_index3;
-  CUDAMALLOCCTRL("&d_source_node_index3",&d_source_node_index3, n_source3*sizeof(int));
-  gpuErrchk(cudaMemcpy(d_source_node_index3, h_source_node_index3,
-		       n_source3*sizeof(int), cudaMemcpyHostToDevice));
-  RemoteConnect(1, d_source_node_index3, n_source3, 2, 0, 1,
-		conn_spec2, syn_spec1);
-
-  int n_source4 = 2;
-  int h_source_node_index4[n_source4] =
-    {3, 4};
-  int *d_source_node_index4;
-  CUDAMALLOCCTRL("&d_source_node_index4",&d_source_node_index4, n_source4*sizeof(int));
-  gpuErrchk(cudaMemcpy(d_source_node_index4, h_source_node_index4,
-		       n_source4*sizeof(int), cudaMemcpyHostToDevice));
-  RemoteConnect(1, d_source_node_index4, n_source4, 4, 0, 1,
-		conn_spec2, syn_spec1);
-
-  int n_source5 = 1;
-  int h_source_node_index5[n_source5] = {4};
-  int *d_source_node_index5;
-  CUDAMALLOCCTRL("&d_source_node_index5",&d_source_node_index5, n_source5*sizeof(int));
-  gpuErrchk(cudaMemcpy(d_source_node_index5, h_source_node_index5,
-		       n_source5*sizeof(int), cudaMemcpyHostToDevice));
-  RemoteConnect(1, d_source_node_index5, n_source5, 0, 0, 1,
-		conn_spec2, syn_spec1);
-
-  
-  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  //RemoteConnectionMapCalibrate(this_host, 5);
-  Calibrate();
-
-#endif
-  
-  // NestedLoop::Init(); moved to calibrate
   nested_loop_algo_ = CumulSumNestedLoopAlgo;
 
   SpikeBufferUpdate_time_ = 0;
@@ -543,97 +437,11 @@ int NESTGPU::Calibrate()
   spikeBufferInit(GetNTotalNodes(), max_spike_buffer_size_,
 		  conn_->getMaxDelayNum());
 
-  //#ifndef CHECKRC
   if (n_hosts_ > 1) {
     conn_->remoteConnectionMapCalibrate(GetNLocalNodes());
 
-#ifdef CHECKRC
-    // TEMPORARY, FOR TESTING
-    std::cout << "////////////////////////////////////////\n";
-    std::cout << "After addOffsetToSpikeBufferMap\n";
-    std::cout << "MAP\n";
-  
-    int tmp_n_hosts = 2;
-    int tmp_tg_host = 0;
-    int tmp_src_host = 1;
-  
-    int **tmp_pt2[tmp_n_hosts];
-    int tmp_n[tmp_n_hosts];
-    int tmp_map[h_node_map_block_size];
-    int n_map;
-    int n_blocks;
-
-    gpuErrchk(cudaMemcpy(tmp_n, d_n_local_source_node_map,
-			 tmp_n_hosts*sizeof(int), cudaMemcpyDeviceToHost));
-    n_map = tmp_n[tmp_tg_host];
-    if (n_map>0) {
-      std::cout << "////////////////////////////////////////\n";
-      std::cout << "Local Source Node Map\n";
-      std::cout << "target host: " << tmp_tg_host << "\n";
-      std::cout << "n_local_source_node_map: " << n_map << "\n";
-      gpuErrchk(cudaMemcpy(tmp_pt2, d_local_source_node_map,
-			   tmp_n_hosts*sizeof(int**), cudaMemcpyDeviceToHost));
-  
-      n_blocks = (n_map - 1) / h_node_map_block_size + 1;
-      std::cout << "n_blocks: " << n_blocks << "\n";
-      int *tmp_pt1[n_blocks];
-      gpuErrchk(cudaMemcpy(tmp_pt1, tmp_pt2[tmp_tg_host],
-			   n_blocks*sizeof(int*), cudaMemcpyDeviceToHost));
-    
-      for (int ib=0; ib<n_blocks; ib++) {
-	std::cout << "block " << ib << "\n";
-	int n = h_node_map_block_size;
-	if (ib==n_blocks-1) {
-	  n = (n_map - 1) % h_node_map_block_size + 1;
-	}
-	gpuErrchk(cudaMemcpy(tmp_map, tmp_pt1[ib],
-			     n*sizeof(int), cudaMemcpyDeviceToHost));
-	std::cout << "local source node index\n";
-	for (int i=0; i<n; i++) {
-	  std::cout << tmp_map[i] << "\n";
-	}
-      }
-    }
-
-    //gpuErrchk(cudaMemcpy(tmp_n, d_n_local_spike_buffer_map,
-    gpuErrchk(cudaMemcpy(tmp_n, d_n_remote_source_node_map,
-			 tmp_n_hosts*sizeof(int), cudaMemcpyDeviceToHost));
-    n_map = tmp_n[tmp_src_host];
-    if (n_map>0) {
-      std::cout << "////////////////////////////////////////\n";
-      std::cout << "Local Spike Buffer Map\n";
-      std::cout << "source host: " << tmp_src_host << "\n";
-      std::cout << "n_local_spike_buffer_map: " << n_map << "\n";
-      gpuErrchk(cudaMemcpy(tmp_pt2, d_local_spike_buffer_map,
-			   tmp_n_hosts*sizeof(int**), cudaMemcpyDeviceToHost));
-  
-      n_blocks = (n_map - 1) / h_node_map_block_size + 1;
-      std::cout << "n_blocks: " << n_blocks << "\n";
-      int *tmp_pt1[n_blocks];
-      gpuErrchk(cudaMemcpy(tmp_pt1, tmp_pt2[tmp_src_host],
-			   n_blocks*sizeof(int*), cudaMemcpyDeviceToHost));
-    
-      for (int ib=0; ib<n_blocks; ib++) {
-	std::cout << "block " << ib << "\n";
-	int n = h_node_map_block_size;
-	if (ib==n_blocks-1) {
-	  n = (n_map - 1) % h_node_map_block_size + 1;
-	}
-	gpuErrchk(cudaMemcpy(tmp_map, tmp_pt1[ib],
-			     n*sizeof(int), cudaMemcpyDeviceToHost));
-	std::cout << "local spike buffer index\n";
-	for (int i=0; i<n; i++) {
-	  std::cout << tmp_map[i] << "\n";
-	}
-      }
-    }
-
-    ////////////////////////////////////////
-#endif
-
     ExternalSpikeInit();
   }
-  //#endif
 
   if (conn_->getRevConnFlag()) {
     conn_->revSpikeInit(GetNLocalNodes());

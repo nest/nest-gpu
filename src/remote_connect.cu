@@ -1,4 +1,3 @@
-//#define CHECKRC
 
 #include <iostream>
 #include <vector>
@@ -49,6 +48,21 @@ __device__ uint ***local_source_node_map;
 __constant__ uint n_local_nodes; // number of local nodes
 
 
+// kernel that flags source nodes used in at least one new connection
+// of a given block
+__global__ void setUsedSourceNodeOnSourceHostKernel(inode_t *conn_source_ids,
+						    int64_t n_conn,
+						    uint *source_node_flag)
+{
+  int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i_conn>=n_conn) return;
+  inode_t i_source = conn_source_ids[i_conn];
+  // it is not necessary to use atomic operation. See:
+  // https://stackoverflow.com/questions/8416374/several-threads-writing-the-same-value-in-the-same-global-memory-location
+  //printf("i_conn: %ld\t i_source: %d\n", i_conn, i_source);
+
+  source_node_flag[i_source] = 1;
+}
 
 __global__ void setTargetHostArrayNodePointersKernel
 (uint *target_host_array, uint *target_host_i_map, uint *n_target_hosts_cumul,
