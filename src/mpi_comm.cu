@@ -24,7 +24,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <mpi.h>
 #include <list>
 
 #include "nestgpu.h"
@@ -36,6 +35,7 @@
 #include "mpi_comm.h"
 
 #ifdef HAVE_MPI
+#include <mpi.h>
 MPI_Request *recv_mpi_request;
 #endif
 

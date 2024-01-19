@@ -5,6 +5,7 @@
 #include <config.h>
 #include <stdlib.h>
 #include "scan.h"
+#include "cuda_error.h"
 
 #define checkCudaError(o, l) _checkCudaError(o, l, __func__)
 
@@ -299,8 +300,8 @@ void scanLargeEvenDeviceArray(int *d_out, int *d_in, int length, bool bcao) {
 	const int sharedMemArraySize = ELEMENTS_PER_BLOCK * sizeof(int);
 
 	int *d_sums, *d_incr;
-	cudaMalloc((void **)&d_sums, blocks * sizeof(int));
-	cudaMalloc((void **)&d_incr, blocks * sizeof(int));
+	CUDAMALLOCCTRL("&d_sums", (void **)&d_sums, blocks * sizeof(int));
+	CUDAMALLOCCTRL("&d_sums", (void **)&d_incr, blocks * sizeof(int));
 
 	if (bcao) {
 		prescan_large<<<blocks, THREADS_PER_BLOCK, 2 * sharedMemArraySize>>>(d_out, d_in, ELEMENTS_PER_BLOCK, d_sums);
@@ -321,8 +322,8 @@ void scanLargeEvenDeviceArray(int *d_out, int *d_in, int length, bool bcao) {
 
 	add<<<blocks, ELEMENTS_PER_BLOCK>>>(d_out, ELEMENTS_PER_BLOCK, d_incr);
 
-	cudaFree(d_sums);
-	cudaFree(d_incr);
+	CUDAFREECTRL("d_sums",d_sums);
+	CUDAFREECTRL("d_incr",d_incr);
 }
 
 // from https://stackoverflow.com/a/12506181

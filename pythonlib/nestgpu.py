@@ -1611,6 +1611,42 @@ def HostNum():
     return ret
 
 
+NESTGPU_getCUDAMemHostUsed = _nestgpu.NESTGPU_getCUDAMemHostUsed
+NESTGPU_getCUDAMemHostUsed.restype = ctypes.c_size_t
+def getCUDAMemHostUsed():
+    "Get CUDA memory currently used by this host"
+    ret = NESTGPU_getCUDAMemHostUsed()
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_getCUDAMemHostPeak = _nestgpu.NESTGPU_getCUDAMemHostPeak
+NESTGPU_getCUDAMemHostPeak.restype = ctypes.c_size_t
+def getCUDAMemHostPeak():
+    "Get maximum CUDA memory used by this host"
+    ret = NESTGPU_getCUDAMemHostPeak()
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_getCUDAMemTotal = _nestgpu.NESTGPU_getCUDAMemTotal
+NESTGPU_getCUDAMemTotal.restype = ctypes.c_size_t
+def getCUDAMemTotal():
+    "Get total CUDA memory"
+    ret = NESTGPU_getCUDAMemTotal()
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_getCUDAMemFree = _nestgpu.NESTGPU_getCUDAMemFree
+NESTGPU_getCUDAMemFree.restype = ctypes.c_size_t
+def getCUDAMemFree():
+    "Get free CUDA memory"
+    ret = NESTGPU_getCUDAMemFree()
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
 NESTGPU_MpiFinalize = _nestgpu.NESTGPU_MpiFinalize
 NESTGPU_MpiFinalize.restype = ctypes.c_int
 def MpiFinalize():

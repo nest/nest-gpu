@@ -324,6 +324,14 @@ class NESTGPU
 
   std::string HostIdStr();
 
+  size_t getCUDAMemHostUsed();
+      
+  size_t getCUDAMemHostPeak();
+
+  size_t getCUDAMemTotal();
+
+  size_t getCUDAMemFree();
+  
   int GetNBoolParam();
   std::vector<std::string> GetBoolParamNames();
   bool IsBoolParam(std::string param_name);

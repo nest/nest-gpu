@@ -19,41 +19,6 @@
 
 # Here all user defined options will be processed.
 
-
-function( NEST_PROCESS_WITH_OPENMP )
-  # Find OPENMP
-  if ( with-openmp )
-    if ( NOT "${with-openmp}" STREQUAL "ON" )
-      printInfo( "Set OpenMP argument: ${with-openmp}")
-      # set variables in this scope
-      set( OPENMP_FOUND ON )
-      set( OpenMP_C_FLAGS "${with-openmp}" )
-      set( OpenMP_CXX_FLAGS "${with-openmp}" )
-    else ()
-      find_package( OpenMP )
-    endif ()
-    if ( OPENMP_FOUND )
-      # export found variables to parent scope
-      set( OPENMP_FOUND "${OPENMP_FOUND}" PARENT_SCOPE )
-      set( OpenMP_C_FLAGS "${OpenMP_C_FLAGS}" PARENT_SCOPE )
-      set( OpenMP_CXX_FLAGS "${OpenMP_CXX_FLAGS}" PARENT_SCOPE )
-      # set flags
-      set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}" PARENT_SCOPE )
-      set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" PARENT_SCOPE )
-    else()
-      printError( "CMake can not find OpenMP." )
-    endif ()
-  endif ()
-
-  # Provide a dummy OpenMP::OpenMP_CXX if no OpenMP or if flags explicitly
-  # given. Needed to avoid problems where OpenMP::OpenMP_CXX is used.
-  if ( NOT TARGET OpenMP::OpenMP_CXX )
-    add_library(OpenMP::OpenMP_CXX INTERFACE IMPORTED)
-  endif()
-
-endfunction()
-
-
 function( NEST_PROCESS_WITH_MPI )
   # Find MPI
   set( HAVE_MPI OFF PARENT_SCOPE )
@@ -89,19 +54,6 @@ function( NEST_PROCESS_WITH_MPI )
     endif ()
   endif ()
 endfunction()
-
-
-function( NEST_PROCESS_WITH_MPI4PY )
-  if ( HAVE_MPI AND HAVE_PYTHON )
-    include( FindPythonModule )
-    find_python_module(mpi4py)
-
-    if ( HAVE_MPI4PY )
-      include_directories( "${PY_MPI4PY}/include" )
-    endif ()
-
-  endif ()
-endfunction ()
 
 
 function( NESTGPU_PROCESS_CUDA_ARCH )

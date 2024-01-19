@@ -51,6 +51,8 @@ sim_dict = {
     'remove_conn_key': False,
     # connection structure type (0: 12 byte, 1: 16 byte)
     #'conn_struct_type': 0,
+    # set nested loop algorithm {0: "BlockStep", 1: "CumulSum", 2: "Simple", 3: "ParallelInner", 4: "ParallelOuter", 5: "Frame1D", 6: "Frame2D", 7: "Smart1D", 8: "Smart2D"}
+    'nl_algo': 0,
     # recording interval of the membrane potential (in ms)
     'rec_V_int': 1.0,
     # if True, data will be overwritten,

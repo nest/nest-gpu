@@ -193,6 +193,14 @@ extern "C" {
 
   int NESTGPU_HostNum();
 
+  size_t NESTGPU_getCUDAMemHostUsed();
+
+  size_t NESTGPU_getCUDAMemHostPeak();
+
+  size_t NESTGPU_getCUDAMemTotal();
+
+  size_t NESTGPU_getCUDAMemFree();
+
   unsigned int *NESTGPU_RandomInt(size_t n);
   
   float *NESTGPU_RandomUniform(size_t n);
