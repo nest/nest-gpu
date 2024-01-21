@@ -21,9 +21,6 @@
  */
 
 
-
-
-
 #ifndef TESTSYNMODEL_H
 #define TESTSYNMODEL_H
 
@@ -31,21 +28,24 @@
 
 class TestSynModel : public SynModel
 {
- public:
-  TestSynModel() {Init();}
+public:
+  TestSynModel()
+  {
+    Init();
+  }
   int Init();
 };
 
 namespace test_syn_model_ns
 {
-  enum ParamIndexes {
-    i_fact = 0, i_offset,
-    N_PARAM
-  };
+enum ParamIndexes
+{
+  i_fact = 0,
+  i_offset,
+  N_PARAM
+};
 
-  const std::string test_syn_model_param_name[N_PARAM] = {
-    "fact", "offset"
-  };
+const std::string test_syn_model_param_name[ N_PARAM ] = { "fact", "offset" };
 
 }
 

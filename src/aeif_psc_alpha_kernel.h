@@ -21,25 +21,23 @@
  */
 
 
-
-
-
 #ifndef AEIFPSCALPHAKERNEL_H
 #define AEIFPSCALPHAKERNEL_H
 
-#include <string>
-#include <cmath>
-#include "spike_buffer.h"
-#include "node_group.h"
 #include "aeif_psc_alpha.h"
+#include "node_group.h"
+#include "spike_buffer.h"
+#include <cmath>
+#include <string>
 
-#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MIN( a, b ) ( ( ( a ) < ( b ) ) ? ( a ) : ( b ) )
 
 extern __constant__ float NESTGPUTimeResolution;
 
 namespace aeif_psc_alpha_ns
 {
-enum ScalVarIndexes {
+enum ScalVarIndexes
+{
   i_I_syn_ex = 0,
   i_I_syn_in,
   i_I1_syn_ex,
@@ -49,7 +47,8 @@ enum ScalVarIndexes {
   N_SCAL_VAR
 };
 
-enum ScalParamIndexes {
+enum ScalParamIndexes
+{
   i_tau_syn_ex = 0,
   i_tau_syn_in,
   i_I0_ex,
@@ -71,24 +70,22 @@ enum ScalParamIndexes {
   N_SCAL_PARAM
 };
 
-enum GroupParamIndexes {
-  i_h_min_rel = 0,  // Min. step in ODE integr. relative to time resolution
-  i_h0_rel,         // Starting step in ODE integr. relative to time resolution
+enum GroupParamIndexes
+{
+  i_h_min_rel = 0, // Min. step in ODE integr. relative to time resolution
+  i_h0_rel,        // Starting step in ODE integr. relative to time resolution
   N_GROUP_PARAM
 };
 
 
-const std::string aeif_psc_alpha_scal_var_name[N_SCAL_VAR] = {
-  "I_syn_ex",
+const std::string aeif_psc_alpha_scal_var_name[ N_SCAL_VAR ] = { "I_syn_ex",
   "I_syn_in",
   "I1_syn_ex",
   "I1_syn_in",
   "V_m",
-  "w"
-};
+  "w" };
 
-const std::string aeif_psc_alpha_scal_param_name[N_SCAL_PARAM] = {
-  "tau_syn_ex",
+const std::string aeif_psc_alpha_scal_param_name[ N_SCAL_PARAM ] = { "tau_syn_ex",
   "tau_syn_in",
   "I0_ex",
   "I0_in",
@@ -105,112 +102,111 @@ const std::string aeif_psc_alpha_scal_param_name[N_SCAL_PARAM] = {
   "V_reset",
   "t_ref",
   "refractory_step",
-  "den_delay"
-};
+  "den_delay" };
 
-const std::string aeif_psc_alpha_group_param_name[N_GROUP_PARAM] = {
-  "h_min_rel",
-  "h0_rel"
-};
+const std::string aeif_psc_alpha_group_param_name[ N_GROUP_PARAM ] = { "h_min_rel", "h0_rel" };
 
 //
 // I know that defines are "bad", but the defines below make the
 // following equations much more readable.
 // For every rule there is some exceptions!
 //
-#define I_syn_ex y[i_I_syn_ex]
-#define I_syn_in y[i_I_syn_in]
-#define I1_syn_ex y[i_I1_syn_ex]
-#define I1_syn_in y[i_I1_syn_in]
-#define V_m y[i_V_m]
-#define w y[i_w]
+#define I_syn_ex y[ i_I_syn_ex ]
+#define I_syn_in y[ i_I_syn_in ]
+#define I1_syn_ex y[ i_I1_syn_ex ]
+#define I1_syn_in y[ i_I1_syn_in ]
+#define V_m y[ i_V_m ]
+#define w y[ i_w ]
 
-#define dI_syn_exdt dydx[i_I_syn_ex]
-#define dI_syn_indt dydx[i_I_syn_in]
-#define dI1_syn_exdt dydx[i_I1_syn_ex]
-#define dI1_syn_indt dydx[i_I1_syn_in]
-#define dVdt dydx[i_V_m]
-#define dwdt dydx[i_w]
+#define dI_syn_exdt dydx[ i_I_syn_ex ]
+#define dI_syn_indt dydx[ i_I_syn_in ]
+#define dI1_syn_exdt dydx[ i_I1_syn_ex ]
+#define dI1_syn_indt dydx[ i_I1_syn_in ]
+#define dVdt dydx[ i_V_m ]
+#define dwdt dydx[ i_w ]
 
-#define I0_ex param[i_I0_ex]
-#define I0_in param[i_I0_in]
-#define tau_syn_ex param[i_tau_syn_ex]
-#define tau_syn_in param[i_tau_syn_in]
-#define V_th param[i_V_th]
-#define Delta_T param[i_Delta_T]
-#define g_L param[i_g_L]
-#define E_L param[i_E_L]
-#define C_m param[i_C_m]
-#define a param[i_a]
-#define b param[i_b]
-#define tau_w param[i_tau_w]
-#define I_e param[i_I_e]
-#define V_peak param[i_V_peak]
-#define V_reset param[i_V_reset]
-#define t_ref param[i_t_ref]
-#define refractory_step param[i_refractory_step]
-#define den_delay param[i_den_delay]
+#define I0_ex param[ i_I0_ex ]
+#define I0_in param[ i_I0_in ]
+#define tau_syn_ex param[ i_tau_syn_ex ]
+#define tau_syn_in param[ i_tau_syn_in ]
+#define V_th param[ i_V_th ]
+#define Delta_T param[ i_Delta_T ]
+#define g_L param[ i_g_L ]
+#define E_L param[ i_E_L ]
+#define C_m param[ i_C_m ]
+#define a param[ i_a ]
+#define b param[ i_b ]
+#define tau_w param[ i_tau_w ]
+#define I_e param[ i_I_e ]
+#define V_peak param[ i_V_peak ]
+#define V_reset param[ i_V_reset ]
+#define t_ref param[ i_t_ref ]
+#define refractory_step param[ i_refractory_step ]
+#define den_delay param[ i_den_delay ]
 
-#define h_min_rel_ group_param_[i_h_min_rel]
-#define h0_rel_ group_param_[i_h0_rel]
+#define h_min_rel_ group_param_[ i_h_min_rel ]
+#define h0_rel_ group_param_[ i_h0_rel ]
 
 
- template<int NVAR, int NPARAM> //, class DataStruct>
-__device__
-    void Derivatives(double x, float *y, float *dydx, float *param,
-		     aeif_psc_alpha_rk5 data_struct)
+template < int NVAR, int NPARAM > //, class DataStruct>
+__device__ void
+Derivatives( double x, float* y, float* dydx, float* param, aeif_psc_alpha_rk5 data_struct )
 {
   float I_syn_tot = 0.0;
-  
 
-  float V = ( refractory_step > 0 ) ? V_reset :  MIN(V_m, V_peak);
+
+  float V = ( refractory_step > 0 ) ? V_reset : MIN( V_m, V_peak );
   I_syn_tot += I_syn_ex - I_syn_in;
 
-  float V_spike = Delta_T == 0. ? 0. : Delta_T*exp((V - V_th)/Delta_T);
+  float V_spike = Delta_T == 0. ? 0. : Delta_T * exp( ( V - V_th ) / Delta_T );
 
-  dVdt = ( refractory_step > 0 ) ? 0 :
-    ( -g_L*(V - E_L - V_spike) + I_syn_tot - w + I_e) / C_m;
+  dVdt = ( refractory_step > 0 ) ? 0 : ( -g_L * ( V - E_L - V_spike ) + I_syn_tot - w + I_e ) / C_m;
   // Adaptation current w.
-  dwdt = (a*(V - E_L) - w) / tau_w;
-  dI1_syn_exdt = -I1_syn_ex/tau_syn_ex;
-  dI1_syn_indt = -I1_syn_in/tau_syn_in;
-  dI_syn_exdt = I1_syn_ex - I_syn_ex/tau_syn_ex;
-  dI_syn_indt = I1_syn_in - I_syn_in/tau_syn_in;
+  dwdt = ( a * ( V - E_L ) - w ) / tau_w;
+  dI1_syn_exdt = -I1_syn_ex / tau_syn_ex;
+  dI1_syn_indt = -I1_syn_in / tau_syn_in;
+  dI_syn_exdt = I1_syn_ex - I_syn_ex / tau_syn_ex;
+  dI_syn_indt = I1_syn_in - I_syn_in / tau_syn_in;
 }
 
- template<int NVAR, int NPARAM> //, class DataStruct>
-__device__
-    void ExternalUpdate
-    (double x, float *y, float *param, bool end_time_step,
-			aeif_psc_alpha_rk5 data_struct)
+template < int NVAR, int NPARAM > //, class DataStruct>
+__device__ void
+ExternalUpdate( double x, float* y, float* param, bool end_time_step, aeif_psc_alpha_rk5 data_struct )
 {
-  if ( V_m < -1.0e3) { // numerical instability
-    printf("V_m out of lower bound\n");
+  if ( V_m < -1.0e3 )
+  { // numerical instability
+    printf( "V_m out of lower bound\n" );
     V_m = V_reset;
-    w=0;
+    w = 0;
     return;
   }
-  if ( w < -1.0e6 || w > 1.0e6) { // numerical instability
-    printf("w out of bound\n");
+  if ( w < -1.0e6 || w > 1.0e6 )
+  { // numerical instability
+    printf( "w out of bound\n" );
     V_m = V_reset;
-    w=0;
+    w = 0;
     return;
   }
-  if (refractory_step > 0.0) {
+  if ( refractory_step > 0.0 )
+  {
     V_m = V_reset;
-    if (end_time_step) {
+    if ( end_time_step )
+    {
       refractory_step -= 1.0;
     }
   }
-  else {
-    if ( V_m >= V_peak ) { // send spike
+  else
+  {
+    if ( V_m >= V_peak )
+    { // send spike
       int neuron_idx = threadIdx.x + blockIdx.x * blockDim.x;
-      PushSpike(data_struct.i_node_0_ + neuron_idx, 1.0);
+      PushSpike( data_struct.i_node_0_ + neuron_idx, 1.0 );
       V_m = V_reset;
       w += b; // spike-driven adaptation
-      refractory_step = (int)round(t_ref/NESTGPUTimeResolution);
-      if (refractory_step<0) {
-	refractory_step = 0;
+      refractory_step = ( int ) round( t_ref / NESTGPUTimeResolution );
+      if ( refractory_step < 0 )
+      {
+        refractory_step = 0;
       }
     }
   }
@@ -219,25 +215,20 @@ __device__
 
 };
 
-int Update(long long it, double t1);
+int Update( long long it, double t1 );
 
-template<int NVAR, int NPARAM>
-__device__
-void Derivatives(double x, float *y, float *dydx, float *param,
-		 aeif_psc_alpha_rk5 data_struct)
+template < int NVAR, int NPARAM >
+__device__ void
+Derivatives( double x, float* y, float* dydx, float* param, aeif_psc_alpha_rk5 data_struct )
 {
-    aeif_psc_alpha_ns::Derivatives<NVAR, NPARAM>(x, y, dydx, param,
-						 data_struct);
+  aeif_psc_alpha_ns::Derivatives< NVAR, NPARAM >( x, y, dydx, param, data_struct );
 }
 
-template<int NVAR, int NPARAM>
-__device__
-void ExternalUpdate(double x, float *y, float *param, bool end_time_step,
-		    aeif_psc_alpha_rk5 data_struct)
+template < int NVAR, int NPARAM >
+__device__ void
+ExternalUpdate( double x, float* y, float* param, bool end_time_step, aeif_psc_alpha_rk5 data_struct )
 {
-    aeif_psc_alpha_ns::ExternalUpdate<NVAR, NPARAM>(x, y, param,
-						    end_time_step,
-						    data_struct);
+  aeif_psc_alpha_ns::ExternalUpdate< NVAR, NPARAM >( x, y, param, end_time_step, data_struct );
 }
 
 

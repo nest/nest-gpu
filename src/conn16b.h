@@ -31,108 +31,101 @@ struct conn16b_struct
   float weight;
 };
 
-//typedef uint conn16b_key;
+// typedef uint conn16b_key;
 typedef uint64_t conn16b_key;
 
 template <>
 __device__ __forceinline__ void
-setConnDelay<conn16b_key> 
-(conn16b_key &conn_key, int delay) {
-  conn_key = (conn_key & (~((uint64_t)DelayMask)))
-    | (delay << MaxPortSynNBits);
+setConnDelay< conn16b_key >( conn16b_key& conn_key, int delay )
+{
+  conn_key = ( conn_key & ( ~( ( uint64_t ) DelayMask ) ) ) | ( delay << MaxPortSynNBits );
 }
 
 template <>
 __device__ __forceinline__ void
-setConnSource<conn16b_key> 
-(conn16b_key &conn_key, inode_t source) {
-  conn_key = (conn_key & 0xFFFFFFFF) | ((uint64_t)source << 32);
+setConnSource< conn16b_key >( conn16b_key& conn_key, inode_t source )
+{
+  conn_key = ( conn_key & 0xFFFFFFFF ) | ( ( uint64_t ) source << 32 );
 }
 
 template <>
 __device__ __forceinline__ void
-setConnTarget<conn16b_struct> 
-(conn16b_struct &conn, inode_t target) {
+setConnTarget< conn16b_struct >( conn16b_struct& conn, inode_t target )
+{
   conn.target = target;
 }
 
 template <>
 __device__ __forceinline__ void
-setConnPort<conn16b_key, conn16b_struct> 
-(conn16b_key &conn_key, conn16b_struct &conn, int port) {
-  conn_key = (conn_key & ((~((uint64_t)PortMask))))
-    | (port << (MaxSynNBits + 1));
+setConnPort< conn16b_key, conn16b_struct >( conn16b_key& conn_key, conn16b_struct& conn, int port )
+{
+  conn_key = ( conn_key & ( ( ~( ( uint64_t ) PortMask ) ) ) ) | ( port << ( MaxSynNBits + 1 ) );
 }
 
 template <>
 __device__ __forceinline__ void
-setConnSyn<conn16b_key, conn16b_struct> 
-(conn16b_key &conn_key, conn16b_struct &conn, int syn) {
-  conn_key = (conn_key & ((~((uint64_t)SynMask))))
-    | syn;
+setConnSyn< conn16b_key, conn16b_struct >( conn16b_key& conn_key, conn16b_struct& conn, int syn )
+{
+  conn_key = ( conn_key & ( ( ~( ( uint64_t ) SynMask ) ) ) ) | syn;
 }
 
 template <>
 __device__ __forceinline__ int
-getConnDelay<conn16b_key> 
-(const conn16b_key &conn_key) {
-  return (int)((conn_key & DelayMask) >> MaxPortSynNBits);
+getConnDelay< conn16b_key >( const conn16b_key& conn_key )
+{
+  return ( int ) ( ( conn_key & DelayMask ) >> MaxPortSynNBits );
 }
 
 template <>
 __device__ __forceinline__ inode_t
-getConnSource<conn16b_key> 
-(conn16b_key &conn_key) {
-  return (inode_t)(conn_key >> 32);
+getConnSource< conn16b_key >( conn16b_key& conn_key )
+{
+  return ( inode_t ) ( conn_key >> 32 );
 }
 
 template <>
 __device__ __forceinline__ inode_t
-getConnTarget<conn16b_struct> 
-(conn16b_struct &conn) {
+getConnTarget< conn16b_struct >( conn16b_struct& conn )
+{
   return conn.target;
 }
 
 template <>
 __device__ __forceinline__ int
-getConnPort<conn16b_key, conn16b_struct> 
-(conn16b_key &conn_key, conn16b_struct &conn) {
-  return (int)((conn_key & PortMask) >> (MaxSynNBits + 1));
+getConnPort< conn16b_key, conn16b_struct >( conn16b_key& conn_key, conn16b_struct& conn )
+{
+  return ( int ) ( ( conn_key & PortMask ) >> ( MaxSynNBits + 1 ) );
 }
 
 template <>
 __device__ __forceinline__ int
-getConnSyn<conn16b_key, conn16b_struct> 
-(conn16b_key &conn_key, conn16b_struct &conn) {
-    return (int)(conn_key & SynMask);
+getConnSyn< conn16b_key, conn16b_struct >( conn16b_key& conn_key, conn16b_struct& conn )
+{
+  return ( int ) ( conn_key & SynMask );
 }
 
 // TEMPORARY TO BE IMPROVED!!!!
 template <>
 __device__ __forceinline__ bool
-getConnRemoteFlag<conn16b_key, conn16b_struct> 
-(conn16b_key &conn_key, conn16b_struct &conn) {
-  return (bool)((conn_key >> MaxSynNBits) & 1);
+getConnRemoteFlag< conn16b_key, conn16b_struct >( conn16b_key& conn_key, conn16b_struct& conn )
+{
+  return ( bool ) ( ( conn_key >> MaxSynNBits ) & 1 );
 }
 
 template <>
 __device__ __forceinline__ void
-clearConnRemoteFlag<conn16b_key, conn16b_struct> 
-(conn16b_key &conn_key, conn16b_struct &conn) {
-  conn_key = conn_key &
-    ~((uint64_t)1 << MaxSynNBits);
+clearConnRemoteFlag< conn16b_key, conn16b_struct >( conn16b_key& conn_key, conn16b_struct& conn )
+{
+  conn_key = conn_key & ~( ( uint64_t ) 1 << MaxSynNBits );
 }
 
-template<>
-int ConnectionTemplate<conn16b_key, conn16b_struct>::setMaxNodeNBits
-(int max_node_nbits);
+template <>
+int ConnectionTemplate< conn16b_key, conn16b_struct >::setMaxNodeNBits( int max_node_nbits );
 
-template<>
-int ConnectionTemplate<conn16b_key, conn16b_struct>::setMaxDelayNBits
-(int max_delay_nbits);
+template <>
+int ConnectionTemplate< conn16b_key, conn16b_struct >::setMaxDelayNBits( int max_delay_nbits );
 
-template<>
-int ConnectionTemplate<conn16b_key, conn16b_struct>::setMaxSynNBits
-(int max_syn_nbits);
+template <>
+int ConnectionTemplate< conn16b_key, conn16b_struct >::setMaxSynNBits( int max_syn_nbits );
 
 #endif

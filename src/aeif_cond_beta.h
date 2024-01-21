@@ -21,19 +21,16 @@
  */
 
 
-
-
-
 #ifndef AEIFCONDBETA_H
 #define AEIFCONDBETA_H
 
+#include "base_neuron.h"
+#include "cuda_error.h"
+#include "neuron_models.h"
+#include "node_group.h"
+#include "rk5.h"
 #include <iostream>
 #include <string>
-#include "cuda_error.h"
-#include "rk5.h"
-#include "node_group.h"
-#include "base_neuron.h"
-#include "neuron_models.h"
 
 
 /* BeginUserDocs: neuron, adaptive threshold, integrate-and-fire, conductance-based
@@ -46,7 +43,7 @@ Conductance-based adaptive exponential integrate-and-fire neuron model
 Description
 +++++++++++
 
-``aeif_cond_beta`` is a conductance-based adaptive exponential 
+``aeif_cond_beta`` is a conductance-based adaptive exponential
 integrate-and-fire neuron model according to [1]_ with synaptic
 conductance modeled by a beta function, as described in [2]_.
 
@@ -126,9 +123,9 @@ tau_decay_in ms            Decay time constant of inhibitory synaptic conductanc
 ========= ======= =========================================================
 **Integration parameters**
 ---------------------------------------------------------------------------
-h0_rel    real    Starting step in ODE integration relative to time 
+h0_rel    real    Starting step in ODE integration relative to time
                   resolution
-h_min_rel real    Minimum step in ODE integration relative to time 
+h_min_rel real    Minimum step in ODE integration relative to time
                   resolution
 ========= ======= =========================================================
 
@@ -152,7 +149,7 @@ aeif_cond_beta_multisynapse, aeif_cond_alpha
 EndUserDocs */
 
 
-//#define MAX_PORT_NUM 20
+// #define MAX_PORT_NUM 20
 
 struct aeif_cond_beta_rk5
 {
@@ -161,30 +158,33 @@ struct aeif_cond_beta_rk5
 
 class aeif_cond_beta : public BaseNeuron
 {
- public:
-  RungeKutta5<aeif_cond_beta_rk5> rk5_;
+public:
+  RungeKutta5< aeif_cond_beta_rk5 > rk5_;
   float h_min_;
   float h_;
   aeif_cond_beta_rk5 rk5_data_struct_;
-    
-  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
-	   
 
-  int Calibrate(double time_min, float time_resolution);
-		
-  int Update(long long it, double t1);
-  
-  int GetX(int i_neuron, int n_node, double *x) {
-    return rk5_.GetX(i_neuron, n_node, x);
-  }
-  
-  int GetY(int i_var, int i_neuron, int n_node, float *y) {
-    return rk5_.GetY(i_var, i_neuron, n_node, y);
-  }
-  
-  template<int N_PORT>
-    int UpdateNR(long long it, double t1);
+  int Init( int i_node_0, int n_neuron, int n_port, int i_group );
 
+
+  int Calibrate( double time_min, float time_resolution );
+
+  int Update( long long it, double t1 );
+
+  int
+  GetX( int i_neuron, int n_node, double* x )
+  {
+    return rk5_.GetX( i_neuron, n_node, x );
+  }
+
+  int
+  GetY( int i_var, int i_neuron, int n_node, float* y )
+  {
+    return rk5_.GetY( i_var, i_neuron, n_node, y );
+  }
+
+  template < int N_PORT >
+  int UpdateNR( long long it, double t1 );
 };
 
 #endif

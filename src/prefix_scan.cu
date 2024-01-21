@@ -21,36 +21,36 @@
  */
 
 
-
-
-
-#include <config.h>
-#include <stdio.h>
 #include "prefix_scan.h"
 #include "scan.h"
+#include <config.h>
+#include <stdio.h>
 
 const unsigned int PrefixScan::AllocSize = 13 * 1048576 / 2;
 
-int PrefixScan::Init()
+int
+PrefixScan::Init()
 {
-  //printf("Initializing CUDA-C scan...\n\n");
-  //initScan();
-  
-  return 0;
-}
-
-int PrefixScan::Scan(int *d_Output, int *d_Input, int n)
-{
-  prefix_scan(d_Output, d_Input, n, true);
+  // printf("Initializing CUDA-C scan...\n\n");
+  // initScan();
 
   return 0;
 }
 
-int PrefixScan::Free()
+int
+PrefixScan::Scan( int* d_Output, int* d_Input, int n )
 {
-  //closeScan();
-  //CUDAFREECTRL("d_Output",d_Output);
-  //CUDAFREECTRL("d_Input",d_Input);
-  
+  prefix_scan( d_Output, d_Input, n, true );
+
+  return 0;
+}
+
+int
+PrefixScan::Free()
+{
+  // closeScan();
+  // CUDAFREECTRL("d_Output",d_Output);
+  // CUDAFREECTRL("d_Input",d_Input);
+
   return 0;
 }

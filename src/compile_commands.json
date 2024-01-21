@@ -1,0 +1,272 @@
+[
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_cond_alpha.cu -o CMakeFiles/nestgpukernel.dir/aeif_cond_alpha.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_cond_alpha.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_cond_alpha_multisynapse.cu -o CMakeFiles/nestgpukernel.dir/aeif_cond_alpha_multisynapse.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_cond_alpha_multisynapse.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_cond_beta.cu -o CMakeFiles/nestgpukernel.dir/aeif_cond_beta.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_cond_beta.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_cond_beta_multisynapse.cu -o CMakeFiles/nestgpukernel.dir/aeif_cond_beta_multisynapse.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_cond_beta_multisynapse.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_psc_alpha.cu -o CMakeFiles/nestgpukernel.dir/aeif_psc_alpha.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_psc_alpha.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_psc_alpha_multisynapse.cu -o CMakeFiles/nestgpukernel.dir/aeif_psc_alpha_multisynapse.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_psc_alpha_multisynapse.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_psc_delta.cu -o CMakeFiles/nestgpukernel.dir/aeif_psc_delta.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_psc_delta.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_psc_exp.cu -o CMakeFiles/nestgpukernel.dir/aeif_psc_exp.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_psc_exp.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_psc_exp_multisynapse.cu -o CMakeFiles/nestgpukernel.dir/aeif_psc_exp_multisynapse.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/aeif_psc_exp_multisynapse.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/base_neuron.cu -o CMakeFiles/nestgpukernel.dir/base_neuron.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/base_neuron.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/connect.cu -o CMakeFiles/nestgpukernel.dir/connect.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/connect.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/connect_rules.cu -o CMakeFiles/nestgpukernel.dir/connect_rules.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/connect_rules.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/copass_kernels.cu -o CMakeFiles/nestgpukernel.dir/copass_kernels.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/copass_kernels.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/copass_sort.cu -o CMakeFiles/nestgpukernel.dir/copass_sort.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/copass_sort.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/distribution.cu -o CMakeFiles/nestgpukernel.dir/distribution.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/distribution.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/ext_neuron.cu -o CMakeFiles/nestgpukernel.dir/ext_neuron.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/ext_neuron.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/getRealTime.cu -o CMakeFiles/nestgpukernel.dir/getRealTime.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/getRealTime.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/get_spike.cu -o CMakeFiles/nestgpukernel.dir/get_spike.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/get_spike.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/iaf_psc_alpha.cu -o CMakeFiles/nestgpukernel.dir/iaf_psc_alpha.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/iaf_psc_alpha.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/iaf_psc_exp.cu -o CMakeFiles/nestgpukernel.dir/iaf_psc_exp.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/iaf_psc_exp.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/iaf_psc_exp_g.cu -o CMakeFiles/nestgpukernel.dir/iaf_psc_exp_g.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/iaf_psc_exp_g.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/iaf_psc_exp_hc.cu -o CMakeFiles/nestgpukernel.dir/iaf_psc_exp_hc.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/iaf_psc_exp_hc.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/izhikevich_cond_beta.cu -o CMakeFiles/nestgpukernel.dir/izhikevich_cond_beta.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/izhikevich_cond_beta.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/izhikevich.cu -o CMakeFiles/nestgpukernel.dir/izhikevich.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/izhikevich.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/izhikevich_psc_exp_2s.cu -o CMakeFiles/nestgpukernel.dir/izhikevich_psc_exp_2s.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/izhikevich_psc_exp_2s.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/izhikevich_psc_exp_5s.cu -o CMakeFiles/nestgpukernel.dir/izhikevich_psc_exp_5s.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/izhikevich_psc_exp_5s.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/izhikevich_psc_exp.cu -o CMakeFiles/nestgpukernel.dir/izhikevich_psc_exp.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/izhikevich_psc_exp.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/multimeter.cu -o CMakeFiles/nestgpukernel.dir/multimeter.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/multimeter.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/nested_loop.cu -o CMakeFiles/nestgpukernel.dir/nested_loop.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/nested_loop.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/nestgpu.cu -o CMakeFiles/nestgpukernel.dir/nestgpu.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/nestgpu.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/neuron_models.cu -o CMakeFiles/nestgpukernel.dir/neuron_models.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/neuron_models.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/node_group.cu -o CMakeFiles/nestgpukernel.dir/node_group.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/node_group.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/parrot_neuron.cu -o CMakeFiles/nestgpukernel.dir/parrot_neuron.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/parrot_neuron.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/poiss_gen.cu -o CMakeFiles/nestgpukernel.dir/poiss_gen.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/poiss_gen.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/prefix_scan.cu -o CMakeFiles/nestgpukernel.dir/prefix_scan.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/prefix_scan.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/propagator_stability.cu -o CMakeFiles/nestgpukernel.dir/propagator_stability.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/propagator_stability.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/random.cu -o CMakeFiles/nestgpukernel.dir/random.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/random.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/remote_connect.cu -o CMakeFiles/nestgpukernel.dir/remote_connect.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/remote_connect.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/rev_spike.cu -o CMakeFiles/nestgpukernel.dir/rev_spike.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/rev_spike.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/rk5.cu -o CMakeFiles/nestgpukernel.dir/rk5.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/rk5.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/scan.cu -o CMakeFiles/nestgpukernel.dir/scan.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/scan.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/send_spike.cu -o CMakeFiles/nestgpukernel.dir/send_spike.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/send_spike.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/spike_buffer.cu -o CMakeFiles/nestgpukernel.dir/spike_buffer.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/spike_buffer.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/spike_detector.cu -o CMakeFiles/nestgpukernel.dir/spike_detector.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/spike_detector.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/spike_generator.cu -o CMakeFiles/nestgpukernel.dir/spike_generator.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/spike_generator.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/remote_spike.cu -o CMakeFiles/nestgpukernel.dir/remote_spike.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/remote_spike.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/mpi_comm.cu -o CMakeFiles/nestgpukernel.dir/mpi_comm.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/mpi_comm.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/stdp.cu -o CMakeFiles/nestgpukernel.dir/stdp.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/stdp.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/syn_model.cu -o CMakeFiles/nestgpukernel.dir/syn_model.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/syn_model.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/test_syn_model.cu -o CMakeFiles/nestgpukernel.dir/test_syn_model.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/test_syn_model.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/user_m1.cu -o CMakeFiles/nestgpukernel.dir/user_m1.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/user_m1.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/user_m2.cu -o CMakeFiles/nestgpukernel.dir/user_m2.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/user_m2.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/local/cuda-12.3/bin/nvcc  -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem=/usr/local/cuda-12.3/include       -x cu -dc /home/golosio/nest-gpu-git/golosio/nest-gpu/src/utilities.cu -o CMakeFiles/nestgpukernel.dir/utilities.cu.o",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/utilities.cu"
+},
+{
+  "directory": "/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/src",
+  "command": "/usr/bin/c++ -Dnestgpukernel_EXPORTS -I/usr/lib/x86_64-linux-gnu/openmpi/include -I/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi -I/home/golosio/nest-gpu-git/golosio/nest-gpu/src -I/home/golosio/nest-gpu-git/golosio/nest-gpu/build_cmake/libnestutil -isystem /usr/local/cuda-12.3/include   -O3 -Wall -fPIC -o CMakeFiles/nestgpukernel.dir/nestgpu_C.cpp.o -c /home/golosio/nest-gpu-git/golosio/nest-gpu/src/nestgpu_C.cpp",
+  "file": "/home/golosio/nest-gpu-git/golosio/nest-gpu/src/nestgpu_C.cpp"
+}
+]

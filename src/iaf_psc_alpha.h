@@ -21,9 +21,6 @@
  */
 
 
-
-
-
 // adapted from:
 // https://github.com/nest/nest-simulator/blob/master/models/iaf_psc_alpha.h
 
@@ -31,12 +28,12 @@
 #ifndef IAFPSCALPHA_H
 #define IAFPSCALPHA_H
 
+#include "base_neuron.h"
+#include "cuda_error.h"
+#include "neuron_models.h"
+#include "node_group.h"
 #include <iostream>
 #include <string>
-#include "cuda_error.h"
-#include "node_group.h"
-#include "base_neuron.h"
-#include "neuron_models.h"
 
 
 /* BeginUserDocs: neuron, integrate-and-fire, current-based
@@ -106,7 +103,7 @@ References
        DOI: https://doi.org/10.1007/s004220050570
 .. [2] Potjans TC. and Diesmann M. 2014. The cell-type specific cortical
        microcircuit: relating structure and activity in a full-scale spiking
-       network model. Cerebral Cortex. 24(3):785–806. 
+       network model. Cerebral Cortex. 24(3):785–806.
        DOI: https://doi.org/10.1093/cercor/bhs358.
 
 See also
@@ -119,29 +116,31 @@ EndUserDocs */
 
 namespace iaf_psc_alpha_ns
 {
-enum ScalVarIndexes {
-  i_I_ex = 0,        // postsynaptic current for exc. inputs
-  i_I_in,            // postsynaptic current for inh. inputs
+enum ScalVarIndexes
+{
+  i_I_ex = 0, // postsynaptic current for exc. inputs
+  i_I_in,     // postsynaptic current for inh. inputs
   i_dI_ex,
   i_dI_in,
-  i_V_m_rel,                 // membrane potential
-  i_refractory_step,     // refractory step counter
+  i_V_m_rel,         // membrane potential
+  i_refractory_step, // refractory step counter
   N_SCAL_VAR
 };
 
-enum ScalParamIndexes {
-  i_tau_m = 0,       // Membrane time constant in ms
-  i_C_m,             // Membrane capacitance in pF
-  i_E_L,             // Resting potential in mV
-  i_I_e,             // External current in pA
-  i_Theta_rel,       // Threshold, RELATIVE TO RESTING POTENTAIL(!)
-                     // i.e. the real threshold is (E_L_+Theta_rel_)
-  i_V_reset_rel,     // relative reset value of the membrane potential
-  i_tau_ex,          // Time constant of excitatory synaptic current in ms
-  i_tau_in,          // Time constant of inhibitory synaptic current in ms
+enum ScalParamIndexes
+{
+  i_tau_m = 0,   // Membrane time constant in ms
+  i_C_m,         // Membrane capacitance in pF
+  i_E_L,         // Resting potential in mV
+  i_I_e,         // External current in pA
+  i_Theta_rel,   // Threshold, RELATIVE TO RESTING POTENTAIL(!)
+                 // i.e. the real threshold is (E_L_+Theta_rel_)
+  i_V_reset_rel, // relative reset value of the membrane potential
+  i_tau_ex,      // Time constant of excitatory synaptic current in ms
+  i_tau_in,      // Time constant of inhibitory synaptic current in ms
   // i_rho,          // Stochastic firing intensity at threshold in 1/s
   // i_delta,        // Width of threshold region in mV
-  i_t_ref,           // Refractory period in ms
+  i_t_ref,     // Refractory period in ms
   i_den_delay, // dendritic backpropagation delay
   // time evolution operator
   i_P11ex,
@@ -162,19 +161,16 @@ enum ScalParamIndexes {
   N_SCAL_PARAM
 };
 
- 
-const std::string iaf_psc_alpha_scal_var_name[N_SCAL_VAR] = {
-  "I_syn_ex",
+
+const std::string iaf_psc_alpha_scal_var_name[ N_SCAL_VAR ] = { "I_syn_ex",
   "I_syn_in",
   "dI_ex",
   "dI_in",
   "V_m_rel",
-  "refractory_step"
-};
+  "refractory_step" };
 
 
-const std::string iaf_psc_alpha_scal_param_name[N_SCAL_PARAM] = {
-  "tau_m",
+const std::string iaf_psc_alpha_scal_param_name[ N_SCAL_PARAM ] = { "tau_m",
   "C_m",
   "E_L",
   "I_e",
@@ -198,24 +194,22 @@ const std::string iaf_psc_alpha_scal_param_name[N_SCAL_PARAM] = {
   "P33",
   "expm1_tau_m",
   "EPSCInitialValue",
-  "IPSCInitialValue"
-};
+  "IPSCInitialValue" };
 
 } // namespace
- 
+
 class iaf_psc_alpha : public BaseNeuron
 {
- public:
+public:
   ~iaf_psc_alpha();
-  
-  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
 
-  int Calibrate(double, float time_resolution);
-		
-  int Update(long long it, double t1);
+  int Init( int i_node_0, int n_neuron, int n_port, int i_group );
+
+  int Calibrate( double, float time_resolution );
+
+  int Update( long long it, double t1 );
 
   int Free();
-
 };
 
 

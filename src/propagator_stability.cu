@@ -26,22 +26,19 @@
 #include <cmath>
 
 // Includes from libnestutil:
-//#include "numerics.h"
+// #include "numerics.h"
 
-__device__
-double propagator_32( double tau_syn, double tau, double C, double h )
+__device__ double
+propagator_32( double tau_syn, double tau, double C, double h )
 {
-  const double P32_linear = 1.0 / ( 2.0 * C * tau * tau ) * h * h
-    * ( tau_syn - tau ) * exp( -h / tau );
+  const double P32_linear = 1.0 / ( 2.0 * C * tau * tau ) * h * h * ( tau_syn - tau ) * exp( -h / tau );
   const double P32_singular = h / C * exp( -h / tau );
   const double P32 =
-    -tau / ( C * ( 1.0 - tau / tau_syn ) ) * exp( -h / tau_syn )
-    * expm1( h * ( 1.0 / tau_syn - 1.0 / tau ) );
+    -tau / ( C * ( 1.0 - tau / tau_syn ) ) * exp( -h / tau_syn ) * expm1( h * ( 1.0 / tau_syn - 1.0 / tau ) );
 
   const double dev_P32 = fabs( P32 - P32_singular );
 
-  if ( tau == tau_syn || ( fabs( tau - tau_syn ) < 0.1 && dev_P32 > 2.0
-			   * fabs( P32_linear ) ) )
+  if ( tau == tau_syn || ( fabs( tau - tau_syn ) < 0.1 && dev_P32 > 2.0 * fabs( P32_linear ) ) )
   {
     return P32_singular;
   }
@@ -51,13 +48,14 @@ double propagator_32( double tau_syn, double tau, double C, double h )
   }
 }
 
-__device__
-double propagator_31( double tau_syn, double tau, double C, double h )
+__device__ double
+propagator_31( double tau_syn, double tau, double C, double h )
 {
   const double P31_linear = 1.0 / ( 3.0 * C * tau * tau ) * h * h * h * ( tau_syn - tau ) * exp( -h / tau );
-  const double P31 =
-    1.0 / C * ( exp( -h / tau_syn ) * expm1( -h / tau + h / tau_syn ) / ( tau / tau_syn - 1.0 ) * tau
-              - h * exp( -h / tau_syn ) ) / ( -1.0 - -tau / tau_syn ) * tau;
+  const double P31 = 1.0 / C
+    * ( exp( -h / tau_syn ) * expm1( -h / tau + h / tau_syn ) / ( tau / tau_syn - 1.0 ) * tau
+      - h * exp( -h / tau_syn ) )
+    / ( -1.0 - -tau / tau_syn ) * tau;
   const double P31_singular = h * h / 2.0 / C * exp( -h / tau );
   const double dev_P31 = fabs( P31 - P31_singular );
 

@@ -21,12 +21,9 @@
  */
 
 
-
-
-
 #ifndef SPIKEBUFFER_H
 #define SPIKEBUFFER_H
-//#include "connect.h"
+// #include "connect.h"
 
 extern __constant__ bool ExternalSpikeFlag;
 extern __device__ int MaxSpikeBufferSize;
@@ -35,55 +32,56 @@ extern __device__ int MaxDelayNum;
 
 extern int h_NSpikeBuffer;
 
-extern float *d_LastSpikeHeight; // [NSpikeBuffer];
-extern __device__ float *LastSpikeHeight; //
+extern float* d_LastSpikeHeight;          // [NSpikeBuffer];
+extern __device__ float* LastSpikeHeight; //
 
-extern long long *d_LastSpikeTimeIdx; // [NSpikeBuffer];
-extern __device__ long long *LastSpikeTimeIdx; //
+extern long long* d_LastSpikeTimeIdx;          // [NSpikeBuffer];
+extern __device__ long long* LastSpikeTimeIdx; //
 
-extern long long *d_LastRevSpikeTimeIdx; // [NSpikeBuffer];
-extern __device__ long long *LastRevSpikeTimeIdx; //
+extern long long* d_LastRevSpikeTimeIdx;          // [NSpikeBuffer];
+extern __device__ long long* LastRevSpikeTimeIdx; //
 
-extern unsigned short *d_ConnectionSpikeTime; // [NConnection];
-extern __device__ unsigned short *ConnectionSpikeTime; //
+extern unsigned short* d_ConnectionSpikeTime;          // [NConnection];
+extern __device__ unsigned short* ConnectionSpikeTime; //
 
 
-extern int *d_SpikeBufferSize;
-extern __device__ int *SpikeBufferSize;
+extern int* d_SpikeBufferSize;
+extern __device__ int* SpikeBufferSize;
 // number of spikes stored in the buffer
 
-extern int *d_SpikeBufferIdx0;
-extern __device__ int *SpikeBufferIdx0;
+extern int* d_SpikeBufferIdx0;
+extern __device__ int* SpikeBufferIdx0;
 // index of most recent spike stored in the buffer
 
-extern int *d_SpikeBufferTimeIdx;
-extern __device__ int *SpikeBufferTimeIdx;
+extern int* d_SpikeBufferTimeIdx;
+extern __device__ int* SpikeBufferTimeIdx;
 // time index of the spike
 
-extern int *d_SpikeBufferConnIdx;
-extern __device__ int *SpikeBufferConnIdx;
+extern int* d_SpikeBufferConnIdx;
+extern __device__ int* SpikeBufferConnIdx;
 // index of the next connection group that will emit this spike
 
-extern float *d_SpikeBufferHeight;
-extern __device__ float *SpikeBufferHeight;
+extern float* d_SpikeBufferHeight;
+extern __device__ float* SpikeBufferHeight;
 // spike height
 
 
-__device__ void PushSpike(int i_spike_buffer, float height);
+__device__ void PushSpike( int i_spike_buffer, float height );
 
 __global__ void SpikeBufferUpdate();
 
-__global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
-				int max_spike_buffer_size,
-				long long *last_spike_time_idx,
-				float *last_spike_height,      
-				int *spike_buffer_size, int *spike_buffer_idx0,
-				int *spike_buffer_time,
-				int *spike_buffer_conn,
-				float *spike_buffer_height,
-                                long long *last_rev_spike_time_idx);
+__global__ void DeviceSpikeBufferInit( int n_spike_buffers,
+  int max_delay_num,
+  int max_spike_buffer_size,
+  long long* last_spike_time_idx,
+  float* last_spike_height,
+  int* spike_buffer_size,
+  int* spike_buffer_idx0,
+  int* spike_buffer_time,
+  int* spike_buffer_conn,
+  float* spike_buffer_height,
+  long long* last_rev_spike_time_idx );
 
-int spikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size,
-		    int max_delay_num);
+int spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int max_delay_num );
 
 #endif

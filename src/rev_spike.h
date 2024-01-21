@@ -23,33 +23,33 @@
 #ifndef REVSPIKE_H
 #define REVSPIKE_H
 
-//#include "connect.h"
-#include "spike_buffer.h"
-#include "syn_model.h"
-#include "get_spike.h"
+// #include "connect.h"
 #include "conn12b.h"
 #include "conn16b.h"
+#include "get_spike.h"
+#include "spike_buffer.h"
+#include "syn_model.h"
 
 extern __constant__ long long NESTGPUTimeIdx;
 extern __constant__ float NESTGPUTimeResolution;
 
-extern __device__ unsigned int *RevSpikeNum;
-extern __device__ unsigned int *RevSpikeTarget;
-extern __device__ int *RevSpikeNConn;
+extern __device__ unsigned int* RevSpikeNum;
+extern __device__ unsigned int* RevSpikeTarget;
+extern __device__ int* RevSpikeNConn;
 
-extern int64_t *d_RevConnections; //[i] i=0,..., n_rev_conn - 1;
-extern __device__ int64_t *RevConnections;
+extern int64_t* d_RevConnections; //[i] i=0,..., n_rev_conn - 1;
+extern __device__ int64_t* RevConnections;
 
-extern int *d_TargetRevConnectionSize; //[i] i=0,..., n_neuron-1;
-extern __device__ int *TargetRevConnectionSize;
+extern int* d_TargetRevConnectionSize; //[i] i=0,..., n_neuron-1;
+extern __device__ int* TargetRevConnectionSize;
 
-extern int64_t **d_TargetRevConnection; //[i][j] j=0,...,RevConnectionSize[i]-1
-extern __device__ int64_t **TargetRevConnection;
+extern int64_t** d_TargetRevConnection; //[i][j] j=0,...,RevConnectionSize[i]-1
+extern __device__ int64_t** TargetRevConnection;
 
 
 __global__ void revSpikeReset();
 
-__global__ void revSpikeBufferUpdate(unsigned int n_node);
+__global__ void revSpikeBufferUpdate( unsigned int n_node );
 
 int revSpikeFree();
 
@@ -61,69 +61,62 @@ int resetConnectionSpikeTimeUp();
 //////////////////////////////////////////////////////////////////////
 // This is the function called by the nested loop
 // that makes use of positive post-pre spike time difference
-template<class ConnKeyT, class ConnStructT>
-__device__ __forceinline__ void NestedLoopFunction1
-(int i_spike, int i_target_rev_conn)
+template < class ConnKeyT, class ConnStructT >
+__device__ __forceinline__ void
+NestedLoopFunction1( int i_spike, int i_target_rev_conn )
 {
-  unsigned int target = RevSpikeTarget[i_spike];
-  int64_t i_conn = TargetRevConnection[target][i_target_rev_conn];
-  uint i_block = (uint)(i_conn / ConnBlockSize);
+  unsigned int target = RevSpikeTarget[ i_spike ];
+  int64_t i_conn = TargetRevConnection[ target ][ i_target_rev_conn ];
+  uint i_block = ( uint ) ( i_conn / ConnBlockSize );
   int64_t i_block_conn = i_conn % ConnBlockSize;
-  //connection_struct conn = ConnectionArray[i_block][i_block_conn];
-  //unsigned char syn_group = conn.target_port_syn & SynMask;
-  ConnKeyT &conn_key =
-    ((ConnKeyT**)ConnKeyArray)[i_block][i_block_conn];
-  ConnStructT &conn_struct =
-    ((ConnStructT**)ConnStructArray)[i_block][i_block_conn];
-  uint syn_group = getConnSyn<ConnKeyT, ConnStructT>(conn_key, conn_struct);
-  
+  // connection_struct conn = ConnectionArray[i_block][i_block_conn];
+  // unsigned char syn_group = conn.target_port_syn & SynMask;
+  ConnKeyT& conn_key = ( ( ConnKeyT** ) ConnKeyArray )[ i_block ][ i_block_conn ];
+  ConnStructT& conn_struct = ( ( ConnStructT** ) ConnStructArray )[ i_block ][ i_block_conn ];
+  uint syn_group = getConnSyn< ConnKeyT, ConnStructT >( conn_key, conn_struct );
+
   // TO BE IMPROVED BY CHECKING IF THE SYNAPSE TYPE OF THE GROUP
   // REQUIRES AN UPDATE BASED ON POST-PRE SPIKE TIME DIFFERENCE
-  if (syn_group>0) {
-    unsigned short spike_time_idx = ConnectionSpikeTime[i_conn];
-    unsigned short time_idx = (unsigned short)(NESTGPUTimeIdx & 0xffff);
+  if ( syn_group > 0 )
+  {
+    unsigned short spike_time_idx = ConnectionSpikeTime[ i_conn ];
+    unsigned short time_idx = ( unsigned short ) ( NESTGPUTimeIdx & 0xffff );
     unsigned short Dt_int = time_idx - spike_time_idx;
 
-    //printf("rev spike target %d i_target_rev_conn %d "
+    // printf("rev spike target %d i_target_rev_conn %d "
     //	   "i_conn %lld weight %f syn_group %d "
     //	   "TimeIdx %lld CST %d Dt %d\n",
     //	   target, i_target_rev_conn, i_conn, conn.weight, syn_group,
     //	   NESTGPUTimeIdx, spike_time_idx, Dt_int);
-   
-    if (Dt_int<MAX_SYN_DT) {
-      SynapseUpdate(syn_group,
-		    &(conn_struct.weight),
-		    NESTGPUTimeResolution*Dt_int);
+
+    if ( Dt_int < MAX_SYN_DT )
+    {
+      SynapseUpdate( syn_group, &( conn_struct.weight ), NESTGPUTimeResolution * Dt_int );
     }
   }
 }
 
-template<int i_func>
-__device__  __forceinline__ void NestedLoopFunction(int i_spike, int i_syn);
+template < int i_func >
+__device__ __forceinline__ void NestedLoopFunction( int i_spike, int i_syn );
 
 //////////////////////////////////////////////////////////////////////
 // This is the function called by the nested loop
 // that makes use of positive post-pre spike time difference.
 // Include more integer template specializations
 // for different connection types
-template<>
-__device__ __forceinline__ void NestedLoopFunction<1>
-(int i_spike, int i_target_rev_conn)
+template <>
+__device__ __forceinline__ void
+NestedLoopFunction< 1 >( int i_spike, int i_target_rev_conn )
 {
-  NestedLoopFunction1<conn12b_key, conn12b_struct>
-    (i_spike, i_target_rev_conn);
+  NestedLoopFunction1< conn12b_key, conn12b_struct >( i_spike, i_target_rev_conn );
 }
 
-template<>
-__device__ __forceinline__ void NestedLoopFunction<3>
-(int i_spike, int i_target_rev_conn)
+template <>
+__device__ __forceinline__ void
+NestedLoopFunction< 3 >( int i_spike, int i_target_rev_conn )
 {
-  NestedLoopFunction1<conn16b_key, conn16b_struct>
-    (i_spike, i_target_rev_conn);
+  NestedLoopFunction1< conn16b_key, conn16b_struct >( i_spike, i_target_rev_conn );
 }
-
-
-
 
 
 #endif

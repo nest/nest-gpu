@@ -21,33 +21,31 @@
  */
 
 
-
-
-
-#include <config.h>
-#include <stdio.h>
-#include <iostream>
-#include "ngpu_exception.h"
 #include "cuda_error.h"
+#include "ngpu_exception.h"
 #include "stdp.h"
 #include "syn_model.h"
+#include <config.h>
+#include <iostream>
+#include <stdio.h>
 
 using namespace stdp_ns;
 
-int STDP::Init()
+int
+STDP::Init()
 {
   type_ = i_stdp_model;
   n_param_ = N_PARAM;
   param_name_ = stdp_param_name;
-  CUDAMALLOCCTRL("&d_param_arr_",&d_param_arr_, n_param_*sizeof(float));
-  SetParam("tau_plus", 20.0);
-  SetParam("tau_minus", 20.0);
-  SetParam("lambda", 1.0e-4);
-  SetParam("alpha", 1.0);
-  SetParam("mu_plus", 1.0);
-  SetParam("mu_minus", 1.0);
-  SetParam("Wmax", 100.0);
-  //SetParam("den_delay", 0.0);
+  CUDAMALLOCCTRL( "&d_param_arr_", &d_param_arr_, n_param_ * sizeof( float ) );
+  SetParam( "tau_plus", 20.0 );
+  SetParam( "tau_minus", 20.0 );
+  SetParam( "lambda", 1.0e-4 );
+  SetParam( "alpha", 1.0 );
+  SetParam( "mu_plus", 1.0 );
+  SetParam( "mu_minus", 1.0 );
+  SetParam( "Wmax", 100.0 );
+  // SetParam("den_delay", 0.0);
 
   return 0;
 }

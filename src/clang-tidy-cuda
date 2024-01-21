@@ -1,0 +1,7 @@
+#!/bin/bash
+
+#cat $1 | sed 's://<BEGIN-CLANG-TIDY-SKIP>//:#if 0:;s://<END-CLANG-TIDY-SKIP>//:#endif:' > tmp~
+    
+#cat ../build_cmake/compile_commands.json | sed "s:-Xcompiler=-fPIC::;s:-forward-unknown-to-host-compiler::;s:--compiler-options='.*'::;s:--generate-code=arch=compute_80,code=\[compute_80,sm_80\]::;s:--maxrregcount=55::" > compile_commands.json
+
+clang-tidy $1 -p .  --  -isystem /usr/include/c++/11/ -isystem /usr/include/x86_64-linux-gnu/c++/11/ -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/ -isystem /usr/local/cuda-12.3/targets/x86_64-linux/include/ -I ../../build_cmake/libnestutil/ --no-cuda-version-check
