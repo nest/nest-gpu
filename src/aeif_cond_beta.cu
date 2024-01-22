@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "aeif_cond_beta.h"
 #include "aeif_cond_beta_kernel.h"
 #include "rk5.h"
@@ -113,7 +112,7 @@ NodeCalibrate( int n_var, int n_param, double x, float* y, float* param, aeif_co
     g0_in = ( 1. / tau_rise_in - 1. / tau_decay_in ) / denom2;
   }
 }
-}
+} // namespace aeif_cond_beta_ns
 
 __device__ void
 NodeInit( int n_var, int n_param, double x, float* y, float* param, aeif_cond_beta_rk5 data_struct )

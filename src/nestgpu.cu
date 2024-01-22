@@ -20,7 +20,6 @@
  *
  */
 
-
 #include <algorithm>
 #include <cmath>
 #include <config.h>
@@ -68,7 +67,7 @@ std::map< void*, size_t > alloc_map_;
 size_t mem_used_;
 size_t mem_max_;
 int verbose_;
-}
+} // namespace cuda_error_ns
 
 enum KernelFloatParamIndexes
 {
@@ -123,7 +122,6 @@ const std::string kernel_bool_param_name[ N_KERNEL_BOOL_PARAM ] = { "print_time"
   "remove_conn_key",
   "remote_spike_height" };
 
-
 int
 NESTGPU::setNHosts( int n_hosts )
 {
@@ -146,7 +144,6 @@ NESTGPU::setThisHost( int i_host )
 
   return 0;
 }
-
 
 NESTGPU::NESTGPU()
 {
@@ -439,7 +436,6 @@ NESTGPU::Calibrate()
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
-
   neural_time_ = t_min_;
 
   NodeGroupArrayInit();
@@ -580,7 +576,6 @@ NESTGPU::EndSimulation()
   return 0;
 }
 
-
 int
 NESTGPU::SimulationStep()
 {
@@ -645,7 +640,7 @@ NESTGPU::SimulationStep()
   }
 
   int n_spikes;
-  time_mark = getRealTime();
+
   // Call will get delayed until ClearGetSpikesArrays()
   // afterwards the value of n_spikes will be available
   gpuErrchk( cudaMemcpyAsync( &n_spikes, d_SpikeNum, sizeof( int ), cudaMemcpyDeviceToHost ) );
@@ -996,7 +991,7 @@ int
 NESTGPU::IsNeuronScalParam( int i_node, std::string param_name )
 {
   int i_group;
-  int i_neuron = i_node - GetNodeSequenceOffset( i_node, 1, i_group );
+  GetNodeSequenceOffset( i_node, 1, i_group );
 
   return node_vect_[ i_group ]->IsScalParam( param_name );
 }
@@ -1005,7 +1000,7 @@ int
 NESTGPU::IsNeuronPortParam( int i_node, std::string param_name )
 {
   int i_group;
-  int i_neuron = i_node - GetNodeSequenceOffset( i_node, 1, i_group );
+  GetNodeSequenceOffset( i_node, 1, i_group );
 
   return node_vect_[ i_group ]->IsPortParam( param_name );
 }
@@ -1014,7 +1009,7 @@ int
 NESTGPU::IsNeuronArrayParam( int i_node, std::string param_name )
 {
   int i_group;
-  int i_neuron = i_node - GetNodeSequenceOffset( i_node, 1, i_group );
+  GetNodeSequenceOffset( i_node, 1, i_group );
 
   return node_vect_[ i_group ]->IsArrayParam( param_name );
 }
@@ -1087,7 +1082,7 @@ int
 NESTGPU::IsNeuronIntVar( int i_node, std::string var_name )
 {
   int i_group;
-  int i_neuron = i_node - GetNodeSequenceOffset( i_node, 1, i_group );
+  GetNodeSequenceOffset( i_node, 1, i_group );
 
   return node_vect_[ i_group ]->IsIntVar( var_name );
 }
@@ -1096,7 +1091,7 @@ int
 NESTGPU::IsNeuronScalVar( int i_node, std::string var_name )
 {
   int i_group;
-  int i_neuron = i_node - GetNodeSequenceOffset( i_node, 1, i_group );
+  GetNodeSequenceOffset( i_node, 1, i_group );
 
   return node_vect_[ i_group ]->IsScalVar( var_name );
 }
@@ -1105,7 +1100,7 @@ int
 NESTGPU::IsNeuronPortVar( int i_node, std::string var_name )
 {
   int i_group;
-  int i_neuron = i_node - GetNodeSequenceOffset( i_node, 1, i_group );
+  GetNodeSequenceOffset( i_node, 1, i_group );
 
   return node_vect_[ i_group ]->IsPortVar( var_name );
 }
@@ -1114,11 +1109,10 @@ int
 NESTGPU::IsNeuronArrayVar( int i_node, std::string var_name )
 {
   int i_group;
-  int i_neuron = i_node - GetNodeSequenceOffset( i_node, 1, i_group );
+  GetNodeSequenceOffset( i_node, 1, i_group );
 
   return node_vect_[ i_group ]->IsArrayVar( var_name );
 }
-
 
 int
 NESTGPU::GetNeuronParamSize( int i_node, std::string param_name )
@@ -1149,7 +1143,6 @@ NESTGPU::GetNeuronVarSize( int i_node, std::string var_name )
     return node_vect_[ i_group ]->GetVarSize( var_name );
   }
 }
-
 
 float*
 NESTGPU::GetNeuronParam( int i_node, int n_node, std::string param_name )
@@ -1368,7 +1361,6 @@ NESTGPU::getCUDAMemFree()
   return mem_free;
 }
 
-
 unsigned int*
 NESTGPU::RandomInt( size_t n )
 {
@@ -1513,7 +1505,6 @@ NESTGPU::GetNPortVar( int i_node )
   return node_vect_[ i_group ]->GetNPortVar();
 }
 
-
 std::vector< std::string >
 NESTGPU::GetScalParamNames( int i_node )
 {
@@ -1566,7 +1557,6 @@ NESTGPU::GetNPortParam( int i_node )
   return node_vect_[ i_group ]->GetNPortParam();
 }
 
-
 std::vector< std::string >
 NESTGPU::GetArrayParamNames( int i_node )
 {
@@ -1592,7 +1582,6 @@ NESTGPU::GetNArrayParam( int i_node )
 
   return node_vect_[ i_group ]->GetNArrayParam();
 }
-
 
 std::vector< std::string >
 NESTGPU::GetArrayVarNames( int i_node )
@@ -1668,7 +1657,6 @@ NESTGPU::SetConnectionFloatParam( int64_t* conn_ids, int64_t n_conn, float val, 
   return conn_->setConnectionFloatParam( conn_ids, n_conn, val, param_name );
 }
 
-
 int
 NESTGPU::SetConnectionIntParamArr( int64_t* conn_ids, int64_t n_conn, int* h_param_arr, std::string param_name )
 {
@@ -1680,7 +1668,6 @@ NESTGPU::SetConnectionIntParam( int64_t* conn_ids, int64_t n_conn, int val, std:
 {
   return conn_->setConnectionIntParam( conn_ids, n_conn, val, param_name );
 }
-
 
 int
 NESTGPU::GetConnectionStatus( int64_t* conn_ids,
@@ -1694,7 +1681,6 @@ NESTGPU::GetConnectionStatus( int64_t* conn_ids,
 {
   return conn_->getConnectionStatus( conn_ids, n_conn, source, target, port, syn_group, delay, weight );
 }
-
 
 int64_t*
 NESTGPU::GetConnections( inode_t i_source,
@@ -1760,7 +1746,6 @@ NESTGPU::GetConnections( inode_t* i_source_pt,
   return conn_ids;
 }
 
-
 int64_t*
 NESTGPU::GetConnections( inode_t i_source,
   inode_t n_source,
@@ -1813,7 +1798,6 @@ NESTGPU::GetConnections( std::vector< inode_t > source, NodeSeq target, int syn_
   return GetConnections( source.data(), source.size(), target.i0, target.n, syn_group, n_conn );
 }
 
-
 int64_t*
 NESTGPU::GetConnections( NodeSeq source, std::vector< inode_t > target, int syn_group, int64_t* n_conn )
 {
@@ -1825,7 +1809,6 @@ NESTGPU::GetConnections( std::vector< inode_t > source, std::vector< inode_t > t
 {
   return conn_->getConnections( source.data(), source.size(), target.data(), target.size(), syn_group, n_conn );
 }
-
 
 int
 NESTGPU::ActivateSpikeCount( int i_node, int n_node )
@@ -1916,8 +1899,8 @@ NESTGPU::PushSpikesToNodes( int n_spikes, int* node_id, float* spike_height )
   // Memcpy are synchronized by PushSpikeFromRemote kernel
   gpuErrchk(cudaMemcpyAsync(d_node_id, node_id, n_spikes*sizeof(int),
                        cudaMemcpyHostToDevice));
-  gpuErrchk(cudaMemcpyAsync(d_spike_height, spike_height, n_spikes*sizeof(float),
-                       cudaMemcpyHostToDevice));
+  gpuErrchk(cudaMemcpyAsync(d_spike_height, spike_height,
+  n_spikes*sizeof(float), cudaMemcpyHostToDevice));
   PushSpikeFromRemote<<<(n_spikes+1023)/1024, 1024>>>(n_spikes, d_node_id,
                                                      d_spike_height);
   gpuErrchk( cudaPeekAtLastError() );
@@ -1998,9 +1981,9 @@ NESTGPU::SetNeuronGroupParam( int i_node, int n_node, std::string param_name, fl
   int i_node_0 = GetNodeSequenceOffset( i_node, n_node, i_group );
   if ( i_node_0 != i_node || node_vect_[ i_group ]->n_node_ != n_node )
   {
-    throw ngpu_exception(std::string("Group parameter ") + param_name
-			 + " can only be set for all and only "
-			 " the nodes of the same group");
+    throw ngpu_exception(std::string("Group parameter ") + param_name +
+                         " can only be set for all and only "
+                         " the nodes of the same group");
   }
   return node_vect_[ i_group ]->SetGroupParam( param_name, val );
 }
@@ -2009,7 +1992,7 @@ int
 NESTGPU::IsNeuronGroupParam( int i_node, std::string param_name )
 {
   int i_group;
-  int i_node_0 = GetNodeSequenceOffset( i_node, 1, i_group );
+  GetNodeSequenceOffset( i_node, 1, i_group );
 
   return node_vect_[ i_group ]->IsGroupParam( param_name );
 }
@@ -2018,7 +2001,7 @@ float
 NESTGPU::GetNeuronGroupParam( int i_node, std::string param_name )
 {
   int i_group;
-  int i_node_0 = GetNodeSequenceOffset( i_node, 1, i_group );
+  GetNodeSequenceOffset( i_node, 1, i_group );
 
   return node_vect_[ i_group ]->GetGroupParam( param_name );
 }
@@ -2139,7 +2122,6 @@ NESTGPU::SetBoolParam( std::string param_name, bool val )
 
   return 0;
 }
-
 
 int
 NESTGPU::GetNFloatParam()

@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef BASENEURON_H
 #define BASENEURON_H
 
@@ -106,7 +105,6 @@ public:
 
   virtual int Init( int i_node_0, int n_neuron, int n_port, int i_neuron_group );
 
-
   virtual int AllocVarArr();
 
   virtual int AllocParamArr();
@@ -186,7 +184,6 @@ public:
   virtual int SetArrayVar( int i_neuron, int n_neuron, std::string var_name, float* array, int array_size );
 
   virtual int SetArrayVar( int* i_neuron, int n_neuron, std::string var_name, float* array, int array_size );
-
 
   virtual int SetScalParamDistr( int i_neuron, int n_node, std::string param_name, Distribution* distribution );
 

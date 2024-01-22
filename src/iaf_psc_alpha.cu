@@ -20,7 +20,6 @@
  *
  */
 
-
 // adapted from:
 // https://github.com/nest/nest-simulator/blob/master/models/iaf_psc_alpha.cpp
 
@@ -71,7 +70,6 @@ extern __device__ double propagator_32( double, double, double, double );
 #define EPSCInitialValue param[ i_EPSCInitialValue ]
 #define IPSCInitialValue param[ i_IPSCInitialValue ]
 
-
 __global__ void
 iaf_psc_alpha_Calibrate( int n_node, float* param_arr, int n_param, float h )
 {
@@ -98,7 +96,6 @@ iaf_psc_alpha_Calibrate( int n_node, float* param_arr, int n_param, float h )
     IPSCInitialValue = M_E / tau_in;
   }
 }
-
 
 __global__ void
 iaf_psc_alpha_Update( int n_node, int i_node_0, float* var_arr, float* param_arr, int n_var, int n_param )

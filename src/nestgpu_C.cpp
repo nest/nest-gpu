@@ -20,7 +20,6 @@
  *
  */
 
-
 #include <config.h>
 #include <cstdlib>
 #include <cstring>
@@ -157,7 +156,6 @@ extern "C"
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_Create( char* model_name, int n_neuron, int n_port )
@@ -321,7 +319,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_SetNeuronIntVar( int i_node, int n_neuron, char* var_name, int val )
   {
@@ -396,7 +393,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_SetNeuronScalParamDistr( int i_node, int n_neuron, char* param_name )
   {
@@ -422,7 +418,6 @@ extern "C"
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_SetNeuronPortParamDistr( int i_node, int n_neuron, char* param_name )
@@ -498,7 +493,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_SetDistributionIntParam( char* param_name, int val )
   {
@@ -564,7 +558,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_IsNeuronIntVar( int i_node, char* var_name )
   {
@@ -617,7 +610,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_GetNeuronParamSize( int i_node, char* param_name )
   {
@@ -630,7 +622,6 @@ extern "C"
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_GetNeuronVarSize( int i_node, char* var_name )
@@ -645,7 +636,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   float*
   NESTGPU_GetNeuronParam( int i_node, int n_neuron, char* param_name )
   {
@@ -659,7 +649,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   float*
   NESTGPU_GetNeuronPtParam( int* i_node, int n_neuron, char* param_name )
   {
@@ -671,7 +660,6 @@ extern "C"
     }
     END_ERR_PROP return ret;
   }
-
 
   float*
   NESTGPU_GetArrayParam( int i_node, char* param_name )
@@ -686,7 +674,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int*
   NESTGPU_GetNeuronIntVar( int i_node, int n_neuron, char* param_name )
   {
@@ -699,7 +686,6 @@ extern "C"
     }
     END_ERR_PROP return ret;
   }
-
 
   int*
   NESTGPU_GetNeuronPtIntVar( int* i_node, int n_neuron, char* param_name )
@@ -726,7 +712,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   float*
   NESTGPU_GetNeuronPtVar( int* i_node, int n_neuron, char* param_name )
   {
@@ -751,7 +736,6 @@ extern "C"
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_Calibrate()
@@ -1153,7 +1137,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_RemoteConnectGroupGroup( int i_source_host,
     uint* i_source,
@@ -1171,7 +1154,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   char**
   NESTGPU_GetIntVarNames( uint i_node )
   {
@@ -1182,9 +1164,10 @@ extern "C"
       char** var_name_array = ( char** ) malloc( var_name_vect.size() * sizeof( char* ) );
       for ( unsigned int i = 0; i < var_name_vect.size(); i++ )
       {
-        char* var_name = ( char* ) malloc( ( var_name_vect[ i ].length() + 1 ) * sizeof( char ) );
+        uint vl = var_name_vect[ i ].length() + 1;
+        char* var_name = ( char* ) malloc( ( vl ) * sizeof( char ) );
 
-        strcpy( var_name, var_name_vect[ i ].c_str() );
+        strncpy( var_name, var_name_vect[ i ].c_str(), vl );
         var_name_array[ i ] = var_name;
       }
       ret = var_name_array;
@@ -1202,9 +1185,10 @@ extern "C"
       char** var_name_array = ( char** ) malloc( var_name_vect.size() * sizeof( char* ) );
       for ( unsigned int i = 0; i < var_name_vect.size(); i++ )
       {
-        char* var_name = ( char* ) malloc( ( var_name_vect[ i ].length() + 1 ) * sizeof( char ) );
+        uint vl = var_name_vect[ i ].length() + 1;
+        char* var_name = ( char* ) malloc( ( vl ) * sizeof( char ) );
 
-        strcpy( var_name, var_name_vect[ i ].c_str() );
+        strncpy( var_name, var_name_vect[ i ].c_str(), vl );
         var_name_array[ i ] = var_name;
       }
       ret = var_name_array;
@@ -1234,7 +1218,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   char**
   NESTGPU_GetPortVarNames( uint i_node )
   {
@@ -1245,16 +1228,16 @@ extern "C"
       char** var_name_array = ( char** ) malloc( var_name_vect.size() * sizeof( char* ) );
       for ( unsigned int i = 0; i < var_name_vect.size(); i++ )
       {
-        char* var_name = ( char* ) malloc( ( var_name_vect[ i ].length() + 1 ) * sizeof( char ) );
+        uint vl = var_name_vect[ i ].length() + 1;
+        char* var_name = ( char* ) malloc( ( vl ) * sizeof( char ) );
 
-        strcpy( var_name, var_name_vect[ i ].c_str() );
+        strncpy( var_name, var_name_vect[ i ].c_str(), vl );
         var_name_array[ i ] = var_name;
       }
       ret = var_name_array;
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_GetNPortVar( uint i_node )
@@ -1267,7 +1250,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   char**
   NESTGPU_GetScalParamNames( uint i_node )
   {
@@ -1278,16 +1260,16 @@ extern "C"
       char** var_name_array = ( char** ) malloc( var_name_vect.size() * sizeof( char* ) );
       for ( unsigned int i = 0; i < var_name_vect.size(); i++ )
       {
-        char* var_name = ( char* ) malloc( ( var_name_vect[ i ].length() + 1 ) * sizeof( char ) );
+        uint vl = var_name_vect[ i ].length() + 1;
+        char* var_name = ( char* ) malloc( ( vl ) * sizeof( char ) );
 
-        strcpy( var_name, var_name_vect[ i ].c_str() );
+        strncpy( var_name, var_name_vect[ i ].c_str(), vl );
         var_name_array[ i ] = var_name;
       }
       ret = var_name_array;
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_GetNScalParam( uint i_node )
@@ -1300,7 +1282,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   char**
   NESTGPU_GetGroupParamNames( uint i_node )
   {
@@ -1311,16 +1292,16 @@ extern "C"
       char** var_name_array = ( char** ) malloc( var_name_vect.size() * sizeof( char* ) );
       for ( unsigned int i = 0; i < var_name_vect.size(); i++ )
       {
-        char* var_name = ( char* ) malloc( ( var_name_vect[ i ].length() + 1 ) * sizeof( char ) );
+        uint vl = var_name_vect[ i ].length() + 1;
+        char* var_name = ( char* ) malloc( ( vl ) * sizeof( char ) );
 
-        strcpy( var_name, var_name_vect[ i ].c_str() );
+        strncpy( var_name, var_name_vect[ i ].c_str(), vl );
         var_name_array[ i ] = var_name;
       }
       ret = var_name_array;
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_GetNGroupParam( uint i_node )
@@ -1333,7 +1314,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   char**
   NESTGPU_GetPortParamNames( uint i_node )
   {
@@ -1344,16 +1324,16 @@ extern "C"
       char** var_name_array = ( char** ) malloc( var_name_vect.size() * sizeof( char* ) );
       for ( unsigned int i = 0; i < var_name_vect.size(); i++ )
       {
-        char* var_name = ( char* ) malloc( ( var_name_vect[ i ].length() + 1 ) * sizeof( char ) );
+        uint vl = var_name_vect[ i ].length() + 1;
+        char* var_name = ( char* ) malloc( ( vl ) * sizeof( char ) );
 
-        strcpy( var_name, var_name_vect[ i ].c_str() );
+        strncpy( var_name, var_name_vect[ i ].c_str(), vl );
         var_name_array[ i ] = var_name;
       }
       ret = var_name_array;
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_GetNPortParam( uint i_node )
@@ -1366,7 +1346,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   char**
   NESTGPU_GetArrayParamNames( uint i_node )
   {
@@ -1377,16 +1356,16 @@ extern "C"
       char** var_name_array = ( char** ) malloc( var_name_vect.size() * sizeof( char* ) );
       for ( unsigned int i = 0; i < var_name_vect.size(); i++ )
       {
-        char* var_name = ( char* ) malloc( ( var_name_vect[ i ].length() + 1 ) * sizeof( char ) );
+        uint vl = var_name_vect[ i ].length() + 1;
+        char* var_name = ( char* ) malloc( ( vl ) * sizeof( char ) );
 
-        strcpy( var_name, var_name_vect[ i ].c_str() );
+        strncpy( var_name, var_name_vect[ i ].c_str(), vl );
         var_name_array[ i ] = var_name;
       }
       ret = var_name_array;
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_GetNArrayParam( uint i_node )
@@ -1409,9 +1388,10 @@ extern "C"
       char** var_name_array = ( char** ) malloc( var_name_vect.size() * sizeof( char* ) );
       for ( unsigned int i = 0; i < var_name_vect.size(); i++ )
       {
-        char* var_name = ( char* ) malloc( ( var_name_vect[ i ].length() + 1 ) * sizeof( char ) );
+        uint vl = var_name_vect[ i ].length() + 1;
+        char* var_name = ( char* ) malloc( ( vl ) * sizeof( char ) );
 
-        strcpy( var_name, var_name_vect[ i ].c_str() );
+        strncpy( var_name, var_name_vect[ i ].c_str(), vl );
         var_name_array[ i ] = var_name;
       }
       ret = var_name_array;
@@ -1429,7 +1409,6 @@ extern "C"
     }
     END_ERR_PROP return ret;
   }
-
 
   int64_t*
   NESTGPU_GetSeqSeqConnections( uint i_source,
@@ -1622,7 +1601,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_GetSynGroupNParam( int i_syn_group )
   {
@@ -1634,7 +1612,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   char**
   NESTGPU_GetSynGroupParamNames( int i_syn_group )
   {
@@ -1645,16 +1622,16 @@ extern "C"
       char** name_array = ( char** ) malloc( name_vect.size() * sizeof( char* ) );
       for ( unsigned int i = 0; i < name_vect.size(); i++ )
       {
-        char* param_name = ( char* ) malloc( ( name_vect[ i ].length() + 1 ) * sizeof( char ) );
+        uint vl = name_vect[ i ].length() + 1;
+        char* param_name = ( char* ) malloc( ( vl ) * sizeof( char ) );
 
-        strcpy( param_name, name_vect[ i ].c_str() );
+        strncpy( param_name, name_vect[ i ].c_str(), vl );
         name_array[ i ] = param_name;
       }
       ret = name_array;
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_IsSynGroupParam( int i_syn_group, char* param_name )
@@ -1669,7 +1646,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_GetSynGroupParamIdx( int i_syn_group, char* param_name )
   {
@@ -1682,7 +1658,6 @@ extern "C"
     }
     END_ERR_PROP return ret;
   }
-
 
   float
   NESTGPU_GetSynGroupParam( int i_syn_group, char* param_name )
@@ -1697,7 +1672,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_SetSynGroupParam( int i_syn_group, char* param_name, float val )
   {
@@ -1711,19 +1685,16 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_ActivateSpikeCount( uint i_node, int n_node )
   {
     int ret = 0;
     BEGIN_ERR_PROP
     {
-
       ret = NESTGPU_instance->ActivateSpikeCount( i_node, n_node );
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_ActivateRecSpikeTimes( uint i_node, int n_node, int max_n_rec_spike_times )
@@ -1749,14 +1720,12 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_GetNRecSpikeTimes( uint i_node )
   {
     int ret = 0;
     BEGIN_ERR_PROP
     {
-
       ret = NESTGPU_instance->GetNRecSpikeTimes( i_node );
     }
     END_ERR_PROP return ret;
@@ -1836,7 +1805,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_GetNBoolParam()
   {
@@ -1848,7 +1816,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   char**
   NESTGPU_GetBoolParamNames()
   {
@@ -1859,16 +1826,16 @@ extern "C"
       char** name_array = ( char** ) malloc( name_vect.size() * sizeof( char* ) );
       for ( unsigned int i = 0; i < name_vect.size(); i++ )
       {
-        char* param_name = ( char* ) malloc( ( name_vect[ i ].length() + 1 ) * sizeof( char ) );
+        uint vl = name_vect[ i ].length() + 1;
+        char* param_name = ( char* ) malloc( ( vl ) * sizeof( char ) );
 
-        strcpy( param_name, name_vect[ i ].c_str() );
+        strncpy( param_name, name_vect[ i ].c_str(), vl );
         name_array[ i ] = param_name;
       }
       ret = name_array;
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_IsBoolParam( char* param_name )
@@ -1883,7 +1850,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_GetBoolParamIdx( char* param_name )
   {
@@ -1896,7 +1862,6 @@ extern "C"
     }
     END_ERR_PROP return ret;
   }
-
 
   bool
   NESTGPU_GetBoolParam( char* param_name )
@@ -1911,7 +1876,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_SetBoolParam( char* param_name, bool val )
   {
@@ -1925,7 +1889,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_GetNFloatParam()
   {
@@ -1937,7 +1900,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   char**
   NESTGPU_GetFloatParamNames()
   {
@@ -1948,16 +1910,16 @@ extern "C"
       char** name_array = ( char** ) malloc( name_vect.size() * sizeof( char* ) );
       for ( unsigned int i = 0; i < name_vect.size(); i++ )
       {
-        char* param_name = ( char* ) malloc( ( name_vect[ i ].length() + 1 ) * sizeof( char ) );
+        uint vl = name_vect[ i ].length() + 1;
+        char* param_name = ( char* ) malloc( ( vl ) * sizeof( char ) );
 
-        strcpy( param_name, name_vect[ i ].c_str() );
+        strncpy( param_name, name_vect[ i ].c_str(), vl );
         name_array[ i ] = param_name;
       }
       ret = name_array;
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_IsFloatParam( char* param_name )
@@ -1972,7 +1934,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_GetFloatParamIdx( char* param_name )
   {
@@ -1986,7 +1947,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   float
   NESTGPU_GetFloatParam( char* param_name )
   {
@@ -1999,7 +1959,6 @@ extern "C"
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_SetFloatParam( char* param_name, float val )
@@ -2025,7 +1984,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   char**
   NESTGPU_GetIntParamNames()
   {
@@ -2036,16 +1994,16 @@ extern "C"
       char** name_array = ( char** ) malloc( name_vect.size() * sizeof( char* ) );
       for ( unsigned int i = 0; i < name_vect.size(); i++ )
       {
-        char* param_name = ( char* ) malloc( ( name_vect[ i ].length() + 1 ) * sizeof( char ) );
+        uint vl = name_vect[ i ].length() + 1;
+        char* param_name = ( char* ) malloc( ( vl ) * sizeof( char ) );
 
-        strcpy( param_name, name_vect[ i ].c_str() );
+        strncpy( param_name, name_vect[ i ].c_str(), vl );
         name_array[ i ] = param_name;
       }
       ret = name_array;
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_IsIntParam( char* param_name )
@@ -2060,7 +2018,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_GetIntParamIdx( char* param_name )
   {
@@ -2074,7 +2031,6 @@ extern "C"
     END_ERR_PROP return ret;
   }
 
-
   int
   NESTGPU_GetIntParam( char* param_name )
   {
@@ -2087,7 +2043,6 @@ extern "C"
     }
     END_ERR_PROP return ret;
   }
-
 
   int
   NESTGPU_SetIntParam( char* param_name, int val )

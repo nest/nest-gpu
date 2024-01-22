@@ -119,13 +119,14 @@ clearConnRemoteFlag< conn16b_key, conn16b_struct >( conn16b_key& conn_key, conn1
   conn_key = conn_key & ~( ( uint64_t ) 1 << MaxSynNBits );
 }
 
-template <>
-int ConnectionTemplate< conn16b_key, conn16b_struct >::setMaxNodeNBits( int max_node_nbits );
 
 template <>
-int ConnectionTemplate< conn16b_key, conn16b_struct >::setMaxDelayNBits( int max_delay_nbits );
+int ConnectionTemplate< conn16b_key, conn16b_struct >::_setMaxNodeNBits( int max_node_nbits );
 
 template <>
-int ConnectionTemplate< conn16b_key, conn16b_struct >::setMaxSynNBits( int max_syn_nbits );
+int ConnectionTemplate< conn16b_key, conn16b_struct >::_setMaxDelayNBits( int max_delay_nbits );
+
+template <>
+int ConnectionTemplate< conn16b_key, conn16b_struct >::_setMaxSynNBits( int max_syn_nbits );
 
 #endif

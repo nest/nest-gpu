@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef CONNECTSPEC_H
 #define CONNECTSPEC_H
 
@@ -76,7 +75,6 @@ public:
   int GetParam( std::string param_name );
   static bool IsParam( std::string param_name );
 };
-
 
 class SynSpec
 {

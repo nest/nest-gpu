@@ -30,7 +30,6 @@ nextPowerOf2( unsigned int n )
   return n;
 }
 
-
 /*
 //template <class T>
 void cudaReusableAlloc(void *d_storage, int64_t &st_bytes,
@@ -68,7 +67,6 @@ atomicArgMax( position_t* array, int* arg_max_pt, int index )
   return old_index;
 }
 
-
 __global__ void
 copass_last_step_kernel( position_t* part_size,
   position_t* m_d,
@@ -101,7 +99,6 @@ copass_last_step_kernel( position_t* part_size,
   printf( "kernel i: %d\tm_d: %ld\tpart_size: %ld\n", i, m_d[ i ], part_size[ i ] );
 #endif
 }
-
 
 __global__ void
 case2_inc_partitions_kernel( position_t* part_size, int* sorted_extra_elem_idx, position_t tot_diff )

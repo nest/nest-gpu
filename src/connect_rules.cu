@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "connect.h"
 #include "connect_rules.h"
 #include "distribution.h"
@@ -140,7 +139,6 @@ SynSpec::SynSpec()
   Init();
 }
 
-
 int
 SynSpec::Init()
 {
@@ -155,7 +153,6 @@ SynSpec::Init()
 
   return 0;
 }
-
 
 SynSpec::SynSpec( float weight, float delay )
 {
@@ -361,7 +358,6 @@ SynSpec::IsFloatPtParam( std::string param_name )
   }
 }
 
-
 int
 NESTGPU::Connect( inode_t i_source,
   inode_t n_source,
@@ -458,7 +454,6 @@ NESTGPU::Connect( std::vector< inode_t > source, std::vector< inode_t > target, 
 {
   return Connect( source.data(), source.size(), target.data(), target.size(), conn_spec, syn_spec );
 }
-
 
 int
 NESTGPU::RemoteConnect( int i_source_host,

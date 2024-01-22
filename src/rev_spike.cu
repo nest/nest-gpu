@@ -71,7 +71,6 @@ revConnectionInitKernel( int64_t* rev_conn, int* target_rev_conn_size, int64_t**
   TargetRevConnection = target_rev_conn;
 }
 
-
 __global__ void
 revSpikeBufferUpdate( unsigned int n_node )
 {

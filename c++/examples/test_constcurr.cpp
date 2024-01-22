@@ -20,41 +20,38 @@
  *
  */
 
-
-
-
-
-#include <stdio.h>
-#include <iostream>
-#include <string>
-#include <algorithm>
 #include "nestgpu.h"
+#include <algorithm>
+#include <iostream>
+#include <stdio.h>
+#include <string>
 
 using namespace std;
 
-int main(int argc, char *argv[])
+int
+main( int argc, char* argv[] )
 {
   NESTGPU ngpu;
   cout << "Building ...\n";
-  
-  srand(12345);
+
+  srand( 12345 );
   int n_neurons = 10000;
-  
+
   // create n_neurons neurons with 1 receptor ports
-  NodeSeq neuron = ngpu.Create("aeif_cond_beta", n_neurons, 1);
+  NodeSeq neuron = ngpu.Create( "aeif_cond_beta", n_neurons, 1 );
 
   // neuron parameters
-  ngpu.SetNeuronParam(neuron, "a", 4.0);
-  ngpu.SetNeuronParam(neuron, "b",  80.5);
-  ngpu.SetNeuronParam(neuron, "E_L", -70.6);
-  ngpu.SetNeuronParam(neuron, "I_e", 800.0);
+  ngpu.SetNeuronParam( neuron, "a", 4.0 );
+  ngpu.SetNeuronParam( neuron, "b", 80.5 );
+  ngpu.SetNeuronParam( neuron, "E_L", -70.6 );
+  ngpu.SetNeuronParam( neuron, "I_e", 800.0 );
 
   string filename = "test_constcurr.dat";
-  int i_neurons[] = {neuron[rand()%n_neurons]}; // any set of neuron indexes
-  string var_name[] = {"V_m"};
+  int i_neurons[] = { neuron[ rand() % n_neurons ] }; // any set of neuron indexes
+  string var_name[] = { "V_m" };
 
   // create multimeter record of V_m
-  ngpu.CreateRecord(filename, var_name, i_neurons, 1);
+  ngpu.CreateRecord( filename, var_name, i_neurons, 1 );
 
   ngpu.Simulate();
 

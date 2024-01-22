@@ -32,8 +32,7 @@ void* d_aux_array_key_pt_;
 void* d_aux_array_value_pt_;
 position_t* h_part_size_;
 position_t* d_part_size_;
-}
-
+} // namespace copass_sort
 
 int
 copass_sort::last_step( position_t* local_d_m_d,

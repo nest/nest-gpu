@@ -27,7 +27,6 @@ prescan_arbitrary( int* output, int* input, int n, int powerOfTwo )
   int bankOffsetA = CONFLICT_FREE_OFFSET( ai );
   int bankOffsetB = CONFLICT_FREE_OFFSET( bi );
 
-
   if ( threadID < n )
   {
     temp[ ai + bankOffsetA ] = input[ ai ];
@@ -38,7 +37,6 @@ prescan_arbitrary( int* output, int* input, int n, int powerOfTwo )
     temp[ ai + bankOffsetA ] = 0;
     temp[ bi + bankOffsetB ] = 0;
   }
-
 
   int offset = 1;
   for ( int d = powerOfTwo >> 1; d > 0; d >>= 1 ) // build sum in place up the tree
@@ -103,7 +101,6 @@ prescan_arbitrary_unoptimized( int* output, int* input, int n, int powerOfTwo )
     temp[ 2 * threadID + 1 ] = 0;
   }
 
-
   int offset = 1;
   for ( int d = powerOfTwo >> 1; d > 0; d >>= 1 ) // build sum in place up the tree
   {
@@ -144,7 +141,6 @@ prescan_arbitrary_unoptimized( int* output, int* input, int n, int powerOfTwo )
   }
 }
 
-
 __global__ void
 prescan_large( int* output, int* input, int n, int* sums )
 {
@@ -177,7 +173,6 @@ prescan_large( int* output, int* input, int n, int* sums )
     offset *= 2;
   }
   __syncthreads();
-
 
   if ( threadID == 0 )
   {
@@ -232,7 +227,6 @@ prescan_large_unoptimized( int* output, int* input, int n, int* sums )
   }
   __syncthreads();
 
-
   if ( threadID == 0 )
   {
     sums[ blockID ] = temp[ n - 1 ];
@@ -257,7 +251,6 @@ prescan_large_unoptimized( int* output, int* input, int n, int* sums )
   output[ blockOffset + ( 2 * threadID ) ] = temp[ 2 * threadID ];
   output[ blockOffset + ( 2 * threadID ) + 1 ] = temp[ 2 * threadID + 1 ];
 }
-
 
 __global__ void
 add( int* output, int length, int* n )
@@ -292,7 +285,6 @@ prefix_scan( int* d_out, int* d_in, int length, bool bcao )
   }
 }
 
-
 void
 scanLargeDeviceArray( int* d_out, int* d_in, int length, bool bcao )
 {
@@ -307,7 +299,8 @@ scanLargeDeviceArray( int* d_out, int* d_in, int length, bool bcao )
     int lengthMultiple = length - remainder;
     scanLargeEvenDeviceArray( d_out, d_in, lengthMultiple, bcao );
 
-    // scan the remaining elements and add the (inclusive) last element of the large scan to this
+    // scan the remaining elements and add the (inclusive) last element of the
+    // large scan to this
     int* startOfOutputArray = &( d_out[ lengthMultiple ] );
     scanSmallDeviceArray( startOfOutputArray, &( d_in[ lengthMultiple ] ), remainder, bcao );
 

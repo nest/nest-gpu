@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "rk5.h"
 #include <cmath>
 #include <config.h>

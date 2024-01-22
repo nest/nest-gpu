@@ -57,7 +57,6 @@ cudaReusableAlloc( void* d_storage,
   }
 }
 
-
 template < class KeyT, class ValueT >
 struct key_value
 {
@@ -127,7 +126,6 @@ setElem( contiguous_key_value< KeyT, ValueT >& arr, position_t i, const key_valu
   *( arr.key_pt + arr.offset + i ) = kv.key;
   *( arr.value_pt + arr.offset + i ) = kv.value;
 }
-
 
 template < class KeyT, class ValueT >
 void
@@ -522,7 +520,6 @@ getBlock( regular_block_array< ElementT >& arr, int i_block )
   return c_arr;
 }
 
-
 template < class ElementT >
 __device__ ElementT
 getElem( regular_block_array< ElementT >& arr, position_t i )
@@ -571,7 +568,6 @@ unsigned int nextPowerOf2( unsigned int n );
 // If it is true, set *arg_max_pt=index
 __device__ int atomicArgMax( position_t* array, int* arg_max_pt, int index );
 
-
 // find difference between two arrays of type T and specified size
 template < class T >
 __global__ void
@@ -584,7 +580,6 @@ diffKernel( T* c, const T* a, const T* b, position_t size )
   }
 }
 
-
 __global__ void copass_last_step_kernel( position_t* part_size,
   position_t* m_d,
   uint k,
@@ -595,7 +590,6 @@ __global__ void copass_last_step_kernel( position_t* part_size,
 
 //////////////////////////////////////////////////
 __global__ void case2_inc_partitions_kernel( position_t* part_size, int* sorted_extra_elem_idx, position_t tot_diff );
-
 
 // find the number of elements <= val
 // in a sorted array array[i+1]>=array[i]
@@ -854,7 +848,6 @@ max_diff_kernel( position_t* m_u,
   }
 }
 
-
 // check array element type, maybe replace with position_t
 template < class ElementT, int bsize >
 __global__ void
@@ -928,7 +921,6 @@ prefix_scan( ElementT* array_in, ElementT* array_out, uint k, uint n )
   }
 }
 
-
 // trova num. di elementi dell'array < val
 // in un array ordinato array[i+1]>=array[i]
 template < class ElementT, uint bsize >
@@ -952,7 +944,6 @@ search_up( ElementT* array, position_t size, ElementT val, position_t* num_up )
   arr.offset = 0;
   search_block_up< ElementT, contiguous_array< ElementT >, bsize >( arr, size, val, num_up );
 }
-
 
 template < class KeyT, class ArrayT, uint bsize >
 int
@@ -1020,7 +1011,6 @@ atomicKeyArgMin( KeyT* array, int* arg_min_pt, int index )
 
   return old_index;
 }
-
 
 template < class KeyT, class ArrayT, uint bsize >
 __global__ void
@@ -1162,7 +1152,6 @@ case2_extra_elems_kernel( ArrayT* subarray,
     extra_elem_idx[ i_elem ] = i;
   }
 }
-
 
 template < class ElementT, class ArrayT, class AuxArrayT >
 __global__ void
@@ -1325,7 +1314,6 @@ CopyRegion( regular_block_array< KeyT >& arr,
   }
 }
 
-
 template < class ArrayT >
 void
 regularBlockTranslate( ArrayT& arr, position_t transl, char* d_buffer, position_t buffer_size )
@@ -1435,6 +1423,5 @@ repack( ArrayT* h_subarray, uint k, position_t* part_size, char* d_buffer, posit
     transl += psize;
   }
 }
-
 
 #endif

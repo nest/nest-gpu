@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef AEIFPSCEXPKERNEL_H
 #define AEIFPSCEXPKERNEL_H
 
@@ -129,7 +128,6 @@ const std::string aeif_psc_exp_group_param_name[ N_GROUP_PARAM ] = { "h_min_rel"
 #define h_min_rel_ group_param_[ i_h_min_rel ]
 #define h0_rel_ group_param_[ i_h0_rel ]
 
-
 template < int NVAR, int NPARAM > //, class DataStruct>
 __device__ void
 Derivatives( double x, float* y, float* dydx, float* param, aeif_psc_exp_rk5 data_struct )
@@ -191,9 +189,7 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, aeif_psc_e
   }
 }
 
-
-};
-
+}; // namespace aeif_psc_exp_ns
 
 int Update( long long it, double t1 );
 
@@ -210,6 +206,5 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, aeif_psc_e
 {
   aeif_psc_exp_ns::ExternalUpdate< NVAR, NPARAM >( x, y, param, end_time_step, data_struct );
 }
-
 
 #endif

@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef POISSGENVARIABLES_H
 #define POISSGENVARIABLES_H
 

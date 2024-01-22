@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "izhikevich.h"
 #include "spike_buffer.h"
 #include <cmath>
@@ -94,7 +93,6 @@ izhikevich_Update( int n_node,
     }
   }
 }
-
 
 izhikevich::~izhikevich()
 {

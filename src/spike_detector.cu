@@ -20,7 +20,6 @@
  *
  */
 
-
 #include <cmath>
 #include <config.h>
 #include <iostream>
@@ -51,7 +50,6 @@ enum
 
 const std::string spike_detector_scal_var_name[ N_SPIKE_DETECTOR_SCAL_VAR ] = { "input_spike_height", "spike_height" };
 
-
 __global__ void
 spike_detector_UpdateKernel( int i_node_0, int n_node, float* var_arr, float* param_arr, int n_var, int n_param )
 {
@@ -74,7 +72,6 @@ spike_detector_UpdateKernel( int i_node_0, int n_node, float* var_arr, float* pa
     *spike_height_pt = spike_height;
   }
 }
-
 
 int
 spike_detector::Init( int i_node_0, int n_node, int /*n_port*/, int i_group )

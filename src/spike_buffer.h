@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef SPIKEBUFFER_H
 #define SPIKEBUFFER_H
 // #include "connect.h"
@@ -44,7 +43,6 @@ extern __device__ long long* LastRevSpikeTimeIdx; //
 extern unsigned short* d_ConnectionSpikeTime;          // [NConnection];
 extern __device__ unsigned short* ConnectionSpikeTime; //
 
-
 extern int* d_SpikeBufferSize;
 extern __device__ int* SpikeBufferSize;
 // number of spikes stored in the buffer
@@ -64,7 +62,6 @@ extern __device__ int* SpikeBufferConnIdx;
 extern float* d_SpikeBufferHeight;
 extern __device__ float* SpikeBufferHeight;
 // spike height
-
 
 __device__ void PushSpike( int i_spike_buffer, float height );
 

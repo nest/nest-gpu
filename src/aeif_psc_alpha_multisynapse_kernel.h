@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef AEIFPSCALPHAMULTISYNAPSEKERNEL_H
 #define AEIFPSCALPHAMULTISYNAPSEKERNEL_H
 
@@ -83,7 +82,6 @@ enum GroupParamIndexes
   N_GROUP_PARAM
 };
 
-
 const std::string aeif_psc_alpha_multisynapse_scal_var_name[ N_SCAL_VAR ] = { "V_m", "w" };
 
 const std::string aeif_psc_alpha_multisynapse_port_var_name[ N_PORT_VAR ] = { "I_syn", "I1_syn" };
@@ -143,7 +141,6 @@ const std::string aeif_psc_alpha_multisynapse_group_param_name[ N_GROUP_PARAM ] 
 #define h_min_rel_ group_param_[ i_h_min_rel ]
 #define h0_rel_ group_param_[ i_h0_rel ]
 
-
 template < int NVAR, int NPARAM > //, class DataStruct>
 __device__ void
 Derivatives( double x, float* y, float* dydx, float* param, aeif_psc_alpha_multisynapse_rk5 data_struct )
@@ -153,7 +150,6 @@ Derivatives( double x, float* y, float* dydx, float* param, aeif_psc_alpha_multi
     n_port = ( NVAR - N_SCAL_VAR ) / N_PORT_VAR
   };
   float I_syn_tot = 0.0;
-
 
   float V = ( refractory_step > 0 ) ? V_reset : MIN( V_m, V_peak );
   for ( int i = 0; i < n_port; i++ )
@@ -216,8 +212,7 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, aeif_psc_a
   }
 }
 
-
-};
+}; // namespace aeif_psc_alpha_multisynapse_ns
 
 template <>
 int aeif_psc_alpha_multisynapse::UpdateNR< 0 >( long long it, double t1 );
@@ -255,6 +250,5 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, aeif_psc_a
 {
   aeif_psc_alpha_multisynapse_ns::ExternalUpdate< NVAR, NPARAM >( x, y, param, end_time_step, data_struct );
 }
-
 
 #endif

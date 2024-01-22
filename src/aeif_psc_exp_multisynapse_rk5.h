@@ -20,12 +20,10 @@
  *
  */
 
-
 #ifndef AEIFPSCEXPMULTISYNAPSERK5_H
 #define AEIFPSCEXPMULTISYNAPSERK5_H
 
 struct aeif_psc_exp_multisynapse_rk5;
-
 
 template < int NVAR, int NPARAM >
 __device__ void Derivatives( double x, float* y, float* dydx, float* param, aeif_psc_exp_multisynapse_rk5 data_struct );

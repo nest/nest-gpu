@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef AEIFPSCDELTA_H
 #define AEIFPSCDELTA_H
 
@@ -32,13 +31,13 @@
 #include <iostream>
 #include <string>
 
-
 /* BeginUserDocs: neuron, adaptive threshold, integrate-and-fire, current-based
 
 Short description
 +++++++++++++++++
 
-Current-based adaptive exponential integrate-and-fire neuron model with delta synapse
+Current-based adaptive exponential integrate-and-fire neuron model with delta
+synapse
 
 Description
 +++++++++++
@@ -53,7 +52,8 @@ The membrane potential is given by the following differential equation:
 
 .. math::
 
-  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
+  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T
+\exp\left(\frac{V-V_{th}}{\Delta_T}\right)
     + I(t)- w + I_e
 
 and
@@ -72,11 +72,12 @@ the value of J after a spike.
 
 .. note::
 
-  The number of receptor ports must be specified at neuron creation (default value is 1) and
-  the receptor index starts from 0 (and not from 1 as in NEST  models).
-  The time constants are supplied by an array, ``tau_syn``. Port numbers
+  The number of receptor ports must be specified at neuron creation (default
+value is 1) and the receptor index starts from 0 (and not from 1 as in NEST
+models). The time constants are supplied by an array, ``tau_syn``. Port numbers
   are automatically assigned in the range 0 to ``n_receptors-1``.
-  During connection, the ports are selected with the synapse property ``receptor``.
+  During connection, the ports are selected with the synapse property
+``receptor``.
 
 Parameters
 ++++++++++
@@ -137,7 +138,6 @@ aeif_psc_exp
 
 EndUserDocs */
 
-
 #define MAX_PORT_NUM 20
 
 struct aeif_psc_delta_rk5
@@ -154,7 +154,6 @@ public:
   aeif_psc_delta_rk5 rk5_data_struct_;
 
   int Init( int i_node_0, int n_neuron, int n_port, int i_group );
-
 
   int Calibrate( double time_min, float time_resolution );
 

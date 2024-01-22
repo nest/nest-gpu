@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef CONNECT_H
 #define CONNECT_H
 
@@ -197,7 +196,6 @@ public:
   // set index of this host
   virtual int setThisHost( int this_host ) = 0;
 
-
   virtual int remoteConnectionMapInit() = 0;
 
   virtual int remoteConnectionMapCalibrate( inode_t n_nodes ) = 0;
@@ -240,7 +238,6 @@ public:
 
   virtual int addOffsetToSpikeBufferMap( inode_t n_nodes ) = 0;
 };
-
 
 template < class ConnKeyT, class ConnStructT >
 class ConnectionTemplate : public Connection
@@ -434,11 +431,29 @@ public:
 
   int setRandomSeed( unsigned long long seed );
 
-  int setMaxNodeNBits( int max_node_nbits );
+  int _setMaxNodeNBits( int max_node_nbits );
 
-  int setMaxDelayNBits( int max_delay_nbits );
+  int _setMaxDelayNBits( int max_delay_nbits );
 
-  int setMaxSynNBits( int max_syn_nbits );
+  int _setMaxSynNBits( int max_syn_nbits );
+
+  int
+  setMaxNodeNBits( int max_node_nbits )
+  {
+    return _setMaxNodeNBits( max_node_nbits );
+  }
+
+  int
+  setMaxDelayNBits( int max_delay_nbits )
+  {
+    return _setMaxDelayNBits( max_delay_nbits );
+  }
+
+  int
+  setMaxSynNBits( int max_syn_nbits )
+  {
+    return _setMaxSynNBits( max_syn_nbits );
+  }
 
   int
   getMaxNodeNBits()
@@ -696,7 +711,6 @@ public:
   // index itself in the array local_node_index
   int fixConnectionSourceNodeIndexes( int64_t old_n_conn, uint* d_local_node_index );
 
-
   // remote connect functions
   int
   remoteConnect( int source_host,
@@ -816,7 +830,6 @@ public:
     int64_t*& d_poiss_sum,
     void*& d_poiss_thresh );
 
-
   int sendDirectSpikes( long long time_idx,
     int64_t i_conn0,
     int64_t n_dir_conn,
@@ -835,8 +848,7 @@ extern int64_t* d_poiss_num;
 extern int64_t* d_poiss_sum;
 extern void* d_poiss_thresh;
 int organizeDirectConnections( Connection* conn );
-};
-
+}; // namespace poiss_conn
 
 enum ConnectionFloatParamIndexes
 {
@@ -859,7 +871,6 @@ extern __constant__ float NESTGPUTimeResolution;
 extern __device__ int16_t* NodeGroupMap;
 
 extern __constant__ NodeGroupStruct NodeGroupArray[];
-
 
 // maximum number of bits used to represent node index
 extern __device__ int MaxNodeNBits;
@@ -928,7 +939,6 @@ __device__ __forceinline__ void setConnPort( ConnKeyT& conn_key, ConnStructT& co
 template < class ConnKeyT, class ConnStructT >
 __device__ __forceinline__ void setConnSyn( ConnKeyT& conn_key, ConnStructT& conn_struct, int syn );
 
-
 template < class ConnKeyT >
 __device__ __forceinline__ int getConnDelay( const ConnKeyT& conn_key );
 
@@ -949,7 +959,6 @@ __device__ __forceinline__ bool getConnRemoteFlag( ConnKeyT& conn_key, ConnStruc
 
 template < class ConnKeyT, class ConnStructT >
 __device__ __forceinline__ void clearConnRemoteFlag( ConnKeyT& conn_key, ConnStructT& conn_struct );
-
 
 template < class ConnStructT >
 __global__ void
@@ -974,7 +983,6 @@ setWeights( ConnStructT* conn_struct_subarray, float* arr_val, int64_t n_conn )
   }
   conn_struct_subarray[ i_conn ].weight = arr_val[ i_conn ];
 }
-
 
 template < class ConnKeyT >
 __global__ void
@@ -1004,7 +1012,6 @@ setDelays( ConnKeyT* conn_key_subarray, float fdelay, int64_t n_conn, float time
   setConnDelay< ConnKeyT >( conn_key_subarray[ i_conn ], delay );
 }
 
-
 template < class ConnKeyT, class ConnStructT >
 __global__ void
 setPort( ConnKeyT* conn_key_subarray, ConnStructT* conn_struct_subarray, int port, int64_t n_conn )
@@ -1017,7 +1024,6 @@ setPort( ConnKeyT* conn_key_subarray, ConnStructT* conn_struct_subarray, int por
   setConnPort< ConnKeyT, ConnStructT >( conn_key_subarray[ i_conn ], conn_struct_subarray[ i_conn ], port );
 }
 
-
 template < class ConnKeyT, class ConnStructT >
 __global__ void
 setSynGroup( ConnKeyT* conn_key_subarray, ConnStructT* conn_struct_subarray, int syn_group, int64_t n_conn )
@@ -1029,7 +1035,6 @@ setSynGroup( ConnKeyT* conn_key_subarray, ConnStructT* conn_struct_subarray, int
   }
   setConnSyn< ConnKeyT, ConnStructT >( conn_key_subarray[ i_conn ], conn_struct_subarray[ i_conn ], syn_group );
 }
-
 
 template < class ConnKeyT, class ConnStructT >
 __global__ void
@@ -1060,7 +1065,6 @@ __global__ void setConnGroupNum( inode_t n_compact,
   iconngroup_t* conn_group_idx0_compact,
   inode_t* conn_group_source_compact );
 
-
 __global__ void setConnGroupIConn0( int64_t n_block_conn,
   int* conn_group_iconn0_mask,
   iconngroup_t* conn_group_iconn0_mask_cumul,
@@ -1068,14 +1072,12 @@ __global__ void setConnGroupIConn0( int64_t n_block_conn,
   int64_t i_conn0,
   iconngroup_t* offset );
 
-
 template < class T >
 __global__ void
 setConnGroupNewOffset( T* offset, T* add_offset )
 {
   *offset = *offset + *add_offset;
 }
-
 
 template < class ConnKeyT >
 __global__ void
@@ -1120,7 +1122,6 @@ buildConnGroupIConn0Mask( ConnKeyT* conn_key_subarray,
     conn_group_iconn0_mask[ i_conn ] = 1;
   }
 }
-
 
 template < class ConnKeyT >
 __global__ void
@@ -1268,7 +1269,6 @@ setSource( inode_t* conn_source_ids, uint* rand_val, int64_t n_conn, T source, i
   conn_source_ids[ i_conn ] = i_source;
 }
 
-
 template < class T, class ConnStructT >
 __global__ void
 setTarget( ConnStructT* conn_struct_subarray, uint* rand_val, int64_t n_conn, T target, inode_t n_target )
@@ -1359,7 +1359,6 @@ setAllToAllSource( inode_t* conn_source_ids,
   conn_source_ids[ i_conn ] = i_source;
 }
 
-
 template < class T, class ConnStructT >
 __global__ void
 setIndegreeTarget( ConnStructT* conn_struct_subarray,
@@ -1444,7 +1443,6 @@ countConnectionsKernel( int64_t n_conn,
     }
   }
 }
-
 
 // Fill array of connection indexes
 template < class ConnKeyT, class ConnStructT >
@@ -1533,7 +1531,6 @@ getConnectionStatusKernel( int64_t* conn_ids,
   syn_group[ i_arr ] = i_syn_group;
   delay[ i_arr ] = NESTGPUTimeResolution * i_delay;
 }
-
 
 //////////////////////////////////////////////////////////////////////
 // CUDA Kernel that gets a float parameter of an array of n_conn connections,
@@ -1729,7 +1726,6 @@ setConnectionIntParamKernel( int64_t* conn_ids, int64_t n_conn, int* param_arr, 
   }
 }
 
-
 //////////////////////////////////////////////////////////////////////
 // CUDA Kernel that sets an integer parameter of an array of n_conn connections,
 // identified by the indexes conn_ids[i], to the value val
@@ -1800,7 +1796,8 @@ struct MaxDelay
   {
     int i_delay_a = getConnDelay< ConnKeyT >( conn_key_a );
     int i_delay_b = getConnDelay< ConnKeyT >( conn_key_b );
-    // printf("conn_key_a: %lu\tconn_key_b: %lu\ti_delay_a: %d\ti_delay_b: %d\n",
+    // printf("conn_key_a: %lu\tconn_key_b: %lu\ti_delay_a: %d\ti_delay_b:
+    // %d\n",
     //   conn_key_a, conn_key_b, i_delay_a, i_delay_b);
     // return (i_delay_b > i_delay_a) ? i_delay_b : i_delay_a;
 
@@ -1951,7 +1948,6 @@ __global__ void resetConnectionSpikeTimeUpKernel( unsigned int n_conn );
 
 __global__ void resetConnectionSpikeTimeDownKernel( unsigned int n_conn );
 
-
 __global__ void connectCalibrateKernel( iconngroup_t* conn_group_idx0,
   int64_t* conn_group_iconn0,
   int* conn_group_delay,
@@ -2088,7 +2084,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::calibrate()
   return 0;
 }
 
-
 template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::allocateNewBlocks( int new_n_block )
@@ -2174,7 +2169,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionWeights( curandGenerat
   return 0;
 }
 
-
 template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionDelays( curandGenerator_t& gen,
@@ -2230,7 +2224,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionDelays( curandGenerato
   }
   return 0;
 }
-
 
 template < class ConnKeyT, class ConnStructT >
 int
@@ -2518,7 +2511,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::organizeConnections( inode_t n_node
   printf( "%-40s%.2f ms\n", "Time: ", ( double ) time / 1000. );
   printf( "Done\n" );
 
-
   return 0;
 }
 
@@ -2541,7 +2533,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::_Connect( T1 source,
     syn_spec,
     false );
 }
-
 
 template < class ConnKeyT, class ConnStructT >
 template < class T1, class T2 >
@@ -2618,7 +2609,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::reallocConnSourceIds( int64_t n_con
 
   return 0;
 }
-
 
 template < class ConnKeyT, class ConnStructT >
 template < class T1, class T2 >
@@ -2698,7 +2688,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::connectOneToOne( curandGenerator_t&
 
   return 0;
 }
-
 
 template < class ConnKeyT, class ConnStructT >
 template < class T1, class T2 >
@@ -2786,7 +2775,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::connectAllToAll( curandGenerator_t&
 
   return 0;
 }
-
 
 template < class ConnKeyT, class ConnStructT >
 template < class T1, class T2 >
@@ -2973,7 +2961,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::connectFixedIndegree( curandGenerat
   return 0;
 }
 
-
 template < class ConnKeyT, class ConnStructT >
 template < class T1, class T2 >
 int
@@ -3068,7 +3055,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::connectFixedOutdegree( curandGenera
   return 0;
 }
 
-
 //////////////////////////////////////////////////////////////////////
 // Get the float parameter param_name of an array of n_conn connections,
 // identified by the indexes conn_ids[i], and put it in the array
@@ -3114,7 +3100,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::getConnectionFloatParam( int64_t* c
 
   return 0;
 }
-
 
 //////////////////////////////////////////////////////////////////////
 // Get the integer parameter param_name of an array of n_conn connections,
@@ -3164,7 +3149,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::getConnectionIntParam( int64_t* con
   return 0;
 }
 
-
 //////////////////////////////////////////////////////////////////////
 // Set the float parameter param_name of an array of n_conn connections,
 // identified by the indexes conn_ids[i], to the value val
@@ -3205,7 +3189,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionFloatParam( int64_t* c
 
   return 0;
 }
-
 
 //////////////////////////////////////////////////////////////////////
 // Set the float parameter param_name of an array of n_conn connections,
@@ -3250,7 +3233,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionFloatParamDistr( int64
 
   return 0;
 }
-
 
 //////////////////////////////////////////////////////////////////////
 // Set the integer parameter param_name of an array of n_conn connections,
@@ -3302,7 +3284,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionIntParamArr( int64_t* 
   return 0;
 }
 
-
 //////////////////////////////////////////////////////////////////////
 // Set the int parameter param_name of an array of n_conn connections,
 // identified by the indexes conn_ids[i], to the value val
@@ -3343,7 +3324,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionIntParam( int64_t* con
 
   return 0;
 }
-
 
 template < class ConnKeyT, class ConnStructT >
 int64_t*
@@ -3430,7 +3410,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::getConnections( inode_t* i_source_p
   return h_conn_ids;
 }
 
-
 //////////////////////////////////////////////////////////////////////
 // Get all parameters of an array of n_conn connections, identified by
 // the indexes conn_ids[i], and put them in the arrays
@@ -3490,7 +3469,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::getConnectionStatus( int64_t* conn_
   return 0;
 }
 
-
 template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::freeConnRandomGenerator()
@@ -3540,7 +3518,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setRandomSeed( unsigned long long s
 
   return 0;
 }
-
 
 template < class ConnKeyT, class ConnStructT >
 int
@@ -3594,12 +3571,10 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::organizeDirectConnections( void*& d
   CUDAMALLOCCTRL( "&d_poiss_num", &d_poiss_num, 2 * k * sizeof( int64_t ) );
   CUDAMALLOCCTRL( "&d_poiss_sum", &d_poiss_sum, 2 * sizeof( int64_t ) );
 
-
   CUDAMALLOCCTRL( "&d_poiss_thresh", &d_poiss_thresh, 2 * sizeof( ConnKeyT ) );
 
   return 0;
 }
-
 
 template < class ConnKeyT, class ConnStructT >
 int
@@ -3795,7 +3770,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::buildDirectConnections( inode_t i_n
   return 0;
 }
 
-
 template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::sendDirectSpikes( long long time_idx,
@@ -3937,7 +3911,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::revSpikeFree()
   return 0;
 }
 
-
 template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::resetConnectionSpikeTimeUp()
@@ -3957,6 +3930,5 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::resetConnectionSpikeTimeDown()
 
   return 0;
 }
-
 
 #endif

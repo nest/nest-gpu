@@ -30,7 +30,6 @@
 #include "send_spike.h"
 #include "spike_buffer.h"
 
-
 // improve using a grid
 /*
 __global__ void GetSpikes(double *spike_array, int array_size, int n_port,
@@ -84,7 +83,6 @@ GetSpikes( double* spike_array,
     port_input_arr[ port_input ] = ( float ) d_val;
   }
 }
-
 
 int
 NESTGPU::ClearGetSpikeArrays()

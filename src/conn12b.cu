@@ -1,5 +1,6 @@
 #include "conn12b.h"
 #include "connect.h"
+
 #include <iostream>
 
 __global__ void
@@ -37,7 +38,7 @@ setMaxSynNBitsKernel( int max_syn_nbits, int max_port_nbits, uint syn_mask, uint
 // and other dependent variables
 template <>
 int
-ConnectionTemplate< conn12b_key, conn12b_struct >::setMaxNodeNBits( int max_node_nbits )
+ConnectionTemplate< conn12b_key, conn12b_struct >::_setMaxNodeNBits( int max_node_nbits )
 {
   // maximum number of bits used to represent node index
   max_node_nbits_ = max_node_nbits;
@@ -87,16 +88,16 @@ ConnectionTemplate< conn12b_key, conn12b_struct >::setMaxNodeNBits( int max_node
 // and other dependent variables
 template <>
 int
-ConnectionTemplate< conn12b_key, conn12b_struct >::setMaxDelayNBits( int max_delay_nbits )
+ConnectionTemplate< conn12b_key, conn12b_struct >::_setMaxDelayNBits( int max_delay_nbits )
 {
-  return setMaxNodeNBits( 32 - max_delay_nbits );
+  return _setMaxNodeNBits( 32 - max_delay_nbits );
 }
 
 // Set maximum number of bits used to represent synapse group index
 // and other dependent variables
 template <>
 int
-ConnectionTemplate< conn12b_key, conn12b_struct >::setMaxSynNBits( int max_syn_nbits )
+ConnectionTemplate< conn12b_key, conn12b_struct >::_setMaxSynNBits( int max_syn_nbits )
 {
   // maximum number of bits used to represent synapse group index
   max_syn_nbits_ = max_syn_nbits;
@@ -137,7 +138,7 @@ ConnectionTemplate< conn12b_key, conn12b_struct >::ConnectionTemplate()
   // std::cout << "In Connectiontemplate<conn12b_key, conn12b_struct> "
   //"specialized constructor\n";
   init();
-  setMaxNodeNBits( 20 ); // maximum number of nodes is 2^20
+  _setMaxNodeNBits( 20 ); // maximum number of nodes is 2^20
   // std::cout << "max_node_nbits_: " << max_node_nbits_ << "\n";
-  setMaxSynNBits( 6 ); // maximum number of synapse groups is 2^6
+  _setMaxSynNBits( 6 ); // maximum number of synapse groups is 2^6
 }

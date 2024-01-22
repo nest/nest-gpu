@@ -20,7 +20,6 @@
  *
  */
 
-
 /*
  * Author:  David Robert Nadeau
  * Site:    http://NadeauSoftware.com/
@@ -45,7 +44,6 @@
 #else
 #error "Unable to define getRealTime( ) for an unknown OS."
 #endif
-
 
 /**
  * Returns the real time, in seconds, or -1.0 if an error occurred.

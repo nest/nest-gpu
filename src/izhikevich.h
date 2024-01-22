@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef IZHIKEVICH_H
 #define IZHIKEVICH_H
 
@@ -83,11 +82,11 @@ References
 ++++++++++
 
 .. [1] Izhikevich EM (2003). Simple model of spiking neurons. IEEE Transactions
-       on Neural Networks, 14:1569-1572. DOI: https://doi.org/10.1109/TNN.2003.820440
+       on Neural Networks, 14:1569-1572. DOI:
+https://doi.org/10.1109/TNN.2003.820440
 
 
 EndUserDocs */
-
 
 namespace izhikevich_ns
 {
@@ -118,15 +117,13 @@ enum GroupParamIndexes
   N_GROUP_PARAM
 };
 
-
 const std::string izhikevich_scal_var_name[ N_SCAL_VAR ] = { "I_syn", "V_m", "u", "refractory_step" };
 
 const std::string izhikevich_scal_param_name[ N_SCAL_PARAM ] = { "I_e", "den_delay" };
 
 const std::string izhikevich_group_param_name[ N_GROUP_PARAM ] = { "V_th", "a", "b", "c", "d", "t_ref" };
 
-} // namespace
-
+} // namespace izhikevich_ns
 
 class izhikevich : public BaseNeuron
 {
@@ -148,6 +145,5 @@ public:
 
   int Free();
 };
-
 
 #endif

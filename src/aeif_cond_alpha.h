@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef AEIFCONDALPHA_H
 #define AEIFCONDALPHA_H
 
@@ -32,7 +31,8 @@
 #include <iostream>
 #include <string>
 
-/* BeginUserDocs: neuron, integrate-and-fire, adaptive threshold, conductance-based
+/* BeginUserDocs: neuron, integrate-and-fire, adaptive threshold,
+conductance-based
 
 Short description
 +++++++++++++++++
@@ -53,7 +53,8 @@ The membrane potential is given by the following differential equation:
 
 .. math::
 
-  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
+  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T
+\exp\left(\frac{V-V_{th}}{\Delta_T}\right)
   + g_{ex}(t) (V - E_{rev\_ ex,i}) + g_{in}(t) (V - E_{rev\_ in,i}) - w + I_e
 
 The differential equation for the spike-adaptation current `w` is
@@ -68,8 +69,9 @@ When the neuron fires a spike, the adaptation current :math:`w <- w + b`.
 
   Although this is not multisynapse, the port (excitatory or inhibitory)
   to be chosen must be specified using the synapse property ``receptor``.
-  The excitatory port has index 0, whereas the inhibitory one has index 1. Differently from
-  NEST, the connection weights related to the inhibitory port must be positive.
+  The excitatory port has index 0, whereas the inhibitory one has index 1.
+Differently from NEST, the connection weights related to the inhibitory port
+must be positive.
 
 Parameters
 ++++++++++
@@ -108,14 +110,16 @@ The following parameters can be set in the status dictionary.
  tau_w   ms      Adaptation time constant
 ======== ======= ==================================
 
-=========== ============= ========================================================
+=========== =============
+========================================================
 **Synaptic parameters**
 ----------------------------------------------------------------------------------
 E_rev_ex    mV            Excitatory reversal potential
 E_rev_in    mV            Inhibitory reversal potential
 tau_syn_ex  ms            Time constant of excitatory synaptic conductance
 tau_syn_in  ms            Time constant of inhibitory synaptic conductance
-=========== ============= ========================================================
+=========== =============
+========================================================
 
 ============= ======= =========================================================
 **Integration parameters**
@@ -161,7 +165,6 @@ public:
   aeif_cond_alpha_rk5 rk5_data_struct_;
 
   int Init( int i_node_0, int n_neuron, int n_port, int i_group );
-
 
   int Calibrate( double time_min, float time_resolution );
 

@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef EXTNEURON_H
 #define EXTNEURON_H
 
@@ -30,7 +29,6 @@
 #include "node_group.h"
 #include <iostream>
 #include <string>
-
 
 namespace ext_neuron_ns
 {
@@ -66,14 +64,13 @@ const std::string ext_neuron_scal_param_name[ N_SCAL_PARAM ] = { "den_delay" };
 
 const std::string ext_neuron_port_param_name[ N_PORT_PARAM ] = { "port_weight" };
 
-}
+} // namespace ext_neuron_ns
 
 class ext_neuron : public BaseNeuron
 {
 public:
   ~ext_neuron();
   int Init( int i_node_0, int n_neuron, int n_port, int i_group );
-
 
   // int Calibrate(double time_min, float time_resolution);
 
@@ -83,6 +80,5 @@ public:
 
   float* GetExtNeuronInputSpikes( int* n_node, int* n_port );
 };
-
 
 #endif

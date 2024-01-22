@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef PREFIXSCAN_H
 #define PREFIXSCAN_H
 

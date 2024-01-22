@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef IZHIKEVICHPSCEXP5S_H
 #define IZHIKEVICHPSCEXP5S_H
 
@@ -30,7 +29,6 @@
 #include "node_group.h"
 #include <iostream>
 #include <string>
-
 
 namespace izhikevich_psc_exp_5s_ns
 {
@@ -62,7 +60,6 @@ enum GroupParamIndexes
   N_GROUP_PARAM
 };
 
-
 const std::string izhikevich_psc_exp_5s_scal_var_name[ N_SCAL_VAR ] = { "I_syn", "V_m", "u", "refractory_step" };
 
 const std::string izhikevich_psc_exp_5s_scal_param_name[ N_SCAL_PARAM ] = { "I_e", "den_delay" };
@@ -70,8 +67,7 @@ const std::string izhikevich_psc_exp_5s_scal_param_name[ N_SCAL_PARAM ] = { "I_e
 const std::string
   izhikevich_psc_exp_5s_group_param_name[ N_GROUP_PARAM ] = { "V_th", "a", "b", "c", "d", "tau_syn", "t_ref" };
 
-} // namespace
-
+} // namespace izhikevich_psc_exp_5s_ns
 
 class izhikevich_psc_exp_5s : public BaseNeuron
 {
@@ -93,6 +89,5 @@ public:
 
   int Free();
 };
-
 
 #endif

@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef AEIFCONDBETAKERNEL_H
 #define AEIFCONDBETAKERNEL_H
 
@@ -80,7 +79,6 @@ enum GroupParamIndexes
   i_h0_rel,        // Starting step in ODE integr. relative to time resolution
   N_GROUP_PARAM
 };
-
 
 const std::string aeif_cond_beta_scal_var_name[ N_SCAL_VAR ] = { "g_ex", "g_in", "g1_ex", "g1_in", "V_m", "w" };
 
@@ -154,7 +152,6 @@ const std::string aeif_cond_beta_group_param_name[ N_GROUP_PARAM ] = { "h_min_re
 #define h_min_rel_ group_param_[ i_h_min_rel ]
 #define h0_rel_ group_param_[ i_h0_rel ]
 
-
 template < int NVAR, int NPARAM > //, class DataStruct>
 __device__ void
 Derivatives( double x, float* y, float* dydx, float* param, aeif_cond_beta_rk5 data_struct )
@@ -220,8 +217,7 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, aeif_cond_
   }
 }
 
-
-};
+}; // namespace aeif_cond_beta_ns
 
 int Update( long long it, double t1 );
 
@@ -238,6 +234,5 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, aeif_cond_
 {
   aeif_cond_beta_ns::ExternalUpdate< NVAR, NPARAM >( x, y, param, end_time_step, data_struct );
 }
-
 
 #endif

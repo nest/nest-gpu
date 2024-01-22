@@ -20,7 +20,6 @@
  *
  */
 
-
 #include <cmath>
 #include <config.h>
 #include <iostream>
@@ -64,8 +63,7 @@ organizeDirectConnections( Connection* conn )
   return conn->organizeDirectConnections(
     d_poiss_key_array_data_pt, d_poiss_subarray, d_poiss_num, d_poiss_sum, d_poiss_thresh );
 }
-};
-
+}; // namespace poiss_conn
 
 __global__ void
 SetupPoissKernel( curandState* curand_state, uint64_t n_conn, unsigned long long seed )
@@ -77,7 +75,6 @@ SetupPoissKernel( curandState* curand_state, uint64_t n_conn, unsigned long long
     curand_init( seed, i_conn, 0, &curand_state[ i_conn ] );
   }
 }
-
 
 __global__ void
 PoissGenUpdateKernel( long long time_idx, int n_node, int max_delay, float* param_arr, int n_param, float* mu_arr )
@@ -94,7 +91,6 @@ PoissGenUpdateKernel( long long time_idx, int n_node, int max_delay, float* para
     }
   }
 }
-
 
 int
 poiss_gen::Init( int i_node_0, int n_node, int /*n_port*/, int i_group )
@@ -172,7 +168,6 @@ poiss_gen::Calibrate( double, float )
 
   return 0;
 }
-
 
 int
 poiss_gen::Update( long long it, double )

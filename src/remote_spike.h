@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef REMOTE_SPIKE_H
 #define REMOTE_SPIKE_H
 
@@ -116,6 +115,5 @@ __global__ void DeviceExternalSpikeInit( uint n_hosts,
   uint* n_ext_node_target_host,
   uint** ext_node_target_host_id,
   uint** ext_node_id );
-
 
 #endif

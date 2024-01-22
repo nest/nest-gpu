@@ -20,12 +20,10 @@
  *
  */
 
-
 #ifndef AEIFCONDALPHAMULTISYNAPSERK5_H
 #define AEIFCONDALPHAMULTISYNAPSERK5_H
 
 struct aeif_cond_alpha_multisynapse_rk5;
-
 
 template < int NVAR, int NPARAM >
 __device__ void

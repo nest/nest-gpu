@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef NESTGPU_H
 #define NESTGPU_H
 
@@ -167,7 +166,6 @@ class NESTGPU
 
   int16_t* d_node_group_map_;
 
-
   int max_spike_buffer_size_;
 
   int max_spike_num_;
@@ -254,7 +252,6 @@ class NESTGPU
 
   NodeSeq _Create( std::string model_name, int n_nodes, int n_ports );
 
-
   double SpikeBufferUpdate_time_;
 
   double poisson_generator_time_;
@@ -276,7 +273,6 @@ class NESTGPU
   double SpikeReset_time_;
 
   double ExternalSpikeReset_time_;
-
 
   double SendSpikeToRemote_comm_time_;
 
@@ -750,7 +746,6 @@ public:
     ConnSpec& conn_spec,
     SynSpec& syn_spec );
 
-
   std::vector< std::string > GetScalVarNames( int i_node );
 
   int GetNIntVar( int i_node );
@@ -798,7 +793,6 @@ public:
   int SetConnectionFloatParamDistr( int64_t* conn_ids, int64_t n_conn, std::string param_name );
 
   int SetConnectionFloatParam( int64_t* conn_ids, int64_t n_conn, float val, std::string param_name );
-
 
   int SetConnectionIntParamArr( int64_t* conn_ids, int64_t n_conn, int* h_param_arr, std::string param_name );
 
@@ -924,6 +918,5 @@ public:
 
   int organizeExternalSpikes( int n_ext_spikes );
 };
-
 
 #endif

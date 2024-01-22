@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef USERM2CONDBETA_H
 #define USERM2CONDBETA_H
 
@@ -48,7 +47,6 @@ public:
   user_m2_rk5 rk5_data_struct_;
 
   int Init( int i_node_0, int n_neuron, int n_port, int i_group );
-
 
   int Calibrate( double time_min, float time_resolution );
 

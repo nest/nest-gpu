@@ -20,12 +20,10 @@
  *
  */
 
-
 #ifndef AEIFPSCDELTAMULTISYNAPSERK5_H
 #define AEIFPSCDELTAMULTISYNAPSERK5_H
 
 struct aeif_psc_delta_multisynapse_rk5;
-
 
 template < int NVAR, int NPARAM >
 __device__ void

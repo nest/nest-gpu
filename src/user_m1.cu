@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "rk5.h"
 #include "user_m1.h"
 #include "user_m1_kernel.h"
@@ -96,7 +95,7 @@ NodeCalibrate( int n_var, int n_param, double x, float* y, float* param, user_m1
   }
 }
 
-}
+} // namespace user_m1_ns
 
 __device__ void
 NodeInit( int n_var, int n_param, double x, float* y, float* param, user_m1_rk5 data_struct )

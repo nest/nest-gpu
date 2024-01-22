@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef IZHIKEVICHPSCEXP_H
 #define IZHIKEVICHPSCEXP_H
 
@@ -30,7 +29,6 @@
 #include "node_group.h"
 #include <iostream>
 #include <string>
-
 
 /* BeginUserDocs: neuron, integrate-and-fire
 
@@ -86,11 +84,11 @@ References
 ++++++++++
 
 .. [1] Izhikevich EM (2003). Simple model of spiking neurons. IEEE Transactions
-       on Neural Networks, 14:1569-1572. DOI: https://doi.org/10.1109/TNN.2003.820440
+       on Neural Networks, 14:1569-1572. DOI:
+https://doi.org/10.1109/TNN.2003.820440
 
 
 EndUserDocs */
-
 
 namespace izhikevich_psc_exp_ns
 {
@@ -122,7 +120,6 @@ enum GroupParamIndexes
   N_GROUP_PARAM
 };
 
-
 const std::string izhikevich_psc_exp_scal_var_name[ N_SCAL_VAR ] = { "I_syn", "V_m", "u", "refractory_step" };
 
 const std::string izhikevich_psc_exp_scal_param_name[ N_SCAL_PARAM ] = { "I_e", "den_delay" };
@@ -130,8 +127,7 @@ const std::string izhikevich_psc_exp_scal_param_name[ N_SCAL_PARAM ] = { "I_e", 
 const std::string
   izhikevich_psc_exp_group_param_name[ N_GROUP_PARAM ] = { "V_th", "a", "b", "c", "d", "tau_syn", "t_ref" };
 
-} // namespace
-
+} // namespace izhikevich_psc_exp_ns
 
 class izhikevich_psc_exp : public BaseNeuron
 {
@@ -153,6 +149,5 @@ public:
 
   int Free();
 };
-
 
 #endif

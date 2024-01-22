@@ -20,7 +20,6 @@
  *
  */
 
-
 #include <cmath>
 #include <config.h>
 #include <iostream>
@@ -115,7 +114,6 @@ spike_generator::Init( int i_node_0, int n_node, int /*n_port*/, int i_group )
 
   return 0;
 }
-
 
 int
 spike_generator::Free()
@@ -244,7 +242,6 @@ spike_generator::Calibrate( double time_min, float time_resolution )
 
   return 0;
 }
-
 
 int
 spike_generator::SetSpikes( int irel_node,

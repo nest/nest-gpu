@@ -48,7 +48,6 @@ bool print_sort_cfr = false;
 bool compare_with_serial = false;
 uint last_i_sub = 0;
 
-
 // maximum number of bits used to represent node index
 __device__ int MaxNodeNBits;
 
@@ -83,7 +82,6 @@ __device__ uint PortMask;
 // bit mask used to extract port and synapse group index
 __device__ uint PortSynMask;
 
-
 // ig0 = ConnGroupIdx0[i_spike_buffer] is the index in the whole
 // connection-group array of the first connection group outgoing
 // from the node i_spike_buffer
@@ -94,7 +92,6 @@ __device__ iconngroup_t* ConnGroupIdx0;
 // belonging to the connection group ig
 __device__ int64_t* ConnGroupIConn0;
 
-
 // ConnGroupDelay[ig]
 // delay associated to all connections of the connection group ig
 // with ig = 0, ..., Ng
@@ -103,7 +100,6 @@ __device__ int* ConnGroupDelay;
 // size (i.e. number of connections) of connection blocks
 // int64_t h_ConnBlockSize = 10000000; // 160000000; //50000000;
 __device__ int64_t ConnBlockSize;
-
 
 // Array of source node indexes and delays of all connections
 // Source node indexes and delays are merged in a single integer variable
@@ -132,7 +128,6 @@ const std::string ConnectionFloatParamName[ N_CONN_FLOAT_PARAM ] = { "weight", "
 
 const std::string ConnectionIntParamName[ N_CONN_INT_PARAM ] = { "source", "target", "port", "syn_group" };
 
-
 __global__ void
 setConnGroupNum( inode_t n_compact,
   iconngroup_t* conn_group_num,
@@ -148,7 +143,6 @@ setConnGroupNum( inode_t n_compact,
   iconngroup_t num = conn_group_idx0_compact[ i_compact + 1 ] - conn_group_idx0_compact[ i_compact ];
   conn_group_num[ source ] = num;
 }
-
 
 __global__ void
 setConnGroupIConn0( int64_t n_block_conn,
@@ -170,7 +164,6 @@ setConnGroupIConn0( int64_t n_block_conn,
   }
 }
 
-
 __global__ void
 connectCalibrateKernel( iconngroup_t* conn_group_idx0,
   int64_t* conn_group_iconn0,
@@ -188,7 +181,6 @@ connectCalibrateKernel( iconngroup_t* conn_group_idx0,
   ConnStructArray = conn_struct_array;
   ConnectionSpikeTime = conn_spike_time;
 }
-
 
 __global__ void
 setSourceTargetIndexKernel( uint64_t n_src_tgt,
@@ -212,7 +204,6 @@ setSourceTargetIndexKernel( uint64_t n_src_tgt,
   // printf("i_src_tgt %lld\tsrc_id %d\ttgt_id %d\tsrc_tgt_id %lld\n",
   //	 i_src_tgt, src_id, tgt_id, src_tgt_id);
 }
-
 
 // Get the index of the connection float parameter param_name
 // if param_name is not a float parameter, return -1

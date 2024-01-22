@@ -29,7 +29,6 @@
 #include "rev_spike.h"
 // #include <cub/cub.cuh>
 
-
 extern const int Ny_arr_size_;
 extern int Ny_th_arr_[];
 
@@ -116,7 +115,6 @@ ParallelOuterNestedLoopKernel( int Nx, int* d_Ny )
   }
 }
 
-
 //////////////////////////////////////////////////////////////////////
 template < int i_func >
 __global__ void
@@ -181,7 +179,6 @@ Smart2DNestedLoopKernel( int ix0, int iy0, int dim_x, int dim_y, int* sorted_idx
   }
 }
 
-
 namespace NestedLoop
 {
 extern void* d_sort_storage_;
@@ -243,7 +240,7 @@ template < int i_func >
 int Smart2DNestedLoop( int Nx, int* d_Ny );
 
 int Free();
-}
+} // namespace NestedLoop
 
 //////////////////////////////////////////////////////////////////////
 template < int i_func >
@@ -283,7 +280,6 @@ NestedLoop::Run( int nested_loop_algo, int Nx, int* d_Ny )
     return -1;
   }
 }
-
 
 //////////////////////////////////////////////////////////////////////
 template < int i_func >
@@ -714,6 +710,5 @@ NestedLoop::CumulSumNestedLoop( int Nx, int* d_Ny )
 
   return 0;
 }
-
 
 #endif

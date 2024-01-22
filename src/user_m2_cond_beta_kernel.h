@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef USERM2CONDBETAKERNEL_H
 #define USERM2CONDBETAKERNEL_H
 
@@ -85,7 +84,6 @@ enum GroupParamIndexes
   N_GROUP_PARAM
 };
 
-
 const std::string user_m2_scal_var_name[ N_SCAL_VAR ] = { "V_m", "w" };
 
 const std::string user_m2_port_var_name[ N_PORT_VAR ] = { "g", "g1" };
@@ -146,7 +144,6 @@ const std::string user_m2_group_param_name[ N_GROUP_PARAM ] = { "h_min_rel", "h0
 
 #define h_min_rel_ group_param_[ i_h_min_rel ]
 #define h0_rel_ group_param_[ i_h0_rel ]
-
 
 template < int NVAR, int NPARAM > //, class DataStruct>
 __device__ void
@@ -219,8 +216,7 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, user_m2_rk
   }
 }
 
-
-};
+}; // namespace user_m2_ns
 
 template <>
 int user_m2::UpdateNR< 0 >( long long it, double t1 );
@@ -257,6 +253,5 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, user_m2_rk
 {
   user_m2_ns::ExternalUpdate< NVAR, NPARAM >( x, y, param, end_time_step, data_struct );
 }
-
 
 #endif

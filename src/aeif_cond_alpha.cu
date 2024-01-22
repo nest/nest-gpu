@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "aeif_cond_alpha.h"
 #include "aeif_cond_alpha_kernel.h"
 #include "rk5.h"
@@ -74,7 +73,7 @@ NodeCalibrate( int n_var, int n_param, double x, float* y, float* param, aeif_co
   g0_in = M_E / tau_syn_in;
 }
 
-}
+} // namespace aeif_cond_alpha_ns
 
 __device__ void
 NodeInit( int n_var, int n_param, double x, float* y, float* param, aeif_cond_alpha_rk5 data_struct )

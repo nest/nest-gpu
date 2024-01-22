@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "aeif_psc_delta.h"
 #include "aeif_psc_delta_kernel.h"
 #include "rk5.h"
@@ -69,7 +68,7 @@ NodeCalibrate( int n_var, int n_param, double x, float* y, float* param, aeif_ps
   }
 }
 
-}
+} // namespace aeif_psc_delta_ns
 
 __device__ void
 NodeInit( int n_var, int n_param, double x, float* y, float* param, aeif_psc_delta_rk5 data_struct )

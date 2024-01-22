@@ -20,10 +20,8 @@
  *
  */
 
-
 // adapted from:
 // https://github.com/nest/nest-simulator/blob/master/models/iaf_psc_alpha.h
-
 
 #ifndef IAFPSCALPHA_H
 #define IAFPSCALPHA_H
@@ -34,7 +32,6 @@
 #include "node_group.h"
 #include <iostream>
 #include <string>
-
 
 /* BeginUserDocs: neuron, integrate-and-fire, current-based
 
@@ -113,7 +110,6 @@ iaf_psc_exp
 
 EndUserDocs */
 
-
 namespace iaf_psc_alpha_ns
 {
 enum ScalVarIndexes
@@ -161,14 +157,12 @@ enum ScalParamIndexes
   N_SCAL_PARAM
 };
 
-
 const std::string iaf_psc_alpha_scal_var_name[ N_SCAL_VAR ] = { "I_syn_ex",
   "I_syn_in",
   "dI_ex",
   "dI_in",
   "V_m_rel",
   "refractory_step" };
-
 
 const std::string iaf_psc_alpha_scal_param_name[ N_SCAL_PARAM ] = { "tau_m",
   "C_m",
@@ -196,7 +190,7 @@ const std::string iaf_psc_alpha_scal_param_name[ N_SCAL_PARAM ] = { "tau_m",
   "EPSCInitialValue",
   "IPSCInitialValue" };
 
-} // namespace
+} // namespace iaf_psc_alpha_ns
 
 class iaf_psc_alpha : public BaseNeuron
 {
@@ -211,6 +205,5 @@ public:
 
   int Free();
 };
-
 
 #endif

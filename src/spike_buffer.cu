@@ -90,7 +90,6 @@ __device__ float* SpikeBufferHeight; // [NSpikeBuffer*MaxSpikeBufferNum];
 // SpikeBufferHeight[i_spike*NSpikeBuffer+i_spike_buffer];
 // spike height
 
-
 ////////////////////////////////////////////////////////////
 // push a new spike in spike buffer of a node
 ////////////////////////////////////////////////////////////
@@ -225,7 +224,8 @@ SpikeBufferUpdate()
       // den_delay_arr points to the dendritic delay if the first
       // node of the group. The other are separate by steps = n_param
       den_delay_idx = ( int ) round( den_delay_arr[ i_neuron * n_param ] / NESTGPUTimeResolution );
-      // printf("isb update %d\tden_delay_idx: %d\n", i_spike_buffer, den_delay_idx);
+      // printf("isb update %d\tden_delay_idx: %d\n", i_spike_buffer,
+      // den_delay_idx);
     }
   }
   // flag for sending spikes back through dendrites (e.g. for STDP)
@@ -254,7 +254,6 @@ SpikeBufferUpdate()
     uint conn_group_i0 = ConnGroupIdx0[ i_spike_buffer ];
     uint conn_group_num = ConnGroupIdx0[ i_spike_buffer + 1 ] - conn_group_i0;
     int ig = conn_group_i0 + i_conn;
-
 
     if ( i_conn < conn_group_num )
     {
@@ -316,7 +315,6 @@ InitLastSpikeTimeIdx( unsigned int n_spike_buffers, int spike_time_idx )
   LastSpikeTimeIdx[ i_spike_buffer ] = spike_time_idx;
   LastRevSpikeTimeIdx[ i_spike_buffer ] = spike_time_idx;
 }
-
 
 int
 spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int max_delay_num )

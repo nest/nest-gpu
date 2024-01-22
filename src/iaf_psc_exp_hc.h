@@ -20,10 +20,8 @@
  *
  */
 
-
 // adapted from:
 // https://github.com/nest/nest-simulator/blob/master/models/iaf_psc_exp.h
-
 
 #ifndef IAFPSCEXPHC_H
 #define IAFPSCEXPHC_H
@@ -34,7 +32,6 @@
 #include "node_group.h"
 #include <iostream>
 #include <string>
-
 
 namespace iaf_psc_exp_hc_ns
 {
@@ -56,8 +53,7 @@ const std::string iaf_psc_exp_hc_scal_var_name[ N_SCAL_VAR ] = { "I_syn", "V_m_r
 
 const std::string iaf_psc_exp_hc_scal_param_name[ N_SCAL_PARAM ] = { "I_e" };
 
-} // namespace
-
+} // namespace iaf_psc_exp_hc_ns
 
 class iaf_psc_exp_hc : public BaseNeuron
 {
@@ -66,11 +62,9 @@ public:
 
   int Init( int i_node_0, int n_neuron, int n_port, int i_group );
 
-
   int Update( long long it, double t1 );
 
   int Free();
 };
-
 
 #endif

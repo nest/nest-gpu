@@ -47,7 +47,6 @@ __device__ uint*** local_source_node_map;
 
 __constant__ uint n_local_nodes; // number of local nodes
 
-
 // kernel that flags source nodes used in at least one new connection
 // of a given block
 __global__ void
@@ -83,7 +82,6 @@ setTargetHostArrayNodePointersKernel( uint* target_host_array,
   node_target_host_i_map[ i_node ] = target_host_i_map + n_target_hosts_cumul[ i_node ];
 }
 
-
 // kernel that fills the arrays target_host_array
 // and target_host_i_map using the node map
 __global__ void
@@ -114,7 +112,6 @@ fillTargetHostArrayFromMapKernel( uint** node_map,
   }
 }
 
-
 // kernel that counts source nodes actually used in new connections
 __global__ void
 countUsedSourceNodeKernel( uint n_source, uint* n_used_source_nodes, uint* source_node_flag )
@@ -131,7 +128,6 @@ countUsedSourceNodeKernel( uint n_source, uint* n_used_source_nodes, uint* sourc
     atomicAdd( n_used_source_nodes, 1 );
   }
 }
-
 
 // device function that checks if an int value is in a sorted 2d-array
 // assuming that the entries in the 2d-array are sorted.
@@ -176,7 +172,6 @@ checkIfValueIsIn2DArr( uint value, uint** arr, uint n_elem, uint block_size, uin
   }
   return false; // value not found
 }
-
 
 // kernel that searches node indexes in map
 // increase counter of mapped nodes
@@ -237,7 +232,6 @@ searchNodeIndexNotInMapKernel( uint** node_map,
   }
 }
 
-
 // kernel that checks if nodes are already in map
 // if not insert them in the map
 // In the target host unmapped remote source nodes must be mapped
@@ -271,7 +265,6 @@ insertNodesInMapKernel( uint** node_map,
   }
 }
 
-
 __global__ void
 MapIndexToSpikeBufferKernel( uint n_hosts, uint* host_offset, uint* node_index )
 {
@@ -290,7 +283,6 @@ MapIndexToSpikeBufferKernel( uint n_hosts, uint* host_offset, uint* node_index )
     }
   }
 }
-
 
 __global__ void
 addOffsetToSpikeBufferMapKernel( uint i_host, uint n_node_map, uint i_image_node_0 )

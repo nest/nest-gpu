@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef GETREALTIME_H
 #define GETREALTIME_H
 

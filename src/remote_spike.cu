@@ -144,7 +144,8 @@ countExternalSpikesPerTargetHost()
   const uint i_spike = blockIdx.x;
   if ( i_spike < *ExternalSpikeNum )
   {
-    // printf("ExternalSpikeNum: %d\ti_spike: %d\n", *ExternalSpikeNum, i_spike);
+    // printf("ExternalSpikeNum: %d\ti_spike: %d\n", *ExternalSpikeNum,
+    // i_spike);
     uint i_source = ExternalSpikeSourceNode[ i_spike ];
     // printf("i_source: %d\n", i_source);
     uint Nth = NExternalNodeTargetHost[ i_source ];
@@ -171,7 +172,8 @@ organizeExternalSpikesPerTargetHost()
   const uint i_spike = blockIdx.x;
   if ( i_spike < *ExternalSpikeNum )
   {
-    // printf("ExternalSpikeNum: %d\ti_spike: %d\n", *ExternalSpikeNum, i_spike);
+    // printf("ExternalSpikeNum: %d\ti_spike: %d\n", *ExternalSpikeNum,
+    // i_spike);
     uint i_source = ExternalSpikeSourceNode[ i_spike ];
     // printf("i_source: %d\n", i_source);
     uint Nth = NExternalNodeTargetHost[ i_source ];
@@ -246,7 +248,8 @@ NESTGPU::ExternalSpikeInit()
 
   CUDAMALLOCCTRL( "&d_ExternalTargetSpikeNum", &d_ExternalTargetSpikeNum, n_hosts_ * sizeof( uint ) );
 
-  // printf("n_hosts, max_spike_per_host: %d %d\n", n_hosts, max_spike_per_host);
+  // printf("n_hosts, max_spike_per_host: %d %d\n", n_hosts,
+  // max_spike_per_host);
 
   CUDAMALLOCCTRL(
     "&d_ExternalTargetSpikeNodeId", &d_ExternalTargetSpikeNodeId, max_remote_spike_num_ * sizeof( uint ) );
@@ -263,7 +266,8 @@ NESTGPU::ExternalSpikeInit()
   // n_node*sizeof(uint));
   // CUDAMALLOCCTRL("&d_ExternalNodeTargetHostId",&d_ExternalNodeTargetHostId,
   // n_node*sizeof(uint*));
-  // CUDAMALLOCCTRL("&d_ExternalNodeId",&d_ExternalNodeId, n_node*sizeof(uint*));
+  // CUDAMALLOCCTRL("&d_ExternalNodeId",&d_ExternalNodeId,
+  // n_node*sizeof(uint*));
 
   if ( remote_spike_height_ )
   {

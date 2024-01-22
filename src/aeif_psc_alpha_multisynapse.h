@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef AEIFPSCALPHAMULTISYNAPSE_H
 #define AEIFPSCALPHAMULTISYNAPSE_H
 
@@ -42,8 +41,8 @@ Current-based exponential integrate-and-fire neuron model
 Description
 +++++++++++
 
-``aeif_psc_alpha_multisynapse`` is the adaptive exponential integrate and fire neuron according
-to [1]_. Synaptic currents are modeled as alpha functions.
+``aeif_psc_alpha_multisynapse`` is the adaptive exponential integrate and fire
+neuron according to [1]_. Synaptic currents are modeled as alpha functions.
 
 This implementation uses the 5th order Runge-Kutta solver with
 adaptive step size to integrate the differential equation.
@@ -52,7 +51,8 @@ The membrane potential is given by the following differential equation:
 
 .. math::
 
-  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
+  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T
+\exp\left(\frac{V-V_{th}}{\Delta_T}\right)
   + I_{syn}(V, t)- w + I_e
 
 where ``I_syn (V,t)`` is the sum of excitatory and inhibitory synaptic currents
@@ -66,11 +66,12 @@ The differential equation for the spike-adaptation current `w` is:
 
 .. note::
 
-  The number of receptor ports must be specified at neuron creation (default value is 1) and
-  the receptor index starts from 0 (and not from 1 as in NEST multisynapse models).
-  The time constants are supplied by an array, ``tau_syn``. Port numbers
-  are automatically assigned in the range 0 to ``n_receptors-1``.
-  During connection, the ports are selected with the synapse property ``receptor``.
+  The number of receptor ports must be specified at neuron creation (default
+value is 1) and the receptor index starts from 0 (and not from 1 as in NEST
+multisynapse models). The time constants are supplied by an array, ``tau_syn``.
+Port numbers are automatically assigned in the range 0 to ``n_receptors-1``.
+  During connection, the ports are selected with the synapse property
+``receptor``.
 
 Parameters
 ++++++++++

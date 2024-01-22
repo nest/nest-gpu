@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef POISSGEN_H
 #define POISSGEN_H
 

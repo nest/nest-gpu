@@ -167,7 +167,6 @@ NESTGPU::RecvSpikeFromRemote()
 #endif
 }
 
-
 int
 NESTGPU::ConnectMpiInit( int argc, char* argv[] )
 {
@@ -194,7 +193,6 @@ NESTGPU::ConnectMpiInit( int argc, char* argv[] )
   throw ngpu_exception( "MPI is not available in your build" );
 #endif
 }
-
 
 int
 NESTGPU::MpiFinalize()

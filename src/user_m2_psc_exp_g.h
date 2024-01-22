@@ -20,10 +20,8 @@
  *
  */
 
-
 // adapted from:
 // https://github.com/nest/nest-simulator/blob/master/models/iaf_psc_exp.h
-
 
 #ifndef USERM2PSCEXPG_H
 #define USERM2PSCEXPG_H
@@ -34,7 +32,6 @@
 #include "node_group.h"
 #include <iostream>
 #include <string>
-
 
 namespace user_m2_ns
 {
@@ -65,7 +62,6 @@ enum GroupParamIndexes
   N_GROUP_PARAM
 };
 
-
 const std::string user_m2_scal_var_name[ N_SCAL_VAR ] = { "I_syn", "V_m_rel", "refractory_step" };
 
 const std::string user_m2_scal_param_name[ N_SCAL_PARAM ] = { "I_e" };
@@ -73,8 +69,7 @@ const std::string user_m2_scal_param_name[ N_SCAL_PARAM ] = { "I_e" };
 const std::string
   user_m2_group_param_name[ N_GROUP_PARAM ] = { "tau_m", "C_m", "E_L", "Theta_rel", "V_reset_rel", "tau_syn", "t_ref" };
 
-} // namespace
-
+} // namespace user_m2_ns
 
 class user_m2 : public BaseNeuron
 {
@@ -96,6 +91,5 @@ public:
 
   int Free();
 };
-
 
 #endif

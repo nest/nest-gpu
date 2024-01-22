@@ -20,12 +20,10 @@
  *
  */
 
-
 #ifndef AEIFCONDBETAMULTISYNAPSERK5_H
 #define AEIFCONDBETAMULTISYNAPSERK5_H
 
 struct aeif_cond_beta_multisynapse_rk5;
-
 
 template < int NVAR, int NPARAM >
 __device__ void

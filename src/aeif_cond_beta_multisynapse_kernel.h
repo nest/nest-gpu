@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef AEIFCONDBETAMULTISYNAPSEKERNEL_H
 #define AEIFCONDBETAMULTISYNAPSEKERNEL_H
 
@@ -85,7 +84,6 @@ enum GroupParamIndexes
   N_GROUP_PARAM
 };
 
-
 const std::string aeif_cond_beta_multisynapse_scal_var_name[ N_SCAL_VAR ] = { "V_m", "w" };
 
 const std::string aeif_cond_beta_multisynapse_port_var_name[ N_PORT_VAR ] = { "g", "g1" };
@@ -149,7 +147,6 @@ const std::string aeif_cond_beta_multisynapse_group_param_name[ N_GROUP_PARAM ] 
 
 #define h_min_rel_ group_param_[ i_h_min_rel ]
 #define h0_rel_ group_param_[ i_h0_rel ]
-
 
 template < int NVAR, int NPARAM > //, class DataStruct>
 __device__ void
@@ -222,8 +219,7 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, aeif_cond_
   }
 }
 
-
-};
+}; // namespace aeif_cond_beta_multisynapse_ns
 
 template <>
 int aeif_cond_beta_multisynapse::UpdateNR< 0 >( long long it, double t1 );
@@ -261,6 +257,5 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, aeif_cond_
 {
   aeif_cond_beta_multisynapse_ns::ExternalUpdate< NVAR, NPARAM >( x, y, param, end_time_step, data_struct );
 }
-
 
 #endif

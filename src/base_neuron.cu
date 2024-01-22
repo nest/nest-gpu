@@ -555,7 +555,6 @@ BaseNeuron::SetArrayVar( int* i_neuron, int n_neuron, std::string var_name, floa
   throw ngpu_exception( std::string( "Unrecognized variable " ) + var_name );
 }
 
-
 //////////////////////////////////////////////////////////////////////
 
 // set scalar parameter param_name of neurons
@@ -783,9 +782,7 @@ BaseNeuron::SetPortVarDistr( int* i_neuron, int n_neuron, std::string var_name, 
   return 0;
 }
 
-
 //////////////////////////////////////////////////////////////////////
-
 
 // get scalar parameters param_name of neurons
 // i_neuron, ..., i_neuron + n_neuron -1
@@ -934,7 +931,6 @@ BaseNeuron::GetGroupParam( std::string param_name )
 
   throw ngpu_exception( std::string( "Unrecognized group parameter " ) + param_name );
 }
-
 
 // get integer variable var_name of neurons
 // i_neuron, ..., i_neuron + n_neuron -1
@@ -1728,7 +1724,6 @@ BaseNeuron::ActivateSpikeCount()
     throw ngpu_exception( "Spike count already activated" );
   }
 
-
   return 0;
 }
 
@@ -1806,7 +1801,6 @@ BaseNeuron::SetNeuronGroupParam( std::string param_name, float val )
 {
   throw ngpu_exception( std::string( "Unrecognized neuron group parameter " ) + param_name );
 }
-
 
 // kernel for packing spike times of neurons
 // i_neuron, ..., i_neuron + n_neuron -1

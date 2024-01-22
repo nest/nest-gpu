@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "cuda_error.h"
 #include "nestgpu.h"
 #include "ngpu_exception.h"
@@ -110,7 +109,6 @@ SynModel::GetParam( std::string param_name )
   return param_val;
 }
 
-
 int
 SynModel::SetParam( std::string param_name, float val )
 {
@@ -123,7 +121,6 @@ SynModel::SetParam( std::string param_name, float val )
   gpuErrchk( cudaMemcpy( d_param_pt, &val, sizeof( float ), cudaMemcpyHostToDevice ) );
   return 0;
 }
-
 
 int
 NESTGPU::CreateSynGroup( std::string model_name )
@@ -211,7 +208,6 @@ NESTGPU::SetSynGroupParam( int syn_group, std::string param_name, float val )
 
   return syn_group_vect_[ syn_group - 1 ]->SetParam( param_name, val );
 }
-
 
 int
 NESTGPU::SynGroupCalibrate()

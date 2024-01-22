@@ -20,10 +20,8 @@
  *
  */
 
-
 // adapted from:
 // https://github.com/nest/nest-simulator/blob/master/models/iaf_psc_exp.h
-
 
 #ifndef IAFPSCEXPG_H
 #define IAFPSCEXPG_H
@@ -35,13 +33,13 @@
 #include <iostream>
 #include <string>
 
-
 /* BeginUserDocs: neuron, integrate-and-fire, current-based
 
 Short description
 +++++++++++++++++
 
-Leaky integrate-and-fire neuron model with exponential PSCs and same parameters within a population
+Leaky integrate-and-fire neuron model with exponential PSCs and same parameters
+within a population
 
 Description
 +++++++++++
@@ -123,7 +121,6 @@ iaf_psc_exp
 
 EndUserDocs */
 
-
 namespace iaf_psc_exp_g_ns
 {
 enum ScalVarIndexes
@@ -153,7 +150,6 @@ enum GroupParamIndexes
   N_GROUP_PARAM
 };
 
-
 const std::string iaf_psc_exp_g_scal_var_name[ N_SCAL_VAR ] = { "I_syn", "V_m_rel", "refractory_step" };
 
 const std::string iaf_psc_exp_g_scal_param_name[ N_SCAL_PARAM ] = { "I_e" };
@@ -166,8 +162,7 @@ const std::string iaf_psc_exp_g_group_param_name[ N_GROUP_PARAM ] = { "tau_m",
   "tau_syn",
   "t_ref" };
 
-} // namespace
-
+} // namespace iaf_psc_exp_g_ns
 
 class iaf_psc_exp_g : public BaseNeuron
 {
@@ -189,6 +184,5 @@ public:
 
   int Free();
 };
-
 
 #endif

@@ -119,12 +119,12 @@ clearConnRemoteFlag< conn12b_key, conn12b_struct >( conn12b_key& conn_key, conn1
 }
 
 template <>
-int ConnectionTemplate< conn12b_key, conn12b_struct >::setMaxNodeNBits( int max_node_nbits );
+int ConnectionTemplate< conn12b_key, conn12b_struct >::_setMaxNodeNBits( int max_node_nbits );
 
 template <>
-int ConnectionTemplate< conn12b_key, conn12b_struct >::setMaxDelayNBits( int max_delay_nbits );
+int ConnectionTemplate< conn12b_key, conn12b_struct >::_setMaxDelayNBits( int max_delay_nbits );
 
 template <>
-int ConnectionTemplate< conn12b_key, conn12b_struct >::setMaxSynNBits( int max_syn_nbits );
+int ConnectionTemplate< conn12b_key, conn12b_struct >::_setMaxSynNBits( int max_syn_nbits );
 
 #endif

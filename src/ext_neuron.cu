@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "ext_neuron.h"
 #include <cmath>
 #include <config.h>

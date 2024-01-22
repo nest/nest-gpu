@@ -75,7 +75,7 @@ int block_dim_x_;
 int block_dim_y_;
 int frame_area_;
 float x_lim_;
-}
+} // namespace NestedLoop
 
 // TMP
 #include "getRealTime.h"
@@ -91,12 +91,11 @@ extern __constant__ float NESTGPUTimeResolution;
 extern __constant__ NodeGroupStruct NodeGroupArray[];
 extern __device__ int16_t* NodeGroupMap;
 
-
 namespace NestedLoop
 {
 int* d_Ny_cumul_sum_;
 PrefixScan prefix_scan_;
-}
+} // namespace NestedLoop
 
 //////////////////////////////////////////////////////////////////////
 int

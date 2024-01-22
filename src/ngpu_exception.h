@@ -73,5 +73,4 @@ public:
     std::cerr << "Unrecognized error\n";        \
   }
 
-
 #endif

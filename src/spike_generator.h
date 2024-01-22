@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef SPIKEGENERATOR_H
 #define SPIKEGENERATOR_H
 
@@ -114,6 +113,5 @@ public:
 
   float* GetArrayParam( int i_neuron, std::string param_name );
 };
-
 
 #endif

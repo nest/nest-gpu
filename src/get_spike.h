@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef GETSPIKE_H
 #define GETSPIKE_H
 #include "conn12b.h"
@@ -121,7 +120,6 @@ NestedLoopFunction< 2 >( int i_spike, int i_syn )
 {
   NestedLoopFunction0< conn16b_key, conn16b_struct >( i_spike, i_syn );
 }
-
 
 __global__ void GetSpikes( double* spike_array,
   int array_size,

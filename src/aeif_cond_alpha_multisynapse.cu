@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "aeif_cond_alpha_multisynapse.h"
 #include "aeif_cond_alpha_multisynapse_kernel.h"
 #include "rk5.h"
@@ -77,7 +76,7 @@ NodeCalibrate( int n_var, int n_param, double x, float* y, float* param, aeif_co
   }
 }
 
-}
+} // namespace aeif_cond_alpha_multisynapse_ns
 
 __device__ void
 NodeInit( int n_var, int n_param, double x, float* y, float* param, aeif_cond_alpha_multisynapse_rk5 data_struct )

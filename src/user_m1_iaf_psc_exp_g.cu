@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "spike_buffer.h"
 #include "user_m1.h"
 #include <cmath>

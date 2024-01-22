@@ -20,7 +20,6 @@
  *
  */
 
-
 // adapted from:
 // https://github.com/nest/nest-simulator/blob/master/models/user_m2.cpp
 
@@ -61,7 +60,6 @@ extern __device__ double propagator_32( double, double, double, double );
 #define P21in param[ i_P21in ]
 #define P22 param[ i_P22 ]
 
-
 __global__ void
 user_m2_Calibrate( int n_node, float* param_arr, int n_param, float h )
 {
@@ -78,7 +76,6 @@ user_m2_Calibrate( int n_node, float* param_arr, int n_param, float h )
     P20 = tau_m / C_m * ( 1.0 - P22 );
   }
 }
-
 
 __global__ void
 user_m2_Update( int n_node, int i_node_0, float* var_arr, float* param_arr, int n_var, int n_param )

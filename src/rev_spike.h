@@ -23,9 +23,9 @@
 #ifndef REVSPIKE_H
 #define REVSPIKE_H
 
-// #include "connect.h"
 #include "conn12b.h"
 #include "conn16b.h"
+#include "connect.h"
 #include "get_spike.h"
 #include "spike_buffer.h"
 #include "syn_model.h"
@@ -46,7 +46,6 @@ extern __device__ int* TargetRevConnectionSize;
 extern int64_t** d_TargetRevConnection; //[i][j] j=0,...,RevConnectionSize[i]-1
 extern __device__ int64_t** TargetRevConnection;
 
-
 __global__ void revSpikeReset();
 
 __global__ void revSpikeBufferUpdate( unsigned int n_node );
@@ -56,7 +55,6 @@ int revSpikeFree();
 int resetConnectionSpikeTimeDown();
 
 int resetConnectionSpikeTimeUp();
-
 
 //////////////////////////////////////////////////////////////////////
 // This is the function called by the nested loop
@@ -117,6 +115,5 @@ NestedLoopFunction< 3 >( int i_spike, int i_target_rev_conn )
 {
   NestedLoopFunction1< conn16b_key, conn16b_struct >( i_spike, i_target_rev_conn );
 }
-
 
 #endif

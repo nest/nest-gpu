@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef RK5_H
 #define RK5_H
 
@@ -287,7 +286,6 @@ public:
   template < int NVAR, int NPARAM >
   int Update( double x1, float h_min, DataStruct data_struct );
 };
-
 
 template < class DataStruct >
 template < int NVAR, int NPARAM >

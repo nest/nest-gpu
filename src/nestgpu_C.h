@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef NESTGPUC_H
 #define NESTGPUC_H
 
@@ -75,7 +74,6 @@ extern "C"
 
   int NESTGPU_IsNeuronArrayParam( int i_node, char* param_name );
 
-
   int NESTGPU_SetNeuronIntVar( int i_node, int n_neuron, char* var_name, int val );
 
   int NESTGPU_SetNeuronScalVar( int i_node, int n_neuron, char* var_name, float val );
@@ -91,7 +89,6 @@ extern "C"
   int NESTGPU_SetNeuronScalParamDistr( int i_node, int n_neuron, char* param_name );
 
   int NESTGPU_SetNeuronScalVarDistr( int i_node, int n_neuron, char* var_name );
-
 
   int NESTGPU_SetNeuronPortParamDistr( int i_node, int n_neuron, char* param_name );
 
@@ -393,6 +390,5 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

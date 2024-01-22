@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef SENDSPIKE_H
 #define SENDSPIKE_H
 

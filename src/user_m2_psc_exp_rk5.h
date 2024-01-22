@@ -20,12 +20,10 @@
  *
  */
 
-
 #ifndef USERM2PSCEXPRK5_H
 #define USERM2PSCEXPRK5_H
 
 struct user_m2_rk5;
-
 
 template < int NVAR, int NPARAM >
 __device__ void Derivatives( double x, float* y, float* dydx, float* param, user_m2_rk5 data_struct );

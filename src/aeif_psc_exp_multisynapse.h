@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef AEIFPSCEXPMULTISYNAPSE_H
 #define AEIFPSCEXPMULTISYNAPSE_H
 
@@ -31,7 +30,6 @@
 #include "rk5.h"
 #include <iostream>
 #include <string>
-
 
 /* BeginUserDocs: neuron, integrate-and-fire, adaptive threshold, current-based
 
@@ -54,11 +52,12 @@ The membrane potential is given by the following differential equation:
 
 .. math::
 
- C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
+ C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T
+\exp\left(\frac{V-V_{th}}{\Delta_T}\right)
     + I_{syn}(t)- w + I_e
 
-where ``I_syn (t)`` is the sum of the synaptic currents modeled as truncated exponentials
-with time constant ``tau_syn``.
+where ``I_syn (t)`` is the sum of the synaptic currents modeled as truncated
+exponentials with time constant ``tau_syn``.
 
 The differential equation for the spike-adaptation current `w` is:
 
@@ -68,11 +67,12 @@ The differential equation for the spike-adaptation current `w` is:
 
 .. note::
 
-  The number of receptor ports must be specified at neuron creation (default value is 1) and
-  the receptor index starts from 0 (and not from 1 as in NEST multisynapse models).
-  The time constants are supplied by an array, ``tau_syn``. Port numbers
-  are automatically assigned in the range 0 to ``n_receptors-1``.
-  During connection, the ports are selected with the synapse property ``receptor``.
+  The number of receptor ports must be specified at neuron creation (default
+value is 1) and the receptor index starts from 0 (and not from 1 as in NEST
+multisynapse models). The time constants are supplied by an array, ``tau_syn``.
+Port numbers are automatically assigned in the range 0 to ``n_receptors-1``.
+  During connection, the ports are selected with the synapse property
+``receptor``.
 
 Parameters
 ++++++++++
@@ -140,7 +140,6 @@ See also
 iaf_psc_exp
 
 EndUserDocs */
-
 
 #define MAX_PORT_NUM 20
 

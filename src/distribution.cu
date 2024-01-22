@@ -27,7 +27,6 @@
 #include <curand.h>
 #include <vector>
 
-
 __global__ void
 randomNormalClippedKernel( float* arr,
   int64_t n,
@@ -86,7 +85,6 @@ randomNormalClipped( float* arr, int64_t n, float mu, float sigma, float low, fl
 
   return 0;
 }
-
 
 bool
 Distribution::isDistribution( int distr_idx )

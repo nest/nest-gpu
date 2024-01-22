@@ -92,7 +92,6 @@ getUsedSourceNodeIndexKernel( T source,
 // kernel that counts source nodes actually used in new connections
 __global__ void countUsedSourceNodeKernel( uint n_source, uint* n_used_source_nodes, uint* source_node_flag );
 
-
 // kernel that searches source node indexes in the map,
 // and set local_node_index
 template < class T >
@@ -128,7 +127,6 @@ setLocalNodeIndexKernel( T source,
   }
 }
 
-
 // kernel that replaces the source node index
 // in a new remote connection of a given block
 // source_node[i_conn] with the value of the element pointed by the
@@ -151,7 +149,6 @@ fixConnectionSourceNodeIndexesKernel( ConnKeyT* conn_key_subarray, int64_t n_con
   // printf("i_conn: %ld\t new_i_source: %d\n", i_conn, new_i_source);
 }
 
-
 // kernel that searches node indexes in map
 // increase counter of mapped nodes
 __global__ void searchNodeIndexInMapKernel( uint** node_map,
@@ -168,7 +165,6 @@ __global__ void searchNodeIndexNotInMapKernel( uint** node_map,
   uint* n_node_to_map,
   uint n_node );
 
-
 // kernel that checks if nodes are already in map
 // if not insert them in the map
 // In the target host unmapped remote source nodes must be mapped
@@ -181,7 +177,6 @@ __global__ void insertNodesInMapKernel( uint** node_map,
   bool* node_to_map,
   uint* i_node_to_map,
   uint n_node );
-
 
 template < class ConnKeyT, class ConnStructT >
 __global__ void
@@ -256,7 +251,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::allocLocalSourceNodeMapBlocks( std:
 
   return 0;
 }
-
 
 // Loop on all new connections and set source_node_flag[i_source]=true
 template < class ConnKeyT, class ConnStructT >
@@ -362,7 +356,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapInit()
     std::vector< uint* > lsn_map;
     h_local_source_node_map_.push_back( lsn_map );
   }
-
 
   // launch kernel to copy pointers to CUDA variables ?? maybe in calibration?
   // .....
@@ -512,7 +505,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
     n_hosts_ * sizeof( uint** ),
     cudaMemcpyHostToDevice ) );
   gpuErrchk( cudaMemcpyToSymbol( local_spike_buffer_map, &d_local_spike_buffer_map_, sizeof( uint*** ) ) );
-
 
   // uint n_nodes = GetNLocalNodes(); // number of nodes
   //  n_target_hosts[i_node] is the number of remote target hosts
@@ -685,7 +677,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::_RemoteConnect( int source_host,
   return 0;
 }
 
-
 template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::addOffsetToExternalNodeIds( uint n_local_nodes )
@@ -709,7 +700,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::addOffsetToExternalNodeIds( uint n_
 
   return 0;
 }
-
 
 // REMOTE CONNECT FUNCTION for target_host matching this_host
 template < class ConnKeyT, class ConnStructT >
@@ -785,7 +775,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   // and local_node_index
   uint* d_i_unsorted_source_arr;          // [n_used_source_nodes];
   uint* d_i_sorted_source_arr;            // [n_used_source_nodes];
-  bool* d_source_node_index_to_be_mapped; //[n_used_source_nodes]; // initially false
+  bool* d_source_node_index_to_be_mapped; //[n_used_source_nodes]; // initially
+                                          // false
   CUDAMALLOCCTRL(
     "&d_unsorted_source_node_index", &d_unsorted_source_node_index, n_used_source_nodes * sizeof( uint ) );
   CUDAMALLOCCTRL( "&d_sorted_source_node_index", &d_sorted_source_node_index, n_used_source_nodes * sizeof( uint ) );
@@ -811,7 +802,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
 
   // Sort the arrays using unsorted_source_node_index as key
   // and i_source as value -> sorted_source_node_index
-
 
   // Determine temporary storage requirements for RadixSort
   void* d_sort_storage = NULL;
@@ -850,7 +840,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   uint n_node_map;
   gpuErrchk(
     cudaMemcpy( &n_node_map, &d_n_remote_source_node_map_[ source_host ], sizeof( uint ), cudaMemcpyDeviceToHost ) );
-
 
   if ( n_blocks > 0 )
   {
@@ -1023,7 +1012,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   return 0;
 }
 
-
 // REMOTE CONNECT FUNCTION for source_host matching this_host
 template < class ConnKeyT, class ConnStructT >
 template < class T1, class T2 >
@@ -1085,7 +1073,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectTarget( int target_hos
   // and local_node_index
   uint* d_i_unsorted_source_arr;          // [n_used_source_nodes];
   uint* d_i_sorted_source_arr;            // [n_used_source_nodes];
-  bool* d_source_node_index_to_be_mapped; //[n_used_source_nodes]; // initially false
+  bool* d_source_node_index_to_be_mapped; //[n_used_source_nodes]; // initially
+                                          // false
   CUDAMALLOCCTRL(
     "&d_unsorted_source_node_index", &d_unsorted_source_node_index, n_used_source_nodes * sizeof( uint ) );
   CUDAMALLOCCTRL( "&d_sorted_source_node_index", &d_sorted_source_node_index, n_used_source_nodes * sizeof( uint ) );
@@ -1111,7 +1100,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectTarget( int target_hos
 
   // Sort the arrays using unsorted_source_node_index as key
   // and i_source as value -> sorted_source_node_index
-
 
   // Determine temporary storage requirements for RadixSort
   void* d_sort_storage = NULL;
@@ -1151,7 +1139,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectTarget( int target_hos
   gpuErrchk(
     cudaMemcpy( &n_node_map, &d_n_local_source_node_map_[ target_host ], sizeof( uint ), cudaMemcpyDeviceToHost ) );
 
-
   if ( n_blocks > 0 )
   {
     // check for consistency between number of elements
@@ -1188,7 +1175,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectTarget( int target_hos
   uint h_n_node_to_map;
 
   gpuErrchk( cudaMemcpy( &h_n_node_to_map, d_n_node_to_map, sizeof( uint ), cudaMemcpyDeviceToHost ) );
-
 
   // Check if new blocks are required for the map
   uint new_n_blocks = ( n_node_map + h_n_node_to_map - 1 ) / node_map_block_size_ + 1;
@@ -1274,6 +1260,5 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectTarget( int target_hos
 
   return 0;
 }
-
 
 #endif // REMOTECONNECTH

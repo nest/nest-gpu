@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef IZHIKEVICHCONDBETAKERNEL_H
 #define IZHIKEVICHCONDBETAKERNEL_H
 
@@ -80,7 +79,6 @@ enum GroupParamIndexes
   N_GROUP_PARAM
 };
 
-
 const std::string izhikevich_cond_beta_scal_var_name[ N_SCAL_VAR ] = { "V_m", "u" };
 
 const std::string izhikevich_cond_beta_port_var_name[ N_PORT_VAR ] = { "g", "g1" };
@@ -96,7 +94,6 @@ const std::string izhikevich_cond_beta_scal_param_name[ N_SCAL_PARAM ] = { "V_th
   "den_delay" };
 
 const std::string izhikevich_cond_beta_port_param_name[ N_PORT_PARAM ] = { "E_rev", "tau_rise", "tau_decay", "g0" };
-
 
 const std::string izhikevich_cond_beta_group_param_name[ N_GROUP_PARAM ] = { "h_min_rel", "h0_rel" };
 
@@ -130,10 +127,8 @@ const std::string izhikevich_cond_beta_group_param_name[ N_GROUP_PARAM ] = { "h_
 #define tau_decay( i ) param[ N_SCAL_PARAM + N_PORT_PARAM * i + i_tau_decay ]
 #define g0( i ) param[ N_SCAL_PARAM + N_PORT_PARAM * i + i_g0 ]
 
-
 #define h_min_rel_ group_param_[ i_h_min_rel ]
 #define h0_rel_ group_param_[ i_h0_rel ]
-
 
 template < int NVAR, int NPARAM > //, class DataStruct>
 __device__ void
@@ -206,8 +201,7 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, izhikevich
   }
 }
 
-
-};
+}; // namespace izhikevich_cond_beta_ns
 
 template <>
 int izhikevich_cond_beta::UpdateNR< 0 >( long long it, double t1 );
@@ -244,6 +238,5 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, izhikevich
 {
   izhikevich_cond_beta_ns::ExternalUpdate< NVAR, NPARAM >( x, y, param, end_time_step, data_struct );
 }
-
 
 #endif

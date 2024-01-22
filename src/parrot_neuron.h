@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef PARROTNEURON_H
 #define PARROTNEURON_H
 
@@ -29,7 +28,6 @@
 // #include "node_group.h"
 #include "base_neuron.h"
 // #include "neuron_models.h"
-
 
 /* BeginUserDocs: neuron, parrot
 
@@ -66,7 +64,6 @@ a `stdp` onto port 1 on the postsynaptic parrot neuron.
 
 EndUserDocs */
 
-
 class parrot_neuron : public BaseNeuron
 {
 public:
@@ -78,6 +75,5 @@ public:
 
   int Update( long long it, double t1 );
 };
-
 
 #endif

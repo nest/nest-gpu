@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef SPIKEDETECTOR_H
 #define SPIKEDETECTOR_H
 
@@ -62,7 +61,8 @@ Here follows an example:
 
   neuron = nestgpu.Create("aeif_cond_beta", 3)
   spike_det = nestgpu.Create("spike_detector")
-  nestgpu.Connect([neuron[0]], spike_det, {"rule": "one_to_one"}, {"weight": 1.0, "delay": 1.0, "receptor":0})
+  nestgpu.Connect([neuron[0]], spike_det, {"rule": "one_to_one"},
+{"weight": 1.0, "delay": 1.0, "receptor":0})
 
   recorder = nestgpu.CreateRecord("", ["spike_height"], [spike_det[0]], [0])
 
@@ -100,6 +100,5 @@ public:
 
   int Update( long long it, double t1 );
 };
-
 
 #endif

@@ -20,14 +20,12 @@
  *
  */
 
-
 #ifndef MULTIMETER_H
 #define MULTIMETER_H
 #include "base_neuron.h"
 #include <stdio.h>
 #include <string>
 #include <vector>
-
 
 /* BeginUserDocs: device, recorder
 
@@ -90,7 +88,6 @@ See also
 ++++++++
 
 EndUserDocs */
-
 
 class Record
 {

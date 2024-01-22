@@ -20,7 +20,6 @@
  *
  */
 
-
 #include <cmath>
 #include <config.h>
 #include <iostream>
@@ -55,7 +54,6 @@ const std::string parrot_neuron_scal_var_name[ N_PARROT_NEURON_SCAL_VAR ] = { "i
   "dummy_input",
   "V" };
 
-
 __global__ void
 parrot_neuron_UpdateKernel( int i_node_0, int n_node, float* var_arr, float* param_arr, int n_var, int n_param )
 {
@@ -79,7 +77,6 @@ parrot_neuron_UpdateKernel( int i_node_0, int n_node, float* var_arr, float* par
     }
   }
 }
-
 
 int
 parrot_neuron::Init( int i_node_0, int n_node, int /*n_port*/, int i_group )

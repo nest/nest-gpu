@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef STDP_H
 #define STDP_H
 #include <cmath>
@@ -92,7 +91,6 @@ const std::string stdp_param_name[ N_PARAM ] = {
   //, "den_delay"
 };
 
-
 __device__ __forceinline__ void
 STDPUpdate( float* weight_pt, float Dt, float* param )
 {
@@ -124,7 +122,6 @@ STDPUpdate( float* weight_pt, float Dt, float* param )
   w1 = w1 < Wmax ? w1 : Wmax;
   *weight_pt = ( float ) w1;
 }
-}
-
+} // namespace stdp_ns
 
 #endif

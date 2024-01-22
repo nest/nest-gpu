@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "iaf_psc_exp_hc.h"
 #include "spike_buffer.h"
 #include <cmath>

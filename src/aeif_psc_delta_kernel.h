@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef AEIFPSCDELTAKERNEL_H
 #define AEIFPSCDELTAKERNEL_H
 
@@ -74,7 +73,6 @@ enum GroupParamIndexes
   N_GROUP_PARAM
 };
 
-
 const std::string aeif_psc_delta_scal_var_name[ N_SCAL_VAR ] = { "V_m", "w" };
 
 const std::string aeif_psc_delta_scal_param_name[ N_SCAL_PARAM ] = { "V_th",
@@ -93,7 +91,6 @@ const std::string aeif_psc_delta_scal_param_name[ N_SCAL_PARAM ] = { "V_th",
   "den_delay" };
 
 const std::string aeif_psc_delta_group_param_name[ N_GROUP_PARAM ] = { "h_min_rel", "h0_rel" };
-
 
 //
 // I know that defines are "bad", but the defines below make the
@@ -123,7 +120,6 @@ const std::string aeif_psc_delta_group_param_name[ N_GROUP_PARAM ] = { "h_min_re
 
 #define h_min_rel_ group_param_[ i_h_min_rel ]
 #define h0_rel_ group_param_[ i_h0_rel ]
-
 
 template < int NVAR, int NPARAM > //, class DataStruct>
 __device__ void
@@ -182,9 +178,7 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, aeif_psc_d
   }
 }
 
-
-};
-
+}; // namespace aeif_psc_delta_ns
 
 template < int NVAR, int NPARAM >
 __device__ void
@@ -199,6 +193,5 @@ ExternalUpdate( double x, float* y, float* param, bool end_time_step, aeif_psc_d
 {
   aeif_psc_delta_ns::ExternalUpdate< NVAR, NPARAM >( x, y, param, end_time_step, data_struct );
 }
-
 
 #endif

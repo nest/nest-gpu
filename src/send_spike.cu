@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "cuda_error.h"
 #include "send_spike.h"
 #include <config.h>
@@ -71,7 +70,6 @@ DeviceSpikeInit( int* spike_num,
   MaxSpikeNum = max_spike_num;
   *SpikeNum = 0;
 }
-
 
 void
 SpikeInit( int max_spike_num )

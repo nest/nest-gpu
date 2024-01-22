@@ -1,5 +1,6 @@
 #include "conn16b.h"
 #include "connect.h"
+
 #include <iostream>
 
 __global__ void
@@ -33,7 +34,7 @@ setMaxSynNBits16bKernel( int max_syn_nbits, int max_port_nbits, uint syn_mask, u
 // and other dependent variables
 template <>
 int
-ConnectionTemplate< conn16b_key, conn16b_struct >::setMaxNodeNBits( int max_node_nbits )
+ConnectionTemplate< conn16b_key, conn16b_struct >::_setMaxNodeNBits( int max_node_nbits )
 {
   std::cout << "Warning: number of bits representing node index is fixed "
                "to 32 and cannot be modified with conn16b connection type";
@@ -45,7 +46,7 @@ ConnectionTemplate< conn16b_key, conn16b_struct >::setMaxNodeNBits( int max_node
 // and other dependent variables
 template <>
 int
-ConnectionTemplate< conn16b_key, conn16b_struct >::setMaxDelayNBits( int max_delay_nbits )
+ConnectionTemplate< conn16b_key, conn16b_struct >::_setMaxDelayNBits( int max_delay_nbits )
 {
   // maximum number of bits used to represent node index
   max_delay_nbits_ = max_delay_nbits;
@@ -82,7 +83,7 @@ ConnectionTemplate< conn16b_key, conn16b_struct >::setMaxDelayNBits( int max_del
 // and other dependent variables
 template <>
 int
-ConnectionTemplate< conn16b_key, conn16b_struct >::setMaxSynNBits( int max_syn_nbits )
+ConnectionTemplate< conn16b_key, conn16b_struct >::_setMaxSynNBits( int max_syn_nbits )
 {
   // maximum number of bits used to represent synapse group index
   max_syn_nbits_ = max_syn_nbits;
@@ -124,7 +125,7 @@ ConnectionTemplate< conn16b_key, conn16b_struct >::ConnectionTemplate()
   //"specialized constructor\n";
   init();
   max_node_nbits_ = 31;
-  setMaxDelayNBits( 14 ); // maximum number of bits for delays
+  _setMaxDelayNBits( 14 ); // maximum number of bits for delays
   // std::cout << "max_node_nbits_: " << max_node_nbits_ << "\n";
-  setMaxSynNBits( 10 ); // maximum number of synapse groups is 2^10
+  _setMaxSynNBits( 10 ); // maximum number of synapse groups is 2^10
 }

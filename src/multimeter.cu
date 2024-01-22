@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "cuda_error.h"
 #include "multimeter.h"
 #include <config.h>

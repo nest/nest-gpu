@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef AEIFPSCALPHA_H
 #define AEIFPSCALPHA_H
 
@@ -42,8 +41,8 @@ Current-based exponential integrate-and-fire neuron model
 Description
 +++++++++++
 
-``aeif_psc_alpha`` is the adaptive exponential integrate and fire neuron according
-to [1]_. Synaptic currents are modeled as alpha functions.
+``aeif_psc_alpha`` is the adaptive exponential integrate and fire neuron
+according to [1]_. Synaptic currents are modeled as alpha functions.
 
 This implementation uses the 5th order Runge-Kutta solver with
 adaptive step size to integrate the differential equation.
@@ -52,11 +51,12 @@ The membrane potential is given by the following differential equation:
 
 .. math::
 
-  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
+  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T
+\exp\left(\frac{V-V_{th}}{\Delta_T}\right)
   + I_{syn\_ ex}(V, t) - I_{syn\_ in}(V, t) - w + I_e
 
-where `I_syn_ex` and `I_syn_in` are the excitatory and inhibitory synaptic currents
-modeled as alpha functions.
+where `I_syn_ex` and `I_syn_in` are the excitatory and inhibitory synaptic
+currents modeled as alpha functions.
 
 The differential equation for the spike-adaptation current `w` is:
 
@@ -68,8 +68,9 @@ The differential equation for the spike-adaptation current `w` is:
 
   Although this model is not multisynapse, the port (excitatory or inhibitory)
   to be chosen must be specified using the synapse property ``receptor``.
-  The excitatory port has index 0, whereas the inhibitory one has index 1. Differently from
-  NEST, the connection weights related to the inhibitory port must be positive.
+  The excitatory port has index 0, whereas the inhibitory one has index 1.
+Differently from NEST, the connection weights related to the inhibitory port
+must be positive.
 
 Parameters
 ++++++++++
@@ -155,7 +156,6 @@ public:
   aeif_psc_alpha_rk5 rk5_data_struct_;
 
   int Init( int i_node_0, int n_neuron, int n_port, int i_group );
-
 
   int Calibrate( double time_min, float time_resolution );
 

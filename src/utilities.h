@@ -71,7 +71,6 @@ locate( T1 val, T1* data, T2 n )
 
 int64_t IntPow( int64_t x, unsigned int p );
 
-
 template < class T >
 T*
 sortArray( T* h_arr, int n_elem )
@@ -101,6 +100,5 @@ sortArray( T* h_arr, int n_elem )
 
   return d_arr_sorted;
 }
-
 
 #endif

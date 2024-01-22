@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef SYNMODEL_H
 #define SYNMODEL_H
 
@@ -59,7 +58,6 @@ SynapseUpdate( int syn_group, float* w, float Dt )
   }
 }
 
-
 const std::string syn_model_name[ N_SYN_MODELS ] = { "", "test_syn_model", "stdp" };
 
 class SynModel
@@ -86,16 +84,21 @@ public:
   friend class NESTGPU;
 };
 
-
 class STDP : public SynModel
 {
+  int _Init();
+
 public:
   STDP()
   {
-    Init();
+    _Init();
   }
-  int Init();
-};
 
+  int
+  Init()
+  {
+    return _Init();
+  }
+};
 
 #endif

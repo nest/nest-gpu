@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "cuda_error.h"
 #include "ngpu_exception.h"
 #include "stdp.h"
@@ -32,7 +31,7 @@
 using namespace stdp_ns;
 
 int
-STDP::Init()
+STDP::_Init()
 {
   type_ = i_stdp_model;
   n_param_ = N_PARAM;

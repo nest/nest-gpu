@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef NEURONMODELS_H
 #define NEURONMODELS_H
 

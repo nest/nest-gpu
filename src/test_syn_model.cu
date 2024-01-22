@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "cuda_error.h"
 #include "ngpu_exception.h"
 #include "test_syn_model.h"
@@ -39,7 +38,7 @@ TestSynModelUpdate( float* w, float Dt, float* param )
 }
 
 int
-TestSynModel::Init()
+TestSynModel::_Init()
 {
   type_ = i_test_syn_model;
   n_param_ = N_PARAM;

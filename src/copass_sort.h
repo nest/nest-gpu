@@ -109,8 +109,7 @@ int sort( KeyT** key_subarray,
   void* d_storage,
   int64_t& st_bytes );
 
-};
-
+}; // namespace copass_sort
 
 template < class ElementT, class ArrayT, class AuxArrayT >
 int
@@ -134,7 +133,6 @@ copass_sort::extract_partitions( ArrayT* d_subarray,
 
   return 0;
 }
-
 
 template < class KeyT, class ArrayT >
 int
@@ -572,7 +570,6 @@ copass_sort::sort_template( KeyArrayT key_array,
 }
 //////////////////////////////////////////////////////////////////////
 
-
 template < class KeyT >
 int
 copass_sort::sort( KeyT* d_keys, position_t n, position_t block_size, void* d_storage, int64_t& st_bytes )
@@ -645,7 +642,6 @@ copass_sort::get_aux_array_values()
   return h_aux_array_values;
 }
 
-
 template < class KeyT, class ValueT >
 int
 copass_sort::sort( KeyT* d_keys,
@@ -705,7 +701,6 @@ copass_sort::sort( KeyT* d_keys,
 
   return 0;
 }
-
 
 template < class KeyT >
 int
@@ -808,7 +803,6 @@ copass_sort::sort( KeyT** key_subarray,
 
   KeyT** d_key_array_data_pt = NULL;
   cudaReusableAlloc( d_storage, st_bytes, &d_key_array_data_pt, k, sizeof( KeyT* ) );
-
 
   if ( d_storage != NULL )
   {

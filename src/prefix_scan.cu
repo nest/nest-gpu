@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "prefix_scan.h"
 #include "scan.h"
 #include <config.h>

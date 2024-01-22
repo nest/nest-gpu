@@ -20,10 +20,8 @@
  *
  */
 
-
 // adapted from:
 // https://github.com/nest/nest-simulator/blob/master/models/user_m1.h
-
 
 #ifndef USERM1IAFPSCEXP_H
 #define USERM1IAFPSCEXP_H
@@ -34,7 +32,6 @@
 #include "node_group.h"
 #include <iostream>
 #include <string>
-
 
 namespace user_m1_ns
 {
@@ -72,9 +69,7 @@ enum ScalParamIndexes
   N_SCAL_PARAM
 };
 
-
 const std::string user_m1_scal_var_name[ N_SCAL_VAR ] = { "I_syn_ex", "I_syn_in", "V_m_rel", "refractory_step" };
-
 
 const std::string user_m1_scal_param_name[ N_SCAL_PARAM ] = { "tau_m",
   "C_m",
@@ -95,7 +90,7 @@ const std::string user_m1_scal_param_name[ N_SCAL_PARAM ] = { "tau_m",
   "P21in",
   "P22" };
 
-} // namespace
+} // namespace user_m1_ns
 
 class user_m1 : public BaseNeuron
 {
@@ -104,13 +99,11 @@ public:
 
   int Init( int i_node_0, int n_neuron, int n_port, int i_group );
 
-
   int Calibrate( double, float time_resolution );
 
   int Update( long long it, double t1 );
 
   int Free();
 };
-
 
 #endif

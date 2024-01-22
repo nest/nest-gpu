@@ -20,7 +20,6 @@
  *
  */
 
-
 #include "izhikevich_psc_exp.h"
 #include "spike_buffer.h"
 #include <cmath>
@@ -97,7 +96,6 @@ izhikevich_psc_exp_Update( int n_node,
     }
   }
 }
-
 
 izhikevich_psc_exp::~izhikevich_psc_exp()
 {

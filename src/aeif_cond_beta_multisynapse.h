@@ -20,7 +20,6 @@
  *
  */
 
-
 #ifndef AEIFCONDBETAMULTISYNAPSE_H
 #define AEIFCONDBETAMULTISYNAPSE_H
 
@@ -32,8 +31,8 @@
 #include <iostream>
 #include <string>
 
-
-/* BeginUserDocs: neuron, adaptive threshold, integrate-and-fire, conductance-based
+/* BeginUserDocs: neuron, adaptive threshold, integrate-and-fire,
+conductance-based
 
 Short description
 +++++++++++++++++
@@ -58,7 +57,8 @@ The membrane potential is given by the following differential equation:
 
 .. math::
 
-  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
+  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T
+\exp\left(\frac{V-V_{th}}{\Delta_T}\right)
   + I_{syn_{tot}}(V, t)- w + I_e
 
 where:
@@ -79,13 +79,14 @@ When the neuron fires a spike, the adaptation current `w <- w + b`.
 
 .. note::
 
-  The number of receptor ports must be specified at neuron creation (default value is 1) and
-  the receptor index starts from 0 (and not from 1 as in NEST multisynapse models).
-  The time constants are supplied by by two arrays, ``tau_rise`` and ``tau_decay`` for
-  the synaptic rise time and decay time, respectively. The synaptic
-  reversal potentials are supplied by the array ``E_rev``. Port numbers
-  are automatically assigned in the range 0 to ``n_receptors-1``.
-  During connection, the ports are selected with the synapse property ``receptor``.
+  The number of receptor ports must be specified at neuron creation (default
+value is 1) and the receptor index starts from 0 (and not from 1 as in NEST
+multisynapse models). The time constants are supplied by by two arrays,
+``tau_rise`` and ``tau_decay`` for the synaptic rise time and decay time,
+respectively. The synaptic reversal potentials are supplied by the array
+``E_rev``. Port numbers are automatically assigned in the range 0 to
+``n_receptors-1``. During connection, the ports are selected with the synapse
+property ``receptor``.
 
 Parameters
 ++++++++++
@@ -157,7 +158,6 @@ See also
 aeif_cond_alpha_multisynapse
 
 EndUserDocs */
-
 
 #define MAX_PORT_NUM 20
 

@@ -38,7 +38,7 @@ extern std::map< void*, size_t > alloc_map_;
 extern size_t mem_used_;
 extern size_t mem_max_;
 extern int verbose_;
-}
+} // namespace cuda_error_ns
 
 inline int
 printMPIRank()
@@ -57,7 +57,6 @@ printMPIRank()
 
   return 0;
 }
-
 
 inline void
 mapCUDAMemAlloc( void* dev_pt, size_t n_bytes )
@@ -97,7 +96,6 @@ mapCUDAMemFree( void* dev_pt )
       ( float ) cuda_error_ns::mem_max_ / 1024.0 / 1024.0 );
   }
 }
-
 
 #define gpuErrchk( ans )                      \
   {                                           \
