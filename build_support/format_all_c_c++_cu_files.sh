@@ -38,6 +38,8 @@ CLANG_FORMAT_FILE=${CLANG_FORMAT_FILE:-${PWD}/.clang-format}
 FILES_TO_IGNORE="" # not used now, bult could be used in the future
 DIRS_TO_IGNORE="thirdparty" # not used now, bult could be used in the future
 
+CHANGE_COUNT=0
+
 function clang_format_cuda {
   if [ ! -f $1 ]; then
     echo "Error: input file $1 not found"
@@ -58,10 +60,14 @@ function clang_format_cuda {
   fi
 
   cat $1 | sed 's/<<</$$</g;s/>>>/$ >/g;' > $TEMPD/tmp1~
-  echo "CLANG_FORMAT_FILE: $CLANG_FORMAT_FILE"
+  #echo "CLANG_FORMAT_FILE: $CLANG_FORMAT_FILE"
   clang-format -style=file:$CLANG_FORMAT_FILE $TEMPD/tmp1~ > $TEMPD/tmp2~
-  cat $TEMPD/tmp2~ | sed 's/$$</<<</g;s/$ >/>>>/g;s/$>/>>>/g;' > $1
-  ls $TEMPD/tmp2~
+  cat $TEMPD/tmp2~ | sed 's/$$</<<</g;s/$ >/>>>/g;s/$>/>>>/g;' > $TEMPD/tmp1~  
+  if ! cmp -s $TEMPD/tmp1~ $1; then # file changed by clang-format
+      /bin/cp -f $TEMPD/tmp1~  $1
+      CHANGE_COUNT=$((CHANGE_COUNT+1))
+      echo "     FILE CHANGED BY FORMATTING"
+  fi
 }  
 
 # Recursively process all C/C++/CUDA files in all sub-directories.
@@ -153,3 +159,5 @@ fi
 
 # Start formatting the $startdir and all subdirectories
 process_dir $startdir
+
+echo "$CHANGE_COUNT files have been changed by formatting"
