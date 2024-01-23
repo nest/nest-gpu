@@ -21,9 +21,6 @@
  */
 
 
-
-
-
 #ifndef CONNECTSPEC_H
 #define CONNECTSPEC_H
 
@@ -33,27 +30,35 @@
 
 class NESTGPU;
 
-template <class T>
+template < class T >
 class RemoteNode
 {
- public:
+public:
   int i_host_;
   T i_node_;
- RemoteNode(int i_host, T node): i_host_(i_host), i_node_(node) {}
-  int GetINode(int in);
+  RemoteNode( int i_host, T node )
+    : i_host_( i_host )
+    , i_node_( node )
+  {
+  }
+  int GetINode( int in );
 };
 
 enum ConnectionRules
-  {
-   ONE_TO_ONE=0, ALL_TO_ALL, FIXED_TOTAL_NUMBER, FIXED_INDEGREE,
-   FIXED_OUTDEGREE, N_CONN_RULE
-  };
-
-const std::string conn_rule_name[N_CONN_RULE] =
-  {
-   "one_to_one", "all_to_all", "fixed_total_number", "fixed_indegree",
-   "fixed_outdegree"
+{
+  ONE_TO_ONE = 0,
+  ALL_TO_ALL,
+  FIXED_TOTAL_NUMBER,
+  FIXED_INDEGREE,
+  FIXED_OUTDEGREE,
+  N_CONN_RULE
 };
+
+const std::string conn_rule_name[ N_CONN_RULE ] = { "one_to_one",
+  "all_to_all",
+  "fixed_total_number",
+  "fixed_indegree",
+  "fixed_outdegree" };
 
 class ConnSpec
 {
@@ -61,14 +66,15 @@ class ConnSpec
   int total_num_;
   int indegree_;
   int outdegree_;
+
 public:
   ConnSpec();
-  ConnSpec(int rule, int degree=0);
+  ConnSpec( int rule, int degree = 0 );
   int Init();
-  int Init(int rule, int degree=0);
-  int SetParam(std::string param_name, int value);
-  int GetParam(std::string param_name);
-  static bool IsParam(std::string param_name);
+  int Init( int rule, int degree = 0 );
+  int SetParam( std::string param_name, int value );
+  int GetParam( std::string param_name );
+  static bool IsParam( std::string param_name );
 
   friend class NESTGPU;
 };
@@ -78,27 +84,29 @@ class SynSpec
 {
   unsigned char syn_group_;
   unsigned char port_;
- public:
+
+public:
   int weight_distr_;
-  float *weight_array_;
+  float* weight_array_;
   float weight_;
   int delay_distr_;
-  float *delay_array_;
+  float* delay_array_;
   float delay_;
- public:
+
+public:
   SynSpec();
-  SynSpec(float weight, float delay);
-  SynSpec(int syn_group, float weight, float delay, int port=0);
+  SynSpec( float weight, float delay );
+  SynSpec( int syn_group, float weight, float delay, int port = 0 );
   int Init();
-  int Init(float weight, float delay);
-  int Init(int syn_group, float weight, float delay, int port=0);
-  int SetParam(std::string param_name, int value);
-  int SetParam(std::string param_name, float value);
-  int SetParam(std::string param_name, float *array_pt);
-  float GetParam(std::string param_name);
-  static bool IsIntParam(std::string param_name);
-  static bool IsFloatParam(std::string param_name);
-  static bool IsFloatPtParam(std::string param_name);
+  int Init( float weight, float delay );
+  int Init( int syn_group, float weight, float delay, int port = 0 );
+  int SetParam( std::string param_name, int value );
+  int SetParam( std::string param_name, float value );
+  int SetParam( std::string param_name, float* array_pt );
+  float GetParam( std::string param_name );
+  static bool IsIntParam( std::string param_name );
+  static bool IsFloatParam( std::string param_name );
+  static bool IsFloatPtParam( std::string param_name );
 
   friend class NESTGPU;
 };

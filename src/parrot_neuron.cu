@@ -21,134 +21,135 @@
  */
 
 
-
-
-
-#include <config.h>
 #include <cmath>
+#include <config.h>
 #include <iostream>
 #include <string>
-//#include <stdio.h>
+// #include <stdio.h>
 
 #include "cuda_error.h"
 #include "nestgpu.h"
 #include "neuron_models.h"
 #include "parrot_neuron.h"
 #include "spike_buffer.h"
-//#include "parrot_neuron_variables.h"
+// #include "parrot_neuron_variables.h"
 
-enum {
-  i_parrot_neuron_hold_spike_height=0,
+enum
+{
+  i_parrot_neuron_hold_spike_height = 0,
   i_parrot_neuron_den_delay,
   N_PARROT_NEURON_SCAL_PARAM
 };
 
-const std::string parrot_neuron_scal_param_name[N_PARROT_NEURON_SCAL_PARAM]
-= {"hold_spike_height", "den_delay"};
+const std::string parrot_neuron_scal_param_name[ N_PARROT_NEURON_SCAL_PARAM ] = { "hold_spike_height", "den_delay" };
 
-enum {
-  i_parrot_neuron_input_spike_height=0,
+enum
+{
+  i_parrot_neuron_input_spike_height = 0,
   i_parrot_neuron_dummy_input,
   i_parrot_neuron_V,
   N_PARROT_NEURON_SCAL_VAR
 };
 
-const std::string parrot_neuron_scal_var_name[N_PARROT_NEURON_SCAL_VAR]
-= {"input_spike_height", "dummy_input", "V"};
+const std::string parrot_neuron_scal_var_name[ N_PARROT_NEURON_SCAL_VAR ] = { "input_spike_height",
+  "dummy_input",
+  "V" };
 
 
-__global__
-void parrot_neuron_UpdateKernel(int i_node_0, int n_node, float *var_arr,
-				float *param_arr, int n_var, int n_param)
+__global__ void
+parrot_neuron_UpdateKernel( int i_node_0, int n_node, float* var_arr, float* param_arr, int n_var, int n_param )
 {
   int irel_node = threadIdx.x + blockIdx.x * blockDim.x;
-  if (irel_node < n_node) {
-    float *input_spike_height_pt = var_arr + irel_node*n_var
-      + i_parrot_neuron_input_spike_height;
-    float *V_pt = var_arr + irel_node*n_var + i_parrot_neuron_V;
-    float *hold_spike_height_pt = param_arr + irel_node*n_param +
-      i_parrot_neuron_hold_spike_height;
+  if ( irel_node < n_node )
+  {
+    float* input_spike_height_pt = var_arr + irel_node * n_var + i_parrot_neuron_input_spike_height;
+    float* V_pt = var_arr + irel_node * n_var + i_parrot_neuron_V;
+    float* hold_spike_height_pt = param_arr + irel_node * n_param + i_parrot_neuron_hold_spike_height;
     int i_node = i_node_0 + irel_node;
     float spike_height = *input_spike_height_pt;
     *V_pt = spike_height;
-    if (spike_height != 0.0) {
-      if (*hold_spike_height_pt==0.0) {
-	spike_height = 1.0;
+    if ( spike_height != 0.0 )
+    {
+      if ( *hold_spike_height_pt == 0.0 )
+      {
+        spike_height = 1.0;
       }
       *input_spike_height_pt = 0;
-      PushSpike(i_node, spike_height);
+      PushSpike( i_node, spike_height );
     }
   }
 }
 
 
-int parrot_neuron::Init(int i_node_0, int n_node, int /*n_port*/,
-			int i_group, unsigned long long *seed)
+int
+parrot_neuron::Init( int i_node_0, int n_node, int /*n_port*/, int i_group, unsigned long long* seed )
 {
-  BaseNeuron::Init(i_node_0, n_node, 2 /*n_port*/, i_group, seed);
+  BaseNeuron::Init( i_node_0, n_node, 2 /*n_port*/, i_group, seed );
   node_type_ = i_parrot_neuron_model;
 
   n_scal_var_ = N_PARROT_NEURON_SCAL_VAR;
   n_var_ = n_scal_var_;
   scal_var_name_ = parrot_neuron_scal_var_name;
-  
+
   n_scal_param_ = N_PARROT_NEURON_SCAL_PARAM;
   n_param_ = n_scal_param_;
   scal_param_name_ = parrot_neuron_scal_param_name;
 
-  gpuErrchk(cudaMalloc(&var_arr_, n_node_*n_var_*sizeof(float)));
+  gpuErrchk( cudaMalloc( &var_arr_, n_node_ * n_var_ * sizeof( float ) ) );
 
-  gpuErrchk(cudaMalloc(&param_arr_, n_node_*n_param_*sizeof(float)));
+  gpuErrchk( cudaMalloc( &param_arr_, n_node_ * n_param_ * sizeof( float ) ) );
 
-  SetScalParam(0, n_node, "hold_spike_height", 0.0);
+  SetScalParam( 0, n_node, "hold_spike_height", 0.0 );
 
-  SetScalParam(0, n_node, "den_delay", 0.0);
+  SetScalParam( 0, n_node, "den_delay", 0.0 );
 
-  SetScalVar(0, n_node, "input_spike_height", 0.0);
+  SetScalVar( 0, n_node, "input_spike_height", 0.0 );
 
-  SetScalVar(0, n_node, "dummy_input", 0.0);
+  SetScalVar( 0, n_node, "dummy_input", 0.0 );
 
-  SetScalVar(0, n_node, "V", 0.0);
+  SetScalVar( 0, n_node, "V", 0.0 );
 
   // multiplication factor of input signal is always 1 for all nodes
-  float input_weight[] = {1.0, 0.0};
-  gpuErrchk(cudaMalloc(&port_weight_arr_, 2*sizeof(float)));
-  gpuErrchk(cudaMemcpy(port_weight_arr_, input_weight,
-			 2*sizeof(float), cudaMemcpyHostToDevice));
+  float input_weight[] = { 1.0, 0.0 };
+  gpuErrchk( cudaMalloc( &port_weight_arr_, 2 * sizeof( float ) ) );
+  gpuErrchk( cudaMemcpy( port_weight_arr_, input_weight, 2 * sizeof( float ), cudaMemcpyHostToDevice ) );
   port_weight_arr_step_ = 0;
   port_weight_port_step_ = 1;
-  
+
   // input signal is stored in input_spike_height
-  port_input_arr_ = GetVarArr() + GetScalVarIdx("input_spike_height");
+  port_input_arr_ = GetVarArr() + GetScalVarIdx( "input_spike_height" );
   port_input_arr_step_ = n_var_;
   port_input_port_step_ = 1;
 
-  den_delay_arr_ =  GetParamArr() + GetScalParamIdx("den_delay");
+  den_delay_arr_ = GetParamArr() + GetScalParamIdx( "den_delay" );
 
   return 0;
 }
 
-int parrot_neuron::Update(long long /*i_time*/, double /*t1*/)
+int
+parrot_neuron::Update( long long /*i_time*/, double /*t1*/ )
 {
-  parrot_neuron_UpdateKernel<<<(n_node_+1023)/1024, 1024>>>
-    (i_node_0_, n_node_, var_arr_, param_arr_, n_var_, n_param_);
-  //gpuErrchk( cudaPeekAtLastError() );
-  //gpuErrchk( cudaDeviceSynchronize() );
+  parrot_neuron_UpdateKernel<<< ( n_node_ + 1023 ) / 1024, 1024 >>>(
+    i_node_0_, n_node_, var_arr_, param_arr_, n_var_, n_param_ );
+  // gpuErrchk( cudaPeekAtLastError() );
+  // gpuErrchk( cudaDeviceSynchronize() );
 
   return 0;
 }
 
-int parrot_neuron::Free()
+int
+parrot_neuron::Free()
 {
-  gpuErrchk(cudaFree(var_arr_));
-  gpuErrchk(cudaFree(param_arr_));	    
+  gpuErrchk( cudaFree( var_arr_ ) );
+  gpuErrchk( cudaFree( param_arr_ ) );
 
   return 0;
 }
 
 parrot_neuron::~parrot_neuron()
 {
-  if (n_node_>0) {
+  if ( n_node_ > 0 )
+  {
     Free();
   }
 }

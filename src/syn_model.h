@@ -21,9 +21,6 @@
  */
 
 
-
-
-
 #ifndef SYNMODEL_H
 #define SYNMODEL_H
 
@@ -31,32 +28,55 @@
 #include <vector>
 
 #define MAX_SYN_DT 16384
-enum SynModels {
-  i_null_syn_model = 0, i_test_syn_model, i_stdp_model,
+enum SynModels
+{
+  i_null_syn_model = 0,
+  i_test_syn_model,
+  i_stdp_model,
   N_SYN_MODELS
 };
 
-const std::string syn_model_name[N_SYN_MODELS] = {
-  "", "test_syn_model", "stdp"
-};
+const std::string syn_model_name[ N_SYN_MODELS ] = { "", "test_syn_model", "stdp" };
 
 class SynModel
 {
- protected:
+protected:
   int type_;
   int n_param_;
-  const std::string *param_name_;
-  float *d_param_arr_;
- public:
-  virtual int Init() {return 0;}
+  const std::string* param_name_;
+  float* d_param_arr_;
+
+public:
+  virtual int
+  Init()
+  {
+    return 0;
+  }
   int GetNParam();
-  std::vector<std::string> GetParamNames();
-  bool IsParam(std::string param_name);
-  int GetParamIdx(std::string param_name);
-  virtual float GetParam(std::string param_name);
-  virtual int SetParam(std::string param_name, float val);
+  std::vector< std::string > GetParamNames();
+  bool IsParam( std::string param_name );
+  int GetParamIdx( std::string param_name );
+  virtual float GetParam( std::string param_name );
+  virtual int SetParam( std::string param_name, float val );
 
   friend class NESTGPU;
+};
+
+class STDP : public SynModel
+{
+  int _Init();
+
+public:
+  STDP()
+  {
+    _Init();
+  }
+
+  int
+  Init()
+  {
+    return _Init();
+  }
 };
 
 #endif

@@ -21,20 +21,18 @@
  */
 
 
-
-
-
 #ifndef CONNECT_H
 #define CONNECT_H
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 #define PORT_N_SHIFT 1
 #define POW2_PORT_N_SHIFT 2 // 2^PORT_N_SHIFT
-#define PORT_MASK 0x1FFFFF // in the highest byte the lowest PORT_N_SHIFT bits
-				    // are 1, the other are 0
-#define MAX_N_NEURON    POW2_PORT_N_SHIFT*16*1024*1024
-#define MAX_N_PORT    256/POW2_PORT_N_SHIFT
+#define PORT_MASK \
+  0x1FFFFF // in the highest byte the lowest PORT_N_SHIFT bits
+           // are 1, the other are 0
+#define MAX_N_NEURON POW2_PORT_N_SHIFT * 16 * 1024 * 1024
+#define MAX_N_PORT 256 / POW2_PORT_N_SHIFT
 
 extern float TimeResolution;
 
@@ -62,11 +60,11 @@ struct TargetSyn
   unsigned char syn_group;
   float weight;
 };
-  
+
 struct ConnGroup // connections from the same source node with same delay
 {
   int delay;
-  std::vector<TargetSyn> target_vect;
+  std::vector< TargetSyn > target_vect;
 };
 
 struct RemoteConnection
@@ -79,123 +77,126 @@ struct RemoteConnection
   float delay;
 };
 
-template<class T>
-int GetINode(T node, int in);
+template < class T >
+int GetINode( T node, int in );
 
 class NetConnection
 {
   unsigned int n_conn_;
   unsigned int n_rev_conn_;
- public:
+
+public:
   float time_resolution_;
 
-  NetConnection() {n_conn_ = 0;}
-  
-  std::vector<std::vector<ConnGroup> > connection_;
+  NetConnection()
+  {
+    n_conn_ = 0;
+  }
 
-  int Insert(int d_int, int i_source, TargetSyn tg);
+  std::vector< std::vector< ConnGroup > > connection_;
 
-  int Connect(int i_source, int i_target, unsigned char port,
-	      unsigned char syn_group, float weight, float delay);
+  int Insert( int d_int, int i_source, TargetSyn tg );
+
+  int Connect( int i_source, int i_target, unsigned char port, unsigned char syn_group, float weight, float delay );
 
   int Print();
-  
-  int ConnGroupPrint(int i_source);
+
+  int ConnGroupPrint( int i_source );
 
   int MaxDelayNum();
-  
+
   unsigned int StoredNConnections();
-  
+
   unsigned int NConnections();
 
-  unsigned int NRevConnections() {return n_rev_conn_;}
+  unsigned int
+  NRevConnections()
+  {
+    return n_rev_conn_;
+  }
 
-  int SetNRevConnections(unsigned int n_rev_conn) {
+  int
+  SetNRevConnections( unsigned int n_rev_conn )
+  {
     n_rev_conn_ = n_rev_conn;
     return 0;
   }
 
-  ConnectionStatus GetConnectionStatus(ConnectionId conn_id);
+  ConnectionStatus GetConnectionStatus( ConnectionId conn_id );
 
-  std::vector<ConnectionStatus> GetConnectionStatus(std::vector<ConnectionId>
-						    &conn_id_vect);
-  
+  std::vector< ConnectionStatus > GetConnectionStatus( std::vector< ConnectionId >& conn_id_vect );
 
-  template<class T>
-    std::vector<ConnectionId> GetConnections(T source, int n_source,
-					     int i_target, int n_target,
-					     int syn_group=-1);
 
-  template<class T>
-    std::vector<ConnectionId> GetConnections(T source, int n_source,
-					     int *i_target, int n_target,
-					     int syn_group=-1);
+  template < class T >
+  std::vector< ConnectionId > GetConnections( T source, int n_source, int i_target, int n_target, int syn_group = -1 );
 
+  template < class T >
+  std::vector< ConnectionId > GetConnections( T source, int n_source, int* i_target, int n_target, int syn_group = -1 );
 };
 
-template<class T>
-std::vector<ConnectionId> NetConnection::GetConnections(T source,
-							int n_source,
-							int i_target,
-							int n_target,
-							int /*syn_group*/)
+template < class T >
+std::vector< ConnectionId >
+NetConnection::GetConnections( T source, int n_source, int i_target, int n_target, int /*syn_group*/ )
 {
-  std::vector<ConnectionId> conn_id_vect;
-  for (int is=0; is<n_source; is++) {
-    int i_source = GetINode<T>(source, is);
-    std::vector<ConnGroup> &conn = connection_[i_source];
-    for (unsigned int id=0; id<conn.size(); id++) {
-      std::vector<TargetSyn> tv = conn[id].target_vect;
-      for (unsigned int i=0; i<tv.size(); i++) {
-	int itg = tv[i].node;
-	if ((itg>=i_target) && (itg<i_target+n_target)) {
-	  ConnectionId conn_id;
-	  conn_id.i_source_ = i_source;
-	  conn_id.i_group_ = id;
-	  conn_id.i_conn_ = i;
-	  conn_id_vect.push_back(conn_id);
-	}
+  std::vector< ConnectionId > conn_id_vect;
+  for ( int is = 0; is < n_source; is++ )
+  {
+    int i_source = GetINode< T >( source, is );
+    std::vector< ConnGroup >& conn = connection_[ i_source ];
+    for ( unsigned int id = 0; id < conn.size(); id++ )
+    {
+      std::vector< TargetSyn > tv = conn[ id ].target_vect;
+      for ( unsigned int i = 0; i < tv.size(); i++ )
+      {
+        int itg = tv[ i ].node;
+        if ( ( itg >= i_target ) && ( itg < i_target + n_target ) )
+        {
+          ConnectionId conn_id;
+          conn_id.i_source_ = i_source;
+          conn_id.i_group_ = id;
+          conn_id.i_conn_ = i;
+          conn_id_vect.push_back( conn_id );
+        }
       }
     }
   }
-  
+
   return conn_id_vect;
 }
 
-template<class T>
-std::vector<ConnectionId> NetConnection::GetConnections(T source,
-							int n_source,
-							int *i_target,
-							int n_target,
-							int /*syn_group*/)
+template < class T >
+std::vector< ConnectionId >
+NetConnection::GetConnections( T source, int n_source, int* i_target, int n_target, int /*syn_group*/ )
 {
-  std::vector<int> target_vect(i_target, i_target+n_target);
-  std::sort(target_vect.begin(), target_vect.end());
-  
-  std::vector<ConnectionId> conn_id_vect;
-  for (int is=0; is<n_source; is++) {
-    int i_source = GetINode<T>(source, is);
-    std::vector<ConnGroup> &conn = connection_[i_source];
-    for (unsigned int id=0; id<conn.size(); id++) {
-      std::vector<TargetSyn> tv = conn[id].target_vect;
-      for (unsigned int i=0; i<tv.size(); i++) {
-	int itg = tv[i].node;
-	// https://riptutorial.com/cplusplus/example/7270/using-a-sorted-vector-for-fast-element-lookup
-	// check if itg is in target_vect
-	std::vector<int>::iterator it = std::lower_bound(target_vect.begin(),
-							 target_vect.end(),
-							 itg);
-	if (it != target_vect.end() && *it == itg) { // we found the element
-	  ConnectionId conn_id;
-	  conn_id.i_source_ = i_source;
-	  conn_id.i_group_ = id;
-	  conn_id.i_conn_ = i;
-	  conn_id_vect.push_back(conn_id);
-	}
+  std::vector< int > target_vect( i_target, i_target + n_target );
+  std::sort( target_vect.begin(), target_vect.end() );
+
+  std::vector< ConnectionId > conn_id_vect;
+  for ( int is = 0; is < n_source; is++ )
+  {
+    int i_source = GetINode< T >( source, is );
+    std::vector< ConnGroup >& conn = connection_[ i_source ];
+    for ( unsigned int id = 0; id < conn.size(); id++ )
+    {
+      std::vector< TargetSyn > tv = conn[ id ].target_vect;
+      for ( unsigned int i = 0; i < tv.size(); i++ )
+      {
+        int itg = tv[ i ].node;
+        // https://riptutorial.com/cplusplus/example/7270/using-a-sorted-vector-for-fast-element-lookup
+        // check if itg is in target_vect
+        std::vector< int >::iterator it = std::lower_bound( target_vect.begin(), target_vect.end(), itg );
+        if ( it != target_vect.end() && *it == itg )
+        { // we found the element
+          ConnectionId conn_id;
+          conn_id.i_source_ = i_source;
+          conn_id.i_group_ = id;
+          conn_id.i_conn_ = i;
+          conn_id_vect.push_back( conn_id );
+        }
       }
     }
   }
-  
+
   return conn_id_vect;
 }
 

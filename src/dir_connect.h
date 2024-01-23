@@ -21,9 +21,6 @@
  */
 
 
-
-
-
 #ifndef DIRCONNECT_H
 #define DIRCONNECT_H
 

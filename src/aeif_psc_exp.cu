@@ -21,24 +21,20 @@
  */
 
 
-
-
-
-#include <config.h>
-#include <cmath>
-#include <iostream>
+#include "aeif_psc_exp.h"
 #include "aeif_psc_exp_kernel.h"
 #include "rk5.h"
-#include "aeif_psc_exp.h"
+#include <cmath>
+#include <config.h>
+#include <iostream>
 
 namespace aeif_psc_exp_ns
 {
 
-__device__
-void NodeInit(int n_var, int n_param, double x, float *y, float *param,
-	      aeif_psc_exp_rk5 data_struct)
+__device__ void
+NodeInit( int n_var, int n_param, double x, float* y, float* param, aeif_psc_exp_rk5 data_struct )
 {
-  //int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
+  // int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
 
   V_th = -50.4;
   Delta_T = 2.0;
@@ -53,7 +49,7 @@ void NodeInit(int n_var, int n_param, double x, float *y, float *param,
   V_reset = -60.0;
   t_ref = 0.0;
   den_delay = 0.0;
-  
+
   I_syn_ex = 0;
   I_syn_in = 0;
   V_m = E_L;
@@ -61,95 +57,95 @@ void NodeInit(int n_var, int n_param, double x, float *y, float *param,
   tau_syn_ex = 0.2;
   tau_syn_in = 2.0;
   refractory_step = 0;
-
 }
 
-__device__
-void NodeCalibrate(int n_var, int n_param, double x, float *y,
-		       float *param, aeif_psc_exp_rk5 data_struct)
+__device__ void
+NodeCalibrate( int n_var, int n_param, double x, float* y, float* param, aeif_psc_exp_rk5 data_struct )
 {
-  //int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
+  // int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
 
   refractory_step = 0;
   // set the right threshold depending on Delta_T
-  if (Delta_T <= 0.0) {
+  if ( Delta_T <= 0.0 )
+  {
     V_peak = V_th; // same as IAF dynamics for spikes if Delta_T == 0.
   }
 }
 
 }
 
-__device__
-void NodeInit(int n_var, int n_param, double x, float *y,
-	     float *param, aeif_psc_exp_rk5 data_struct)
+__device__ void
+NodeInit( int n_var, int n_param, double x, float* y, float* param, aeif_psc_exp_rk5 data_struct )
 {
-    aeif_psc_exp_ns::NodeInit(n_var, n_param, x, y, param, data_struct);
+  aeif_psc_exp_ns::NodeInit( n_var, n_param, x, y, param, data_struct );
 }
 
-__device__
-void NodeCalibrate(int n_var, int n_param, double x, float *y,
-		  float *param, aeif_psc_exp_rk5 data_struct)
+__device__ void
+NodeCalibrate( int n_var, int n_param, double x, float* y, float* param, aeif_psc_exp_rk5 data_struct )
 
 {
-    aeif_psc_exp_ns::NodeCalibrate(n_var, n_param, x, y, param, data_struct);
+  aeif_psc_exp_ns::NodeCalibrate( n_var, n_param, x, y, param, data_struct );
 }
 
 using namespace aeif_psc_exp_ns;
 
-int aeif_psc_exp::Init(int i_node_0, int n_node, int n_port,
-			 int i_group, unsigned long long *seed) {
-  BaseNeuron::Init(i_node_0, n_node, 2 /*n_port*/, i_group, seed);
+int
+aeif_psc_exp::Init( int i_node_0, int n_node, int n_port, int i_group, unsigned long long* seed )
+{
+  BaseNeuron::Init( i_node_0, n_node, 2 /*n_port*/, i_group, seed );
   node_type_ = i_aeif_psc_exp_model;
   n_scal_var_ = N_SCAL_VAR;
   n_scal_param_ = N_SCAL_PARAM;
-  n_group_param_ = N_GROUP_PARAM; 
+  n_group_param_ = N_GROUP_PARAM;
 
   n_var_ = n_scal_var_;
   n_param_ = n_scal_param_;
 
-  group_param_ = new float[N_GROUP_PARAM];
-  
+  group_param_ = new float[ N_GROUP_PARAM ];
+
   scal_var_name_ = aeif_psc_exp_scal_var_name;
   scal_param_name_ = aeif_psc_exp_scal_param_name;
   group_param_name_ = aeif_psc_exp_group_param_name;
-  //rk5_data_struct_.node_type_ = i_aeif_psc_exp_model;
+  // rk5_data_struct_.node_type_ = i_aeif_psc_exp_model;
   rk5_data_struct_.i_node_0_ = i_node_0_;
 
-  SetGroupParam("h_min_rel", 1.0e-3);
-  SetGroupParam("h0_rel",  1.0e-2);
-  h_ = h0_rel_* 0.1;
-  
-  rk5_.Init(n_node, n_var_, n_param_, 0.0, h_, rk5_data_struct_);
+  SetGroupParam( "h_min_rel", 1.0e-3 );
+  SetGroupParam( "h0_rel", 1.0e-2 );
+  h_ = h0_rel_ * 0.1;
+
+  rk5_.Init( n_node, n_var_, n_param_, 0.0, h_, rk5_data_struct_ );
   var_arr_ = rk5_.GetYArr();
   param_arr_ = rk5_.GetParamArr();
 
   // multiplication factor of input signal is always 1 for all nodes
   float input_weight = 1.0;
-  gpuErrchk(cudaMalloc(&port_weight_arr_, sizeof(float)));
-  gpuErrchk(cudaMemcpy(port_weight_arr_, &input_weight,
-			 sizeof(float), cudaMemcpyHostToDevice));
+  gpuErrchk( cudaMalloc( &port_weight_arr_, sizeof( float ) ) );
+  gpuErrchk( cudaMemcpy( port_weight_arr_, &input_weight, sizeof( float ), cudaMemcpyHostToDevice ) );
   port_weight_arr_step_ = 0;
   port_weight_port_step_ = 0;
 
-  port_input_arr_ = GetVarArr()  + GetScalVarIdx("I_syn_ex");
+  port_input_arr_ = GetVarArr() + GetScalVarIdx( "I_syn_ex" );
   port_input_arr_step_ = n_var_;
   port_input_port_step_ = 1;
-  den_delay_arr_ =  GetParamArr() + GetScalParamIdx("den_delay");
+  den_delay_arr_ = GetParamArr() + GetScalParamIdx( "den_delay" );
 
   return 0;
 }
 
-int aeif_psc_exp::Calibrate(double time_min, float time_resolution)
+int
+aeif_psc_exp::Calibrate( double time_min, float time_resolution )
 {
-  h_min_ = h_min_rel_* time_resolution;
-  h_ = h0_rel_* time_resolution;
-  rk5_.Calibrate(time_min, h_, rk5_data_struct_);
-  
+  h_min_ = h_min_rel_ * time_resolution;
+  h_ = h0_rel_ * time_resolution;
+  rk5_.Calibrate( time_min, h_, rk5_data_struct_ );
+
   return 0;
 }
 
-int aeif_psc_exp::Update(long long it, double t1) {
-  rk5_.Update<N_SCAL_VAR, N_SCAL_PARAM>(t1, h_min_, rk5_data_struct_);
+int
+aeif_psc_exp::Update( long long it, double t1 )
+{
+  rk5_.Update< N_SCAL_VAR, N_SCAL_PARAM >( t1, h_min_, rk5_data_struct_ );
 
   return 0;
 }

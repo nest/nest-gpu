@@ -21,33 +21,32 @@
  */
 
 
-
-
-
-#include <config.h>
-#include <stdio.h>
-#include <iostream>
-#include "ngpu_exception.h"
 #include "cuda_error.h"
+#include "ngpu_exception.h"
 #include "test_syn_model.h"
+#include <config.h>
+#include <iostream>
+#include <stdio.h>
 
 using namespace test_syn_model_ns;
 
-__device__ void TestSynModelUpdate(float *w, float Dt, float *param)
+__device__ void
+TestSynModelUpdate( float* w, float Dt, float* param )
 {
-  float fact = param[0];
-  float offset = param[1];
-  *w += offset + fact*Dt;
+  float fact = param[ 0 ];
+  float offset = param[ 1 ];
+  *w += offset + fact * Dt;
 }
 
-int TestSynModel::Init()
+int
+TestSynModel::_Init()
 {
   type_ = i_test_syn_model;
   n_param_ = N_PARAM;
   param_name_ = test_syn_model_param_name;
-  gpuErrchk(cudaMalloc(&d_param_arr_, n_param_*sizeof(float)));
-  SetParam("fact", 0.1);
-  SetParam("offset", 0.0);
+  gpuErrchk( cudaMalloc( &d_param_arr_, n_param_ * sizeof( float ) ) );
+  SetParam( "fact", 0.1 );
+  SetParam( "offset", 0.0 );
 
   return 0;
 }

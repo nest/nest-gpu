@@ -1,0 +1,522 @@
+~/nest-gpu-git/golosio/nest-gpu/build_support ~/nest-gpu-git/golosio/nest-gpu/build_support
+ls: cannot access '*.cc': No such file or directory
+ls: cannot access '*.c': No such file or directory
+ls: cannot access '*.cuh': No such file or directory
+ls: cannot access '*.hpp': No such file or directory
+ls: cannot access '*.cc': No such file or directory
+ls: cannot access '*.c': No such file or directory
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: aeif_cond_alpha.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config aeif_cond_alpha.cu
+Input file: aeif_cond_alpha.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy aeif_cond_alpha.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: aeif_cond_alpha_multisynapse.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config aeif_cond_alpha_multisynapse.cu
+Input file: aeif_cond_alpha_multisynapse.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy aeif_cond_alpha_multisynapse.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: aeif_cond_beta.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config aeif_cond_beta.cu
+Input file: aeif_cond_beta.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy aeif_cond_beta.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: aeif_cond_beta_multisynapse.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config aeif_cond_beta_multisynapse.cu
+Input file: aeif_cond_beta_multisynapse.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy aeif_cond_beta_multisynapse.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: aeif_psc_alpha.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config aeif_psc_alpha.cu
+Input file: aeif_psc_alpha.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy aeif_psc_alpha.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: aeif_psc_alpha_multisynapse.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config aeif_psc_alpha_multisynapse.cu
+Input file: aeif_psc_alpha_multisynapse.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy aeif_psc_alpha_multisynapse.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: aeif_psc_delta.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config aeif_psc_delta.cu
+Input file: aeif_psc_delta.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy aeif_psc_delta.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: aeif_psc_exp.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config aeif_psc_exp.cu
+Input file: aeif_psc_exp.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy aeif_psc_exp.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: aeif_psc_exp_multisynapse.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config aeif_psc_exp_multisynapse.cu
+Input file: aeif_psc_exp_multisynapse.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy aeif_psc_exp_multisynapse.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: base_neuron.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config base_neuron.cu
+Input file: base_neuron.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy base_neuron.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: connect.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config connect.cu
+Input file: connect.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy connect.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: connect_mpi.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config connect_mpi.cu
+Input file: connect_mpi.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy connect_mpi.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: connect_rules.cpp
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config connect_rules.cpp
+Input file: connect_rules.cpp
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy connect_rules.cpp -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+2 warnings generated.
+warning: argument unused during compilation: '--no-cuda-version-check' [clang-diagnostic-unused-command-line-argument]
+Suppressed 1 warnings (1 in non-user code).
+Use -header-filter=.* to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: dummyfile.cpp
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config dummyfile.cpp
+Input file: dummyfile.cpp
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy dummyfile.cpp -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated.
+warning: argument unused during compilation: '--no-cuda-version-check' [clang-diagnostic-unused-command-line-argument]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: ext_neuron.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config ext_neuron.cu
+Input file: ext_neuron.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy ext_neuron.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: getRealTime.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config getRealTime.cu
+Input file: getRealTime.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy getRealTime.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: get_spike.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config get_spike.cu
+Input file: get_spike.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy get_spike.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+2 warnings generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Suppressed 1 warnings (1 in non-user code).
+Use -header-filter=.* to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: iaf_psc_alpha.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config iaf_psc_alpha.cu
+Input file: iaf_psc_alpha.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy iaf_psc_alpha.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: iaf_psc_exp.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config iaf_psc_exp.cu
+Input file: iaf_psc_exp.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy iaf_psc_exp.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: iaf_psc_exp_g.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config iaf_psc_exp_g.cu
+Input file: iaf_psc_exp_g.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy iaf_psc_exp_g.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: iaf_psc_exp_hc.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config iaf_psc_exp_hc.cu
+Input file: iaf_psc_exp_hc.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy iaf_psc_exp_hc.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: izhikevich_cond_beta.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config izhikevich_cond_beta.cu
+Input file: izhikevich_cond_beta.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy izhikevich_cond_beta.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: izhikevich.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config izhikevich.cu
+Input file: izhikevich.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy izhikevich.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: izhikevich_psc_exp_2s.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config izhikevich_psc_exp_2s.cu
+Input file: izhikevich_psc_exp_2s.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy izhikevich_psc_exp_2s.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: izhikevich_psc_exp_5s.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config izhikevich_psc_exp_5s.cu
+Input file: izhikevich_psc_exp_5s.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy izhikevich_psc_exp_5s.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: izhikevich_psc_exp.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config izhikevich_psc_exp.cu
+Input file: izhikevich_psc_exp.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy izhikevich_psc_exp.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: locate.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config locate.cu
+Input file: locate.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy locate.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: multimeter.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config multimeter.cu
+Input file: multimeter.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy multimeter.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: nestgpu_C.cpp
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config nestgpu_C.cpp
+Input file: nestgpu_C.cpp
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy nestgpu_C.cpp -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+2 warnings generated.
+warning: argument unused during compilation: '--no-cuda-version-check' [clang-diagnostic-unused-command-line-argument]
+Suppressed 1 warnings (1 in non-user code).
+Use -header-filter=.* to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: nestgpu.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config nestgpu.cu
+Input file: nestgpu.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy nestgpu.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+2 warnings generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Suppressed 1 warnings (1 in non-user code).
+Use -header-filter=.* to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: neuron_models.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config neuron_models.cu
+Input file: neuron_models.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy neuron_models.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+2 warnings generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Suppressed 1 warnings (1 in non-user code).
+Use -header-filter=.* to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: node_group.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config node_group.cu
+Input file: node_group.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy node_group.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+3 warnings generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Suppressed 2 warnings (2 in non-user code).
+Use -header-filter=.* to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: parrot_neuron.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config parrot_neuron.cu
+Input file: parrot_neuron.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy parrot_neuron.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+2 warnings generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Suppressed 1 warnings (1 in non-user code).
+Use -header-filter=.* to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: poiss_gen.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config poiss_gen.cu
+Input file: poiss_gen.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy poiss_gen.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+2 warnings generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Suppressed 1 warnings (1 in non-user code).
+Use -header-filter=.* to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: poisson.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config poisson.cu
+Input file: poisson.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy poisson.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: prefix_scan.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config prefix_scan.cu
+Input file: prefix_scan.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy prefix_scan.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: propagator_stability.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config propagator_stability.cu
+Input file: propagator_stability.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy propagator_stability.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: random.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config random.cu
+Input file: random.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy random.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: rev_spike.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config rev_spike.cu
+Input file: rev_spike.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy rev_spike.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: rk5.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config rk5.cu
+Input file: rk5.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy rk5.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: scan.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config scan.cu
+Input file: scan.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy scan.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: send_spike.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config send_spike.cu
+Input file: send_spike.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy send_spike.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: spike_buffer.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config spike_buffer.cu
+Input file: spike_buffer.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy spike_buffer.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: spike_detector.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config spike_detector.cu
+Input file: spike_detector.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy spike_detector.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+2 warnings generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Suppressed 1 warnings (1 in non-user code).
+Use -header-filter=.* to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: spike_generator.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config spike_generator.cu
+Input file: spike_generator.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy spike_generator.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+2 warnings generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Suppressed 1 warnings (1 in non-user code).
+Use -header-filter=.* to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: spike_mpi.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config spike_mpi.cu
+Input file: spike_mpi.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy spike_mpi.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: stdp.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config stdp.cu
+Input file: stdp.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy stdp.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: syn_model.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config syn_model.cu
+Input file: syn_model.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy syn_model.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+2 warnings generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Suppressed 1 warnings (1 in non-user code).
+Use -header-filter=.* to display errors from all non-system headers. Use -system-headers to display errors from system headers as well.
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+ - Check with clang-tidy-cuda.sh C/C++/CUDA file: test_syn_model.cu
+/tmp/tmp.gXRoMuKv8t/clang-tidy-cuda.sh --include-path=/tmp/tmp.gXRoMuKv8t/config test_syn_model.cu
+Input file: test_syn_model.cu
+cuda.h found in path /usr/local/cuda/include
+mpi.h found in path /usr/lib/x86_64-linux-gnu/openmpi/include
+clang-tidy test_syn_model.cu -p . --  -I /tmp/tmp.gXRoMuKv8t/config  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include  -isystem /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi  -isystem /usr/local/cuda/include --no-cuda-version-check
+1 warning generated when compiling for host.
+warning: CUDA version is newer than the latest partially supported version 12.1 [clang-diagnostic-unknown-cuda-version]
+Resource filename: /home/golosio/.local/lib/python3.10/site-packages/clang_tidy/data/bin/clang-tidy 
+PASSED
+~/nest-gpu-git/golosio/nest-gpu/build_support
+Checked 49 files with clang-tidy-cuda.sh
+All tests PASSED

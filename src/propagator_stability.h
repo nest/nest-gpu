@@ -24,9 +24,7 @@
 #define PROPAGATOR_STABILITY_H
 
 // Propagators to handle similar tau_m and tau_syn_* time constants.
-__device__
-double propagator_31( double tau_syn, double tau, double C, double h );
-__device__
-double propagator_32( double tau_syn, double tau, double C, double h );
+__device__ double propagator_31( double tau_syn, double tau, double C, double h );
+__device__ double propagator_32( double tau_syn, double tau, double C, double h );
 
 #endif

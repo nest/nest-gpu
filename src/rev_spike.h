@@ -21,28 +21,25 @@
  */
 
 
-
-
-
 #ifndef REVSPIKE_H
 #define REVSPIKE_H
 
-extern unsigned int *d_RevSpikeNum;
-extern unsigned int *d_RevSpikeTarget;
-extern int *d_RevSpikeNConn;
+extern unsigned int* d_RevSpikeNum;
+extern unsigned int* d_RevSpikeTarget;
+extern int* d_RevSpikeNConn;
 
 __global__ void RevSpikeReset();
 
-__global__ void RevSpikeBufferUpdate(unsigned int n_node);
+__global__ void RevSpikeBufferUpdate( unsigned int n_node );
 
-__global__ void SynapseUpdateKernel(int n_rev_spikes, int *RevSpikeNConn);
+__global__ void SynapseUpdateKernel( int n_rev_spikes, int* RevSpikeNConn );
 
-int RevSpikeInit(NetConnection *net_connection);
+int RevSpikeInit( NetConnection* net_connection );
 
 int RevSpikeFree();
 
-int ResetConnectionSpikeTimeDown(NetConnection *net_connection);
+int ResetConnectionSpikeTimeDown( NetConnection* net_connection );
 
-int ResetConnectionSpikeTimeUp(NetConnection *net_connection);
+int ResetConnectionSpikeTimeUp( NetConnection* net_connection );
 
 #endif
