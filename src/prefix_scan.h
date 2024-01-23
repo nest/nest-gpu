@@ -21,15 +21,12 @@
  */
 
 
-
-
-
 #ifndef PREFIXSCAN_H
 #define PREFIXSCAN_H
 
 class PrefixScan
 {
- public:
+public:
   static const unsigned int AllocSize;
 
   /*
@@ -43,10 +40,10 @@ class PrefixScan
 
   uint *h_OutputGPU;
   */
-  
+
   int Init();
 
-  int Scan(int *d_Output, int *d_Input, int n);
+  int Scan( int* d_Output, int* d_Input, int n );
 
   int Free();
 };

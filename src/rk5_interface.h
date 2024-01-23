@@ -21,9 +21,6 @@
  */
 
 
-
-
-
 #ifndef RK5INTERFACE_H
 #define RK5INTERFACE_H
 

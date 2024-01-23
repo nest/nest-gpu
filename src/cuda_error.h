@@ -21,29 +21,45 @@
  */
 
 
-
-
-
 #ifndef CUDAERROR_H
 #define CUDAERROR_H
-#include <stdio.h>
 #include "ngpu_exception.h"
+#include <stdio.h>
 
-#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+#define gpuErrchk( ans )                      \
+  {                                           \
+    gpuAssert( ( ans ), __FILE__, __LINE__ ); \
+  }
+inline void
+gpuAssert( cudaError_t code, const char* file, int line, bool abort = true )
 {
-   if (code != cudaSuccess) 
-   {
-      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) throw ngpu_exception("CUDA error");
-   }
+  if ( code != cudaSuccess )
+  {
+    fprintf( stderr, "GPUassert: %s %s %d\n", cudaGetErrorString( code ), file, line );
+    if ( abort )
+    {
+      throw ngpu_exception( "CUDA error" );
+    }
+  }
 }
 
-#define CUDA_CALL(x)   do { if((x) != cudaSuccess) { \
-      printf("Error at %s:%d\n",__FILE__,__LINE__);  \
-      throw ngpu_exception("CUDA error");}} while(0)
-#define CURAND_CALL(x) do { if((x) != CURAND_STATUS_SUCCESS) {	\
-     printf("Error at %s:%d\n",__FILE__,__LINE__);		\
-     throw ngpu_exception("CUDA error");}} while(0)
+#define CUDA_CALL( x )                                  \
+  do                                                    \
+  {                                                     \
+    if ( ( x ) != cudaSuccess )                         \
+    {                                                   \
+      printf( "Error at %s:%d\n", __FILE__, __LINE__ ); \
+      throw ngpu_exception( "CUDA error" );             \
+    }                                                   \
+  } while ( 0 )
+#define CURAND_CALL( x )                                \
+  do                                                    \
+  {                                                     \
+    if ( ( x ) != CURAND_STATUS_SUCCESS )               \
+    {                                                   \
+      printf( "Error at %s:%d\n", __FILE__, __LINE__ ); \
+      throw ngpu_exception( "CUDA error" );             \
+    }                                                   \
+  } while ( 0 )
 
 #endif
