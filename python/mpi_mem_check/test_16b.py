@@ -45,7 +45,7 @@ assert args.N > 0 and args.C > 0 and args.R in rules_dict
 
 ngpu.ConnectMpiInit()
 
-ngpu.SetKernelStatus("verbosity_level", 5)
+ngpu.SetKernelStatus({"verbosity_level": 5, "conn_struct_type": 1})
 
 mpi_id = ngpu.HostId()
 mpi_np = ngpu.HostNum()
