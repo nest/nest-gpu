@@ -139,6 +139,9 @@ class NESTGPU
 
   bool create_flag_; // becomes true just before creation of the first node
 
+  // Pointer to the connection object. Note that conn_ is of the type
+  // pointer-to-the(abstract)-base class
+  // while the object it will point to should be an instance of a derived class
   Connection* conn_;
 
   Distribution* distribution_;

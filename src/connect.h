@@ -23,9 +23,8 @@
 #ifndef CONNECT_H
 #define CONNECT_H
 
-// #include <cuda_runtime.h>
-// #include <device_atomic_functions.hpp>
-// #include <device_launch_parameters.h>
+// The following line must be skipped by clang-tidy to avoid errors
+// which are not related to our code but to the CUB CUDA library
 //<BEGIN-CLANG-TIDY-SKIP>//
 #include <cub/cub.cuh>
 //<END-CLANG-TIDY-SKIP>//
@@ -48,47 +47,76 @@
 typedef uint inode_t;
 typedef uint iconngroup_t;
 
+// Connection is the class used to represent connection data and methods.
+// It is defined as an abstract class, with pure virtual methods
+// that offer an interface for using this class in the same way
+// no matter what specific structure is used to represent individual connections
+// This abstract class will then be used as a base for derived classes
+// using templates, with the connection structure specified by template parameters
 class Connection
 {
 public:
-  virtual ~Connection() {};
+  virtual ~Connection() {}; // destructor
 
-  virtual int calibrate() = 0;
+  virtual int calibrate() = 0; // method called by nestgpu calibration
 
+  // methods used to specify the number of bits reserved to represent
+  // different connection parameters
+
+  // bits reserved for representing node indexes (same value for source and target nodes)
   virtual int setMaxNodeNBits( int max_node_nbits ) = 0;
 
+  // bits reserved to represent delays as integer (integer delays) in time-resolution units
   virtual int setMaxDelayNBits( int max_node_nbits ) = 0;
 
+  // bits reserved to represent synapse group
   virtual int setMaxSynNBits( int max_syn_nbits ) = 0;
 
+  // get number of bits reserved to represent node indexes
   virtual int getMaxNodeNBits() = 0;
 
+  // get number of bits reserved to represent integer delays
   virtual int getMaxDelayNBits() = 0;
 
+  // get number of bits reserved to represent receptor ports
   virtual int getMaxPortNBits() = 0;
 
+  // get number of bits reserved to represent synapse groups
   virtual int getMaxSynNBits() = 0;
 
+  // get maximum number of integer-delay values used by a node
   virtual int getMaxDelayNum() = 0;
 
+  // get number of images of remote spiking nodes having connections to local target nodes 
   virtual int getNImageNodes() = 0;
 
+  // get flag that indicates if reverse connections are used (e.g. for STDP)
   virtual bool getRevConnFlag() = 0;
 
+  // get number of reverse connections
   virtual int getNRevConn() = 0;
+
 
   virtual uint* getDevRevSpikeNumPt() = 0;
 
+  // get pt to array of number of reverse connections incoming to each node
   virtual int* getDevRevSpikeNConnPt() = 0;
 
+  // get array of number of remote target hosts per local source node 
   virtual uint* getDevNTargetHosts() = 0;
 
+  // get array with remote target hosts of all nodes
   virtual uint** getDevNodeTargetHosts() = 0;
 
+  // get array with remote target hosts map index
   virtual uint** getDevNodeTargetHostIMap() = 0;
 
+  // method to organize connections after creation and before using them in simulation
   virtual int organizeConnections( inode_t n_node ) = 0;
 
+  // connection methods. 4 combinations where source and target can be either
+  // of inode_t type (in case of a sequence) or pointers to inode_t
+  // (in case of arbitrary arrays if node indexes)
   virtual int connect( inode_t source,
     inode_t n_source,
     inode_t target,
@@ -116,20 +144,30 @@ public:
     inode_t n_target,
     ConnSpec& conn_spec,
     SynSpec& syn_spec ) = 0;
-
+  
+  // methods to check if a connection parameter, specified by the param_name string
+  // is an integer or float parameter
   int isConnectionIntParam( std::string param_name );
 
   int isConnectionFloatParam( std::string param_name );
 
+  // methods to get the index of the (integer or float) connection parameter specified by
+  //the param_name string
   int getConnectionIntParamIndex( std::string param_name );
 
   int getConnectionFloatParamIndex( std::string param_name );
 
+  // methods to get the values of the (integer or float) connection parameter param_name
+  // for the connections specified in the array conn_ids in device memory
   virtual int
   getConnectionFloatParam( int64_t* conn_ids, int64_t n_conn, float* h_param_arr, std::string param_name ) = 0;
 
   virtual int getConnectionIntParam( int64_t* conn_ids, int64_t n_conn, int* h_param_arr, std::string param_name ) = 0;
 
+  // methods to set the values of the (integer or float) connection parameter param_name
+  // for the connections specified in the array conn_ids in device memory
+  // The entries can be specified by a single value (val), by a distribution
+  // (which must be configured before this command) or by an array of values 
   virtual int setConnectionFloatParam( int64_t* conn_ids, int64_t n_conn, float val, std::string param_name ) = 0;
 
   virtual int setConnectionFloatParamDistr( int64_t* conn_ids, int64_t n_conn, std::string param_name ) = 0;
@@ -139,6 +177,8 @@ public:
 
   virtual int setConnectionIntParam( int64_t* conn_ids, int64_t n_conn, int val, std::string param_name ) = 0;
 
+  // method to get the indexes of all the connection specified by an array of source-node indexes
+  // and/or an array of target-node indexes and eventually the synaptic group
   virtual int64_t* getConnections( inode_t* i_source_pt,
     inode_t n_source,
     inode_t* i_target_pt,
@@ -146,6 +186,7 @@ public:
     int syn_group,
     int64_t* n_conn ) = 0;
 
+  // method to get all parameters of the connections specified by the array conn_ids in device memory
   virtual int getConnectionStatus( int64_t* conn_ids,
     int64_t n_conn,
     inode_t* source,
@@ -155,6 +196,7 @@ public:
     float* delay,
     float* weight ) = 0;
 
+  // method to build direct connections, used by Poisson generators
   virtual int buildDirectConnections( inode_t i_node_0,
     inode_t n_node,
     int64_t& i_conn0,
@@ -163,6 +205,7 @@ public:
     float*& d_mu_arr,
     void*& d_poiss_key_array ) = 0;
 
+  // method to send spikes through direct connections, used by Poisson generators
   virtual int sendDirectSpikes( long long time_idx,
     int64_t i_conn0,
     int64_t n_dir_conn,
@@ -172,23 +215,33 @@ public:
     void* d_poiss_key_array,
     curandState* d_curand_state ) = 0;
 
+  // method to organize direct connections, after they are created and before using them in the simulation
   virtual int organizeDirectConnections( void*& d_poiss_key_array_data_pt,
     void*& d_poiss_subarray,
     int64_t*& d_poiss_num,
     int64_t*& d_poiss_sum,
     void*& d_poiss_thresh ) = 0;
 
+  // add a proper offset to externa nodes ids
   virtual int addOffsetToExternalNodeIds( uint n_local_nodes ) = 0;
 
+  // deallocate memory used to represent the key part of the connection structure for all connections
   virtual int freeConnectionKey() = 0;
 
+  // initialize reverse spikes, used e.g. by STDP
   virtual int revSpikeInit( uint n_spike_buffers ) = 0;
 
+  // spike time stored in STDP connections is limited to a time window, to reduce memory usage
+  // the left and right limits of this time interval must be periodically updated
   virtual int resetConnectionSpikeTimeUp() = 0;
 
   virtual int resetConnectionSpikeTimeDown() = 0;
 
+  // set the seeds for random number generation
   virtual int setRandomSeed( unsigned long long seed ) = 0;
+
+  // set the time resolution. Must be consistent with the value stored in the nestgpu class
+  virtual int setTimeResolution( float time_resolution ) = 0;
 
   // set number of hosts
   virtual int setNHosts( int n_hosts ) = 0;
@@ -196,10 +249,16 @@ public:
   // set index of this host
   virtual int setThisHost( int this_host ) = 0;
 
+  // initialize the maps used to send spikes among remote hosts
   virtual int remoteConnectionMapInit() = 0;
 
+  // calibrate the maps used to send spikes among remote hosts
   virtual int remoteConnectionMapCalibrate( inode_t n_nodes ) = 0;
 
+  // remote connection methods. 4 combinations where source and target can be either
+  // of inode_t type (in case of a sequence) or pointers to inode_t
+  // (in case of arbitrary arrays if node indexes)
+
   virtual int remoteConnect( int source_host,
     inode_t source,
     inode_t n_source,
@@ -236,8 +295,26 @@ public:
     ConnSpec& conn_spec,
     SynSpec& syn_spec ) = 0;
 
+  // add an offset to the remote source node indexes in the spike buffer maps
+  // after the creation of the spike buffers used to represent such nodes
   virtual int addOffsetToSpikeBufferMap( inode_t n_nodes ) = 0;
 };
+
+
+//////////////////////////////////////////////////////////////////////
+// Template class used to represent connection of different types
+// as derived classes of the base (abstract) class connection
+// sharing with that class its method, which offer a common interface that can be used
+// in the same way for all derived classes, and adding further internal methods.
+// The connection must be represented by a pair key-value
+//  * The key is a type or a class
+//    that MUST contain the source-node index and the integer delay, which are used as keys
+//    for sorting the connections (source-node index as primary key, integer delay as second key).
+//    It can (but not necessarily should) contain other connection parameters.
+// *  The value is a structure that must contain all the remaining connection parameters
+// Typically, for efficient sorting, the source node index will be stored in the most significant bits
+// of the key, followed by bits used to represent the delay, end eventually by the bits used to represent
+// other parameters not relevant for the sort.
 
 template < class ConnKeyT, class ConnStructT >
 class ConnectionTemplate : public Connection
@@ -430,6 +507,8 @@ public:
   int freeConnRandomGenerator();
 
   int setRandomSeed( unsigned long long seed );
+
+  int setTimeResolution( float time_resolution );
 
   int _setMaxNodeNBits( int max_node_nbits );
 
@@ -3504,6 +3583,15 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::initConnRandomGenerator()
 }
 
 template < class ConnKeyT, class ConnStructT >
+int
+ConnectionTemplate< ConnKeyT, ConnStructT >::setTimeResolution( float time_resolution )
+{
+  time_resolution_ = time_resolution;
+  
+  return 0;
+}
+
+  template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::setRandomSeed( unsigned long long seed )
 {

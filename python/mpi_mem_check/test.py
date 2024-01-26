@@ -18,6 +18,9 @@ Arguments:
   	2 -> Fixed outdegree rule.
   	3 -> Fixed total number rule.
   	4 -> All to all connections. Argument C will be ignored.
+  T: Connection struct type. Intege
+        0 -> 12 byte connection structure
+        1 -> 16 byte connection structure
 
 """
 
@@ -31,6 +34,7 @@ parser = ArgumentParser()
 parser.add_argument("--N", type=int, default=1000)
 parser.add_argument("--C", type=int, default=10000)
 parser.add_argument("--R", type=int, default=1)
+parser.add_argument("--T", type=int, default=0)
 args = parser.parse_args()
 
 rules_dict = {
@@ -41,11 +45,12 @@ rules_dict = {
     4: [{"rule": "all_to_all"}],
 }
 
-assert args.N > 0 and args.C > 0 and args.R in rules_dict
+conn_struct_type = args.T
+assert args.N > 0 and args.C > 0 and args.R in rules_dict and args.T >= 0 and args.T <= 1  
+
+ngpu.SetKernelStatus({"verbosity_level": 5, "conn_struct_type": conn_struct_type})
 
 ngpu.ConnectMpiInit()
-
-ngpu.SetKernelStatus("verbosity_level", 5)
 
 mpi_id = ngpu.HostId()
 mpi_np = ngpu.HostNum()
@@ -65,8 +70,13 @@ if mpi_id == 0:
     print(f"Connection rule: {rule}")
 
 block_size = 10000000
-bytes_per_conn = 12
-bytes_per_key = 4
+bytes_per_storage = 4
+bytes_per_node = 4
+if conn_struct_type==0:
+    bytes_per_conn = 12
+else:
+    bytes_per_conn = 16
+
 margin = 10 # margin in MB
 
 if args.R==0:
@@ -84,13 +94,12 @@ else:
 
     n_blocks = (n_conn*(mpi_np - 1) - 1) // block_size + 1
 
-    n_blocks_woh = (n_conn*mpi_np - 1) // block_size + 1
-
     cuda_mem_exp = (n_blocks*block_size*bytes_per_conn \
-                    + block_size*bytes_per_key)/1024/1024
+                    + block_size*bytes_per_storage)/1024/1024
 
-    cuda_mem_exp_woh = (n_blocks_woh*block_size*bytes_per_conn \
-                        + block_size*bytes_per_key)/1024/1024
+    cuda_mem_exp_oh = n_conn*bytes_per_node/1024/1024
+    
+    cuda_mem_exp_woh = cuda_mem_exp + cuda_mem_exp_oh
 
 # Total CUDA memory (for all hosts)
 cuda_mem_tot = ngpu.getCUDAMemTotal()/1024/1024

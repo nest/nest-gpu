@@ -152,8 +152,9 @@ NESTGPU::NESTGPU()
   external_spike_flag_ = false;
 
   conn_ = nullptr;
-  // setConnStructType(i_conn12b);
-  setConnStructType( i_conn16b );
+  // by default, connection structure type used is the 12-byte type
+  setConnStructType(i_conn12b);
+  //setConnStructType( i_conn16b );
 
   random_generator_ = new curandGenerator_t;
   CURAND_CALL( curandCreateGenerator( random_generator_, CURAND_RNG_PSEUDO_DEFAULT ) );
@@ -316,15 +317,23 @@ NESTGPU::CheckImageNodes( int n_nodes )
   return i_node_0;
 }
 
+// method for changing connection structure type
 int
 NESTGPU::setConnStructType( int conn_struct_type )
 {
   // std::cout << "In setConnStructType " << conn_struct_type << "\n";
+  // Check if conn_ pointer has a nonzero value.
+  // In this case connection object must be deallocated
   if ( conn_ != nullptr )
   {
     delete conn_;
   }
+  // set new connection structure type
   conn_struct_type_ = conn_struct_type;
+  // create connection object from the proper derived class
+  // Note that conn_ is of the type pointer-to-the(abstract)-base class
+  // while the object is in instance of a derived class
+  // defined using templates
   switch ( conn_struct_type )
   {
   case i_conn12b:
@@ -337,8 +346,9 @@ NESTGPU::setConnStructType( int conn_struct_type )
     throw ngpu_exception( "Unrecognized connection structure type index" );
   }
   conn_->setRandomSeed( kernel_seed_ );
-  // set time resolution in conn!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+  
+  // set time resolution in connection object
+  conn_->setTimeResolution( time_resolution_ );
   return 0;
 }
 
@@ -2202,6 +2212,7 @@ NESTGPU::SetFloatParam( std::string param_name, float val )
   {
   case i_time_resolution:
     time_resolution_ = val;
+    conn_->setTimeResolution( time_resolution_ );
     break;
   case i_max_spike_num_fact:
     max_spike_num_fact_ = val;
