@@ -87,7 +87,7 @@ public:
   // get maximum number of integer-delay values used by a node
   virtual int getMaxDelayNum() = 0;
 
-  // get number of images of remote spiking nodes having connections to local target nodes 
+  // get number of images of remote spiking nodes having connections to local target nodes
   virtual int getNImageNodes() = 0;
 
   // get flag that indicates if reverse connections are used (e.g. for STDP)
@@ -102,7 +102,7 @@ public:
   // get pt to array of number of reverse connections incoming to each node
   virtual int* getDevRevSpikeNConnPt() = 0;
 
-  // get array of number of remote target hosts per local source node 
+  // get array of number of remote target hosts per local source node
   virtual uint* getDevNTargetHosts() = 0;
 
   // get array with remote target hosts of all nodes
@@ -144,7 +144,7 @@ public:
     inode_t n_target,
     ConnSpec& conn_spec,
     SynSpec& syn_spec ) = 0;
-  
+
   // methods to check if a connection parameter, specified by the param_name string
   // is an integer or float parameter
   int isConnectionIntParam( std::string param_name );
@@ -152,7 +152,7 @@ public:
   int isConnectionFloatParam( std::string param_name );
 
   // methods to get the index of the (integer or float) connection parameter specified by
-  //the param_name string
+  // the param_name string
   int getConnectionIntParamIndex( std::string param_name );
 
   int getConnectionFloatParamIndex( std::string param_name );
@@ -167,7 +167,7 @@ public:
   // methods to set the values of the (integer or float) connection parameter param_name
   // for the connections specified in the array conn_ids in device memory
   // The entries can be specified by a single value (val), by a distribution
-  // (which must be configured before this command) or by an array of values 
+  // (which must be configured before this command) or by an array of values
   virtual int setConnectionFloatParam( int64_t* conn_ids, int64_t n_conn, float val, std::string param_name ) = 0;
 
   virtual int setConnectionFloatParamDistr( int64_t* conn_ids, int64_t n_conn, std::string param_name ) = 0;
@@ -2134,6 +2134,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::init()
   d_target_rev_conn_ = NULL;      //[i][j] j=0,...,rev_conn_size_[i]-1
 
   initConnRandomGenerator();
+
   return 0;
 }
 
@@ -3552,11 +3553,14 @@ template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::freeConnRandomGenerator()
 {
-  for ( int i_host = 0; i_host < n_hosts_; i_host++ )
+  if ( conn_random_generator_.size() > 0 )
   {
-    for ( int j_host = 0; j_host < n_hosts_; j_host++ )
+    for ( int i_host = 0; i_host < n_hosts_; i_host++ )
     {
-      CURAND_CALL( curandDestroyGenerator( conn_random_generator_[ i_host ][ j_host ] ) );
+      for ( int j_host = 0; j_host < n_hosts_; j_host++ )
+      {
+        CURAND_CALL( curandDestroyGenerator( conn_random_generator_[ i_host ][ j_host ] ) );
+      }
     }
   }
 
@@ -3587,11 +3591,11 @@ int
 ConnectionTemplate< ConnKeyT, ConnStructT >::setTimeResolution( float time_resolution )
 {
   time_resolution_ = time_resolution;
-  
+
   return 0;
 }
 
-  template < class ConnKeyT, class ConnStructT >
+template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::setRandomSeed( unsigned long long seed )
 {

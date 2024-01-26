@@ -151,19 +151,17 @@ NESTGPU::NESTGPU()
   this_host_ = 0;
   external_spike_flag_ = false;
 
-  conn_ = nullptr;
-  // by default, connection structure type used is the 12-byte type
-  setConnStructType(i_conn12b);
-  //setConnStructType( i_conn16b );
+  time_resolution_ = 0.1; // time resolution in ms
 
   random_generator_ = new curandGenerator_t;
   CURAND_CALL( curandCreateGenerator( random_generator_, CURAND_RNG_PSEUDO_DEFAULT ) );
+  kernel_seed_ = 123456789ULL;
+  CURAND_CALL( curandSetPseudoRandomGeneratorSeed( *random_generator_, kernel_seed_ + this_host_ ) );
 
-  // SetRandomSeed(54321ULL);
-  // SetRandomSeed(54322ULL);
-  // SetRandomSeed(54323ULL);
-  // SetRandomSeed(54328ULL);
-  SetRandomSeed( 54328ULL - 5 - 12345 );
+  conn_ = nullptr;
+  // by default, connection structure type used is the 12-byte type
+  setConnStructType( i_conn12b );
+  // setConnStructType( i_conn16b );
 
   distribution_ = new Distribution;
   multimeter_ = new Multimeter;
@@ -181,16 +179,9 @@ NESTGPU::NESTGPU()
   // n_poiss_nodes_ = 0;
   n_remote_nodes_.assign( 1, 0 );
 
-  ////////////// Copy to conn_ object
-  SetTimeResolution( 0.1 ); // time resolution in ms
-
   max_spike_num_fact_ = 1.0;
   max_spike_per_host_fact_ = 1.0;
   max_remote_spike_num_fact_ = 1.0;
-
-  // already set in conn_ constructor
-  // conn_->setMaxNodeNBits(20); // maximum number of nodes is 2^20
-  // conn_->setMaxSynNBits(6); // maximum number of synapse groups is 2^6
 
   error_flag_ = false;
   error_message_ = "";
@@ -249,10 +240,6 @@ int
 NESTGPU::SetRandomSeed( unsigned long long seed )
 {
   kernel_seed_ = seed;
-  // CURAND_CALL(curandDestroyGenerator(*random_generator_));
-  // random_generator_ = new curandGenerator_t;
-  // CURAND_CALL(curandCreateGenerator(random_generator_,
-  //				    CURAND_RNG_PSEUDO_DEFAULT));
   CURAND_CALL( curandSetPseudoRandomGeneratorSeed( *random_generator_, kernel_seed_ + this_host_ ) );
   conn_->setRandomSeed( seed );
 
@@ -263,6 +250,7 @@ int
 NESTGPU::SetTimeResolution( float time_res )
 {
   time_resolution_ = time_res;
+  conn_->setTimeResolution( time_resolution_ );
 
   return 0;
 }
@@ -346,9 +334,10 @@ NESTGPU::setConnStructType( int conn_struct_type )
     throw ngpu_exception( "Unrecognized connection structure type index" );
   }
   conn_->setRandomSeed( kernel_seed_ );
-  
+
   // set time resolution in connection object
   conn_->setTimeResolution( time_resolution_ );
+
   return 0;
 }
 
