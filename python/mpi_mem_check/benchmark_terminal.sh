@@ -6,7 +6,7 @@
 
 for T in 0 1; do
     for P in $(cat n_mpi_list.txt); do
-	for N in 1$(cat n_neuron_list.txt); do
+	for N in $(cat n_neuron_list.txt); do
 	    R=0
 	    id=P$P-N$N-R$R
 	    for iP in $(seq 0 $(($P-1))); do
