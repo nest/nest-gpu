@@ -20,12 +20,25 @@
  *
  */
 
-int IntPow(int x, unsigned int p)
+int64_t
+IntPow( int64_t x, unsigned int p )
 {
-  if (p == 0) return 1;
-  if (p == 1) return x;
-  
-  int tmp = IntPow(x, p/2);
-  if (p%2 == 0) return tmp * tmp;
-  else return x * tmp * tmp;
+  if ( p == 0 )
+  {
+    return 1;
+  }
+  if ( p == 1 )
+  {
+    return x;
+  }
+
+  int64_t tmp = IntPow( x, p / 2 );
+  if ( p % 2 == 0 )
+  {
+    return tmp * tmp;
+  }
+  else
+  {
+    return x * tmp * tmp;
+  }
 }

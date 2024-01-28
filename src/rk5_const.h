@@ -23,7 +23,6 @@
 #ifndef RK5CONST_H
 #define RK5CONST_H
 
-
 extern __constant__ float c2;
 extern __constant__ float c3;
 extern __constant__ float c4;

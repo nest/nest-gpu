@@ -45,6 +45,8 @@ base_neuron.h
 connect.h
 connect_rules.h
 connect_spec.h
+conn12b.h
+conn16b.h
 copass_kernels.h
 copass_sort.h
 cuda_error.h
@@ -112,6 +114,8 @@ aeif_psc_exp_multisynapse.cu
 base_neuron.cu
 connect.cu
 connect_rules.cu
+conn12b.cu
+conn16b.cu
 copass_kernels.cu
 copass_sort.cu
 distribution.cu

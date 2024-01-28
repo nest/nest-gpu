@@ -77,9 +77,9 @@ AC_CHECK_HEADERS([limits.h stdlib.h string.h])
 # check for CUDA SDK
 #CT_CHECK_CUDA_SDK
 
-GPU_ARCH=sm_35
+GPU_ARCH=sm_70
 AC_ARG_WITH(gpu-arch, [AC_HELP_STRING([--with-gpu-arch=GPU architecture],
-[Specify the GPU compute capability [default=sm_35]])],
+[Specify the GPU compute capability [default=sm_70]])],
 [GPU_ARCH=$withval])
 AC_SUBST(GPU_ARCH)
 AC_MSG_NOTICE(GPU architecture: ${GPU_ARCH})

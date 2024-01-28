@@ -20,23 +20,19 @@
  *
  */
 
-
-
-
-
 #ifndef AEIFCONDALPHAMULTISYNAPSE_H
 #define AEIFCONDALPHAMULTISYNAPSE_H
 
+#include "base_neuron.h"
+#include "cuda_error.h"
+#include "neuron_models.h"
+#include "node_group.h"
+#include "rk5.h"
 #include <iostream>
 #include <string>
-#include "cuda_error.h"
-#include "rk5.h"
-#include "node_group.h"
-#include "base_neuron.h"
-#include "neuron_models.h"
 
-
-/* BeginUserDocs: neuron, integrate-and-fire, adaptive threshold, conductance-based
+/* BeginUserDocs: neuron, integrate-and-fire, adaptive threshold,
+conductance-based
 
 Short description
 +++++++++++++++++
@@ -46,7 +42,7 @@ Conductance-based adaptive exponential integrate-and-fire neuron model
 Description
 +++++++++++
 
-``aeif_cond_alpha_multisynapse`` is a conductance-based adaptive exponential 
+``aeif_cond_alpha_multisynapse`` is a conductance-based adaptive exponential
 integrate-and-fire neuron model according to [1]_ with multiple
 synaptic time constants, and synaptic conductance modeled by an
 alpha function.
@@ -61,7 +57,8 @@ The membrane potential is given by the following differential equation:
 
 .. math::
 
-  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T \exp\left(\frac{V-V_{th}}{\Delta_T}\right)
+  C_m \frac{dV}{dt} = -g_L(V-E_L) + g_L\Delta_T
+\exp\left(\frac{V-V_{th}}{\Delta_T}\right)
   + I_{syn_{tot}}(V, t)- w + I_e
 
 where
@@ -82,12 +79,13 @@ When the neuron fires a spike, the adaptation current :math:`w <- w + b`.
 
 .. note::
 
-  The number of receptor ports must be specified at neuron creation (default value is 1) and
-  the receptor index starts from 0 (and not from 1 as in NEST multisynapse models).
-  The time constants are supplied by an array, ``tau_syn``, and the pertaining
-  synaptic reversal potentials are supplied by the array ``E_rev``. Port numbers
-  are automatically assigned in the range 0 to ``n_receptors-1``.
-  During connection, the ports are selected with the synapse property ``receptor``.
+  The number of receptor ports must be specified at neuron creation (default
+value is 1) and the receptor index starts from 0 (and not from 1 as in NEST
+multisynapse models). The time constants are supplied by an array, ``tau_syn``,
+and the pertaining synaptic reversal potentials are supplied by the array
+``E_rev``. Port numbers are automatically assigned in the range 0 to
+``n_receptors-1``. During connection, the ports are selected with the synapse
+property ``receptor``.
 
 Parameters
 ++++++++++
@@ -134,9 +132,9 @@ tau_syn  list of ms    Time constant of synaptic conductance
 ============= ======= =========================================================
 **Integration parameters**
 -------------------------------------------------------------------------------
-h0_rel        real    Starting step in ODE integration relative to time 
+h0_rel        real    Starting step in ODE integration relative to time
                       resolution
-h_min_rel     real    Minimum step in ODE integration relative to time 
+h_min_rel     real    Minimum step in ODE integration relative to time
                       resolution
 ============= ======= =========================================================
 
@@ -159,7 +157,6 @@ aeif_cond_beta_multisynapse
 
 EndUserDocs */
 
-
 #define MAX_PORT_NUM 20
 
 struct aeif_cond_alpha_multisynapse_rk5
@@ -169,29 +166,32 @@ struct aeif_cond_alpha_multisynapse_rk5
 
 class aeif_cond_alpha_multisynapse : public BaseNeuron
 {
- public:
-  RungeKutta5<aeif_cond_alpha_multisynapse_rk5> rk5_;
+public:
+  RungeKutta5< aeif_cond_alpha_multisynapse_rk5 > rk5_;
   float h_min_;
   float h_;
   aeif_cond_alpha_multisynapse_rk5 rk5_data_struct_;
-    
-  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
 
-  int Calibrate(double time_min, float time_resolution);
-		
-  int Update(long long it, double t1);
-  
-  int GetX(int i_neuron, int n_node, double *x) {
-    return rk5_.GetX(i_neuron, n_node, x);
-  }
-  
-  int GetY(int i_var, int i_neuron, int n_node, float *y) {
-    return rk5_.GetY(i_var, i_neuron, n_node, y);
-  }
-  
-  template<int N_PORT>
-    int UpdateNR(long long it, double t1);
+  int Init( int i_node_0, int n_neuron, int n_port, int i_group );
 
+  int Calibrate( double time_min, float time_resolution );
+
+  int Update( long long it, double t1 );
+
+  int
+  GetX( int i_neuron, int n_node, double* x )
+  {
+    return rk5_.GetX( i_neuron, n_node, x );
+  }
+
+  int
+  GetY( int i_var, int i_neuron, int n_node, float* y )
+  {
+    return rk5_.GetY( i_var, i_neuron, n_node, y );
+  }
+
+  template < int N_PORT >
+  int UpdateNR( long long it, double t1 );
 };
 
 #endif

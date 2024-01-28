@@ -295,7 +295,8 @@ class Network:
         else:
             ngpu.SetKernelStatus({'print_time': self.sim_dict['print_time']})
             print("Cannot set remove_conn_key in NEST GPU version < 2.0")
-            
+        # 'conn_struct_type': self.sim_dict['conn_struct_type'],
+
         self.sim_resolution = self.sim_dict['sim_resolution']
 
         if hasattr(ngpu, "SetNestedLoopAlgo"):
