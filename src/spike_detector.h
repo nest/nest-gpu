@@ -20,16 +20,12 @@
  *
  */
 
-
-
-
-
 #ifndef SPIKEDETECTOR_H
 #define SPIKEDETECTOR_H
 
 #include <iostream>
 #include <string>
-//#include "node_group.h"
+// #include "node_group.h"
 #include "base_neuron.h"
 
 /* BeginUserDocs: device, recorder, spike
@@ -46,7 +42,7 @@ The ``spike_detector`` collects and records all spikes it receives
 from neurons that are connected to it.
 
 Any neuron from which spikes have to be recorded must be connected to
-the spike recorder using the standard ``Connect`` command. 
+the spike recorder using the standard ``Connect`` command.
 
 .. warning::
 
@@ -65,22 +61,23 @@ Here follows an example:
 
   neuron = nestgpu.Create("aeif_cond_beta", 3)
   spike_det = nestgpu.Create("spike_detector")
-  nestgpu.Connect([neuron[0]], spike_det, {"rule": "one_to_one"}, {"weight": 1.0, "delay": 1.0, "receptor":0})
+  nestgpu.Connect([neuron[0]], spike_det, {"rule": "one_to_one"},
+{"weight": 1.0, "delay": 1.0, "receptor":0})
 
   recorder = nestgpu.CreateRecord("", ["spike_height"], [spike_det[0]], [0])
 
   nestgpu.Simulate()
-   
+
   recorded_data = nestgpu.GetRecordData(record)
   time = [row[0] for row in recorded_data]
   spike_height = [row[1] for row in recorded_data]
 
 The output is thus a continuous variable, which is 0 when no spikes are emitted
-by the neuron, and is ``weights`` when a spike is emitted. 
+by the neuron, and is ``weights`` when a spike is emitted.
 
 .. note::
 
-  A faster implementation for spike recording, which is also similar to 
+  A faster implementation for spike recording, which is also similar to
   the one of NEST in terms of output, is described in the guide of
   :doc:`how to record spikes <../guides/how_to_record_spikes>`.
 
@@ -94,16 +91,14 @@ EndUserDocs */
 
 class spike_detector : public BaseNeuron
 {
- public:
+public:
   ~spike_detector();
 
-  int Init(int i_node_0, int n_node, int n_port, int i_group);
+  int Init( int i_node_0, int n_node, int n_port, int i_group );
 
   int Free();
-  
-  int Update(long long it, double t1);
 
+  int Update( long long it, double t1 );
 };
-
 
 #endif

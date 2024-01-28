@@ -20,19 +20,14 @@
  *
  */
 
-
-
-
-
 #ifndef PARROTNEURON_H
 #define PARROTNEURON_H
 
 #include <iostream>
 #include <string>
-//#include "node_group.h"
+// #include "node_group.h"
 #include "base_neuron.h"
-//#include "neuron_models.h"
-
+// #include "neuron_models.h"
 
 /* BeginUserDocs: neuron, parrot
 
@@ -59,29 +54,26 @@ Remarks
 - Weights on connections *from* the ``parrot_neuron`` are handled as usual.
 - Delays are honored on incoming and outgoing connections.
 
-Only spikes arriving on connections to port (``receptor``) 0 will 
+Only spikes arriving on connections to port (``receptor``) 0 will
 be repeated. Connections onto port 1 will be accepted, but spikes
 incoming through port 1 will be ignored. This allows setting
-exact pre- and postsynaptic spike times for STDP protocols by 
+exact pre- and postsynaptic spike times for STDP protocols by
 connecting two parrot neurons spiking at desired times by, e.g.,
 a `stdp` onto port 1 on the postsynaptic parrot neuron.
 
 
 EndUserDocs */
 
-
 class parrot_neuron : public BaseNeuron
 {
- public:
+public:
   ~parrot_neuron();
 
-  int Init(int i_node_0, int n_node, int n_port, int i_group);
+  int Init( int i_node_0, int n_node, int n_port, int i_group );
 
   int Free();
-  
-  int Update(long long it, double t1);
 
+  int Update( long long it, double t1 );
 };
-
 
 #endif

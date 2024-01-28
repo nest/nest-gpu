@@ -20,16 +20,13 @@
  *
  */
 
-
-
-
-
 #ifndef POISSGENVARIABLES_H
 #define POISSGENVARIABLES_H
 
 #include <string>
 
-enum {
+enum
+{
   i_rate = 0,
   i_origin,
   i_start,
@@ -37,16 +34,16 @@ enum {
   N_POISS_GEN_SCAL_PARAM
 };
 
-const std::string poiss_gen_scal_param_name[N_POISS_GEN_SCAL_PARAM] = {
+const std::string poiss_gen_scal_param_name[ N_POISS_GEN_SCAL_PARAM ] = {
   "rate",
   "origin",
   "start",
   "stop",
 };
 
-#define rate param[i_rate]
-#define origin param[i_origin]
-#define start param[i_start]
-#define stop param[i_stop]
+#define rate param[ i_rate ]
+#define origin param[ i_origin ]
+#define start param[ i_start ]
+#define stop param[ i_stop ]
 
 #endif

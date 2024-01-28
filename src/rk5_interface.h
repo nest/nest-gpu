@@ -20,15 +20,10 @@
  *
  */
 
-
-
-
-
 #ifndef RK5INTERFACE_H
 #define RK5INTERFACE_H
 
 #include "aeif_cond_beta_multisynapse_rk5.h"
 #include "aeif_psc_exp_multisynapse_rk5.h"
-
 
 #endif

@@ -20,17 +20,12 @@
  *
  */
 
-
-
-
-
 #ifndef MULTIMETER_H
 #define MULTIMETER_H
+#include "base_neuron.h"
 #include <stdio.h>
 #include <string>
 #include <vector>
-#include "base_neuron.h"
-
 
 /* BeginUserDocs: device, recorder
 
@@ -84,7 +79,7 @@ can also be retreived through the commands ``GetRecordDataRows`` and
    print("recorder has {} rows and {} columns".format(rows, columns))
 
    recorded_data = nestgpu.GetRecordData(record)
-   
+
    time = [row[0] for row in recorded_data]
    variable = [row[1] for row in recorded_data]
 
@@ -94,52 +89,50 @@ See also
 
 EndUserDocs */
 
-
-
 class Record
 {
- public:
+public:
   bool data_vect_flag_;
   bool out_file_flag_;
-  std::vector<std::vector<float> > data_vect_;
-  std::vector<BaseNeuron*> neuron_vect_;
+  std::vector< std::vector< float > > data_vect_;
+  std::vector< BaseNeuron* > neuron_vect_;
   std::string file_name_;
-  std::vector<std::string> var_name_vect_;
-  std::vector<int> i_neuron_vect_;
-  std::vector<int> port_vect_;
-  std::vector<float*> var_pt_vect_;
-  FILE *fp_;
+  std::vector< std::string > var_name_vect_;
+  std::vector< int > i_neuron_vect_;
+  std::vector< int > port_vect_;
+  std::vector< float* > var_pt_vect_;
+  FILE* fp_;
 
-  Record(std::vector<BaseNeuron*> neur_vect, std::string file_name,
-	 std::vector<std::string> var_name_vect,
-	 std::vector<int> i_neur_vect, std::vector<int> port_vect);
+  Record( std::vector< BaseNeuron* > neur_vect,
+    std::string file_name,
+    std::vector< std::string > var_name_vect,
+    std::vector< int > i_neur_vect,
+    std::vector< int > port_vect );
 
   int OpenFile();
-  
-  int CloseFile();
-  
-  int WriteRecord(float t);
 
+  int CloseFile();
+
+  int WriteRecord( float t );
 };
-  
+
 class Multimeter
 {
- public:
-  std::vector<Record> record_vect_;
+public:
+  std::vector< Record > record_vect_;
 
-  int CreateRecord(std::vector<BaseNeuron*> neur_vect,
-		   std::string file_name,
-		   std::vector<std::string> var_name_vect,
-		   std::vector<int> i_neur_vect,
-		   std::vector<int> port_vect);
+  int CreateRecord( std::vector< BaseNeuron* > neur_vect,
+    std::string file_name,
+    std::vector< std::string > var_name_vect,
+    std::vector< int > i_neur_vect,
+    std::vector< int > port_vect );
   int OpenFiles();
 
   int CloseFiles();
 
-  int WriteRecords(float t);
+  int WriteRecords( float t );
 
-  std::vector<std::vector<float> > *GetRecordData(int i_record);
-	     
+  std::vector< std::vector< float > >* GetRecordData( int i_record );
 };
 
 #endif

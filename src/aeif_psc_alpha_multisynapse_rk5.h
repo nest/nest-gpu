@@ -20,32 +20,23 @@
  *
  */
 
-
-
-
-
 #ifndef AEIFPSCALPHAMULTISYNAPSERK5_H
 #define AEIFPSCALPHAMULTISYNAPSERK5_H
 
 struct aeif_psc_alpha_multisynapse_rk5;
 
+template < int NVAR, int NPARAM >
+__device__ void
+Derivatives( double x, float* y, float* dydx, float* param, aeif_psc_alpha_multisynapse_rk5 data_struct );
 
-template<int NVAR, int NPARAM>
-__device__
-void Derivatives(double x, float *y, float *dydx, float *param,
-		 aeif_psc_alpha_multisynapse_rk5 data_struct);
+template < int NVAR, int NPARAM >
+__device__ void
+ExternalUpdate( double x, float* y, float* param, bool end_time_step, aeif_psc_alpha_multisynapse_rk5 data_struct );
 
-template<int NVAR, int NPARAM>
-__device__
-void ExternalUpdate(double x, float *y, float *param, bool end_time_step,
-		    aeif_psc_alpha_multisynapse_rk5 data_struct);
+__device__ void
+NodeInit( int n_var, int n_param, double x, float* y, float* param, aeif_psc_alpha_multisynapse_rk5 data_struct );
 
-__device__
-void NodeInit(int n_var, int n_param, double x, float *y,
-	      float *param, aeif_psc_alpha_multisynapse_rk5 data_struct);
-
-__device__
-void NodeCalibrate(int n_var, int n_param, double x, float *y,
-		   float *param, aeif_psc_alpha_multisynapse_rk5 data_struct);
+__device__ void
+NodeCalibrate( int n_var, int n_param, double x, float* y, float* param, aeif_psc_alpha_multisynapse_rk5 data_struct );
 
 #endif
