@@ -1524,6 +1524,30 @@ BaseNeuron::GetParamPt( int i_neuron, std::string param_name, int port /*=0*/ )
 // if neuron emitted a spike in the current time step
 // otherwise return 0
 float
+BaseNeuron::GetSpikeActivity( int i_neuron, long long time_idx )
+{
+  CheckNeuronIdx( i_neuron );
+  int i_spike_buffer = i_neuron + i_node_0_;
+  long long last_spike_time_idx;
+
+  gpuErrchk( cudaMemcpy(
+    &last_spike_time_idx, &d_LastSpikeTimeIdx[ i_spike_buffer ], sizeof( long long ), cudaMemcpyDeviceToHost ) );
+  if ( last_spike_time_idx != time_idx )
+  {
+    return 0.0;
+  }
+  float spike_height;
+  gpuErrchk(
+    cudaMemcpy( &spike_height, &d_LastSpikeHeight[ i_spike_buffer ], sizeof( float ), cudaMemcpyDeviceToHost ) );
+  return spike_height;
+}
+
+
+///////////////////// OLD
+// return spike multiplicity (spike_height) of neuron i_neuron
+// if neuron emitted a spike in the current time step
+// otherwise return 0
+float
 BaseNeuron::GetSpikeActivity( int i_neuron )
 {
   CheckNeuronIdx( i_neuron );
@@ -1551,6 +1575,7 @@ BaseNeuron::GetSpikeActivity( int i_neuron )
 
   return spike_height;
 }
+/////////////////////////////////////////////////
 
 // get all names of integer variables
 std::vector< std::string >

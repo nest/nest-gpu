@@ -31,6 +31,7 @@
 #include "spike_buffer.h"
 // #include "connect.h"
 #include "connect.h"
+#include "input_spike_buffer.h"
 #include "node_group.h"
 #include "remote_spike.h"
 #include "send_spike.h"
@@ -96,33 +97,52 @@ __device__ float* SpikeBufferHeight; // [NSpikeBuffer*MaxSpikeBufferNum];
 // i_spike_buffer : node index
 // height: spike multiplicity
 ////////////////////////////////////////////////////////////
+
 __device__ void
 PushSpike( int i_spike_buffer, float height )
 {
+  if ( input_spike_buffer_ns::algo_ == INPUT_SPIKE_BUFFER_ALGO )
+  {
+    int64_t i_conn = first_out_connection_[ i_spike_buffer ];
+    if ( i_conn < 0 )
+    {
+      return;
+    }
+    uint pos = atomicAdd( input_spike_buffer_ns::n_spikes_, 1 );
+    spike_first_connection_[ pos ] = i_conn;
+    // printf("PushSpike i_conn: %ld\tpos: %d\tspike_first_connection[pos]: %ld\n",
+    //  i_conn, pos, spike_first_connection_[pos]);
+  }
+
   int den_delay_idx = 0;
+
   if ( i_spike_buffer < n_local_nodes )
   {
     LastSpikeTimeIdx[ i_spike_buffer ] = NESTGPUTimeIdx;
     LastSpikeHeight[ i_spike_buffer ] = height;
     int i_group = NodeGroupMap[ i_spike_buffer ];
-    float* den_delay_arr = NodeGroupArray[ i_group ].den_delay_arr_;
-    // check if node has dendritic delay
-    if ( den_delay_arr != nullptr )
+
+    if ( input_spike_buffer_ns::algo_ != INPUT_SPIKE_BUFFER_ALGO )
     {
-      int i_neuron = i_spike_buffer - NodeGroupArray[ i_group ].i_node_0_;
-      int n_param = NodeGroupArray[ i_group ].n_param_;
-      // dendritic delay index is stored in the parameter array
-      // den_delay_arr points to the dendritic delay if the first
-      // node of the group. The other are separate by steps = n_param
-      den_delay_idx = ( int ) round( den_delay_arr[ i_neuron * n_param ] / NESTGPUTimeResolution );
-      // printf("isb %d\tden_delay_idx: %d\n", i_spike_buffer, den_delay_idx);
-    }
-    // printf("Node %d spikes at time %lld , den_delay_idx: %d\n",
-    //	 i_spike_buffer, NESTGPUTimeIdx, den_delay_idx);
-    if ( den_delay_idx == 0 )
-    {
-      // last time when spike is sent back to dendrites (e.g. for STDP)
-      LastRevSpikeTimeIdx[ i_spike_buffer ] = NESTGPUTimeIdx;
+      float* den_delay_arr = NodeGroupArray[ i_group ].den_delay_arr_;
+      // check if node has dendritic delay
+      if ( den_delay_arr != nullptr )
+      {
+        int i_neuron = i_spike_buffer - NodeGroupArray[ i_group ].i_node_0_;
+        int n_param = NodeGroupArray[ i_group ].n_param_;
+        // dendritic delay index is stored in the parameter array
+        // den_delay_arr points to the dendritic delay if the first
+        // node of the group. The other are separate by steps = n_param
+        den_delay_idx = ( int ) round( den_delay_arr[ i_neuron * n_param ] / NESTGPUTimeResolution );
+        // printf("isb %d\tden_delay_idx: %d\n", i_spike_buffer, den_delay_idx);
+      }
+      // printf("Node %d spikes at time %lld , den_delay_idx: %d\n",
+      //	 i_spike_buffer, NESTGPUTimeIdx, den_delay_idx);
+      if ( den_delay_idx == 0 )
+      {
+        // last time when spike is sent back to dendrites (e.g. for STDP)
+        LastRevSpikeTimeIdx[ i_spike_buffer ] = NESTGPUTimeIdx;
+      }
     }
 
     if ( ExternalSpikeFlag )
@@ -141,10 +161,13 @@ PushSpike( int i_spike_buffer, float height )
     }
 
     // if recording  spike counts is activated, increase counter
+    // printf("spike from isb: %d\tig: %d\n", i_spike_buffer, i_group);
     if ( NodeGroupArray[ i_group ].spike_count_ != nullptr )
     {
       int i_node_0 = NodeGroupArray[ i_group ].i_node_0_;
       NodeGroupArray[ i_group ].spike_count_[ i_spike_buffer - i_node_0 ]++;
+      // printf("spike from isb: %d\tinode0: %d\tcount: %d\n", i_spike_buffer,  i_node_0,
+      //      NodeGroupArray[ i_group ].spike_count_[ i_spike_buffer - i_node_0 ]);
     }
 
     // check if recording spike times is activated
@@ -169,32 +192,35 @@ PushSpike( int i_spike_buffer, float height )
     }
   }
 
-  // spike should be stored if there are output connections
-  // or if dendritic delay is > 0
-  uint conn_group_num = ConnGroupIdx0[ i_spike_buffer + 1 ] - ConnGroupIdx0[ i_spike_buffer ];
-  if ( conn_group_num > 0 || den_delay_idx > 0 )
+  if ( input_spike_buffer_ns::algo_ != INPUT_SPIKE_BUFFER_ALGO )
   {
-    int Ns = SpikeBufferSize[ i_spike_buffer ]; // n. of spikes in buffer
-    if ( Ns >= MaxSpikeBufferSize )
+    // spike should be stored if there are output connections
+    // or if dendritic delay is > 0
+    uint conn_group_num = ConnGroupIdx0[ i_spike_buffer + 1 ] - ConnGroupIdx0[ i_spike_buffer ];
+    if ( conn_group_num > 0 || den_delay_idx > 0 )
     {
-      printf(
-        "Maximum number of spikes in spike buffer exceeded"
-        " for spike buffer %d\n",
-        i_spike_buffer );
-      // exit(0);
-      return;
+      int Ns = SpikeBufferSize[ i_spike_buffer ]; // n. of spikes in buffer
+      if ( Ns >= MaxSpikeBufferSize )
+      {
+        printf(
+          "Maximum number of spikes in spike buffer exceeded"
+          " for spike buffer %d\n",
+          i_spike_buffer );
+        // exit(0);
+        return;
+      }
+      ///////////////////////////////////
+      // push_front new spike in buffer
+      //////////////////////////////////
+      SpikeBufferSize[ i_spike_buffer ]++; // increase n. of spikes in buffer
+      // the index of the most recent spike is0 should be decreased by 1
+      int is0 = ( SpikeBufferIdx0[ i_spike_buffer ] + MaxSpikeBufferSize - 1 ) % MaxSpikeBufferSize;
+      SpikeBufferIdx0[ i_spike_buffer ] = is0;
+      int i_arr = is0 * NSpikeBuffer + i_spike_buffer; // spike index in array
+      SpikeBufferTimeIdx[ i_arr ] = 0;                 // time index is initialized to 0
+      SpikeBufferConnIdx[ i_arr ] = 0;                 // connect. group index is initialized to 0
+      SpikeBufferHeight[ i_arr ] = height;             // spike multiplicity
     }
-    ///////////////////////////////////
-    // push_front new spike in buffer
-    //////////////////////////////////
-    SpikeBufferSize[ i_spike_buffer ]++; // increase n. of spikes in buffer
-    // the index of the most recent spike is0 should be decreased by 1
-    int is0 = ( SpikeBufferIdx0[ i_spike_buffer ] + MaxSpikeBufferSize - 1 ) % MaxSpikeBufferSize;
-    SpikeBufferIdx0[ i_spike_buffer ] = is0;
-    int i_arr = is0 * NSpikeBuffer + i_spike_buffer; // spike index in array
-    SpikeBufferTimeIdx[ i_arr ] = 0;                 // time index is initialized to 0
-    SpikeBufferConnIdx[ i_arr ] = 0;                 // connect. group index is initialized to 0
-    SpikeBufferHeight[ i_arr ] = height;             // spike multiplicity
   }
 }
 

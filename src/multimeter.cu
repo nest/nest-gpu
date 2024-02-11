@@ -80,7 +80,7 @@ Record::CloseFile()
 }
 
 int
-Record::WriteRecord( float t )
+Record::WriteRecord( float t, long long time_idx )
 {
   float var;
   std::vector< float > vect;
@@ -101,7 +101,7 @@ Record::WriteRecord( float t )
     }
     else
     {
-      var = neuron_vect_[ i ]->GetSpikeActivity( i_neuron_vect_[ i ] );
+      var = neuron_vect_[ i ]->GetSpikeActivity( i_neuron_vect_[ i ], time_idx );
     }
     if ( out_file_flag_ )
     {
@@ -166,11 +166,11 @@ Multimeter::CloseFiles()
 }
 
 int
-Multimeter::WriteRecords( float t )
+Multimeter::WriteRecords( float t, long long time_idx )
 {
   for ( unsigned int i = 0; i < record_vect_.size(); i++ )
   {
-    record_vect_[ i ].WriteRecord( t );
+    record_vect_[ i ].WriteRecord( t, time_idx );
   }
 
   return 0;

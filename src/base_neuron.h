@@ -276,6 +276,8 @@ public:
   virtual float* GetParamPt( int i_neuron, std::string param_name, int port = 0 );
   virtual float GetSpikeActivity( int i_neuron );
 
+  virtual float GetSpikeActivity( int i_neuron, long long time_idx );
+
   virtual int
   SendDirectSpikes( long long time_idx )
   {

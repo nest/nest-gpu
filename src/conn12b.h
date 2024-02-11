@@ -23,6 +23,7 @@
 #ifndef CONN12B_H
 #define CONN12B_H
 #include "connect.h"
+#include "input_spike_buffer.h"
 #include "remote_connect.h"
 
 struct conn12b_struct

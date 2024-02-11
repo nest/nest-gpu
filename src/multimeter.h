@@ -113,7 +113,7 @@ public:
 
   int CloseFile();
 
-  int WriteRecord( float t );
+  int WriteRecord( float t, long long time_idx );
 };
 
 class Multimeter
@@ -130,7 +130,7 @@ public:
 
   int CloseFiles();
 
-  int WriteRecords( float t );
+  int WriteRecords( float t, long long time_idx );
 
   std::vector< std::vector< float > >* GetRecordData( int i_record );
 };

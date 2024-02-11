@@ -49,6 +49,7 @@
 
 #include "conn12b.h"
 #include "conn16b.h"
+#include "input_spike_buffer.h"
 #include "remote_connect.h"
 
 ////////////// TEMPORARY
@@ -412,6 +413,8 @@ NESTGPU::Calibrate()
 
   conn_->calibrate();
 
+  conn_->initInputSpikeBuffer( GetNLocalNodes() );
+
   poiss_conn::organizeDirectConnections( conn_ );
   for ( unsigned int i = 0; i < node_vect_.size(); i++ )
   {
@@ -435,6 +438,7 @@ NESTGPU::Calibrate()
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
+  neur_t0_ = t_min_;
   neural_time_ = t_min_;
 
   NodeGroupArrayInit();
@@ -511,20 +515,24 @@ NESTGPU::StartSimulation()
   }
   if ( first_simulation_flag_ )
   {
-    gpuErrchk( cudaMemcpyToSymbolAsync( NESTGPUTime, &neural_time_, sizeof( double ) ) );
-    multimeter_->WriteRecords( neural_time_ );
+    gpuErrchk( cudaMemcpyToSymbolAsync( NESTGPUTime, &neur_t0_, sizeof( double ) ) );
+    long long time_idx = ( int ) round( neur_t0_ / time_resolution_ );
+    multimeter_->WriteRecords( neur_t0_, time_idx );
     build_real_time_ = getRealTime();
     first_simulation_flag_ = false;
   }
+  else
+  {
+    neur_t0_ = neural_time_;
+  }
+  it_ = 0;
+  Nt_ = ( long long ) round( sim_time_ / time_resolution_ );
+
   if ( verbosity_level_ >= 1 )
   {
     std::cout << HostIdStr() << "Simulating ...\n";
     printf( "Neural activity simulation time: %.3lf ms\n", sim_time_ );
   }
-
-  neur_t0_ = neural_time_;
-  it_ = 0;
-  Nt_ = ( long long ) round( sim_time_ / time_resolution_ );
 
   return 0;
 }
@@ -584,10 +592,15 @@ NESTGPU::SimulationStep()
   }
   double time_mark;
 
-  time_mark = getRealTime();
-  SpikeBufferUpdate<<< ( GetNTotalNodes() + 1023 ) / 1024, 1024 >>>();
-  gpuErrchk( cudaPeekAtLastError() );
-  SpikeBufferUpdate_time_ += ( getRealTime() - time_mark );
+  if ( conn_->getSpikeBufferAlgo() != INPUT_SPIKE_BUFFER_ALGO )
+  {
+    time_mark = getRealTime();
+    SpikeBufferUpdate<<< ( GetNTotalNodes() + 1023 ) / 1024, 1024 >>>();
+    DBGCUDASYNC;
+
+    SpikeBufferUpdate_time_ += ( getRealTime() - time_mark );
+  }
+
   time_mark = getRealTime();
   neural_time_ = neur_t0_ + ( double ) time_resolution_ * ( it_ + 1 );
   // std::cout << "neural_time_: " << neural_time_ << "\n";
@@ -613,7 +626,7 @@ NESTGPU::SimulationStep()
   gpuErrchk( cudaPeekAtLastError() );
 
   neuron_Update_time_ += ( getRealTime() - time_mark );
-  multimeter_->WriteRecords( neural_time_ );
+  multimeter_->WriteRecords( neural_time_, time_idx );
 
   if ( n_hosts_ > 1 )
   {
@@ -638,30 +651,39 @@ NESTGPU::SimulationStep()
     CopySpikeFromRemote();
   }
 
-  int n_spikes;
 
-  // Call will get delayed until ClearGetSpikesArrays()
-  // afterwards the value of n_spikes will be available
-  gpuErrchk( cudaMemcpyAsync( &n_spikes, d_SpikeNum, sizeof( int ), cudaMemcpyDeviceToHost ) );
-
-  ClearGetSpikeArrays();
-  gpuErrchk( cudaDeviceSynchronize() );
-  if ( n_spikes > 0 )
+  if ( conn_->getSpikeBufferAlgo() == INPUT_SPIKE_BUFFER_ALGO )
   {
-    time_mark = getRealTime();
-    switch ( conn_struct_type_ )
-    {
-    case i_conn12b:
-      NestedLoop::Run< 0 >( nested_loop_algo_, n_spikes, d_SpikeTargetNum );
-      break;
-    case i_conn16b:
-      NestedLoop::Run< 2 >( nested_loop_algo_, n_spikes, d_SpikeTargetNum );
-      break;
-    default:
-      throw ngpu_exception( "Unrecognized connection structure type index" );
-    }
-    NestedLoop_time_ += ( getRealTime() - time_mark );
+    conn_->deliverSpikes();
   }
+  else
+  {
+    int n_spikes;
+
+    // Call will get delayed until ClearGetSpikesArrays()
+    // afterwards the value of n_spikes will be available
+    gpuErrchk( cudaMemcpyAsync( &n_spikes, d_SpikeNum, sizeof( int ), cudaMemcpyDeviceToHost ) );
+
+    ClearGetSpikeArrays();
+    gpuErrchk( cudaDeviceSynchronize() );
+    if ( n_spikes > 0 )
+    {
+      time_mark = getRealTime();
+      switch ( conn_struct_type_ )
+      {
+      case i_conn12b:
+        NestedLoop::Run< 0 >( nested_loop_algo_, n_spikes, d_SpikeTargetNum );
+        break;
+      case i_conn16b:
+        NestedLoop::Run< 2 >( nested_loop_algo_, n_spikes, d_SpikeTargetNum );
+        break;
+      default:
+        throw ngpu_exception( "Unrecognized connection structure type index" );
+      }
+      NestedLoop_time_ += ( getRealTime() - time_mark );
+    }
+  }
+
   time_mark = getRealTime();
   for ( unsigned int i = 0; i < node_vect_.size(); i++ )
   {
@@ -671,6 +693,7 @@ NESTGPU::SimulationStep()
     }
   }
   poisson_generator_time_ += ( getRealTime() - time_mark );
+
   time_mark = getRealTime();
   for ( unsigned int i = 0; i < node_vect_.size(); i++ )
   {
@@ -682,60 +705,83 @@ NESTGPU::SimulationStep()
       dim3 grid_dim( grid_dim_x, grid_dim_y );
       // dim3 block_dim(1024,1);
 
-      GetSpikes<<< grid_dim, 1024 >>> // block_dim>>>
-        ( node_vect_[ i ]->get_spike_array_,
-          node_vect_[ i ]->n_node_,
-          node_vect_[ i ]->n_port_,
-          node_vect_[ i ]->n_var_,
-          node_vect_[ i ]->port_weight_arr_,
-          node_vect_[ i ]->port_weight_arr_step_,
-          node_vect_[ i ]->port_weight_port_step_,
-          node_vect_[ i ]->port_input_arr_,
-          node_vect_[ i ]->port_input_arr_step_,
-          node_vect_[ i ]->port_input_port_step_ );
+      if ( conn_->getSpikeBufferAlgo() == INPUT_SPIKE_BUFFER_ALGO )
+      {
+        input_spike_buffer_ns::GetInputSpikes<<< grid_dim, 1024 >>> // block_dim>>>
+          ( node_vect_[ i ]->i_node_0_,
+            node_vect_[ i ]->n_node_,
+            node_vect_[ i ]->n_port_,
+            node_vect_[ i ]->n_var_,
+            node_vect_[ i ]->port_weight_arr_,
+            node_vect_[ i ]->port_weight_arr_step_,
+            node_vect_[ i ]->port_weight_port_step_,
+            node_vect_[ i ]->port_input_arr_,
+            node_vect_[ i ]->port_input_arr_step_,
+            node_vect_[ i ]->port_input_port_step_ );
+        DBGCUDASYNC;
+      }
+      else
+      {
+        GetSpikes<<< grid_dim, 1024 >>> // block_dim>>>
+          ( node_vect_[ i ]->get_spike_array_,
+            node_vect_[ i ]->n_node_,
+            node_vect_[ i ]->n_port_,
+            node_vect_[ i ]->n_var_,
+            node_vect_[ i ]->port_weight_arr_,
+            node_vect_[ i ]->port_weight_arr_step_,
+            node_vect_[ i ]->port_weight_port_step_,
+            node_vect_[ i ]->port_input_arr_,
+            node_vect_[ i ]->port_input_arr_step_,
+            node_vect_[ i ]->port_input_port_step_ );
+        DBGCUDASYNC;
+      }
     }
   }
-  gpuErrchk( cudaPeekAtLastError() );
 
   GetSpike_time_ += ( getRealTime() - time_mark );
 
   time_mark = getRealTime();
   SpikeReset<<< 1, 1 >>>();
+  DBGCUDASYNC;
+
   gpuErrchk( cudaPeekAtLastError() );
   SpikeReset_time_ += ( getRealTime() - time_mark );
 
-  if ( n_hosts_ > 1 )
+  if ( conn_->getSpikeBufferAlgo() != INPUT_SPIKE_BUFFER_ALGO )
   {
-    time_mark = getRealTime();
-    ExternalSpikeReset();
-    ExternalSpikeReset_time_ += ( getRealTime() - time_mark );
-  }
-
-  if ( conn_->getNRevConn() > 0 )
-  {
-    // time_mark = getRealTime();
-    revSpikeReset<<< 1, 1 >>>();
-    gpuErrchk( cudaPeekAtLastError() );
-    revSpikeBufferUpdate<<< ( GetNLocalNodes() + 1023 ) / 1024, 1024 >>>( GetNLocalNodes() );
-    gpuErrchk( cudaPeekAtLastError() );
-    unsigned int n_rev_spikes;
-    gpuErrchk(
-      cudaMemcpy( &n_rev_spikes, conn_->getDevRevSpikeNumPt(), sizeof( unsigned int ), cudaMemcpyDeviceToHost ) );
-    if ( n_rev_spikes > 0 )
+    if ( n_hosts_ > 1 )
     {
-      switch ( conn_struct_type_ )
-      {
-      case i_conn12b:
-        NestedLoop::Run< 1 >( nested_loop_algo_, n_rev_spikes, conn_->getDevRevSpikeNConnPt() );
-        break;
-      case i_conn16b:
-        NestedLoop::Run< 3 >( nested_loop_algo_, n_rev_spikes, conn_->getDevRevSpikeNConnPt() );
-        break;
-      default:
-        throw ngpu_exception( "Unrecognized connection structure type index" );
-      }
+      time_mark = getRealTime();
+      ExternalSpikeReset();
+      ExternalSpikeReset_time_ += ( getRealTime() - time_mark );
     }
-    // RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
+
+    if ( conn_->getNRevConn() > 0 )
+    {
+      // time_mark = getRealTime();
+      revSpikeReset<<< 1, 1 >>>();
+      gpuErrchk( cudaPeekAtLastError() );
+      revSpikeBufferUpdate<<< ( GetNLocalNodes() + 1023 ) / 1024, 1024 >>>( GetNLocalNodes() );
+      gpuErrchk( cudaPeekAtLastError() );
+      unsigned int n_rev_spikes;
+      gpuErrchk(
+        cudaMemcpy( &n_rev_spikes, conn_->getDevRevSpikeNumPt(), sizeof( unsigned int ), cudaMemcpyDeviceToHost ) );
+      if ( n_rev_spikes > 0 )
+      {
+        switch ( conn_struct_type_ )
+        {
+        case i_conn12b:
+          NestedLoop::Run< 1 >( nested_loop_algo_, n_rev_spikes, conn_->getDevRevSpikeNConnPt() );
+          break;
+        case i_conn16b:
+          NestedLoop::Run< 3 >( nested_loop_algo_, n_rev_spikes, conn_->getDevRevSpikeNConnPt() );
+          break;
+        default:
+          throw ngpu_exception( "Unrecognized connection structure type index" );
+        }
+      }
+      // RevSpikeBufferUpdate_time_ += (getRealTime() - time_mark);
+    }
   }
 
   for ( unsigned int i = 0; i < node_vect_.size(); i++ )
@@ -1821,6 +1867,7 @@ NESTGPU::ActivateSpikeCount( int i_node, int n_node )
       "Spike count must be activated for all and only "
       " the nodes of the same group" );
   }
+  // std::cout << "Activating spike count for group " << i_group << "\n";
   node_vect_[ i_group ]->ActivateSpikeCount();
 
   return 0;
@@ -1840,6 +1887,7 @@ NESTGPU::ActivateRecSpikeTimes( int i_node, int n_node, int max_n_rec_spike_time
       "Spike count must be activated for all and only "
       " the nodes of the same group" );
   }
+  // std::cout << "Activating spike time recording for group " << i_group << "\n";
   node_vect_[ i_group ]->ActivateRecSpikeTimes( max_n_rec_spike_times );
 
   return 0;

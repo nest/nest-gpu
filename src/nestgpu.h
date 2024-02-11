@@ -227,6 +227,8 @@ class NESTGPU
 
   int nested_loop_algo_;
 
+  int spike_buffer_algo_;
+
   std::vector< int > ext_neuron_input_spike_node_;
 
   std::vector< int > ext_neuron_input_spike_port_;

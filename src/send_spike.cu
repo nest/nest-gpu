@@ -21,6 +21,7 @@
  */
 
 #include "cuda_error.h"
+#include "input_spike_buffer.h"
 #include "send_spike.h"
 #include <config.h>
 #include <stdio.h>
@@ -90,5 +91,13 @@ SpikeInit( int max_spike_num )
 __global__ void
 SpikeReset()
 {
-  *SpikeNum = 0;
+  if ( input_spike_buffer_ns::algo_ == INPUT_SPIKE_BUFFER_ALGO )
+  {
+    // printf("Resetting n_spikes\n");
+    *input_spike_buffer_ns::n_spikes_ = 0;
+  }
+  else
+  {
+    *SpikeNum = 0;
+  }
 }

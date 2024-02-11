@@ -44,6 +44,13 @@
 #include "node_group.h"
 #include "utilities.h"
 
+#define INPUT_SPIKE_BUFFER_FLAG
+enum
+{
+  OUTPUT_SPIKE_BUFFER_ALGO = 0,
+  INPUT_SPIKE_BUFFER_ALGO
+};
+
 typedef uint inode_t;
 typedef uint iconngroup_t;
 
@@ -298,6 +305,16 @@ public:
   // add an offset to the remote source node indexes in the spike buffer maps
   // after the creation of the spike buffers used to represent such nodes
   virtual int addOffsetToSpikeBufferMap( inode_t n_nodes ) = 0;
+
+  virtual int initInputSpikeBuffer( uint n_local_nodes ) = 0;
+
+  virtual int deliverSpikes() = 0;
+
+  // set algorithm for spike buffering and delivery
+  virtual int setSpikeBufferAlgo( int spike_buffer_algo ) = 0;
+
+  // get algorithm for spike buffering and delivery
+  virtual int getSpikeBufferAlgo() = 0;
 };
 
 
@@ -491,6 +508,58 @@ class ConnectionTemplate : public Connection
   int* d_target_rev_conn_size_; //[i] i=0,..., n_neuron-1;
 
   int64_t** d_target_rev_conn_; //[i][j] j=0,...,rev_conn_size_[i]-1
+
+  //////////////////////////////////////////////////
+  // input-spike-buffer-related member variables
+  //////////////////////////////////////////////////
+  // number of input ports of each (local) node
+  int* d_n_input_ports_; // [n_local_nodes]
+
+  // cumulative sum of number of input ports of each (local) node
+  int64_t* d_n_input_ports_cumul_; // [n_local_nodes + 1]
+
+  // Total number of input ports over all local nodes
+  int64_t n_input_ports_tot_;
+
+  // one-dimensional array of maximum delay among the incoming connections of each input port
+  // of each (local) target node
+  int* d_max_input_delay_1d_; // [n_input_ports_tot_]
+
+  // two-dimensional array of maximum delay among the incoming connections of each input port
+  // of each (local) target node
+  int** d_max_input_delay_; // [n_local_nodes][n_input_ports[i_node]]
+
+  // Cumulative sum of of maximum delay among the incoming connections of each input port
+  // of each (local) target node
+  int64_t* d_max_input_delay_cumul_; // [n_input_ports_tot_ + 1]
+
+  // Total number of slots in the input spike buffers
+  int64_t n_input_spike_buffer_tot_;
+
+  // input spike buffer representation flattened on one dimension
+  double* d_input_spike_buffer_1d_; // [n_input_spike_buffer_tot_]
+
+  // two-dimensional representation of input spike buffer
+  // (it is an auxiliary representation used for building the final three-dimensional representation)
+  double** d_input_spike_buffer_2d_; // [n_input_ports_tot_][n_slots[i_port_abs]]
+
+  // final (three-dimensional) representation of input spike buffer
+  double*** d_input_spike_buffer_; // [n_local_nodes][n_input_ports[i_node]][n_slots[i_target][i_port]]
+
+
+  // index of the first connection outgoing from each local node (-1 for no connections)
+  // [n_local_nodes]
+  int64_t* d_first_out_connection_;
+
+  // array of the first connection of each spike emitted at current time step
+  // [n_all_nodes*time_resolution*avg_max_firing_rate]
+  int64_t* d_spike_first_connection_;
+
+  // number of spikes emitted at current time step
+  int* d_n_spikes_;
+
+  // algorithm for spike buffering and delivery
+  int spike_buffer_algo_;
 
   //////////////////////////////////////////////////
   // class ConnectionTemplate methods
@@ -917,6 +986,26 @@ public:
     float* d_mu_arr,
     void* d_poiss_key_array,
     curandState* d_curand_state );
+
+  //////////////////////////////////////////////////
+  // class ConnectionTemplate input-spike-buffer-related methods
+  //////////////////////////////////////////////////
+  int initInputSpikeBuffer( uint n_local_nodes );
+
+  int deliverSpikes();
+
+  // set algorithm for spike buffering and delivery
+  int
+  setSpikeBufferAlgo( int spike_buffer_algo )
+  {
+    return _setSpikeBufferAlgo( spike_buffer_algo );
+  }
+  // private call non-overriding virtual method of base class
+  // needed for constructor
+  int _setSpikeBufferAlgo( int spike_buffer_algo );
+
+  // get algorithm for spike buffering and delivery
+  int getSpikeBufferAlgo();
 };
 
 namespace poiss_conn
@@ -1899,53 +1988,6 @@ poissGenSubstractFirstNodeIndexKernel( int64_t n_conn, ConnKeyT* poiss_key_array
   setConnSource< ConnKeyT >( conn_key, i_source_rel );
 }
 
-template < class ConnKeyT, class ConnStructT >
-__global__ void
-sendDirectSpikeKernel( curandState* curand_state,
-  long long time_idx,
-  float* mu_arr,
-  ConnKeyT* poiss_key_array,
-  int64_t n_conn,
-  int64_t i_conn_0,
-  int64_t block_size,
-  int n_node,
-  int max_delay )
-{
-  int64_t blockId = ( int64_t ) blockIdx.y * gridDim.x + blockIdx.x;
-  int64_t i_conn_rel = blockId * blockDim.x + threadIdx.x;
-  if ( i_conn_rel >= n_conn )
-  {
-    return;
-  }
-  ConnKeyT& conn_key = poiss_key_array[ i_conn_rel ];
-  int i_source = getConnSource< ConnKeyT >( conn_key );
-  int i_delay = getConnDelay< ConnKeyT >( conn_key );
-  int id = ( int ) ( ( time_idx - i_delay + 1 ) % max_delay );
-
-  if ( id < 0 )
-  {
-    return;
-  }
-
-  float mu = mu_arr[ id * n_node + i_source ];
-  int n = curand_poisson( curand_state + i_conn_rel, mu );
-  if ( n > 0 )
-  {
-    int64_t i_conn = i_conn_0 + i_conn_rel;
-    int i_block = ( int ) ( i_conn / block_size );
-    int64_t i_block_conn = i_conn % block_size;
-    ConnStructT& conn_struct = ( ( ConnStructT** ) ConnStructArray )[ i_block ][ i_block_conn ];
-
-    int i_target = getConnTarget< ConnStructT >( conn_struct );
-    int port = getConnPort< ConnKeyT, ConnStructT >( conn_key, conn_struct );
-    float weight = conn_struct.weight;
-
-    int i_group = NodeGroupMap[ i_target ];
-    int i = port * NodeGroupArray[ i_group ].n_node_ + i_target - NodeGroupArray[ i_group ].i_node_0_;
-    double d_val = ( double ) ( weight * n );
-    atomicAddDouble( &NodeGroupArray[ i_group ].get_spike_array_[ i ], d_val );
-  }
-}
 // Count number of reverse connections per target node
 template < class ConnKeyT, class ConnStructT >
 __global__ void
@@ -2041,6 +2083,7 @@ __global__ void connectCalibrateKernel( iconngroup_t* conn_group_idx0,
 //   init();
 // }
 
+
 template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::init()
@@ -2134,6 +2177,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::init()
   d_target_rev_conn_ = NULL;      //[i][j] j=0,...,rev_conn_size_[i]-1
 
   initConnRandomGenerator();
+
+  _setSpikeBufferAlgo( INPUT_SPIKE_BUFFER_ALGO );
+  // _setSpikeBufferAlgo(OUTPUT_SPIKE_BUFFER_ALGO);
 
   return 0;
 }
@@ -3862,49 +3908,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::buildDirectConnections( inode_t i_n
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::sendDirectSpikes( long long time_idx,
-  int64_t i_conn0,
-  int64_t n_dir_conn,
-  inode_t n_node,
-  int max_delay,
-  float* d_mu_arr,
-  void* d_poiss_key_array,
-  curandState* d_curand_state )
-{
-  unsigned int grid_dim_x, grid_dim_y;
-
-  if ( n_dir_conn < 65536 * 1024 )
-  { // max grid dim * max block dim
-    grid_dim_x = ( n_dir_conn + 1023 ) / 1024;
-    grid_dim_y = 1;
-  }
-  else
-  {
-    grid_dim_x = 64; // I think it's not necessary to increase it
-    if ( n_dir_conn > grid_dim_x * 1024 * 65535 )
-    {
-      throw ngpu_exception( std::string( "Number of direct connections " ) + std::to_string( n_dir_conn )
-        + " larger than threshold " + std::to_string( grid_dim_x * 1024 * 65535 ) );
-    }
-    grid_dim_y = ( n_dir_conn + grid_dim_x * 1024 - 1 ) / ( grid_dim_x * 1024 );
-  }
-  dim3 numBlocks( grid_dim_x, grid_dim_y );
-  sendDirectSpikeKernel< ConnKeyT, ConnStructT > <<< numBlocks, 1024 >>>( d_curand_state,
-    time_idx,
-    d_mu_arr,
-    ( ConnKeyT* ) d_poiss_key_array,
-    n_dir_conn,
-    i_conn0,
-    conn_block_size_,
-    n_node,
-    max_delay );
-
-  DBGCUDASYNC
-
-  return 0;
-}
 
 template < class ConnKeyT, class ConnStructT >
 int
@@ -4023,4 +4026,4 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::resetConnectionSpikeTimeDown()
   return 0;
 }
 
-#endif
+#endif // CONNECT_H
