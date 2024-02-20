@@ -343,7 +343,7 @@ InitLastSpikeTimeIdx( unsigned int n_spike_buffers, int spike_time_idx )
 }
 
 int
-spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int max_delay_num )
+spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int max_delay_num, int spike_buffer_algo )
 {
   // unsigned int n_spike_buffers = net_connection->connection_.size();
   h_NSpikeBuffer = n_spike_buffers;
@@ -353,17 +353,29 @@ spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int max_delay_
   CUDAMALLOCCTRL( "&d_LastSpikeTimeIdx", &d_LastSpikeTimeIdx, n_spike_buffers * sizeof( long long ) );
   CUDAMALLOCCTRL( "&d_LastSpikeHeight", &d_LastSpikeHeight, n_spike_buffers * sizeof( float ) );
   CUDAMALLOCCTRL( "&d_LastRevSpikeTimeIdx", &d_LastRevSpikeTimeIdx, n_spike_buffers * sizeof( long long ) );
-
-  CUDAMALLOCCTRL( "&d_SpikeBufferSize", &d_SpikeBufferSize, n_spike_buffers * sizeof( int ) );
-  CUDAMALLOCCTRL( "&d_SpikeBufferIdx0", &d_SpikeBufferIdx0, n_spike_buffers * sizeof( int ) );
-  CUDAMALLOCCTRL(
-    "&d_SpikeBufferTimeIdx", &d_SpikeBufferTimeIdx, n_spike_buffers * max_spike_buffer_size * sizeof( int ) );
-  CUDAMALLOCCTRL(
-    "&d_SpikeBufferConnIdx", &d_SpikeBufferConnIdx, n_spike_buffers * max_spike_buffer_size * sizeof( int ) );
-  CUDAMALLOCCTRL(
-    "&d_SpikeBufferHeight", &d_SpikeBufferHeight, n_spike_buffers * max_spike_buffer_size * sizeof( float ) );
-  gpuErrchk( cudaMemsetAsync( d_SpikeBufferSize, 0, n_spike_buffers * sizeof( int ) ) );
-  gpuErrchk( cudaMemsetAsync( d_SpikeBufferIdx0, 0, n_spike_buffers * sizeof( int ) ) );
+  if ( spike_buffer_algo == INPUT_SPIKE_BUFFER_ALGO )
+  {
+    max_delay_num = 0;
+    max_spike_buffer_size = 0;
+    d_SpikeBufferSize = NULL;
+    d_SpikeBufferIdx0 = NULL;
+    d_SpikeBufferTimeIdx = NULL;
+    d_SpikeBufferConnIdx = NULL;
+    d_SpikeBufferHeight = NULL;
+  }
+  else
+  {
+    CUDAMALLOCCTRL( "&d_SpikeBufferSize", &d_SpikeBufferSize, n_spike_buffers * sizeof( int ) );
+    CUDAMALLOCCTRL( "&d_SpikeBufferIdx0", &d_SpikeBufferIdx0, n_spike_buffers * sizeof( int ) );
+    CUDAMALLOCCTRL(
+      "&d_SpikeBufferTimeIdx", &d_SpikeBufferTimeIdx, n_spike_buffers * max_spike_buffer_size * sizeof( int ) );
+    CUDAMALLOCCTRL(
+      "&d_SpikeBufferConnIdx", &d_SpikeBufferConnIdx, n_spike_buffers * max_spike_buffer_size * sizeof( int ) );
+    CUDAMALLOCCTRL(
+      "&d_SpikeBufferHeight", &d_SpikeBufferHeight, n_spike_buffers * max_spike_buffer_size * sizeof( float ) );
+    gpuErrchk( cudaMemsetAsync( d_SpikeBufferSize, 0, n_spike_buffers * sizeof( int ) ) );
+    gpuErrchk( cudaMemsetAsync( d_SpikeBufferIdx0, 0, n_spike_buffers * sizeof( int ) ) );
+  }
 
   DeviceSpikeBufferInit<<< 1, 1 >>>( n_spike_buffers,
     max_delay_num,

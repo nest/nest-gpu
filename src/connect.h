@@ -2380,10 +2380,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::organizeConnections( inode_t n_node
       conn_key_vect_.data(), conn_struct_vect_.data(), n_conn_, conn_block_size_, d_sort_storage, sort_storage_bytes );
     CUDAFREECTRL( "d_sort_storage", d_sort_storage );
 
-    size_t storage_bytes = 0;
-    size_t storage_bytes1 = 0;
-    void* d_storage = NULL;
-    printf( "Indexing connection groups...\n" );
     // It is important to separate number of allocated blocks
     // (determined by conn_key_vect_.size()) from number of blocks
     // on which there are connections, which is determined by n_conn_
@@ -2401,235 +2397,245 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::organizeConnections( inode_t n_node
 
     CUDAMALLOCCTRL( "&d_conn_key_array_", &d_conn_key_array_, k * sizeof( ConnKeyT* ) );
     gpuErrchk(
-      cudaMemcpy( d_conn_key_array_, conn_key_vect_.data(), k * sizeof( ConnKeyT* ), cudaMemcpyHostToDevice ) );
+	      cudaMemcpy( d_conn_key_array_, conn_key_vect_.data(), k * sizeof( ConnKeyT* ), cudaMemcpyHostToDevice ) );
 
     CUDAMALLOCCTRL( "&d_conn_struct_array_", &d_conn_struct_array_, k * sizeof( ConnStructT* ) );
     gpuErrchk( cudaMemcpy(
-      d_conn_struct_array_, conn_struct_vect_.data(), k * sizeof( ConnStructT* ), cudaMemcpyHostToDevice ) );
+			  d_conn_struct_array_, conn_struct_vect_.data(), k * sizeof( ConnStructT* ), cudaMemcpyHostToDevice ) );
 
     //////////////////////////////////////////////////////////////////////
-
-    int* d_conn_group_iconn0_mask;
-    CUDAMALLOCCTRL( "&d_conn_group_iconn0_mask", &d_conn_group_iconn0_mask, conn_block_size_ * sizeof( int ) );
-
-    iconngroup_t* d_conn_group_iconn0_mask_cumul;
-    CUDAMALLOCCTRL( "&d_conn_group_iconn0_mask_cumul",
-      &d_conn_group_iconn0_mask_cumul,
-      ( conn_block_size_ + 1 ) * sizeof( iconngroup_t ) );
-
-    int* d_conn_group_idx0_mask;
-    CUDAMALLOCCTRL( "&d_conn_group_idx0_mask", &d_conn_group_idx0_mask, conn_block_size_ * sizeof( int ) );
-
-    inode_t* d_conn_group_idx0_mask_cumul;
-    CUDAMALLOCCTRL(
-      "&d_conn_group_idx0_mask_cumul", &d_conn_group_idx0_mask_cumul, ( conn_block_size_ + 1 ) * sizeof( inode_t ) );
-
-    iconngroup_t* d_conn_group_idx0_compact;
-    int64_t reserve_size = n_node < conn_block_size_ ? n_node : conn_block_size_;
-    CUDAMALLOCCTRL(
-      "&d_conn_group_idx0_compact", &d_conn_group_idx0_compact, ( reserve_size + 1 ) * sizeof( iconngroup_t ) );
-
-    inode_t* d_conn_group_source_compact;
-    CUDAMALLOCCTRL( "&d_conn_group_source_compact", &d_conn_group_source_compact, reserve_size * sizeof( inode_t ) );
-
-    iconngroup_t* d_iconn0_offset;
-    CUDAMALLOCCTRL( "&d_iconn0_offset", &d_iconn0_offset, sizeof( iconngroup_t ) );
-    gpuErrchk( cudaMemset( d_iconn0_offset, 0, sizeof( iconngroup_t ) ) );
-    inode_t* d_idx0_offset;
-    CUDAMALLOCCTRL( "&d_idx0_offset", &d_idx0_offset, sizeof( inode_t ) );
-    gpuErrchk( cudaMemset( d_idx0_offset, 0, sizeof( inode_t ) ) );
-
-    ConnKeyT* conn_key_subarray_prev = NULL;
-    for ( int ib = 0; ib < k; ib++ )
+    if ( getSpikeBufferAlgo() == OUTPUT_SPIKE_BUFFER_ALGO )
     {
-      int64_t n_block_conn = ib < ( k - 1 ) ? conn_block_size_ : n_conn_ - conn_block_size_ * ( k - 1 );
-      gpuErrchk( cudaMemset( d_conn_group_iconn0_mask, 0, n_block_conn * sizeof( int ) ) );
-      buildConnGroupIConn0Mask< ConnKeyT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-        conn_key_vect_[ ib ], conn_key_subarray_prev, n_block_conn, d_conn_group_iconn0_mask );
-      CUDASYNC;
+      size_t storage_bytes = 0;
+      size_t storage_bytes1 = 0;
+      void* d_storage = NULL;
+      printf( "Indexing connection groups...\n" );
 
-      conn_key_subarray_prev = conn_key_vect_[ ib ] + conn_block_size_ - 1;
+      int* d_conn_group_iconn0_mask;
+      CUDAMALLOCCTRL( "&d_conn_group_iconn0_mask", &d_conn_group_iconn0_mask, conn_block_size_ * sizeof( int ) );
 
-      if ( ib == 0 )
-      {
-        // Determine temporary device storage requirements for prefix sum
-        //<BEGIN-CLANG-TIDY-SKIP>//
-        cub::DeviceScan::ExclusiveSum(
-          NULL, storage_bytes, d_conn_group_iconn0_mask, d_conn_group_iconn0_mask_cumul, n_block_conn + 1 );
-        //<END-CLANG-TIDY-SKIP>//
-        //  Allocate temporary storage for prefix sum
-        CUDAMALLOCCTRL( "&d_storage", &d_storage, storage_bytes );
-      }
-      // Run exclusive prefix sum
-      //<BEGIN-CLANG-TIDY-SKIP>//
-      cub::DeviceScan::ExclusiveSum(
-        d_storage, storage_bytes, d_conn_group_iconn0_mask, d_conn_group_iconn0_mask_cumul, n_block_conn + 1 );
-      //<END-CLANG-TIDY-SKIP>//
-      setConnGroupNewOffset<<< 1, 1 >>>( d_iconn0_offset, d_conn_group_iconn0_mask_cumul + n_block_conn );
+      iconngroup_t* d_conn_group_iconn0_mask_cumul;
+      CUDAMALLOCCTRL( "&d_conn_group_iconn0_mask_cumul",
+        &d_conn_group_iconn0_mask_cumul,
+        ( conn_block_size_ + 1 ) * sizeof( iconngroup_t ) );
 
-      CUDASYNC;
-    }
-    gpuErrchk( cudaMemcpy( &tot_conn_group_num_, d_iconn0_offset, sizeof( iconngroup_t ), cudaMemcpyDeviceToHost ) );
-    printf( "Total number of connection groups: %d\n", tot_conn_group_num_ );
+      int* d_conn_group_idx0_mask;
+      CUDAMALLOCCTRL( "&d_conn_group_idx0_mask", &d_conn_group_idx0_mask, conn_block_size_ * sizeof( int ) );
 
-    if ( tot_conn_group_num_ > 0 )
-    {
-      iconngroup_t* d_conn_group_num;
-      CUDAMALLOCCTRL( "&d_conn_group_num", &d_conn_group_num, n_node * sizeof( iconngroup_t ) );
-      gpuErrchk( cudaMemset( d_conn_group_num, 0, sizeof( iconngroup_t ) ) );
+      inode_t* d_conn_group_idx0_mask_cumul;
+      CUDAMALLOCCTRL(
+        "&d_conn_group_idx0_mask_cumul", &d_conn_group_idx0_mask_cumul, ( conn_block_size_ + 1 ) * sizeof( inode_t ) );
+
+      iconngroup_t* d_conn_group_idx0_compact;
+      int64_t reserve_size = n_node < conn_block_size_ ? n_node : conn_block_size_;
+      CUDAMALLOCCTRL(
+        "&d_conn_group_idx0_compact", &d_conn_group_idx0_compact, ( reserve_size + 1 ) * sizeof( iconngroup_t ) );
+
+      inode_t* d_conn_group_source_compact;
+      CUDAMALLOCCTRL( "&d_conn_group_source_compact", &d_conn_group_source_compact, reserve_size * sizeof( inode_t ) );
+
+      iconngroup_t* d_iconn0_offset;
+      CUDAMALLOCCTRL( "&d_iconn0_offset", &d_iconn0_offset, sizeof( iconngroup_t ) );
+      gpuErrchk( cudaMemset( d_iconn0_offset, 0, sizeof( iconngroup_t ) ) );
+      inode_t* d_idx0_offset;
+      CUDAMALLOCCTRL( "&d_idx0_offset", &d_idx0_offset, sizeof( inode_t ) );
+      gpuErrchk( cudaMemset( d_idx0_offset, 0, sizeof( inode_t ) ) );
 
       ConnKeyT* conn_key_subarray_prev = NULL;
-      gpuErrchk( cudaMemset( d_iconn0_offset, 0, sizeof( iconngroup_t ) ) );
-
-      CUDAMALLOCCTRL( "&d_conn_group_iconn0_", &d_conn_group_iconn0_, ( tot_conn_group_num_ + 1 ) * sizeof( int64_t ) );
-
-      inode_t n_compact = 0;
       for ( int ib = 0; ib < k; ib++ )
       {
         int64_t n_block_conn = ib < ( k - 1 ) ? conn_block_size_ : n_conn_ - conn_block_size_ * ( k - 1 );
         gpuErrchk( cudaMemset( d_conn_group_iconn0_mask, 0, n_block_conn * sizeof( int ) ) );
-        gpuErrchk( cudaMemset( d_conn_group_idx0_mask, 0, n_block_conn * sizeof( int ) ) );
-        buildConnGroupMask< ConnKeyT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>( conn_key_vect_[ ib ],
-          conn_key_subarray_prev,
-          n_block_conn,
-          d_conn_group_iconn0_mask,
-          d_conn_group_idx0_mask );
+        buildConnGroupIConn0Mask< ConnKeyT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
+          conn_key_vect_[ ib ], conn_key_subarray_prev, n_block_conn, d_conn_group_iconn0_mask );
         CUDASYNC;
 
         conn_key_subarray_prev = conn_key_vect_[ ib ] + conn_block_size_ - 1;
 
+        if ( ib == 0 )
+        {
+          // Determine temporary device storage requirements for prefix sum
+          //<BEGIN-CLANG-TIDY-SKIP>//
+          cub::DeviceScan::ExclusiveSum(
+            NULL, storage_bytes, d_conn_group_iconn0_mask, d_conn_group_iconn0_mask_cumul, n_block_conn + 1 );
+          //<END-CLANG-TIDY-SKIP>//
+          //  Allocate temporary storage for prefix sum
+          CUDAMALLOCCTRL( "&d_storage", &d_storage, storage_bytes );
+        }
         // Run exclusive prefix sum
         //<BEGIN-CLANG-TIDY-SKIP>//
         cub::DeviceScan::ExclusiveSum(
           d_storage, storage_bytes, d_conn_group_iconn0_mask, d_conn_group_iconn0_mask_cumul, n_block_conn + 1 );
-        DBGCUDASYNC;
-        cub::DeviceScan::ExclusiveSum(
-          d_storage, storage_bytes, d_conn_group_idx0_mask, d_conn_group_idx0_mask_cumul, n_block_conn + 1 );
+        //<END-CLANG-TIDY-SKIP>//
+        setConnGroupNewOffset<<< 1, 1 >>>( d_iconn0_offset, d_conn_group_iconn0_mask_cumul + n_block_conn );
+
+        CUDASYNC;
+      }
+      gpuErrchk( cudaMemcpy( &tot_conn_group_num_, d_iconn0_offset, sizeof( iconngroup_t ), cudaMemcpyDeviceToHost ) );
+      printf( "Total number of connection groups: %d\n", tot_conn_group_num_ );
+
+      if ( tot_conn_group_num_ > 0 )
+      {
+        iconngroup_t* d_conn_group_num;
+        CUDAMALLOCCTRL( "&d_conn_group_num", &d_conn_group_num, n_node * sizeof( iconngroup_t ) );
+        gpuErrchk( cudaMemset( d_conn_group_num, 0, sizeof( iconngroup_t ) ) );
+
+        ConnKeyT* conn_key_subarray_prev = NULL;
+        gpuErrchk( cudaMemset( d_iconn0_offset, 0, sizeof( iconngroup_t ) ) );
+
+        CUDAMALLOCCTRL(
+          "&d_conn_group_iconn0_", &d_conn_group_iconn0_, ( tot_conn_group_num_ + 1 ) * sizeof( int64_t ) );
+
+        inode_t n_compact = 0;
+        for ( int ib = 0; ib < k; ib++ )
+        {
+          int64_t n_block_conn = ib < ( k - 1 ) ? conn_block_size_ : n_conn_ - conn_block_size_ * ( k - 1 );
+          gpuErrchk( cudaMemset( d_conn_group_iconn0_mask, 0, n_block_conn * sizeof( int ) ) );
+          gpuErrchk( cudaMemset( d_conn_group_idx0_mask, 0, n_block_conn * sizeof( int ) ) );
+          buildConnGroupMask< ConnKeyT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>( conn_key_vect_[ ib ],
+            conn_key_subarray_prev,
+            n_block_conn,
+            d_conn_group_iconn0_mask,
+            d_conn_group_idx0_mask );
+          CUDASYNC;
+
+          conn_key_subarray_prev = conn_key_vect_[ ib ] + conn_block_size_ - 1;
+
+          // Run exclusive prefix sum
+          //<BEGIN-CLANG-TIDY-SKIP>//
+          cub::DeviceScan::ExclusiveSum(
+            d_storage, storage_bytes, d_conn_group_iconn0_mask, d_conn_group_iconn0_mask_cumul, n_block_conn + 1 );
+          DBGCUDASYNC;
+          cub::DeviceScan::ExclusiveSum(
+            d_storage, storage_bytes, d_conn_group_idx0_mask, d_conn_group_idx0_mask_cumul, n_block_conn + 1 );
+          //<END-CLANG-TIDY-SKIP>//
+
+          DBGCUDASYNC;
+          int64_t i_conn0 = conn_block_size_ * ib;
+          setConnGroupIConn0<<< ( n_block_conn + 1023 ) / 1024, 1024 >>>( n_block_conn,
+            d_conn_group_iconn0_mask,
+            d_conn_group_iconn0_mask_cumul,
+            d_conn_group_iconn0_,
+            i_conn0,
+            d_iconn0_offset );
+          CUDASYNC;
+
+          setConnGroupIdx0Compact< ConnKeyT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>( conn_key_vect_[ ib ],
+            n_block_conn,
+            d_conn_group_idx0_mask,
+            d_conn_group_iconn0_mask_cumul,
+            d_conn_group_idx0_mask_cumul,
+            d_conn_group_idx0_compact,
+            d_conn_group_source_compact,
+            d_iconn0_offset,
+            d_idx0_offset );
+          CUDASYNC;
+
+          inode_t n_block_compact;
+          gpuErrchk( cudaMemcpy( &n_block_compact,
+            d_conn_group_idx0_mask_cumul + n_block_conn,
+            sizeof( inode_t ),
+            cudaMemcpyDeviceToHost ) );
+          // std::cout << "number of nodes with outgoing connections "
+          //"in block " << ib << ": " << n_block_compact << "\n";
+          n_compact += n_block_compact;
+
+          setConnGroupNewOffset<<< 1, 1 >>>( d_iconn0_offset, d_conn_group_iconn0_mask_cumul + n_block_conn );
+          setConnGroupNewOffset<<< 1, 1 >>>( d_idx0_offset, d_conn_group_idx0_mask_cumul + n_block_conn );
+          CUDASYNC;
+        }
+        gpuErrchk( cudaMemcpy(
+          d_conn_group_iconn0_ + tot_conn_group_num_, &n_conn_, sizeof( int64_t ), cudaMemcpyHostToDevice ) );
+
+        setConnGroupNum<<< ( n_compact + 1023 ) / 1024, 1024 >>>(
+          n_compact, d_conn_group_num, d_conn_group_idx0_compact, d_conn_group_source_compact );
+        CUDASYNC;
+
+        CUDAMALLOCCTRL( "&d_conn_group_idx0_", &d_conn_group_idx0_, ( n_node + 1 ) * sizeof( iconngroup_t ) );
+        storage_bytes1 = 0;
+
+        // Determine temporary device storage requirements for prefix sum
+        //<BEGIN-CLANG-TIDY-SKIP>//
+        cub::DeviceScan::ExclusiveSum( NULL, storage_bytes1, d_conn_group_num, d_conn_group_idx0_, n_node + 1 );
         //<END-CLANG-TIDY-SKIP>//
 
-        DBGCUDASYNC;
-        int64_t i_conn0 = conn_block_size_ * ib;
-        setConnGroupIConn0<<< ( n_block_conn + 1023 ) / 1024, 1024 >>>( n_block_conn,
-          d_conn_group_iconn0_mask,
-          d_conn_group_iconn0_mask_cumul,
-          d_conn_group_iconn0_,
-          i_conn0,
-          d_iconn0_offset );
+        if ( storage_bytes1 > storage_bytes )
+        {
+          storage_bytes = storage_bytes1;
+          CUDAFREECTRL( "d_storage", d_storage );
+          // Allocate temporary storage for prefix sum
+          CUDAMALLOCCTRL( "&d_storage", &d_storage, storage_bytes );
+        }
+        // Run exclusive prefix sum
+        //<BEGIN-CLANG-TIDY-SKIP>//
+        cub::DeviceScan::ExclusiveSum( d_storage, storage_bytes, d_conn_group_num, d_conn_group_idx0_, n_node + 1 );
+        //<END-CLANG-TIDY-SKIP>//
+
+        // find maxumum number of connection groups (delays) over all neurons
+        int* d_max_delay_num;
+        CUDAMALLOCCTRL( "&d_max_delay_num", &d_max_delay_num, sizeof( int ) );
+
+        storage_bytes1 = 0;
+        // Determine temporary device storage requirements
+        //<BEGIN-CLANG-TIDY-SKIP>//
+        cub::DeviceReduce::Max( NULL, storage_bytes1, d_conn_group_num, d_max_delay_num, n_node );
+        //<END-CLANG-TIDY-SKIP>//
+
+        if ( storage_bytes1 > storage_bytes )
+        {
+          storage_bytes = storage_bytes1;
+          CUDAFREECTRL( "d_storage", d_storage );
+          // Allocate temporary storage for prefix sum
+          CUDAMALLOCCTRL( "&d_storage", &d_storage, storage_bytes );
+        }
+
+        // Run maximum search
+        //<BEGIN-CLANG-TIDY-SKIP>//
+        cub::DeviceReduce::Max( d_storage, storage_bytes, d_conn_group_num, d_max_delay_num, n_node );
+        //<END-CLANG-TIDY-SKIP>//
+
         CUDASYNC;
+        gpuErrchk( cudaMemcpy( &max_delay_num_, d_max_delay_num, sizeof( int ), cudaMemcpyDeviceToHost ) );
+        CUDAFREECTRL( "d_max_delay_num", d_max_delay_num );
 
-        setConnGroupIdx0Compact< ConnKeyT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>( conn_key_vect_[ ib ],
-          n_block_conn,
-          d_conn_group_idx0_mask,
-          d_conn_group_iconn0_mask_cumul,
-          d_conn_group_idx0_mask_cumul,
-          d_conn_group_idx0_compact,
-          d_conn_group_source_compact,
-          d_iconn0_offset,
-          d_idx0_offset );
-        CUDASYNC;
+        printf(
+          "Maximum number of connection groups (delays)"
+          " over all nodes: %d\n",
+          max_delay_num_ );
 
-        inode_t n_block_compact;
-        gpuErrchk( cudaMemcpy(
-          &n_block_compact, d_conn_group_idx0_mask_cumul + n_block_conn, sizeof( inode_t ), cudaMemcpyDeviceToHost ) );
-        // std::cout << "number of nodes with outgoing connections "
-        //"in block " << ib << ": " << n_block_compact << "\n";
-        n_compact += n_block_compact;
-
-        setConnGroupNewOffset<<< 1, 1 >>>( d_iconn0_offset, d_conn_group_iconn0_mask_cumul + n_block_conn );
-        setConnGroupNewOffset<<< 1, 1 >>>( d_idx0_offset, d_conn_group_idx0_mask_cumul + n_block_conn );
-        CUDASYNC;
-      }
-      gpuErrchk(
-        cudaMemcpy( d_conn_group_iconn0_ + tot_conn_group_num_, &n_conn_, sizeof( int64_t ), cudaMemcpyHostToDevice ) );
-
-      setConnGroupNum<<< ( n_compact + 1023 ) / 1024, 1024 >>>(
-        n_compact, d_conn_group_num, d_conn_group_idx0_compact, d_conn_group_source_compact );
-      CUDASYNC;
-
-      CUDAMALLOCCTRL( "&d_conn_group_idx0_", &d_conn_group_idx0_, ( n_node + 1 ) * sizeof( iconngroup_t ) );
-      storage_bytes1 = 0;
-
-      // Determine temporary device storage requirements for prefix sum
-      //<BEGIN-CLANG-TIDY-SKIP>//
-      cub::DeviceScan::ExclusiveSum( NULL, storage_bytes1, d_conn_group_num, d_conn_group_idx0_, n_node + 1 );
-      //<END-CLANG-TIDY-SKIP>//
-
-      if ( storage_bytes1 > storage_bytes )
-      {
-        storage_bytes = storage_bytes1;
-        CUDAFREECTRL( "d_storage", d_storage );
-        // Allocate temporary storage for prefix sum
-        CUDAMALLOCCTRL( "&d_storage", &d_storage, storage_bytes );
-      }
-      // Run exclusive prefix sum
-      //<BEGIN-CLANG-TIDY-SKIP>//
-      cub::DeviceScan::ExclusiveSum( d_storage, storage_bytes, d_conn_group_num, d_conn_group_idx0_, n_node + 1 );
-      //<END-CLANG-TIDY-SKIP>//
-
-      // find maxumum number of connection groups (delays) over all neurons
-      int* d_max_delay_num;
-      CUDAMALLOCCTRL( "&d_max_delay_num", &d_max_delay_num, sizeof( int ) );
-
-      storage_bytes1 = 0;
-      // Determine temporary device storage requirements
-      //<BEGIN-CLANG-TIDY-SKIP>//
-      cub::DeviceReduce::Max( NULL, storage_bytes1, d_conn_group_num, d_max_delay_num, n_node );
-      //<END-CLANG-TIDY-SKIP>//
-
-      if ( storage_bytes1 > storage_bytes )
-      {
-        storage_bytes = storage_bytes1;
-        CUDAFREECTRL( "d_storage", d_storage );
-        // Allocate temporary storage for prefix sum
-        CUDAMALLOCCTRL( "&d_storage", &d_storage, storage_bytes );
-      }
-
-      // Run maximum search
-      //<BEGIN-CLANG-TIDY-SKIP>//
-      cub::DeviceReduce::Max( d_storage, storage_bytes, d_conn_group_num, d_max_delay_num, n_node );
-      //<END-CLANG-TIDY-SKIP>//
-
-      CUDASYNC;
-      gpuErrchk( cudaMemcpy( &max_delay_num_, d_max_delay_num, sizeof( int ), cudaMemcpyDeviceToHost ) );
-      CUDAFREECTRL( "d_max_delay_num", d_max_delay_num );
-
-      printf(
-        "Maximum number of connection groups (delays)"
-        " over all nodes: %d\n",
-        max_delay_num_ );
-
-      ///////////////////////////////////////////////////////////////////
-      ///////////////////////////////////////////////////////////////////
-      CUDAFREECTRL( "d_storage", d_storage ); // free temporary allocated storage
-      CUDAFREECTRL( "d_conn_group_iconn0_mask", d_conn_group_iconn0_mask );
-      CUDAFREECTRL( "d_conn_group_iconn0_mask_cumul", d_conn_group_iconn0_mask_cumul );
-      CUDAFREECTRL( "d_iconn0_offset", d_iconn0_offset );
-      CUDAFREECTRL( "d_conn_group_idx0_mask", d_conn_group_idx0_mask );
-      CUDAFREECTRL( "d_conn_group_idx0_mask_cumul", d_conn_group_idx0_mask_cumul );
-      CUDAFREECTRL( "d_idx0_offset", d_idx0_offset );
-      CUDAFREECTRL( "d_conn_group_idx0_compact", d_conn_group_idx0_compact );
-      CUDAFREECTRL( "d_conn_group_num", d_conn_group_num );
+        ///////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////////////
+        CUDAFREECTRL( "d_storage", d_storage ); // free temporary allocated storage
+        CUDAFREECTRL( "d_conn_group_iconn0_mask", d_conn_group_iconn0_mask );
+        CUDAFREECTRL( "d_conn_group_iconn0_mask_cumul", d_conn_group_iconn0_mask_cumul );
+        CUDAFREECTRL( "d_iconn0_offset", d_iconn0_offset );
+        CUDAFREECTRL( "d_conn_group_idx0_mask", d_conn_group_idx0_mask );
+        CUDAFREECTRL( "d_conn_group_idx0_mask_cumul", d_conn_group_idx0_mask_cumul );
+        CUDAFREECTRL( "d_idx0_offset", d_idx0_offset );
+        CUDAFREECTRL( "d_conn_group_idx0_compact", d_conn_group_idx0_compact );
+        CUDAFREECTRL( "d_conn_group_num", d_conn_group_num );
 
 #ifndef OPTIMIZE_FOR_MEMORY
-      CUDAMALLOCCTRL( "&d_conn_group_delay_", &d_conn_group_delay_, tot_conn_group_num_ * sizeof( int ) );
+        CUDAMALLOCCTRL( "&d_conn_group_delay_", &d_conn_group_delay_, tot_conn_group_num_ * sizeof( int ) );
 
-      getConnGroupDelay< ConnKeyT > <<< ( tot_conn_group_num_ + 1023 ) / 1024, 1024 >>>(
-        conn_block_size_, d_conn_key_array_, d_conn_group_iconn0_, d_conn_group_delay_, tot_conn_group_num_ );
-      DBGCUDASYNC;
+        getConnGroupDelay< ConnKeyT > <<< ( tot_conn_group_num_ + 1023 ) / 1024, 1024 >>>(
+          conn_block_size_, d_conn_key_array_, d_conn_group_iconn0_, d_conn_group_delay_, tot_conn_group_num_ );
+        DBGCUDASYNC;
 #endif
+      }
+      else
+      {
+        throw ngpu_exception(
+          "Number of connections groups must be positive "
+          "for number of connections > 0" );
+      }
     }
-    else
+  }
+  else if ( getSpikeBufferAlgo() == OUTPUT_SPIKE_BUFFER_ALGO )
     {
-      throw ngpu_exception(
-        "Number of connections groups must be positive "
-        "for number of connections > 0" );
+      gpuErrchk( cudaMemset( d_conn_group_idx0_, 0, ( n_node + 1 ) * sizeof( iconngroup_t ) ) );
+      max_delay_num_ = 0;
     }
-  }
-  else
-  {
-    gpuErrchk( cudaMemset( d_conn_group_idx0_, 0, ( n_node + 1 ) * sizeof( iconngroup_t ) ) );
-    max_delay_num_ = 0;
-  }
 
   gettimeofday( &endTV, NULL );
   long time =

@@ -453,7 +453,7 @@ NESTGPU::Calibrate()
   max_remote_spike_num_ = ( max_remote_spike_num_ > 1 ) ? max_remote_spike_num_ : 1;
 
   SpikeInit( max_spike_num_ );
-  spikeBufferInit( GetNTotalNodes(), max_spike_buffer_size_, conn_->getMaxDelayNum() );
+  spikeBufferInit( GetNTotalNodes(), max_spike_buffer_size_, conn_->getMaxDelayNum(), conn_->getSpikeBufferAlgo() );
 
   if ( n_hosts_ > 1 )
   {

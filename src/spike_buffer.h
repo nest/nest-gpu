@@ -79,6 +79,6 @@ __global__ void DeviceSpikeBufferInit( int n_spike_buffers,
   float* spike_buffer_height,
   long long* last_rev_spike_time_idx );
 
-int spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int max_delay_num );
+int spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int max_delay_num, int spike_buffer_algo );
 
 #endif
