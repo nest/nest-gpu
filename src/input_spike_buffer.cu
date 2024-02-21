@@ -62,7 +62,7 @@ initInputSpikeBuffer2DKernel( int64_t n_input_ports_tot,
 }
 
 __global__ void
-initInputSpikeBufferKernel( uint n_local_nodes,
+initInputSpikeBufferKernel( inode_t n_local_nodes,
   double*** input_spike_buffer,
   double** input_spike_buffer_2d,
   int64_t* n_input_ports_cumul )
@@ -76,7 +76,7 @@ initInputSpikeBufferKernel( uint n_local_nodes,
 }
 
 __global__ void
-initMaxInputDelayArrayKernel( uint n_local_nodes,
+initMaxInputDelayArrayKernel( inode_t n_local_nodes,
   int** max_input_delay,
   int* max_input_delay_1d,
   int64_t* n_input_ports_cumul )
@@ -91,10 +91,10 @@ initMaxInputDelayArrayKernel( uint n_local_nodes,
 
 // Initialize array of first outgoing connection index of each node to default value of -1 (no outgoing connections)
 __global__ void
-initFirstOutConnectionKernel( uint n_local_nodes, int64_t* first_out_connection )
+initFirstOutConnectionKernel( inode_t n_nodes, int64_t* first_out_connection )
 {
   inode_t i_node = blockIdx.x * blockDim.x + threadIdx.x;
-  if ( i_node >= n_local_nodes )
+  if ( i_node >= n_nodes )
   {
     return;
   }

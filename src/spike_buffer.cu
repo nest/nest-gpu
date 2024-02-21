@@ -104,14 +104,13 @@ PushSpike( int i_spike_buffer, float height )
   if ( input_spike_buffer_ns::algo_ == INPUT_SPIKE_BUFFER_ALGO )
   {
     int64_t i_conn = first_out_connection_[ i_spike_buffer ];
-    if ( i_conn < 0 )
+    if ( i_conn >= 0 )
     {
-      return;
+      uint pos = atomicAdd( input_spike_buffer_ns::n_spikes_, 1 );
+      spike_first_connection_[ pos ] = i_conn;
+      // printf("PushSpike i_conn: %ld\tpos: %d\tspike_first_connection[pos]: %ld\n",
+      //  i_conn, pos, spike_first_connection_[pos]);
     }
-    uint pos = atomicAdd( input_spike_buffer_ns::n_spikes_, 1 );
-    spike_first_connection_[ pos ] = i_conn;
-    // printf("PushSpike i_conn: %ld\tpos: %d\tspike_first_connection[pos]: %ld\n",
-    //  i_conn, pos, spike_first_connection_[pos]);
   }
 
   int den_delay_idx = 0;
@@ -355,7 +354,6 @@ spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int max_delay_
   CUDAMALLOCCTRL( "&d_LastRevSpikeTimeIdx", &d_LastRevSpikeTimeIdx, n_spike_buffers * sizeof( long long ) );
   if ( spike_buffer_algo == INPUT_SPIKE_BUFFER_ALGO )
   {
-    max_delay_num = 0;
     max_spike_buffer_size = 0;
     d_SpikeBufferSize = NULL;
     d_SpikeBufferIdx0 = NULL;

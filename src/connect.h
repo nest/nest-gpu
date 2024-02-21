@@ -306,7 +306,7 @@ public:
   // after the creation of the spike buffers used to represent such nodes
   virtual int addOffsetToSpikeBufferMap( inode_t n_nodes ) = 0;
 
-  virtual int initInputSpikeBuffer( uint n_local_nodes ) = 0;
+  virtual int initInputSpikeBuffer( inode_t n_local_nodes, inode_t n_nodes ) = 0;
 
   virtual int deliverSpikes() = 0;
 
@@ -990,7 +990,7 @@ public:
   //////////////////////////////////////////////////
   // class ConnectionTemplate input-spike-buffer-related methods
   //////////////////////////////////////////////////
-  int initInputSpikeBuffer( uint n_local_nodes );
+  int initInputSpikeBuffer( inode_t n_local_nodes, inode_t n_nodes );
 
   int deliverSpikes();
 
@@ -2630,6 +2630,11 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::organizeConnections( inode_t n_node
           "for number of connections > 0" );
       }
     }
+    ///////////////////////// TEMPORARY!!!!
+    else {
+      max_delay_num_ = 100;
+    }
+    
   }
   else if ( getSpikeBufferAlgo() == OUTPUT_SPIKE_BUFFER_ALGO )
     {

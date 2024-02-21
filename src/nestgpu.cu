@@ -413,7 +413,7 @@ NESTGPU::Calibrate()
 
   conn_->calibrate();
 
-  conn_->initInputSpikeBuffer( GetNLocalNodes() );
+  conn_->initInputSpikeBuffer( GetNLocalNodes(), GetNTotalNodes() );
 
   poiss_conn::organizeDirectConnections( conn_ );
   for ( unsigned int i = 0; i < node_vect_.size(); i++ )
@@ -747,15 +747,15 @@ NESTGPU::SimulationStep()
   gpuErrchk( cudaPeekAtLastError() );
   SpikeReset_time_ += ( getRealTime() - time_mark );
 
-  if ( conn_->getSpikeBufferAlgo() != INPUT_SPIKE_BUFFER_ALGO )
+  if ( n_hosts_ > 1 )
   {
-    if ( n_hosts_ > 1 )
-    {
-      time_mark = getRealTime();
-      ExternalSpikeReset();
-      ExternalSpikeReset_time_ += ( getRealTime() - time_mark );
-    }
+    time_mark = getRealTime();
+    ExternalSpikeReset();
+    ExternalSpikeReset_time_ += ( getRealTime() - time_mark );
+  }
 
+  if ( conn_->getSpikeBufferAlgo() != INPUT_SPIKE_BUFFER_ALGO )
+  {	
     if ( conn_->getNRevConn() > 0 )
     {
       // time_mark = getRealTime();
