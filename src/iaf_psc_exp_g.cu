@@ -184,7 +184,7 @@ iaf_psc_exp_g::Update( long long it, double t1 )
     P22,
     P21,
     P20 );
-  // gpuErrchk( cudaDeviceSynchronize() );
+  DBGCUDASYNC;
 
   return 0;
 }

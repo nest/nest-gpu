@@ -163,7 +163,7 @@ class NESTGPU
 
   bool mpi_flag_; // true if MPI is initialized
 
-  bool remote_spike_height_;
+  bool remote_spike_mul_;
 
   std::vector< int16_t > node_group_map_;
 
@@ -233,7 +233,7 @@ class NESTGPU
 
   std::vector< int > ext_neuron_input_spike_port_;
 
-  std::vector< float > ext_neuron_input_spike_height_;
+  std::vector< float > ext_neuron_input_spike_mul_;
 
   int setNHosts( int n_hosts );
 
@@ -577,7 +577,7 @@ public:
 
   int IsNeuronArrayVar( int i_node, std::string var_name );
 
-  int SetSpikeGenerator( int i_node, int n_spikes, float* spike_time, float* spike_height );
+  int SetSpikeGenerator( int i_node, int n_spikes, float* spike_time, float* spike_mul );
 
   int Calibrate();
 
@@ -899,11 +899,11 @@ public:
     return GetRecSpikeTimes( nodes.i0, nodes.n, n_spike_times_pt, spike_times_pt );
   }
 
-  int PushSpikesToNodes( int n_spikes, int* node_id, float* spike_height );
+  int PushSpikesToNodes( int n_spikes, int* node_id, float* spike_mul );
 
   int PushSpikesToNodes( int n_spikes, int* node_id );
 
-  int GetExtNeuronInputSpikes( int* n_spikes, int** node, int** port, float** spike_height, bool include_zeros );
+  int GetExtNeuronInputSpikes( int* n_spikes, int** node, int** port, float** spike_mul, bool include_zeros );
 
   int SetNeuronGroupParam( int i_node, int n_node, std::string param_name, float val );
 

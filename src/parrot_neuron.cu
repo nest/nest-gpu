@@ -35,22 +35,22 @@
 
 enum
 {
-  i_parrot_neuron_hold_spike_height = 0,
+  i_parrot_neuron_hold_spike_mul = 0,
   i_parrot_neuron_den_delay,
   N_PARROT_NEURON_SCAL_PARAM
 };
 
-const std::string parrot_neuron_scal_param_name[ N_PARROT_NEURON_SCAL_PARAM ] = { "hold_spike_height", "den_delay" };
+const std::string parrot_neuron_scal_param_name[ N_PARROT_NEURON_SCAL_PARAM ] = { "hold_spike_mul", "den_delay" };
 
 enum
 {
-  i_parrot_neuron_input_spike_height = 0,
+  i_parrot_neuron_input_spike_mul = 0,
   i_parrot_neuron_dummy_input,
   i_parrot_neuron_V,
   N_PARROT_NEURON_SCAL_VAR
 };
 
-const std::string parrot_neuron_scal_var_name[ N_PARROT_NEURON_SCAL_VAR ] = { "input_spike_height",
+const std::string parrot_neuron_scal_var_name[ N_PARROT_NEURON_SCAL_VAR ] = { "input_spike_mul",
   "dummy_input",
   "V" };
 
@@ -60,20 +60,20 @@ parrot_neuron_UpdateKernel( int i_node_0, int n_node, float* var_arr, float* par
   int irel_node = threadIdx.x + blockIdx.x * blockDim.x;
   if ( irel_node < n_node )
   {
-    float* input_spike_height_pt = var_arr + irel_node * n_var + i_parrot_neuron_input_spike_height;
+    float* input_spike_mul_pt = var_arr + irel_node * n_var + i_parrot_neuron_input_spike_mul;
     float* V_pt = var_arr + irel_node * n_var + i_parrot_neuron_V;
-    float* hold_spike_height_pt = param_arr + irel_node * n_param + i_parrot_neuron_hold_spike_height;
+    float* hold_spike_mul_pt = param_arr + irel_node * n_param + i_parrot_neuron_hold_spike_mul;
     int i_node = i_node_0 + irel_node;
-    float spike_height = *input_spike_height_pt;
-    *V_pt = spike_height;
-    if ( spike_height != 0.0 )
+    float spike_mul = *input_spike_mul_pt;
+    *V_pt = spike_mul;
+    if ( spike_mul != 0.0 )
     {
-      if ( *hold_spike_height_pt == 0.0 )
+      if ( *hold_spike_mul_pt == 0.0 )
       {
-        spike_height = 1.0;
+        spike_mul = 1.0;
       }
-      *input_spike_height_pt = 0;
-      PushSpike( i_node, spike_height );
+      *input_spike_mul_pt = 0;
+      PushSpike( i_node, spike_mul );
     }
   }
 }
@@ -96,11 +96,11 @@ parrot_neuron::Init( int i_node_0, int n_node, int /*n_port*/, int i_group )
 
   CUDAMALLOCCTRL( "&param_arr_", &param_arr_, n_node_ * n_param_ * sizeof( float ) );
 
-  SetScalParam( 0, n_node, "hold_spike_height", 0.0 );
+  SetScalParam( 0, n_node, "hold_spike_mul", 0.0 );
 
   SetScalParam( 0, n_node, "den_delay", 0.0 );
 
-  SetScalVar( 0, n_node, "input_spike_height", 0.0 );
+  SetScalVar( 0, n_node, "input_spike_mul", 0.0 );
 
   SetScalVar( 0, n_node, "dummy_input", 0.0 );
 
@@ -113,8 +113,8 @@ parrot_neuron::Init( int i_node_0, int n_node, int /*n_port*/, int i_group )
   port_weight_arr_step_ = 0;
   port_weight_port_step_ = 1;
 
-  // input signal is stored in input_spike_height
-  port_input_arr_ = GetVarArr() + GetScalVarIdx( "input_spike_height" );
+  // input signal is stored in input_spike_mul
+  port_input_arr_ = GetVarArr() + GetScalVarIdx( "input_spike_mul" );
   port_input_arr_step_ = n_var_;
   port_input_port_step_ = 1;
 

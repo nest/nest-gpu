@@ -45,7 +45,7 @@ NestedLoopFunction0( int i_spike, int i_syn )
 {
   int i_source = SpikeSourceIdx[ i_spike ];
   int i_source_conn_group = SpikeConnIdx[ i_spike ];
-  float height = SpikeHeight[ i_spike ];
+  float mul = SpikeMul[ i_spike ];
   int ig = ConnGroupIdx0[ i_source ] + i_source_conn_group;
 
   int64_t i_conn = ConnGroupIConn0[ ig ] + i_syn;
@@ -73,7 +73,7 @@ NestedLoopFunction0( int i_spike, int i_syn )
   /////////////////////////////////////////////////////////////////
   int i_group = NodeGroupMap[ i_target ];
   int64_t i = ( int64_t ) port * NodeGroupArray[ i_group ].n_node_ + i_target - NodeGroupArray[ i_group ].i_node_0_;
-  double d_val = ( double ) ( height * weight );
+  double d_val = ( double ) ( weight * mul );
 
   atomicAddDouble( &NodeGroupArray[ i_group ].get_spike_array_[ i ], d_val );
   // TO BE IMPROVED BY CHECKING IF THE SYNAPSE TYPE OF THE GROUP

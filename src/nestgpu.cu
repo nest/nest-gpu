@@ -95,7 +95,7 @@ enum KernelBoolParamIndexes
 {
   i_print_time,
   i_remove_conn_key,
-  i_remote_spike_height,
+  i_remote_spike_mul,
   N_KERNEL_BOOL_PARAM
 };
 
@@ -121,7 +121,7 @@ const std::string kernel_int_param_name[ N_KERNEL_INT_PARAM ] = { "rnd_seed",
 
 const std::string kernel_bool_param_name[ N_KERNEL_BOOL_PARAM ] = { "print_time",
   "remove_conn_key",
-  "remote_spike_height" };
+  "remote_spike_mul" };
 
 int
 NESTGPU::setNHosts( int n_hosts )
@@ -196,7 +196,7 @@ NESTGPU::NESTGPU()
   remove_conn_key_ = false;
 
   mpi_flag_ = false;
-  remote_spike_height_ = false;
+  remote_spike_mul_ = false;
 
   nested_loop_algo_ = CumulSumNestedLoopAlgo;
 
@@ -393,7 +393,7 @@ NESTGPU::Calibrate()
 
   gpuErrchk( cudaMemcpyToSymbol( NESTGPUTimeResolution, &time_resolution_, sizeof( float ) ) );
 
-  gpuErrchk( cudaMemcpyToSymbol( have_remote_spike_height, &remote_spike_height_, sizeof( bool ) ) );
+  gpuErrchk( cudaMemcpyToSymbol( have_remote_spike_mul, &remote_spike_mul_, sizeof( bool ) ) );
   ///////////////////////////////////
   int n_nodes = GetNLocalNodes();
   gpuErrchk( cudaMemcpyToSymbol( n_local_nodes, &n_nodes, sizeof( int ) ) );
@@ -429,7 +429,7 @@ NESTGPU::Calibrate()
     conn_->freeConnectionKey();
   }
 
-  int max_delay_num = conn_->getMaxDelayNum();
+  int max_delay_num = max_spike_buffer_size_;
 
   unsigned int n_spike_buffers = GetNTotalNodes();
   NestedLoop::Init( n_spike_buffers );
@@ -453,7 +453,7 @@ NESTGPU::Calibrate()
   max_remote_spike_num_ = ( max_remote_spike_num_ > 1 ) ? max_remote_spike_num_ : 1;
 
   SpikeInit( max_spike_num_ );
-  spikeBufferInit( GetNTotalNodes(), max_spike_buffer_size_, conn_->getMaxDelayNum(), conn_->getSpikeBufferAlgo() );
+  spikeBufferInit( GetNTotalNodes(), max_spike_buffer_size_, conn_->getSpikeBufferAlgo() );
 
   if ( n_hosts_ > 1 )
   {
@@ -1936,24 +1936,24 @@ NESTGPU::GetRecSpikeTimes( int i_node, int n_node, int** n_spike_times_pt, float
 }
 
 int
-NESTGPU::PushSpikesToNodes( int n_spikes, int* node_id, float* spike_height )
+NESTGPU::PushSpikesToNodes( int n_spikes, int* node_id, float* spike_mul )
 {
   /*
   int *d_node_id;
-  float *d_spike_height;
+  float *d_spike_mul;
   CUDAMALLOCCTRL("&d_node_id",&d_node_id, n_spikes*sizeof(int));
-  CUDAMALLOCCTRL("&d_spike_height",&d_spike_height, n_spikes*sizeof(float));
+  CUDAMALLOCCTRL("&d_spike_mul",&d_spike_mul, n_spikes*sizeof(float));
   // Memcpy are synchronized by PushSpikeFromRemote kernel
   gpuErrchk(cudaMemcpyAsync(d_node_id, node_id, n_spikes*sizeof(int),
                        cudaMemcpyHostToDevice));
-  gpuErrchk(cudaMemcpyAsync(d_spike_height, spike_height,
+  gpuErrchk(cudaMemcpyAsync(d_spike_mul, spike_mul,
   n_spikes*sizeof(float), cudaMemcpyHostToDevice));
   PushSpikeFromRemote<<<(n_spikes+1023)/1024, 1024>>>(n_spikes, d_node_id,
-                                                     d_spike_height);
+                                                     d_spike_mul);
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
   CUDAFREECTRL("d_node_id",d_node_id);
-  CUDAFREECTRL("d_spike_height",d_spike_height);
+  CUDAFREECTRL("d_spike_mul",d_spike_mul);
   */
 
   return 0;
@@ -1984,11 +1984,11 @@ NESTGPU::PushSpikesToNodes( int n_spikes, int* node_id )
 }
 
 int
-NESTGPU::GetExtNeuronInputSpikes( int* n_spikes, int** node, int** port, float** spike_height, bool include_zeros )
+NESTGPU::GetExtNeuronInputSpikes( int* n_spikes, int** node, int** port, float** spike_mul, bool include_zeros )
 {
   ext_neuron_input_spike_node_.clear();
   ext_neuron_input_spike_port_.clear();
-  ext_neuron_input_spike_height_.clear();
+  ext_neuron_input_spike_mul_.clear();
 
   for ( unsigned int i = 0; i < node_vect_.size(); i++ )
   {
@@ -2007,7 +2007,7 @@ NESTGPU::GetExtNeuronInputSpikes( int* n_spikes, int** node, int** port, float**
           {
             ext_neuron_input_spike_node_.push_back( i_node );
             ext_neuron_input_spike_port_.push_back( i_port );
-            ext_neuron_input_spike_height_.push_back( sh[ j ] );
+            ext_neuron_input_spike_mul_.push_back( sh[ j ] );
           }
         }
       }
@@ -2016,7 +2016,7 @@ NESTGPU::GetExtNeuronInputSpikes( int* n_spikes, int** node, int** port, float**
   *n_spikes = ext_neuron_input_spike_node_.size();
   *node = ext_neuron_input_spike_node_.data();
   *port = ext_neuron_input_spike_port_.data();
-  *spike_height = ext_neuron_input_spike_height_.data();
+  *spike_mul = ext_neuron_input_spike_mul_.data();
 
   return 0;
 }
@@ -2140,8 +2140,8 @@ NESTGPU::GetBoolParam( std::string param_name )
     return print_time_;
   case i_remove_conn_key:
     return remove_conn_key_;
-  case i_remote_spike_height:
-    return remote_spike_height_;
+  case i_remote_spike_mul:
+    return remote_spike_mul_;
   default:
     throw ngpu_exception( std::string( "Unrecognized kernel boolean parameter " ) + param_name );
   }
@@ -2160,8 +2160,8 @@ NESTGPU::SetBoolParam( std::string param_name, bool val )
   case i_remove_conn_key:
     remove_conn_key_ = val;
     break;
-  case i_remote_spike_height:
-    remote_spike_height_ = val;
+  case i_remote_spike_mul:
+    remote_spike_mul_ = val;
     break;
   default:
     throw ngpu_exception( std::string( "Unrecognized kernel boolean parameter " ) + param_name );

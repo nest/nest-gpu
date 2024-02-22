@@ -174,7 +174,7 @@ poiss_gen::Update( long long it, double )
 {
   PoissGenUpdateKernel<<< ( n_node_ + 1023 ) / 1024, 1024 >>>(
     it, n_node_, max_delay_, param_arr_, n_param_, d_mu_arr_ );
-  DBGCUDASYNC
+  DBGCUDASYNC;
 
   return 0;
 }

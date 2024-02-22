@@ -47,12 +47,11 @@ extern __device__ int16_t* NodeGroupMap;
 __constant__ bool ExternalSpikeFlag;
 __device__ int MaxSpikeBufferSize;
 __device__ int NSpikeBuffer;
-__device__ int MaxDelayNum;
 
 int h_NSpikeBuffer;
 
-float* d_LastSpikeHeight;          // [NSpikeBuffer];
-__device__ float* LastSpikeHeight; //
+float* d_LastSpikeMul;          // [NSpikeBuffer];
+__device__ float* LastSpikeMul; //
 
 long long* d_LastSpikeTimeIdx;          // [NSpikeBuffer];
 __device__ long long* LastSpikeTimeIdx; //
@@ -86,20 +85,20 @@ __device__ int* SpikeBufferConnIdx; // [NSpikeBuffer*MaxSpikeBufferNum];
 // SpikeBufferConnIdx[i_spike*NSpikeBuffer+i_spike_buffer];
 // index of the next connection group that will emit this spike
 
-float* d_SpikeBufferHeight;          // [NSpikeBuffer*MaxSpikeBufferNum];
-__device__ float* SpikeBufferHeight; // [NSpikeBuffer*MaxSpikeBufferNum];
-// SpikeBufferHeight[i_spike*NSpikeBuffer+i_spike_buffer];
-// spike height
+float* d_SpikeBufferMul;          // [NSpikeBuffer*MaxSpikeBufferNum];
+__device__ float* SpikeBufferMul; // [NSpikeBuffer*MaxSpikeBufferNum];
+// SpikeBufferMul[i_spike*NSpikeBuffer+i_spike_buffer];
+// spike mul
 
 ////////////////////////////////////////////////////////////
 // push a new spike in spike buffer of a node
 ////////////////////////////////////////////////////////////
 // i_spike_buffer : node index
-// height: spike multiplicity
+// mul: spike multiplicity
 ////////////////////////////////////////////////////////////
 
 __device__ void
-PushSpike( int i_spike_buffer, float height )
+PushSpike( int i_spike_buffer, float mul )
 {
   if ( input_spike_buffer_ns::algo_ == INPUT_SPIKE_BUFFER_ALGO )
   {
@@ -108,6 +107,7 @@ PushSpike( int i_spike_buffer, float height )
     {
       uint pos = atomicAdd( input_spike_buffer_ns::n_spikes_, 1 );
       spike_first_connection_[ pos ] = i_conn;
+      spike_mul_[ pos ] = mul;
       // printf("PushSpike i_conn: %ld\tpos: %d\tspike_first_connection[pos]: %ld\n",
       //  i_conn, pos, spike_first_connection_[pos]);
     }
@@ -118,7 +118,7 @@ PushSpike( int i_spike_buffer, float height )
   if ( i_spike_buffer < n_local_nodes )
   {
     LastSpikeTimeIdx[ i_spike_buffer ] = NESTGPUTimeIdx;
-    LastSpikeHeight[ i_spike_buffer ] = height;
+    LastSpikeMul[ i_spike_buffer ] = mul;
     int i_group = NodeGroupMap[ i_spike_buffer ];
 
     if ( input_spike_buffer_ns::algo_ != INPUT_SPIKE_BUFFER_ALGO )
@@ -147,11 +147,11 @@ PushSpike( int i_spike_buffer, float height )
     if ( ExternalSpikeFlag )
     {
       // if active spike should eventually be sent to remote connections
-      // printf("PushExternalSpike i_spike_buffer: %d height: %f\n",
-      //	   i_spike_buffer, height);
-      if ( have_remote_spike_height )
+      // printf("PushExternalSpike i_spike_buffer: %d mul: %f\n",
+      //	   i_spike_buffer, mul);
+      if ( have_remote_spike_mul )
       {
-        PushExternalSpike( i_spike_buffer, height );
+        PushExternalSpike( i_spike_buffer, mul );
       }
       else
       {
@@ -218,7 +218,7 @@ PushSpike( int i_spike_buffer, float height )
       int i_arr = is0 * NSpikeBuffer + i_spike_buffer; // spike index in array
       SpikeBufferTimeIdx[ i_arr ] = 0;                 // time index is initialized to 0
       SpikeBufferConnIdx[ i_arr ] = 0;                 // connect. group index is initialized to 0
-      SpikeBufferHeight[ i_arr ] = height;             // spike multiplicity
+      SpikeBufferMul[ i_arr ] = mul;             // spike multiplicity
     }
   }
 }
@@ -296,11 +296,11 @@ SpikeBufferUpdate()
       {
         int64_t conn_group_i_conn0 = ConnGroupIConn0[ ig ];
 #endif
-        float height = SpikeBufferHeight[ i_arr ]; // spike multiplicity
+        float mul = SpikeBufferMul[ i_arr ]; // spike multiplicity
         // deliver spike
         int64_t conn_group_n_conn = ConnGroupIConn0[ ig + 1 ] - conn_group_i_conn0;
-        // SendSpike(i_spike_buffer, i_conn, height, ConnGroupNConn[ig]);
-        SendSpike( i_spike_buffer, i_conn, height, conn_group_n_conn );
+        // SendSpike(i_spike_buffer, i_conn, mul, ConnGroupNConn[ig]);
+        SendSpike( i_spike_buffer, i_conn, mul, conn_group_n_conn );
         // increase index of the next conn. group that will emit this spike
         i_conn++;
         SpikeBufferConnIdx[ i_arr ] = i_conn;
@@ -342,15 +342,13 @@ InitLastSpikeTimeIdx( unsigned int n_spike_buffers, int spike_time_idx )
 }
 
 int
-spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int max_delay_num, int spike_buffer_algo )
+spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int spike_buffer_algo )
 {
   // unsigned int n_spike_buffers = net_connection->connection_.size();
   h_NSpikeBuffer = n_spike_buffers;
-  // int max_delay_num = h_MaxDelayNum;
-  // printf("mdn: %d\n", max_delay_num);
 
   CUDAMALLOCCTRL( "&d_LastSpikeTimeIdx", &d_LastSpikeTimeIdx, n_spike_buffers * sizeof( long long ) );
-  CUDAMALLOCCTRL( "&d_LastSpikeHeight", &d_LastSpikeHeight, n_spike_buffers * sizeof( float ) );
+  CUDAMALLOCCTRL( "&d_LastSpikeMul", &d_LastSpikeMul, n_spike_buffers * sizeof( float ) );
   CUDAMALLOCCTRL( "&d_LastRevSpikeTimeIdx", &d_LastRevSpikeTimeIdx, n_spike_buffers * sizeof( long long ) );
   if ( spike_buffer_algo == INPUT_SPIKE_BUFFER_ALGO )
   {
@@ -359,7 +357,7 @@ spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int max_delay_
     d_SpikeBufferIdx0 = NULL;
     d_SpikeBufferTimeIdx = NULL;
     d_SpikeBufferConnIdx = NULL;
-    d_SpikeBufferHeight = NULL;
+    d_SpikeBufferMul = NULL;
   }
   else
   {
@@ -370,53 +368,50 @@ spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int max_delay_
     CUDAMALLOCCTRL(
       "&d_SpikeBufferConnIdx", &d_SpikeBufferConnIdx, n_spike_buffers * max_spike_buffer_size * sizeof( int ) );
     CUDAMALLOCCTRL(
-      "&d_SpikeBufferHeight", &d_SpikeBufferHeight, n_spike_buffers * max_spike_buffer_size * sizeof( float ) );
+      "&d_SpikeBufferMul", &d_SpikeBufferMul, n_spike_buffers * max_spike_buffer_size * sizeof( float ) );
     gpuErrchk( cudaMemsetAsync( d_SpikeBufferSize, 0, n_spike_buffers * sizeof( int ) ) );
     gpuErrchk( cudaMemsetAsync( d_SpikeBufferIdx0, 0, n_spike_buffers * sizeof( int ) ) );
   }
 
   DeviceSpikeBufferInit<<< 1, 1 >>>( n_spike_buffers,
-    max_delay_num,
     max_spike_buffer_size,
     d_LastSpikeTimeIdx,
-    d_LastSpikeHeight,
+    d_LastSpikeMul,
     d_SpikeBufferSize,
     d_SpikeBufferIdx0,
     d_SpikeBufferTimeIdx,
     d_SpikeBufferConnIdx,
-    d_SpikeBufferHeight,
+    d_SpikeBufferMul,
     d_LastRevSpikeTimeIdx );
   gpuErrchk( cudaPeekAtLastError() );
 
   InitLastSpikeTimeIdx <<< ( n_spike_buffers + 1023 ) / 1024, 1024 >>>( n_spike_buffers, LAST_SPIKE_TIME_GUARD );
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk( cudaMemsetAsync( d_LastSpikeHeight, 0, n_spike_buffers * sizeof( unsigned short ) ) );
+  gpuErrchk( cudaMemsetAsync( d_LastSpikeMul, 0, n_spike_buffers * sizeof( unsigned short ) ) );
 
   return 0;
 }
 
 __global__ void
 DeviceSpikeBufferInit( int n_spike_buffers,
-  int max_delay_num,
   int max_spike_buffer_size,
   long long* last_spike_time_idx,
-  float* last_spike_height,
+  float* last_spike_mul,
   int* spike_buffer_size,
   int* spike_buffer_idx0,
   int* spike_buffer_time,
   int* spike_buffer_conn,
-  float* spike_buffer_height,
+  float* spike_buffer_mul,
   long long* last_rev_spike_time_idx )
 {
   NSpikeBuffer = n_spike_buffers;
-  MaxDelayNum = max_delay_num;
   MaxSpikeBufferSize = max_spike_buffer_size;
   LastSpikeTimeIdx = last_spike_time_idx;
-  LastSpikeHeight = last_spike_height;
+  LastSpikeMul = last_spike_mul;
   SpikeBufferSize = spike_buffer_size;
   SpikeBufferIdx0 = spike_buffer_idx0;
   SpikeBufferTimeIdx = spike_buffer_time;
   SpikeBufferConnIdx = spike_buffer_conn;
-  SpikeBufferHeight = spike_buffer_height;
+  SpikeBufferMul = spike_buffer_mul;
   LastRevSpikeTimeIdx = last_rev_spike_time_idx;
 }

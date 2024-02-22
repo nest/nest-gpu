@@ -341,7 +341,7 @@ extern "C"
 
   int NESTGPU_PushSpikesToNodes( int n_spikes, int* node_id );
 
-  int NESTGPU_GetExtNeuronInputSpikes( int* n_spikes, int** node, int** port, float** spike_height, int include_zeros );
+  int NESTGPU_GetExtNeuronInputSpikes( int* n_spikes, int** node, int** port, float** spike_mul, int include_zeros );
 
   int NESTGPU_SetNeuronGroupParam( uint i_node, int n_node, char* param_name, float val );
 

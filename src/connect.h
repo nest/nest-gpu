@@ -91,9 +91,6 @@ public:
   // get number of bits reserved to represent synapse groups
   virtual int getMaxSynNBits() = 0;
 
-  // get maximum number of integer-delay values used by a node
-  virtual int getMaxDelayNum() = 0;
-
   // get number of images of remote spiking nodes having connections to local target nodes
   virtual int getNImageNodes() = 0;
 
@@ -402,8 +399,6 @@ class ConnectionTemplate : public Connection
 
   iconngroup_t tot_conn_group_num_;
 
-  int max_delay_num_;
-
   ConnKeyT** d_conn_key_array_;
 
   ConnStructT** d_conn_struct_array_;
@@ -554,7 +549,9 @@ class ConnectionTemplate : public Connection
   // array of the first connection of each spike emitted at current time step
   // [n_all_nodes*time_resolution*avg_max_firing_rate]
   int64_t* d_spike_first_connection_;
-
+  // array of spike multiplicity
+  float *d_spike_mul_;
+  
   // number of spikes emitted at current time step
   int* d_n_spikes_;
 
@@ -625,12 +622,6 @@ public:
   getMaxSynNBits()
   {
     return max_syn_nbits_;
-  }
-
-  int
-  getMaxDelayNum()
-  {
-    return max_delay_num_;
   }
 
   int
@@ -2108,8 +2099,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::init()
 
   tot_conn_group_num_ = 0;
 
-  max_delay_num_ = 0;
-
   d_conn_key_array_ = NULL;
 
   d_conn_struct_array_ = NULL;
@@ -2571,39 +2560,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::organizeConnections( inode_t n_node
         cub::DeviceScan::ExclusiveSum( d_storage, storage_bytes, d_conn_group_num, d_conn_group_idx0_, n_node + 1 );
         //<END-CLANG-TIDY-SKIP>//
 
-        // find maxumum number of connection groups (delays) over all neurons
-        int* d_max_delay_num;
-        CUDAMALLOCCTRL( "&d_max_delay_num", &d_max_delay_num, sizeof( int ) );
-
-        storage_bytes1 = 0;
-        // Determine temporary device storage requirements
-        //<BEGIN-CLANG-TIDY-SKIP>//
-        cub::DeviceReduce::Max( NULL, storage_bytes1, d_conn_group_num, d_max_delay_num, n_node );
-        //<END-CLANG-TIDY-SKIP>//
-
-        if ( storage_bytes1 > storage_bytes )
-        {
-          storage_bytes = storage_bytes1;
-          CUDAFREECTRL( "d_storage", d_storage );
-          // Allocate temporary storage for prefix sum
-          CUDAMALLOCCTRL( "&d_storage", &d_storage, storage_bytes );
-        }
-
-        // Run maximum search
-        //<BEGIN-CLANG-TIDY-SKIP>//
-        cub::DeviceReduce::Max( d_storage, storage_bytes, d_conn_group_num, d_max_delay_num, n_node );
-        //<END-CLANG-TIDY-SKIP>//
-
-        CUDASYNC;
-        gpuErrchk( cudaMemcpy( &max_delay_num_, d_max_delay_num, sizeof( int ), cudaMemcpyDeviceToHost ) );
-        CUDAFREECTRL( "d_max_delay_num", d_max_delay_num );
-
-        printf(
-          "Maximum number of connection groups (delays)"
-          " over all nodes: %d\n",
-          max_delay_num_ );
-
-        ///////////////////////////////////////////////////////////////////
         ///////////////////////////////////////////////////////////////////
         CUDAFREECTRL( "d_storage", d_storage ); // free temporary allocated storage
         CUDAFREECTRL( "d_conn_group_iconn0_mask", d_conn_group_iconn0_mask );
@@ -2630,16 +2586,11 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::organizeConnections( inode_t n_node
           "for number of connections > 0" );
       }
     }
-    ///////////////////////// TEMPORARY!!!!
-    else {
-      max_delay_num_ = 100;
-    }
     
   }
   else if ( getSpikeBufferAlgo() == OUTPUT_SPIKE_BUFFER_ALGO )
     {
       gpuErrchk( cudaMemset( d_conn_group_idx0_, 0, ( n_node + 1 ) * sizeof( iconngroup_t ) ) );
-      max_delay_num_ = 0;
     }
 
   gettimeofday( &endTV, NULL );

@@ -27,12 +27,11 @@
 extern __constant__ bool ExternalSpikeFlag;
 extern __device__ int MaxSpikeBufferSize;
 extern __device__ int NSpikeBuffer;
-extern __device__ int MaxDelayNum;
 
 extern int h_NSpikeBuffer;
 
-extern float* d_LastSpikeHeight;          // [NSpikeBuffer];
-extern __device__ float* LastSpikeHeight; //
+extern float* d_LastSpikeMul;          // [NSpikeBuffer];
+extern __device__ float* LastSpikeMul; //
 
 extern long long* d_LastSpikeTimeIdx;          // [NSpikeBuffer];
 extern __device__ long long* LastSpikeTimeIdx; //
@@ -59,26 +58,25 @@ extern int* d_SpikeBufferConnIdx;
 extern __device__ int* SpikeBufferConnIdx;
 // index of the next connection group that will emit this spike
 
-extern float* d_SpikeBufferHeight;
-extern __device__ float* SpikeBufferHeight;
-// spike height
+extern float* d_SpikeBufferMul;
+extern __device__ float* SpikeBufferMul;
+// spike mul
 
-__device__ void PushSpike( int i_spike_buffer, float height );
+__device__ void PushSpike( int i_spike_buffer, float mul );
 
 __global__ void SpikeBufferUpdate();
 
 __global__ void DeviceSpikeBufferInit( int n_spike_buffers,
-  int max_delay_num,
   int max_spike_buffer_size,
   long long* last_spike_time_idx,
-  float* last_spike_height,
+  float* last_spike_mul,
   int* spike_buffer_size,
   int* spike_buffer_idx0,
   int* spike_buffer_time,
   int* spike_buffer_conn,
-  float* spike_buffer_height,
+  float* spike_buffer_mul,
   long long* last_rev_spike_time_idx );
 
-int spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int max_delay_num, int spike_buffer_algo );
+int spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int spike_buffer_algo );
 
 #endif

@@ -64,13 +64,13 @@ Here follows an example:
   nestgpu.Connect([neuron[0]], spike_det, {"rule": "one_to_one"},
 {"weight": 1.0, "delay": 1.0, "receptor":0})
 
-  recorder = nestgpu.CreateRecord("", ["spike_height"], [spike_det[0]], [0])
+  recorder = nestgpu.CreateRecord("", ["spike_mul"], [spike_det[0]], [0])
 
   nestgpu.Simulate()
 
   recorded_data = nestgpu.GetRecordData(record)
   time = [row[0] for row in recorded_data]
-  spike_height = [row[1] for row in recorded_data]
+  spike_mul = [row[1] for row in recorded_data]
 
 The output is thus a continuous variable, which is 0 when no spikes are emitted
 by the neuron, and is ``weights`` when a spike is emitted.

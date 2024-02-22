@@ -1520,7 +1520,7 @@ BaseNeuron::GetParamPt( int i_neuron, std::string param_name, int port /*=0*/ )
   }
 }
 
-// return spike multiplicity (spike_height) of neuron i_neuron
+// return spike multiplicity (spike_mul) of neuron i_neuron
 // if neuron emitted a spike in the current time step
 // otherwise return 0
 float
@@ -1536,15 +1536,15 @@ BaseNeuron::GetSpikeActivity( int i_neuron, long long time_idx )
   {
     return 0.0;
   }
-  float spike_height;
+  float spike_mul;
   gpuErrchk(
-    cudaMemcpy( &spike_height, &d_LastSpikeHeight[ i_spike_buffer ], sizeof( float ), cudaMemcpyDeviceToHost ) );
-  return spike_height;
+    cudaMemcpy( &spike_mul, &d_LastSpikeMul[ i_spike_buffer ], sizeof( float ), cudaMemcpyDeviceToHost ) );
+  return spike_mul;
 }
 
 
 ///////////////////// OLD
-// return spike multiplicity (spike_height) of neuron i_neuron
+// return spike multiplicity (spike_mul) of neuron i_neuron
 // if neuron emitted a spike in the current time step
 // otherwise return 0
 float
@@ -1570,10 +1570,10 @@ BaseNeuron::GetSpikeActivity( int i_neuron )
   { // neuron is not spiking now
     return 0.0;
   }
-  float spike_height;
-  gpuErrchk( cudaMemcpy( &spike_height, d_SpikeBufferHeight + i_arr, sizeof( float ), cudaMemcpyDeviceToHost ) );
+  float spike_mul;
+  gpuErrchk( cudaMemcpy( &spike_mul, d_SpikeBufferMul + i_arr, sizeof( float ), cudaMemcpyDeviceToHost ) );
 
-  return spike_height;
+  return spike_mul;
 }
 /////////////////////////////////////////////////
 

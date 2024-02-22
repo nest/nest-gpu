@@ -43,7 +43,7 @@ ngpu.Connect(neuron, sd, sd_conn_dict, sd_syn_dict)
 # create multimeter record of spikes
 i_node_list = sd.ToList()
 i_receptor_list = [0]*n_neurons
-var_name_list = ["spike_height"]*n_neurons
+var_name_list = ["spike_mul"]*n_neurons
 
 record = ngpu.CreateRecord("", var_name_list, i_node_list, \
                            i_receptor_list)

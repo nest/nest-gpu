@@ -29,18 +29,18 @@
 int* d_SpikeNum;
 int* d_SpikeSourceIdx;
 int* d_SpikeConnIdx;
-float* d_SpikeHeight;
+float* d_SpikeMul;
 int* d_SpikeTargetNum;
 
 __device__ int MaxSpikeNum;
 __device__ int* SpikeNum;
 __device__ int* SpikeSourceIdx;
 __device__ int* SpikeConnIdx;
-__device__ float* SpikeHeight;
+__device__ float* SpikeMul;
 __device__ int* SpikeTargetNum;
 
 __device__ void
-SendSpike( int i_source, int i_conn, float height, int target_num )
+SendSpike( int i_source, int i_conn, float mul, int target_num )
 {
   int pos = atomicAdd( SpikeNum, 1 );
   if ( pos >= MaxSpikeNum )
@@ -51,7 +51,7 @@ SendSpike( int i_source, int i_conn, float height, int target_num )
   }
   SpikeSourceIdx[ pos ] = i_source;
   SpikeConnIdx[ pos ] = i_conn;
-  SpikeHeight[ pos ] = height;
+  SpikeMul[ pos ] = mul;
   SpikeTargetNum[ pos ] = target_num;
 }
 
@@ -59,14 +59,14 @@ __global__ void
 DeviceSpikeInit( int* spike_num,
   int* spike_source_idx,
   int* spike_conn_idx,
-  float* spike_height,
+  float* spike_mul,
   int* spike_target_num,
   int max_spike_num )
 {
   SpikeNum = spike_num;
   SpikeSourceIdx = spike_source_idx;
   SpikeConnIdx = spike_conn_idx;
-  SpikeHeight = spike_height;
+  SpikeMul = spike_mul;
   SpikeTargetNum = spike_target_num;
   MaxSpikeNum = max_spike_num;
   *SpikeNum = 0;
@@ -80,11 +80,11 @@ SpikeInit( int max_spike_num )
   CUDAMALLOCCTRL( "&d_SpikeNum", &d_SpikeNum, sizeof( int ) );
   CUDAMALLOCCTRL( "&d_SpikeSourceIdx", &d_SpikeSourceIdx, max_spike_num * sizeof( int ) );
   CUDAMALLOCCTRL( "&d_SpikeConnIdx", &d_SpikeConnIdx, max_spike_num * sizeof( int ) );
-  CUDAMALLOCCTRL( "&d_SpikeHeight", &d_SpikeHeight, max_spike_num * sizeof( float ) );
+  CUDAMALLOCCTRL( "&d_SpikeMul", &d_SpikeMul, max_spike_num * sizeof( float ) );
   CUDAMALLOCCTRL( "&d_SpikeTargetNum", &d_SpikeTargetNum, max_spike_num * sizeof( int ) );
   // printf("here: SpikeTargetNum size: %d", max_spike_num);
   DeviceSpikeInit<<< 1, 1 >>>(
-    d_SpikeNum, d_SpikeSourceIdx, d_SpikeConnIdx, d_SpikeHeight, d_SpikeTargetNum, max_spike_num );
+    d_SpikeNum, d_SpikeSourceIdx, d_SpikeConnIdx, d_SpikeMul, d_SpikeTargetNum, max_spike_num );
   gpuErrchk( cudaPeekAtLastError() );
 }
 

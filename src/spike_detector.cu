@@ -35,20 +35,20 @@
 
 enum
 {
-  i_spike_detector_hold_spike_height = 0,
+  i_spike_detector_hold_spike_mul = 0,
   N_SPIKE_DETECTOR_SCAL_PARAM
 };
 
-const std::string spike_detector_scal_param_name[ N_SPIKE_DETECTOR_SCAL_PARAM ] = { "hold_spike_height" };
+const std::string spike_detector_scal_param_name[ N_SPIKE_DETECTOR_SCAL_PARAM ] = { "hold_spike_mul" };
 
 enum
 {
-  i_spike_detector_input_spike_height = 0,
-  i_spike_detector_spike_height,
+  i_spike_detector_input_spike_mul = 0,
+  i_spike_detector_spike_mul,
   N_SPIKE_DETECTOR_SCAL_VAR
 };
 
-const std::string spike_detector_scal_var_name[ N_SPIKE_DETECTOR_SCAL_VAR ] = { "input_spike_height", "spike_height" };
+const std::string spike_detector_scal_var_name[ N_SPIKE_DETECTOR_SCAL_VAR ] = { "input_spike_mul", "spike_mul" };
 
 __global__ void
 spike_detector_UpdateKernel( int i_node_0, int n_node, float* var_arr, float* param_arr, int n_var, int n_param )
@@ -56,20 +56,20 @@ spike_detector_UpdateKernel( int i_node_0, int n_node, float* var_arr, float* pa
   int irel_node = threadIdx.x + blockIdx.x * blockDim.x;
   if ( irel_node < n_node )
   {
-    float* input_spike_height_pt = var_arr + irel_node * n_var + i_spike_detector_input_spike_height;
-    float* spike_height_pt = var_arr + irel_node * n_var + i_spike_detector_spike_height;
-    float* hold_spike_height_pt = param_arr + irel_node * n_param + i_spike_detector_hold_spike_height;
+    float* input_spike_mul_pt = var_arr + irel_node * n_var + i_spike_detector_input_spike_mul;
+    float* spike_mul_pt = var_arr + irel_node * n_var + i_spike_detector_spike_mul;
+    float* hold_spike_mul_pt = param_arr + irel_node * n_param + i_spike_detector_hold_spike_mul;
     // int i_node = i_node_0 + irel_node;
-    float spike_height = *input_spike_height_pt;
-    if ( spike_height != 0.0 )
+    float spike_mul = *input_spike_mul_pt;
+    if ( spike_mul != 0.0 )
     {
-      if ( *hold_spike_height_pt == 0.0 )
+      if ( *hold_spike_mul_pt == 0.0 )
       {
-        spike_height = 1.0;
+        spike_mul = 1.0;
       }
-      *input_spike_height_pt = 0;
+      *input_spike_mul_pt = 0;
     }
-    *spike_height_pt = spike_height;
+    *spike_mul_pt = spike_mul;
   }
 }
 
@@ -91,11 +91,11 @@ spike_detector::Init( int i_node_0, int n_node, int /*n_port*/, int i_group )
 
   CUDAMALLOCCTRL( "&param_arr_", &param_arr_, n_node_ * n_param_ * sizeof( float ) );
 
-  SetScalParam( 0, n_node, "hold_spike_height", 1.0 );
+  SetScalParam( 0, n_node, "hold_spike_mul", 1.0 );
 
-  SetScalVar( 0, n_node, "input_spike_height", 0.0 );
+  SetScalVar( 0, n_node, "input_spike_mul", 0.0 );
 
-  SetScalVar( 0, n_node, "spike_height", 0.0 );
+  SetScalVar( 0, n_node, "spike_mul", 0.0 );
 
   // multiplication factor of input signal is always 1 for all nodes
   float input_weight = 1.0;
@@ -104,8 +104,8 @@ spike_detector::Init( int i_node_0, int n_node, int /*n_port*/, int i_group )
   port_weight_arr_step_ = 0;
   port_weight_port_step_ = 0;
 
-  // input signal is stored in input_spike_height
-  port_input_arr_ = GetVarArr() + GetScalVarIdx( "input_spike_height" );
+  // input signal is stored in input_spike_mul
+  port_input_arr_ = GetVarArr() + GetScalVarIdx( "input_spike_mul" );
   port_input_arr_step_ = n_var_;
   port_input_port_step_ = n_port_var_;
 

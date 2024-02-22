@@ -37,6 +37,8 @@ extern __device__ int64_t* first_out_connection_;
 // array of the first connection of each spike emitted at current time step
 // [n_all_nodes*time_resolution*avg_max_firing_rate]
 extern __device__ int64_t* spike_first_connection_;
+// array of spike multiplicity
+extern __device__ float *spike_mul_;
 
 // number of spikes emitted at current time step
 extern __device__ int* n_spikes_;
@@ -47,6 +49,7 @@ __global__ void initInputSpikeBufferPointersKernel( int* n_input_ports,
   double*** input_spike_buffer,
   int64_t* first_out_connection,
   int64_t* spike_first_connection,
+  float *spike_mul_,						    
   int* n_spikes );
 
 // Evaluates the number of input ports of each (local) target node
@@ -172,7 +175,8 @@ deliverSpikesKernel( int64_t n_conn )
   {
     return;
   }
-
+  
+  float mul = input_spike_buffer_ns::spike_mul_[ i_spike ];
   int i_block = ( int ) ( i_conn1 / ConnBlockSize );
   int64_t i_block_conn = i_conn1 % ConnBlockSize;
   ConnKeyT conn_key = ( ( ConnKeyT** ) ConnKeyArray )[ i_block ][ i_block_conn ];
@@ -215,7 +219,7 @@ deliverSpikesKernel( int64_t n_conn )
     //	     input_spike_buffer_[i_target][i_port][i_slot]);
     //   printf("deliver w: %f\n", weight);
     // }
-    atomicAdd( &input_spike_buffer_[ i_target ][ i_port ][ i_slot ], weight );
+    atomicAdd( &input_spike_buffer_[ i_target ][ i_port ][ i_slot ], weight*mul );
   }
 }
 
@@ -414,9 +418,11 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::initInputSpikeBuffer( inode_t n_loc
     getFirstOutConnectionKernel< ConnKeyT > <<< ( n_conn_ + 1023 ) / 1024, 1024 >>>( n_conn_, d_first_out_connection_ );
 
     // allocate array of the first connection of each spike emitted at current time step
+    // and array of spike multiplicity
     // temporary size is n_local_nodes, in the future evaluate [n_all_nodes*time_resolution*avg_max_firing_rate]
     CUDAMALLOCCTRL( "&d_spike_first_connection_", &d_spike_first_connection_, n_local_nodes * sizeof( int64_t ) );
-
+    CUDAMALLOCCTRL( "&d_spike_mul_", &d_spike_mul_, n_local_nodes * sizeof( float ) );
+    
     // number of spikes emitted at current time step
     CUDAMALLOCCTRL( "&d_n_spikes_", &d_n_spikes_, sizeof( int ) );
     gpuErrchk( cudaMemset( d_n_spikes_, 0, sizeof( int ) ) );
@@ -426,6 +432,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::initInputSpikeBuffer( inode_t n_loc
       d_input_spike_buffer_,
       d_first_out_connection_,
       d_spike_first_connection_,
+      d_spike_mul_,						    
       d_n_spikes_ );
     DBGCUDASYNC;
 

@@ -49,7 +49,7 @@ The following parameters can be set in the status dictionary.
 **Parameters:**
 --------------------------------------------------------------
  spike_times   list    Times in which spikes are emitted
- spike_heights list    Weight of the spikes emitted
+ spike_gen_mul list    Multiplicity of the spikes emitted
 ============== ======= =======================================
 
 Spike times are given in milliseconds, and must be sorted with the
@@ -62,10 +62,10 @@ In that case, spike times will be rounded to the nearest
 simulation steps (i.e. multiples of the resolution).
 
 Sending multiple occurrences at same time step is not possible,
-however the spike height can be regulated to be the equivalent of
+however the spike multiplicity can be regulated to be the equivalent of
 having multiple spikes at once.
 The spikes are thus delivered with the weight indicated by
-the spike height multiplied with the weight of the connection.
+the spike multiplicity multiplied with the weight of the connection.
 
 
 See also
@@ -81,16 +81,16 @@ class spike_generator : public BaseNeuron
   int* d_n_spikes_;
   int* d_i_spike_;
   int** d_spike_time_idx_;
-  float** d_spike_height_;
+  float** d_spike_gen_mul_;
   int** h_spike_time_idx_;
-  float** h_spike_height_;
+  float** h_spike_gen_mul_;
   std::vector< std::vector< float > > spike_time_vect_;
-  std::vector< std::vector< float > > spike_height_vect_;
+  std::vector< std::vector< float > > spike_mul_vect_;
 
   int SetSpikes( int irel_node,
     int n_spikes,
     float* spike_time,
-    float* spike_height,
+    float* spike_gen_mul,
     float time_min,
     float time_resolution );
 

@@ -1755,13 +1755,13 @@ extern "C"
   }
 
   int
-  NESTGPU_GetExtNeuronInputSpikes( int* n_spikes, int** node, int** port, float** spike_height, int include_zeros )
+  NESTGPU_GetExtNeuronInputSpikes( int* n_spikes, int** node, int** port, float** spike_mul, int include_zeros )
   {
     int ret = 0;
     BEGIN_ERR_PROP
     {
 
-      ret = NESTGPU_instance->GetExtNeuronInputSpikes( n_spikes, node, port, spike_height, include_zeros > 0 );
+      ret = NESTGPU_instance->GetExtNeuronInputSpikes( n_spikes, node, port, spike_mul, include_zeros > 0 );
     }
     END_ERR_PROP return ret;
   }
