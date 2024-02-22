@@ -133,7 +133,7 @@ gpuAssert( cudaError_t code, const char* file, int line, bool abort = true )
     }                                                   \
   } while ( 0 )
 
-#define DEBUG_CUDA_SYNC
+//#define DEBUG_CUDA_SYNC
 #ifdef DEBUG_CUDA_SYNC
 #define DBGCUDASYNC                   \
   gpuErrchk( cudaPeekAtLastError() ); \
