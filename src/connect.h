@@ -2168,7 +2168,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::init()
   initConnRandomGenerator();
 
   _setSpikeBufferAlgo( INPUT_SPIKE_BUFFER_ALGO );
-  // _setSpikeBufferAlgo(OUTPUT_SPIKE_BUFFER_ALGO);
+  //_setSpikeBufferAlgo(OUTPUT_SPIKE_BUFFER_ALGO);
 
   return 0;
 }

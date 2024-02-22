@@ -17,6 +17,7 @@ def STDPUpdate(w, Dt, tau_plus, tau_minus, Wplus, alpha, mu_plus, mu_minus, \
             w1 = 0.0
     return w1
 
+ngpu.SetKernelStatus({'spike_buffer_algo': 0})
 
 tolerance = 1.0e-5
 dt_step = 5.0

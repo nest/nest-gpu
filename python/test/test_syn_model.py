@@ -7,6 +7,8 @@ N = 5
 fact = 0.2
 offset = 0.03
 
+ngpu.SetKernelStatus({'spike_buffer_algo': 0})
+
 syn_group = ngpu.CreateSynGroup("test_syn_model")
 ngpu.SetSynGroupParam(syn_group, "fact", fact)
 ngpu.SetSynGroupParam(syn_group, "offset", offset)

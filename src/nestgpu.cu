@@ -88,6 +88,7 @@ enum KernelIntParamIndexes
   i_max_syn_n_bits,
   i_max_delay_n_bits,
   i_conn_struct_type,
+  i_spike_buffer_algo,
   N_KERNEL_INT_PARAM
 };
 
@@ -117,7 +118,8 @@ const std::string kernel_int_param_name[ N_KERNEL_INT_PARAM ] = { "rnd_seed",
   "max_node_n_bits",
   "max_syn_n_bits",
   "max_delay_n_bits",
-  "conn_struct_type" };
+  "conn_struct_type",
+  "spike_buffer_algo" };
 
 const std::string kernel_bool_param_name[ N_KERNEL_BOOL_PARAM ] = { "print_time",
   "remove_conn_key",
@@ -2339,6 +2341,8 @@ NESTGPU::GetIntParam( std::string param_name )
     return conn_->getMaxDelayNBits();
   case i_conn_struct_type:
     return conn_struct_type_;
+  case i_spike_buffer_algo:
+    return conn_->getSpikeBufferAlgo();
   default:
     throw ngpu_exception( std::string( "Unrecognized kernel int parameter " ) + param_name );
   }
@@ -2382,6 +2386,9 @@ NESTGPU::SetIntParam( std::string param_name, int val )
       setConnStructType( val );
     }
     break;
+  case i_spike_buffer_algo:
+    conn_->setSpikeBufferAlgo( val );
+    break;    
   default:
     throw ngpu_exception( std::string( "Unrecognized kernel int parameter " ) + param_name );
   }
