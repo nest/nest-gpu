@@ -108,6 +108,9 @@ PushSpike( int i_spike_buffer, float mul )
       uint pos = atomicAdd( input_spike_buffer_ns::n_spikes_, 1 );
       spike_first_connection_[ pos ] = i_conn;
       spike_mul_[ pos ] = mul;
+#ifdef HAVE_N_OUT_CONNECTIONS
+      spike_n_connections_[ pos ] = n_out_connections_[ i_spike_buffer ];
+#endif
       // printf("PushSpike i_conn: %ld\tpos: %d\tspike_first_connection[pos]: %ld\n",
       //  i_conn, pos, spike_first_connection_[pos]);
     }
@@ -218,7 +221,7 @@ PushSpike( int i_spike_buffer, float mul )
       int i_arr = is0 * NSpikeBuffer + i_spike_buffer; // spike index in array
       SpikeBufferTimeIdx[ i_arr ] = 0;                 // time index is initialized to 0
       SpikeBufferConnIdx[ i_arr ] = 0;                 // connect. group index is initialized to 0
-      SpikeBufferMul[ i_arr ] = mul;             // spike multiplicity
+      SpikeBufferMul[ i_arr ] = mul;                   // spike multiplicity
     }
   }
 }
@@ -367,8 +370,7 @@ spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int spike_buff
       "&d_SpikeBufferTimeIdx", &d_SpikeBufferTimeIdx, n_spike_buffers * max_spike_buffer_size * sizeof( int ) );
     CUDAMALLOCCTRL(
       "&d_SpikeBufferConnIdx", &d_SpikeBufferConnIdx, n_spike_buffers * max_spike_buffer_size * sizeof( int ) );
-    CUDAMALLOCCTRL(
-      "&d_SpikeBufferMul", &d_SpikeBufferMul, n_spike_buffers * max_spike_buffer_size * sizeof( float ) );
+    CUDAMALLOCCTRL( "&d_SpikeBufferMul", &d_SpikeBufferMul, n_spike_buffers * max_spike_buffer_size * sizeof( float ) );
     gpuErrchk( cudaMemsetAsync( d_SpikeBufferSize, 0, n_spike_buffers * sizeof( int ) ) );
     gpuErrchk( cudaMemsetAsync( d_SpikeBufferIdx0, 0, n_spike_buffers * sizeof( int ) ) );
   }

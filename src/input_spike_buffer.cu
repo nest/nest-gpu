@@ -18,15 +18,26 @@ __device__ int** max_input_delay_; // [n_local_nodes][n_input_ports[i_node]]
 // [n_local_nodes][n_input_ports[i_node]][n_slots[i_target][i_port]]
 __device__ double*** input_spike_buffer_;
 
-// index of the first connection outgoing from each local node (-1 for no connections)
-// [n_local_nodes]
+// index of the first connection outgoing from each node (-1 for no connections)
+// [n_nodes]
 __device__ int64_t* first_out_connection_;
+
+
+// number of connections outgoing from each node
+// [n_nodes]
+__device__ int* n_out_connections_;
 
 // array of the first connection of each spike emitted at current time step
 // [n_all_nodes*time_resolution*avg_max_firing_rate]
 __device__ int64_t* spike_first_connection_;
+
+// array of the number of connections through which each spike emitted
+// at current time step should be delivered
+// [n_all_nodes*time_resolution*avg_max_firing_rate]
+__device__ int* spike_n_connections_;
+
 // array of spike multiplicity
-__device__ float *spike_mul_;
+__device__ float* spike_mul_;
 
 // number of spikes emitted at current time step
 __device__ int* n_spikes_;
@@ -37,15 +48,19 @@ initInputSpikeBufferPointersKernel( int* n_input_ports,
   int** max_input_delay,
   double*** input_spike_buffer,
   int64_t* first_out_connection,
+  int* n_out_connections,
   int64_t* spike_first_connection,
-  float* spike_mul,				    
+  int* spike_n_connections,
+  float* spike_mul,
   int* n_spikes )
 {
   n_input_ports_ = n_input_ports;
   max_input_delay_ = max_input_delay;
   input_spike_buffer_ = input_spike_buffer;
   first_out_connection_ = first_out_connection;
+  n_out_connections_ = n_out_connections;
   spike_first_connection_ = spike_first_connection;
+  spike_n_connections_ = spike_n_connections;
   spike_mul_ = spike_mul;
   n_spikes_ = n_spikes;
 }

@@ -757,7 +757,7 @@ NESTGPU::SimulationStep()
   }
 
   if ( conn_->getSpikeBufferAlgo() != INPUT_SPIKE_BUFFER_ALGO )
-  {	
+  {
     if ( conn_->getNRevConn() > 0 )
     {
       // time_mark = getRealTime();
@@ -2388,7 +2388,7 @@ NESTGPU::SetIntParam( std::string param_name, int val )
     break;
   case i_spike_buffer_algo:
     conn_->setSpikeBufferAlgo( val );
-    break;    
+    break;
   default:
     throw ngpu_exception( std::string( "Unrecognized kernel int parameter " ) + param_name );
   }

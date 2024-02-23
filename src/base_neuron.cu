@@ -1537,8 +1537,7 @@ BaseNeuron::GetSpikeActivity( int i_neuron, long long time_idx )
     return 0.0;
   }
   float spike_mul;
-  gpuErrchk(
-    cudaMemcpy( &spike_mul, &d_LastSpikeMul[ i_spike_buffer ], sizeof( float ), cudaMemcpyDeviceToHost ) );
+  gpuErrchk( cudaMemcpy( &spike_mul, &d_LastSpikeMul[ i_spike_buffer ], sizeof( float ), cudaMemcpyDeviceToHost ) );
   return spike_mul;
 }
 

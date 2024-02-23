@@ -240,10 +240,8 @@ NESTGPU::ExternalSpikeInit()
   {
     h_ExternalSpikeMul = new float[ max_spike_per_host_ ];
     CUDAMALLOCCTRL( "&d_ExternalSpikeMul", &d_ExternalSpikeMul, max_spike_per_host_ * sizeof( float ) );
-    CUDAMALLOCCTRL(
-      "&d_ExternalTargetSpikeMul", &d_ExternalTargetSpikeMul, max_remote_spike_num_ * sizeof( float ) );
-    CUDAMALLOCCTRL(
-      "&d_ExternalSourceSpikeMul", &d_ExternalSourceSpikeMul, max_remote_spike_num_ * sizeof( float ) );
+    CUDAMALLOCCTRL( "&d_ExternalTargetSpikeMul", &d_ExternalTargetSpikeMul, max_remote_spike_num_ * sizeof( float ) );
+    CUDAMALLOCCTRL( "&d_ExternalSourceSpikeMul", &d_ExternalSourceSpikeMul, max_remote_spike_num_ * sizeof( float ) );
   }
 
   CUDAMALLOCCTRL( "&d_ExternalTargetSpikeNum", &d_ExternalTargetSpikeNum, n_hosts_ * sizeof( uint ) );

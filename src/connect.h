@@ -542,16 +542,25 @@ class ConnectionTemplate : public Connection
   double*** d_input_spike_buffer_; // [n_local_nodes][n_input_ports[i_node]][n_slots[i_target][i_port]]
 
 
-  // index of the first connection outgoing from each local node (-1 for no connections)
-  // [n_local_nodes]
+  // index of the first connection outgoing from each node (-1 for no connections)
+  // [n_nodes]
   int64_t* d_first_out_connection_;
+  // number of connections outgoing from each node
+  // [n_nodes]
+  int* d_n_out_connections_;
 
   // array of the first connection of each spike emitted at current time step
   // [n_all_nodes*time_resolution*avg_max_firing_rate]
   int64_t* d_spike_first_connection_;
+
+  // array of the number of connections through which each spike emitted
+  // at current time step should be delivered
+  // [n_all_nodes*time_resolution*avg_max_firing_rate]
+  int* d_spike_n_connections_;
+
   // array of spike multiplicity
-  float *d_spike_mul_;
-  
+  float* d_spike_mul_;
+
   // number of spikes emitted at current time step
   int* d_n_spikes_;
 
@@ -2386,11 +2395,11 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::organizeConnections( inode_t n_node
 
     CUDAMALLOCCTRL( "&d_conn_key_array_", &d_conn_key_array_, k * sizeof( ConnKeyT* ) );
     gpuErrchk(
-	      cudaMemcpy( d_conn_key_array_, conn_key_vect_.data(), k * sizeof( ConnKeyT* ), cudaMemcpyHostToDevice ) );
+      cudaMemcpy( d_conn_key_array_, conn_key_vect_.data(), k * sizeof( ConnKeyT* ), cudaMemcpyHostToDevice ) );
 
     CUDAMALLOCCTRL( "&d_conn_struct_array_", &d_conn_struct_array_, k * sizeof( ConnStructT* ) );
     gpuErrchk( cudaMemcpy(
-			  d_conn_struct_array_, conn_struct_vect_.data(), k * sizeof( ConnStructT* ), cudaMemcpyHostToDevice ) );
+      d_conn_struct_array_, conn_struct_vect_.data(), k * sizeof( ConnStructT* ), cudaMemcpyHostToDevice ) );
 
     //////////////////////////////////////////////////////////////////////
     if ( getSpikeBufferAlgo() == OUTPUT_SPIKE_BUFFER_ALGO )
@@ -2586,12 +2595,11 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::organizeConnections( inode_t n_node
           "for number of connections > 0" );
       }
     }
-    
   }
   else if ( getSpikeBufferAlgo() == OUTPUT_SPIKE_BUFFER_ALGO )
-    {
-      gpuErrchk( cudaMemset( d_conn_group_idx0_, 0, ( n_node + 1 ) * sizeof( iconngroup_t ) ) );
-    }
+  {
+    gpuErrchk( cudaMemset( d_conn_group_idx0_, 0, ( n_node + 1 ) * sizeof( iconngroup_t ) ) );
+  }
 
   gettimeofday( &endTV, NULL );
   long time =

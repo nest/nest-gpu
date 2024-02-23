@@ -50,9 +50,7 @@ enum
   N_PARROT_NEURON_SCAL_VAR
 };
 
-const std::string parrot_neuron_scal_var_name[ N_PARROT_NEURON_SCAL_VAR ] = { "input_spike_mul",
-  "dummy_input",
-  "V" };
+const std::string parrot_neuron_scal_var_name[ N_PARROT_NEURON_SCAL_VAR ] = { "input_spike_mul", "dummy_input", "V" };
 
 __global__ void
 parrot_neuron_UpdateKernel( int i_node_0, int n_node, float* var_arr, float* param_arr, int n_var, int n_param )

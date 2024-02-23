@@ -268,7 +268,8 @@ spike_generator::SetSpikes( int irel_node,
 
   cudaMemcpy(
     &d_spike_time_idx_[ irel_node ], &h_spike_time_idx_[ irel_node ], sizeof( int* ), cudaMemcpyHostToDevice );
-  cudaMemcpy( &d_spike_gen_mul_[ irel_node ], &h_spike_gen_mul_[ irel_node ], sizeof( float* ), cudaMemcpyHostToDevice );
+  cudaMemcpy(
+    &d_spike_gen_mul_[ irel_node ], &h_spike_gen_mul_[ irel_node ], sizeof( float* ), cudaMemcpyHostToDevice );
 
   int* spike_time_idx = new int[ n_spikes ];
   for ( int i = 0; i < n_spikes; i++ )
