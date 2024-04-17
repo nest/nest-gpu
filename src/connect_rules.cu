@@ -462,13 +462,14 @@ NESTGPU::RemoteConnect( int i_source_host,
   int i_target_host,
   inode_t i_target,
   inode_t n_target,
+  int i_host_group,
   ConnSpec& conn_spec,
   SynSpec& syn_spec )
 {
   CheckUncalibrated( "Connections cannot be created after calibration" );
 
   return conn_->remoteConnect(
-    i_source_host, i_source, n_source, i_target_host, i_target, n_target, conn_spec, syn_spec );
+			      i_source_host, i_source, n_source, i_target_host, i_target, n_target, i_host_group, conn_spec, syn_spec );
 }
 
 int
@@ -478,6 +479,7 @@ NESTGPU::RemoteConnect( int i_source_host,
   int i_target_host,
   inode_t* target,
   inode_t n_target,
+  int i_host_group,
   ConnSpec& conn_spec,
   SynSpec& syn_spec )
 {
@@ -487,7 +489,7 @@ NESTGPU::RemoteConnect( int i_source_host,
   CUDAMALLOCCTRL( "&d_target", &d_target, n_target * sizeof( inode_t ) );
   gpuErrchk( cudaMemcpy( d_target, target, n_target * sizeof( inode_t ), cudaMemcpyHostToDevice ) );
   int ret =
-    conn_->remoteConnect( i_source_host, i_source, n_source, i_target_host, d_target, n_target, conn_spec, syn_spec );
+    conn_->remoteConnect( i_source_host, i_source, n_source, i_target_host, d_target, n_target, i_host_group, conn_spec, syn_spec );
   CUDAFREECTRL( "d_target", d_target );
 
   return ret;
@@ -500,6 +502,7 @@ NESTGPU::RemoteConnect( int i_source_host,
   int i_target_host,
   inode_t i_target,
   inode_t n_target,
+  int i_host_group,
   ConnSpec& conn_spec,
   SynSpec& syn_spec )
 {
@@ -509,7 +512,7 @@ NESTGPU::RemoteConnect( int i_source_host,
   CUDAMALLOCCTRL( "&d_source", &d_source, n_source * sizeof( inode_t ) );
   gpuErrchk( cudaMemcpy( d_source, source, n_source * sizeof( inode_t ), cudaMemcpyHostToDevice ) );
   int ret =
-    conn_->remoteConnect( i_source_host, d_source, n_source, i_target_host, i_target, n_target, conn_spec, syn_spec );
+    conn_->remoteConnect( i_source_host, d_source, n_source, i_target_host, i_target, n_target, i_host_group, conn_spec, syn_spec );
   CUDAFREECTRL( "d_source", d_source );
 
   return ret;
@@ -522,6 +525,7 @@ NESTGPU::RemoteConnect( int i_source_host,
   int i_target_host,
   inode_t* target,
   inode_t n_target,
+  int i_host_group,
   ConnSpec& conn_spec,
   SynSpec& syn_spec )
 {
@@ -534,7 +538,7 @@ NESTGPU::RemoteConnect( int i_source_host,
   CUDAMALLOCCTRL( "&d_target", &d_target, n_target * sizeof( inode_t ) );
   gpuErrchk( cudaMemcpy( d_target, target, n_target * sizeof( inode_t ), cudaMemcpyHostToDevice ) );
   int ret =
-    conn_->remoteConnect( i_source_host, d_source, n_source, i_target_host, d_target, n_target, conn_spec, syn_spec );
+    conn_->remoteConnect( i_source_host, d_source, n_source, i_target_host, d_target, n_target, i_host_group, conn_spec, syn_spec );
   CUDAFREECTRL( "d_source", d_source );
   CUDAFREECTRL( "d_target", d_target );
 
@@ -546,10 +550,11 @@ NESTGPU::RemoteConnect( int i_source_host,
   NodeSeq source,
   int i_target_host,
   NodeSeq target,
+  int i_host_group,
   ConnSpec& conn_spec,
   SynSpec& syn_spec )
 {
-  return RemoteConnect( i_source_host, source.i0, source.n, i_target_host, target.i0, target.n, conn_spec, syn_spec );
+  return RemoteConnect( i_source_host, source.i0, source.n, i_target_host, target.i0, target.n, i_host_group, conn_spec, syn_spec );
 }
 
 int
@@ -557,11 +562,12 @@ NESTGPU::RemoteConnect( int i_source_host,
   NodeSeq source,
   int i_target_host,
   std::vector< inode_t > target,
+  int i_host_group,
   ConnSpec& conn_spec,
   SynSpec& syn_spec )
 {
   return RemoteConnect(
-    i_source_host, source.i0, source.n, i_target_host, target.data(), target.size(), conn_spec, syn_spec );
+    i_source_host, source.i0, source.n, i_target_host, target.data(), target.size(), i_host_group, conn_spec, syn_spec );
 }
 
 int
@@ -569,11 +575,12 @@ NESTGPU::RemoteConnect( int i_source_host,
   std::vector< inode_t > source,
   int i_target_host,
   NodeSeq target,
+  int i_host_group,
   ConnSpec& conn_spec,
   SynSpec& syn_spec )
 {
   return RemoteConnect(
-    i_source_host, source.data(), source.size(), i_target_host, target.i0, target.n, conn_spec, syn_spec );
+    i_source_host, source.data(), source.size(), i_target_host, target.i0, target.n, i_host_group, conn_spec, syn_spec );
 }
 
 int
@@ -581,9 +588,10 @@ NESTGPU::RemoteConnect( int i_source_host,
   std::vector< inode_t > source,
   int i_target_host,
   std::vector< inode_t > target,
+  int i_host_group,
   ConnSpec& conn_spec,
   SynSpec& syn_spec )
 {
   return RemoteConnect(
-    i_source_host, source.data(), source.size(), i_target_host, target.data(), target.size(), conn_spec, syn_spec );
+    i_source_host, source.data(), source.size(), i_target_host, target.data(), target.size(), i_host_group, conn_spec, syn_spec );
 }

@@ -207,28 +207,32 @@ extern "C"
     uint n_source,
     int i_target_host,
     uint i_target,
-    uint n_target );
+    uint n_target,
+    int i_host_group );
 
   int NESTGPU_RemoteConnectSeqGroup( int i_source_host,
     uint i_source,
     uint n_source,
     int i_target_host,
     uint* i_target,
-    uint n_target );
+    uint n_target,
+    int i_host_group );
 
   int NESTGPU_RemoteConnectGroupSeq( int i_source_host,
     uint* i_source,
     uint n_source,
     int i_target_host,
     uint i_target,
-    uint n_target );
+    uint n_target,
+    int i_host_group );
 
   int NESTGPU_RemoteConnectGroupGroup( int i_source_host,
     uint* i_source,
     uint n_source,
     int i_target_host,
     uint* i_target,
-    uint n_target );
+    uint n_target,
+    int i_host_group );
 
   char** NESTGPU_GetIntVarNames( uint i_node );
 

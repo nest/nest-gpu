@@ -1092,13 +1092,14 @@ extern "C"
     uint n_source,
     int i_target_host,
     uint i_target,
-    uint n_target )
+    uint n_target,
+    int i_host_group )
   {
     int ret = 0;
     BEGIN_ERR_PROP
     {
       ret = NESTGPU_instance->RemoteConnect(
-        i_source_host, i_source, n_source, i_target_host, i_target, n_target, ConnSpec_instance, SynSpec_instance );
+        i_source_host, i_source, n_source, i_target_host, i_target, n_target, i_host_group, ConnSpec_instance, SynSpec_instance );
     }
     END_ERR_PROP return ret;
   }
@@ -1109,13 +1110,14 @@ extern "C"
     uint n_source,
     int i_target_host,
     uint* i_target,
-    uint n_target )
+    uint n_target,
+    int i_host_group )
   {
     int ret = 0;
     BEGIN_ERR_PROP
     {
       ret = NESTGPU_instance->RemoteConnect(
-        i_source_host, i_source, n_source, i_target_host, i_target, n_target, ConnSpec_instance, SynSpec_instance );
+        i_source_host, i_source, n_source, i_target_host, i_target, n_target, i_host_group, ConnSpec_instance, SynSpec_instance );
     }
     END_ERR_PROP return ret;
   }
@@ -1126,13 +1128,14 @@ extern "C"
     uint n_source,
     int i_target_host,
     uint i_target,
-    uint n_target )
+    uint n_target,
+    int i_host_group )
   {
     int ret = 0;
     BEGIN_ERR_PROP
     {
       ret = NESTGPU_instance->RemoteConnect(
-        i_source_host, i_source, n_source, i_target_host, i_target, n_target, ConnSpec_instance, SynSpec_instance );
+        i_source_host, i_source, n_source, i_target_host, i_target, n_target, i_host_group, ConnSpec_instance, SynSpec_instance );
     }
     END_ERR_PROP return ret;
   }
@@ -1143,13 +1146,14 @@ extern "C"
     uint n_source,
     int i_target_host,
     uint* i_target,
-    uint n_target )
+    uint n_target,
+    int i_host_group )
   {
     int ret = 0;
     BEGIN_ERR_PROP
     {
       ret = NESTGPU_instance->RemoteConnect(
-        i_source_host, i_source, n_source, i_target_host, i_target, n_target, ConnSpec_instance, SynSpec_instance );
+        i_source_host, i_source, n_source, i_target_host, i_target, n_target, i_host_group, ConnSpec_instance, SynSpec_instance );
     }
     END_ERR_PROP return ret;
   }

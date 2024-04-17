@@ -642,9 +642,11 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::_RemoteConnect( int source_host,
   int target_host,
   T2 target,
   inode_t n_target,
+  int i_host_group,
   ConnSpec& conn_spec,
   SynSpec& syn_spec )
 {
+  first_connection_flag_ = false;
   if ( source_host >= n_hosts_ )
   {
     throw ngpu_exception( "Source host index out of range in _RemoteConnect" );
@@ -661,17 +663,38 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::_RemoteConnect( int source_host,
   // Check if it is a local connection
   if ( this_host_ == source_host && source_host == target_host )
   {
-    _Connect< T1, T2 >( source, n_source, target, n_target, conn_spec, syn_spec );
+    return _Connect< T1, T2 >( source, n_source, target, n_target, conn_spec, syn_spec );
+  }
+
+  // i_host_group is the global host-group index, given as optional argument to the
+  // RemoteConnect command. Default value is either -1 or 0 (initialized as kernel parameter).
+  // i_host_group = -1 for point-to-point MPI communication
+  //              = 0 for the world group, which includes all hosts (i.e. all MPI processes)
+  //              > 0 for all the other host groups
+  if (i_host_group>=0) { // not a point-to-point MPI communication
+    int group_local_id = host_group_local_id_[i_host_group];
+    if (group_local_id >= 0) { // this host is in group
+      // find the source host index in the host group
+      auto it = std::find(host_group_[group_local_id].begin(), host_group_[group_local_id].end(), source_host);
+      if (it == host_group_[group_local_id].end()) {
+	throw ngpu_exception( "source host not found in host group" );
+      }
+      int i_host = it - host_group_[group_local_id].begin();
+      for (inode_t i=0; i<n_source; i++) {
+	inode_t i_source = hGetNodeIndex(source, i);
+	host_group_source_node_[group_local_id][i_host].insert(i_source);
+      }
+    }
+  }
+  // if i_host_group<0, i.e. a point-to-point MPI communication is required
+  // and this host is the source (but it is not a local connection) call RemoteConnectTarget
+  // Check if source_host matches this_host
+  else if (this_host_ == source_host) {
+    return remoteConnectTarget< T1, T2 >( target_host, source, n_source, target, n_target, conn_spec, syn_spec );
   }
   // Check if target_host matches this_host
-  else if ( this_host_ == target_host )
-  {
-    remoteConnectSource< T1, T2 >( source_host, source, n_source, target, n_target, conn_spec, syn_spec );
-  }
-  // Check if source_host matches this_host
-  else if ( this_host_ == source_host )
-  {
-    remoteConnectTarget< T1, T2 >( target_host, source, n_source, target, n_target, conn_spec, syn_spec );
+  else if (this_host_ == target_host) {
+    return remoteConnectSource< T1, T2 >( source_host, source, n_source, target, n_target, conn_spec, syn_spec );
   }
 
   return 0;
@@ -1260,5 +1283,51 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectTarget( int target_hos
 
   return 0;
 }
+
+// Method that creates a group of hosts for remote spike communication (i.e. a group of MPI processes)
+// host_arr: array of host inexes, n_hosts: nomber of hosts in the group
+template < class ConnKeyT, class ConnStructT >
+int
+ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int n_hosts)
+{
+  if (first_connection_flag_ == false) {
+    throw ngpu_exception("Host groups must be defined before creating "
+			 "connections");
+  }
+  // pushes all the host indexes in a vector, hg, and check whether this host is in the group 
+  std::vector<int> hg;
+  bool this_host_is_in_group = false;
+  for (int ih=0; ih<n_hosts; ih++) {
+    int i_host = host_arr[ih];
+    // check whether this host is in the group 
+    if (i_host == this_host_) {
+      this_host_is_in_group = true;
+    }
+    hg.push_back(i_host);
+  }
+  // the code in the block is executed only if this host is in the group
+  if (this_host_is_in_group) {
+    // set the local id of the group to be the current size of the local host group array
+    int group_local_id = host_group_.size();
+    // push the local id in the array of local indexes  of all host groups
+    host_group_local_id_.push_back(group_local_id);
+    // push the new group into the host_group_ vector 
+    host_group_.push_back(hg);
+    // push a vector of empty unordered sets into host_group_source_node_
+    std::vector< std::unordered_set< inode_t > > empty_i_node(n_hosts);
+    host_group_source_node_.push_back(empty_i_node);
+  }
+  else {
+    // if this host is not in the group, set the entry of host_group_local_id_ to -1 
+    host_group_local_id_.push_back(-1);
+  }
+  // return as output the index of the last entry in host_group_local_id_
+  // which correspond to the newly created group
+  return host_group_local_id_.size() - 1;
+}
+
+
+
+
 
 #endif // REMOTECONNECTH

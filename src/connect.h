@@ -34,6 +34,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <vector>
+#include <unordered_set>
 
 #include "connect_spec.h"
 #include "copass_kernels.h"
@@ -269,6 +270,7 @@ public:
     int target_host,
     inode_t target,
     inode_t n_target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec ) = 0;
 
@@ -278,6 +280,7 @@ public:
     int target_host,
     inode_t target,
     inode_t n_target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec ) = 0;
 
@@ -287,6 +290,7 @@ public:
     int target_host,
     inode_t* target,
     inode_t n_target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec ) = 0;
 
@@ -296,6 +300,7 @@ public:
     int target_host,
     inode_t* target,
     inode_t n_target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec ) = 0;
 
@@ -341,6 +346,8 @@ class ConnectionTemplate : public Connection
   int64_t conn_block_size_;
 
   int64_t n_conn_;
+
+  bool first_connection_flag_;
 
   std::vector< ConnKeyT* > conn_key_vect_;
 
@@ -567,6 +574,33 @@ class ConnectionTemplate : public Connection
   // algorithm for spike buffering and delivery
   int spike_buffer_algo_;
 
+  //////////////////////////////////////////////////
+  // host-group-related member variables
+  //////////////////////////////////////////////////
+  // Maybe the world group can be initialized by a specialized command in the Init that calls
+  // the CreateHostGroup method giving the array of all hosts' indexes (0,1,2,3, ...) as parameter
+
+  // array of local indexes  of all host groups.
+  // Index: global host group index
+  // Each element is the local index of the group, -1 if this host is not in the group
+  // n_host_groups_  = host_group_local_id_.size()
+  // the first element corresponds to the world group and must be equal to zero
+  std::vector<int> host_group_local_id_;
+  // local group of hosts (i.e. group of MPI processes)
+  // two-dimensional array, indexes: [group_local_id][i_host]
+  // The first element corresponds to the world group and should contain all hosts
+  // however maybe in this case it is not necessary to explicitly store their indexes
+  // n_hosts[group_local_id] = host_group_[group_local_id].size();
+  std::vector<std::vector< int >> host_group_;
+
+  // Indexes of source nodes of each host that communicate spikes to a specific host group
+  // three-dimensional array, indexes: [group_local_id][i_host][i_node]
+  // besides the index group_local_id, the content should be the same across all hosts of the group
+  std::vector<std::vector< std::unordered_set< inode_t > > > host_group_source_node_;
+
+
+
+  
   //////////////////////////////////////////////////
   // class ConnectionTemplate methods
   //////////////////////////////////////////////////
@@ -867,11 +901,12 @@ public:
     int target_host,
     inode_t target,
     inode_t n_target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec )
   {
     return _RemoteConnect< inode_t, inode_t >(
-      source_host, source, n_source, target_host, target, n_target, conn_spec, syn_spec );
+      source_host, source, n_source, target_host, target, n_target, i_host_group, conn_spec, syn_spec );
   }
 
   int
@@ -881,11 +916,12 @@ public:
     int target_host,
     inode_t target,
     inode_t n_target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec )
   {
     return _RemoteConnect< inode_t*, inode_t >(
-      source_host, source, n_source, target_host, target, n_target, conn_spec, syn_spec );
+      source_host, source, n_source, target_host, target, n_target, i_host_group, conn_spec, syn_spec );
   }
 
   int
@@ -895,11 +931,12 @@ public:
     int target_host,
     inode_t* target,
     inode_t n_target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec )
   {
     return _RemoteConnect< inode_t, inode_t* >(
-      source_host, source, n_source, target_host, target, n_target, conn_spec, syn_spec );
+      source_host, source, n_source, target_host, target, n_target, i_host_group, conn_spec, syn_spec );
   }
 
   int
@@ -909,11 +946,12 @@ public:
     int target_host,
     inode_t* target,
     inode_t n_target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec )
   {
     return _RemoteConnect< inode_t*, inode_t* >(
-      source_host, source, n_source, target_host, target, n_target, conn_spec, syn_spec );
+      source_host, source, n_source, target_host, target, n_target, i_host_group, conn_spec, syn_spec );
   }
 
   template < class T1, class T2 >
@@ -923,6 +961,7 @@ public:
     int target_host,
     T2 target,
     inode_t n_target,
+    int i_host_group,  
     ConnSpec& conn_spec,
     SynSpec& syn_spec );
 
@@ -1006,6 +1045,14 @@ public:
 
   // get algorithm for spike buffering and delivery
   int getSpikeBufferAlgo();
+
+  //////////////////////////////////////////////////
+  // class ConnectionTemplate host-group-related methods
+  //////////////////////////////////////////////////
+  // Method that creates a group of hosts for remote spike communication (i.e. a group of MPI processes)
+  // host_arr: array of host inexes, n_hosts: nomber of hosts in the group
+  int CreateHostGroup(int *host_arr, int n_hosts);
+
 };
 
 namespace poiss_conn
@@ -1407,6 +1454,17 @@ getNodeIndex( inode_t i_node_0, inode_t i_node_rel )
 
 __device__ __forceinline__ inode_t
 getNodeIndex( inode_t* i_node_0, inode_t i_node_rel )
+{
+  return *( i_node_0 + i_node_rel );
+}
+
+inline inode_t hGetNodeIndex( inode_t i_node_0, inode_t i_node_rel )
+{
+  return i_node_0 + i_node_rel;
+}
+
+inline inode_t
+hGetNodeIndex( inode_t* i_node_0, inode_t i_node_rel )
 {
   return *( i_node_0 + i_node_rel );
 }
@@ -2096,6 +2154,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::init()
 
   n_conn_ = 0;
 
+  first_connection_flag_ = true;
+  
   d_conn_storage_ = NULL;
 
   time_resolution_ = 0.1;
@@ -2642,6 +2702,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::_Connect( curandGenerator_t& gen,
   SynSpec& syn_spec,
   bool remote_source_flag )
 {
+  first_connection_flag_ = false;
   if ( d_conn_storage_ == NULL )
   {
     CUDAMALLOCCTRL( "&d_conn_storage_", &d_conn_storage_, conn_block_size_ * sizeof( uint ) );
@@ -3995,5 +4056,6 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::resetConnectionSpikeTimeDown()
 
   return 0;
 }
+
 
 #endif // CONNECT_H

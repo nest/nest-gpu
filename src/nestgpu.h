@@ -693,6 +693,7 @@ public:
     int i_target_host,
     inode_t i_target,
     inode_t n_target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec );
 
@@ -702,6 +703,7 @@ public:
     int i_target_host,
     inode_t* target,
     inode_t n_target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec );
 
@@ -711,6 +713,7 @@ public:
     int i_target_host,
     inode_t i_target,
     inode_t n_target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec );
 
@@ -720,6 +723,7 @@ public:
     int i_target_host,
     inode_t* target,
     inode_t n_target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec );
 
@@ -727,6 +731,7 @@ public:
     NodeSeq source,
     int i_target_host,
     NodeSeq target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec );
 
@@ -734,6 +739,7 @@ public:
     NodeSeq source,
     int i_target_host,
     std::vector< inode_t > target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec );
 
@@ -741,6 +747,7 @@ public:
     std::vector< inode_t > source,
     int i_target_host,
     NodeSeq target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec );
 
@@ -748,6 +755,7 @@ public:
     std::vector< inode_t > source,
     int i_target_host,
     std::vector< inode_t > target,
+    int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec );
 
