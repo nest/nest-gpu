@@ -104,38 +104,60 @@ int RemoteConnect(int source_host, T source, int n_source, int i_host_group)
 // in the target
 int Calibrate()
 {
-  // loop on source host indexes
-  for (int ish=0; ish<n_hosts_; ish++) {
-    if (ish==this_host_) {
-      continue;
-    }
-    // loop on remote-source-node-to-local-image-node map blocks
-    for (int ib=0; ib<n_map_blocks; ib++) {
-      if (ib<n_map_blocks-1) {
-	n_elem = map_block_size;
-      }
-      else {
-	n_elem = map_size%map_block_size;
-      }
-      /////////// !!!!!!!!!!!! non ho definito ig !!!!!!!!!!!!!!!!!!!!!!
-      CudaMemCpy(&h_remote_source_node_[ig][ish][ib*map_block_size],
-		 remote_source_node_[ig*n_hosts_ + ish][i_block], n_elem);
-      CudaMemCpy(&h_local_node_index_[ig][ish][ib*map_block_size],
-		 local_node_index_[ig*n_hosts_ + ish][i_block], n_elem);
-    }
-    for (int i=0; i<map_size; i++) {
-      i_node = h_remote_source_node_[ig][ish].size();
-      if (pos=find(i_node, host_group_source_node_vect_
-		   [group_local_id][source_host]>0)) {
-	host_group_local_node_index_vect_[pos] =
-	  h_local_node_index_[ig][ish][i];
-      }
-    }
-  }
+  uint nhg = host_group_.size(); // number of local host groups
+  for (uint group_local_id=0; group_local_id<nhg; group_local_id++) {
+    host_group_local_source_node_map_[group_local_id].resize(n_local_nodes);
+    uint nh = host_group_[group_local_id].size(); // number of hosts in the group
+    for ( uint gi_host = 0; gi_host < nh; gi_host++ ) {// loop on hosts
+      uint n_src = host_group_source_node_[group_local_id][gi_host].size();
+      host_group_source_node_vect_[group_local_id][gi_host].resize(n_src);
+      std::copy(host_group_source_node_[group_local_id][gi_host].begin(), host_group_source_node_[group_local_id][gi_host].end(),
+		host_group_source_node_vect_[group_local_id][gi_host].begin());
+      int src_host = host_group_[group_local_id][gi_host];
+      if ( src_host != this_host_ ) { // skip self host
+	host_group_local_node_index_[group_local_id][gi_host].resize(n_src);
+	// get number of elements in the map
+	uint n_node_map;
+	gpuErrchk(
+		  cudaMemcpy( &n_node_map, &d_n_remote_source_node_map_[group_local_id][ gi_host ], sizeof( uint ), cudaMemcpyDeviceToHost ) );
 
-  // only in the source
-  for (int i=0; i<n; i++) {
-    i_source = host_group_source_node_vect_[group_local_id][source_host][i];
-    my_map[i_source] = i;
+	if (n_node_map > 0) {
+	  hc_remote_source_node_map_[group_local_id][gi_host].resize(n_node_map);
+	  hc_image_node_map_[group_local_id][gi_host].resize(n_node_map);
+	  // loop on remote-source-node-to-local-image-node map blocks
+	  uint n_map_blocks =  h_remote_source_node_map_[group_local_id][gi_host].size();
+	  for (int ib=0; ib<n_map_blocks; ib++) {
+	    if (ib<n_map_blocks-1) {
+	      n_elem = node_map_block_size_;
+	    }
+	    else {
+	      n_elem = (n_node_map - 1) % node_map_block_size_ + 1;
+	    }
+	    CudaMemCpy(&hc_remote_source_node_map_[group_local_id][gi_host][ib*node_map_block_size_],
+		       h_remote_source_node_map_[group_local_id][gi_host][ib], n_elem);
+	    CudaMemCpy(&hc_image_node_map_[group_local_id][gi_host][ib*node_map_block_size_],
+		       hc_image_node_map_[group_local_id][gi_host][ib], n_elem);
+	  }
+       
+	  for (int i=0; i<n_node_map; i++) {
+	    src_node = hc_remote_source_node_map_[group_local_id][gi_host][i];
+	    auto it = std::find(host_group_source_node_vect_[group_local_id][gi_host].begin(),
+				host_group_source_node_vect_[group_local_id][gi_host].end(), src_node);
+	    if (it == host_group_source_node_vect_[group_local_id][gi_host].end()) {
+	      throw ngpu_exception( "source node not found in host map" );
+	    }
+	    inode_t pos = it - host_group_source_node_vect_[group_local_id][gi_host].begin();
+	    host_group_local_node_index_[pos] = hc_image_node_map_[group_local_id][gi_host][i];
+	  }
+	}
+      }
+      else { // only in the source, i.e. if src_host == this_host_       
+	for (uint i=0; i<n_src; i++) {
+	  inode_t i_source = host_group_source_node_vect_[group_local_id][source_host][i];
+	  host_group_local_source_node_map_[group_local_id][i_source] = i;
+	}
+      }
+    }
   }
+  
 }

@@ -116,6 +116,15 @@ public:
   // get array with remote target hosts map index
   virtual uint** getDevNodeTargetHostIMap() = 0;
 
+  // get remote target host groups of all nodes
+  virtual std::vector< std::unordered_set < int > > &getNodeTargetHostGroup() = 0;
+  
+  // get map of local source nodes positions in host group node map
+  virtual std::vector< std::vector< uint > > &getHostGroupLocalSourceNodeMap() = 0;
+
+  // get local host groups
+  virtual std::vector< std::vector< int > > &getHostGroup() = 0;
+  
   // method to organize connections after creation and before using them in simulation
   virtual int organizeConnections( inode_t n_node ) = 0;
 
@@ -304,9 +313,8 @@ public:
     ConnSpec& conn_spec,
     SynSpec& syn_spec ) = 0;
 
-  // add an offset to the remote source node indexes in the spike buffer maps
-  // after the creation of the spike buffers used to represent such nodes
-  virtual int addOffsetToSpikeBufferMap( inode_t n_nodes ) = 0;
+  // add an offset to the remote source node indexes in the image node maps
+  virtual int addOffsetToImageNodeMap( inode_t n_nodes ) = 0;
 
   virtual int initInputSpikeBuffer( inode_t n_local_nodes, inode_t n_nodes ) = 0;
 
@@ -423,27 +431,39 @@ class ConnectionTemplate : public Connection
 
   int n_image_nodes_;
 
-  // The arrays that map remote source nodes to local spike buffers
+  // The arrays that map remote source nodes to local image nodes
   // are organized in blocks having block size:
   uint node_map_block_size_; // = 100000;
 
-  // number of elements in the map for each source host
-  // n_remote_source_node_map[i_source_host]
-  // with i_source_host = 0, ..., n_hosts-1 excluding this host itself
-  std::vector< uint > h_n_remote_source_node_map_;
-  uint* d_n_remote_source_node_map_;
+  // number of elements in the map for each host group and for each source host in the group
+  // n_remote_source_node_map[group_local_id][i_host]
+  // with i_host = 0, ...,  host_group_[group_local_id].size()-1 excluding this host itself
+  std::vector< std::vector< uint > > h_n_remote_source_node_map_;
+  std::vector< uint* > d_n_remote_source_node_map_;
 
-  // remote_source_node_map_[i_source_host][i_block][i]
-  std::vector< std::vector< uint* > > h_remote_source_node_map_;
+  // remote_source_node_map_[group_local_id][i_host][i_block][i]
+  std::vector< std::vector< std::vector< uint* > > > h_remote_source_node_map_;
 
-  // local_spike_buffer_map[i_source_host][i_block][i]
-  std::vector< std::vector< uint* > > h_local_spike_buffer_map_;
-  uint*** d_local_spike_buffer_map_;
+  // image_node_map[group_local_id][i_host][i_block][i]
+  std::vector< std::vector< std::vector< uint* > > > h_image_node_map_;
+  uint**** d_image_node_map_;
 
-  // hd_local_spike_buffer_map_[i_source_host] vector of pointers to gpu memory
-  std::vector< uint** > hd_local_spike_buffer_map_;
+  // host copy of remote_source_node_map [group_local_id][i_host][i]
+  std::vector< std::vector< std::vector< uint > > > hc_remote_source_node_map_;
 
-  // Arrays that map local source nodes to remote spike buffers
+  // host copy of image_node_map [group_local_id][i_host][i]
+  std::vector< std::vector< std::vector< uint > > > hc_image_node_map_;
+  
+  // hd_image_node_map_[group_local_id][i_host] vector of vectors of pointers-to-pointers to gpu memory
+  std::vector< std::vector< uint** > > hd_image_node_map_;
+
+  // hdd_image_node_map_[group_local_id] vector of pointers of pointers-to-pointers to gpu memory
+  std::vector< uint*** > hdd_image_node_map_;
+
+  // map positions of local source nodes in host group node map
+  std::vector< std::vector< uint > > host_group_local_source_node_map_;
+  
+  // Arrays that map local source nodes to remote image nodes
   // number of elements in the map for each target host
   // n_local_source_node_map[i_target_host]
   // with i_target_host = 0, ..., n_hosts-1 excluding this host itself
@@ -597,10 +617,13 @@ class ConnectionTemplate : public Connection
   // three-dimensional array, indexes: [group_local_id][i_host][i_node]
   // besides the index group_local_id, the content should be the same across all hosts of the group
   std::vector<std::vector< std::unordered_set< inode_t > > > host_group_source_node_;
+  // same as above, but ordered
+  std::vector<std::vector< std::vector< inode_t > > > host_group_source_node_vect_;
+  // map of host group source nodes to local image nodes
+  std::vector<std::vector< std::vector< inode_t > > > host_group_local_node_index_;
 
-
-
-  
+  // local ids of the host groups to which each node should send spikes
+  std::vector< std::unordered_set< int > > node_target_host_group_; // [n_local_nodes ][num. of target host groups ]
   //////////////////////////////////////////////////
   // class ConnectionTemplate methods
   //////////////////////////////////////////////////
@@ -715,6 +738,21 @@ public:
     return d_node_target_host_i_map_;
   }
 
+  std::vector< std::unordered_set < int > > &getNodeTargetHostGroup()
+  {
+    return node_target_host_group_;
+  }
+  
+  std::vector< std::vector< uint > > &getHostGroupLocalSourceNodeMap()
+  {
+    return host_group_local_source_node_map_;
+  }
+
+  std::vector< std::vector< int > > &getHostGroup()
+  {
+    return host_group_;
+  }
+  
   int allocateNewBlocks( int new_n_block );
 
   int freeConnectionKey();
@@ -974,6 +1012,7 @@ public:
     inode_t n_source,
     T2 target,
     inode_t n_target,
+    int group_local_id,
     ConnSpec& conn_spec,
     SynSpec& syn_spec );
 
@@ -987,7 +1026,7 @@ public:
     ConnSpec& conn_spec,
     SynSpec& syn_spec );
 
-  int addOffsetToSpikeBufferMap( inode_t n_nodes );
+  int addOffsetToImageNodeMap( inode_t n_nodes );
 
   //////////////////////////////////////////////////
   // class ConnectionTemplate reverse-connection-related methods
@@ -2192,11 +2231,11 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::init()
   // number of elements in the map for each source host
   // n_remote_source_node_map[i_source_host]
   // with i_source_host = 0, ..., n_hosts-1 excluding this host itself
-  d_n_remote_source_node_map_ = NULL;
+  //d_n_remote_source_node_map_ = NULL;
 
-  d_local_spike_buffer_map_ = NULL;
+  d_image_node_map_ = NULL;
 
-  // Arrays that map local source nodes to remote spike buffers
+  // Arrays that map local source nodes to remote image nodes
   // number of elements in the map for each target host
   // n_local_source_node_map[i_target_host]
   // with i_target_host = 0, ..., n_hosts-1 excluding this host itself
@@ -3696,6 +3735,27 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setNHosts( int n_hosts )
   freeConnRandomGenerator();
   n_hosts_ = n_hosts;
   initConnRandomGenerator();
+  
+  if (n_hosts > 1) {
+    // sequence of all hosts indexes
+    std::vector< int > seq;
+    for (int i=0; i < n_hosts; i++) {
+      seq.push_back(i);
+    }
+    // The first two host groups correspond to poit-to-point communication and world group
+    // Both include all hosts
+    if ( host_group_.size() < 2 ) {
+      host_group_.resize(2, seq);
+    }
+    else {
+      host_group_[0] = seq; // point-to-point communication
+      host_group_[1] = seq; // world group
+    }
+    if ( host_group_local_id_.size() < 1 ) {
+      host_group_local_id_.resize(1);
+    }
+    host_group_local_id_[0] = 1; // world group
+  }
 
   return 0;
 }

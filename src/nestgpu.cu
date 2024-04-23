@@ -134,7 +134,7 @@ NESTGPU::setNHosts( int n_hosts )
   n_remote_nodes_.assign( n_hosts_, 0 );
   external_spike_flag_ = ( n_hosts > 1 ) ? true : false;
   gpuErrchk( cudaMemcpyToSymbolAsync( ExternalSpikeFlag, &external_spike_flag_, sizeof( bool ) ) );
-
+      
   return 0;
 }
 

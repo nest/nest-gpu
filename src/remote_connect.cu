@@ -8,12 +8,12 @@
 
 // INITIALIZATION
 //
-// Define two arrays that map remote source nodes to local spike buffers
+// Define two arrays that map remote source nodes to local image nodes
 // There is one element for each remote host,
 // so the array size is n_hosts
 // Each of the two arrays contain n_remote_source_node_map elements
 // that represent a map, with n_remote_source_node_map pairs
-// (remote node index, local spike buffer index)
+// (remote node index, local image node index)
 // where n_remote_source_node_map is the number of nodes in the source host
 // that have outgoing connections to local nodes.
 // All elements are initially empty:
@@ -23,18 +23,18 @@
 
 __constant__ uint node_map_block_size; // = 100000;
 
-// number of elements in the map for each source host
-// n_remote_source_node_map[i_source_host]
-// with i_source_host = 0, ..., n_hosts-1 excluding this host itself
-__device__ uint* n_remote_source_node_map; // [n_hosts];
+// number of elements in the map for each host group and for each source host in the group
+// n_remote_source_node_map[group_local_id][i_host]
+// with i_host = 0, ..., host_group_[group_local_id].size()-1 excluding this host itself
+__device__ uint** n_remote_source_node_map; 
 
-// remote_source_node_map[i_source_host][i_block][i]
-__device__ uint*** remote_source_node_map;
+// remote_source_node_map[group_local_id][i_host][i_block][i]
+__device__ uint**** remote_source_node_map;
 
-// local_spike_buffer_map[i_source_host][i_block][i]
-__device__ uint*** local_spike_buffer_map;
+// image_node_map[group_local_id][i_host][i_block][i]
+__device__ uint**** local_image_node_map;
 
-// Define two arrays that map local source nodes to remote spike buffers.
+// Define two arrays that map local source nodes to remote image nodes.
 // The structure is the same as for remote source nodes
 
 // number of elements in the map for each target host
@@ -238,8 +238,8 @@ searchNodeIndexNotInMapKernel( uint** node_map,
 // to local nodes from n_nodes to n_nodes + n_node_to_map
 __global__ void
 insertNodesInMapKernel( uint** node_map,
-  uint** spike_buffer_map,
-  uint spike_buffer_map_i0,
+  uint** image_node_map,
+  uint image_node_map_i0,
   uint old_n_node_map,
   uint* sorted_node_index,
   bool* node_to_map,
@@ -259,14 +259,15 @@ insertNodesInMapKernel( uint** node_map,
   uint i_block = i_node_map / node_map_block_size;
   uint i = i_node_map % node_map_block_size;
   node_map[ i_block ][ i ] = sorted_node_index[ i_node ];
-  if ( spike_buffer_map != nullptr )
+  if ( image_node_map != nullptr )
   {
-    spike_buffer_map[ i_block ][ i ] = spike_buffer_map_i0 + pos;
+    image_node_map[ i_block ][ i ] = image_node_map_i0 + pos;
   }
 }
 
+// This function is used only by point-by-point communication, not by host groups
 __global__ void
-MapIndexToSpikeBufferKernel( uint n_hosts, uint* host_offset, uint* node_index )
+MapIndexToImageNodeKernel( uint n_hosts, uint* host_offset, uint* node_index )
 {
   const uint i_host = blockIdx.x;
   if ( i_host < n_hosts )
@@ -278,14 +279,15 @@ MapIndexToSpikeBufferKernel( uint n_hosts, uint* host_offset, uint* node_index )
       const uint i_node_map = node_index[ pos + i_elem ];
       const uint i_block = i_node_map / node_map_block_size;
       const uint i = i_node_map % node_map_block_size;
-      const uint i_spike_buffer = local_spike_buffer_map[ i_host ][ i_block ][ i ];
-      node_index[ pos + i_elem ] = i_spike_buffer;
+      const uint i_image_node = local_image_node_map[ 0 ][ i_host ][ i_block ][ i ];
+      node_index[ pos + i_elem ] = i_image_node;
     }
   }
 }
 
+
 __global__ void
-addOffsetToSpikeBufferMapKernel( uint i_host, uint n_node_map, uint i_image_node_0 )
+addOffsetToImageNodeMapKernel( uint group_local_id, uint gi_host, uint n_node_map, uint i_image_node_0 )
 {
   uint i_node_map = threadIdx.x + blockIdx.x * blockDim.x;
   if ( i_node_map >= n_node_map )
@@ -295,5 +297,5 @@ addOffsetToSpikeBufferMapKernel( uint i_host, uint n_node_map, uint i_image_node
 
   const uint i_block = i_node_map / node_map_block_size;
   const uint i = i_node_map % node_map_block_size;
-  local_spike_buffer_map[ i_host ][ i_block ][ i ] += i_image_node_0;
+  local_image_node_map[ group_local_id ][ gi_host ][ i_block ][ i ] += i_image_node_0;
 }

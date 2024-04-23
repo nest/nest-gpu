@@ -92,7 +92,9 @@ __global__ void countExternalSpikesPerTargetHost();
 
 __global__ void organizeExternalSpikesPerTargetHost();
 
-__global__ void DeviceExternalSpikeInit( uint n_hosts,
+// initialize external spike array pointers in the GPU
+__global__ void
+DeviceExternalSpikeInit( uint n_hosts,
   uint max_spike_per_host,
   uint* ext_spike_num,
   uint* ext_spike_source_node,
@@ -103,9 +105,20 @@ __global__ void DeviceExternalSpikeInit( uint n_hosts,
   float* ext_target_spike_mul,
   uint* n_ext_node_target_host,
   uint** ext_node_target_host_id,
-  uint** ext_node_id );
+  uint** ext_node_id,
+  uint* n_ext_node_target_host_group,
+  uint** ext_node_target_host_group_id,
+  uint** ext_host_group_node_id,
+  uint* ext_host_group_spike_num,
+  uint* ext_host_group_spike_idx0,
+  uint* ext_host_group_spike_node_id,
+  float* ext_host_group_spike_mul
+ );
 
-__global__ void DeviceExternalSpikeInit( uint n_hosts,
+// initialize external spike array pointers in the GPU
+// (version without spike multiplicity)
+__global__ void
+DeviceExternalSpikeInit( uint n_hosts,
   uint max_spike_per_host,
   uint* ext_spike_num,
   uint* ext_spike_source_node,
@@ -114,6 +127,14 @@ __global__ void DeviceExternalSpikeInit( uint n_hosts,
   uint* ext_target_spike_node_id,
   uint* n_ext_node_target_host,
   uint** ext_node_target_host_id,
-  uint** ext_node_id );
+  uint** ext_node_id,
+  uint* n_ext_node_target_host_group,
+  uint** ext_node_target_host_group_id,
+  uint** ext_host_group_node_id,
+  uint* ext_host_group_spike_num,
+  uint* ext_host_group_spike_idx0,
+  uint* ext_host_group_spike_node_id
+ );
+
 
 #endif

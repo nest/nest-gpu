@@ -7,23 +7,23 @@
 #include "connect.h"
 #include "copass_sort.h"
 #include "cuda_error.h"
-// Arrays that map remote source nodes to local spike buffers
+// Arrays that map remote source nodes to local image nodes
 
 // The map is organized in blocks having block size:
 extern __constant__ uint node_map_block_size; // = 100000;
 
-// number of elements in the map for each source host
-// n_remote_source_node_map[i_source_host]
-// with i_source_host = 0, ..., n_hosts-1 excluding this host itself
-extern __device__ uint* n_remote_source_node_map; // [n_hosts];
+// number of elements in the map for each host group and for each source host in the group
+// n_remote_source_node_map[group_local_id][i_host]
+// with i_host = 0, ..., host_group_[group_local_id].size()-1 excluding this host itself
+extern __device__ uint** n_remote_source_node_map;
 
-// remote_source_node_map[i_source_host][i_block][i]
-extern __device__ uint*** remote_source_node_map;
+// remote_source_node_map[group_local_id][i_host][i_block][i]
+extern __device__ uint**** remote_source_node_map;
 
-// local_spike_buffer_map[i_source_host][i_block][i]
-extern __device__ uint*** local_spike_buffer_map;
+// image_node_map[group_local_id][i_host][i_block][i]
+extern __device__ uint**** local_image_node_map;
 
-// Arrays that map local source nodes to remote spike buffers
+// Arrays that map local source nodes to remote image nodes
 
 // number of elements in the map for each target host
 // n_local_source_node_map[i_target_host]
@@ -100,7 +100,7 @@ setLocalNodeIndexKernel( T source,
   uint n_source,
   uint* source_node_flag,
   uint** node_map,
-  uint** spike_buffer_map,
+  uint** image_node_map,
   uint n_node_map,
   uint* local_node_index )
 {
@@ -122,8 +122,8 @@ setLocalNodeIndexKernel( T source,
       printf( "Error in setLocalNodeIndexKernel: node index not mapped\n" );
       return;
     }
-    uint i_spike_buffer = spike_buffer_map[ i_block ][ i_in_block ];
-    local_node_index[ i_source ] = i_spike_buffer;
+    uint i_image_node = image_node_map[ i_block ][ i_in_block ];
+    local_node_index[ i_source ] = i_image_node;
   }
 }
 
@@ -170,8 +170,8 @@ __global__ void searchNodeIndexNotInMapKernel( uint** node_map,
 // In the target host unmapped remote source nodes must be mapped
 // to local nodes from n_nodes to n_nodes + n_node_to_map
 __global__ void insertNodesInMapKernel( uint** node_map,
-  uint** spike_buffer_map,
-  uint spike_buffer_map_i0,
+  uint** image_node_map,
+  uint image_node_map_i0,
   uint old_n_node_map,
   uint* sorted_node_index,
   bool* node_to_map,
@@ -207,27 +207,29 @@ addOffsetToExternalNodeIdsKernel( int64_t n_conn,
   }
 }
 
-__global__ void MapIndexToSpikeBufferKernel( uint n_hosts, uint* host_offset, uint* node_index );
+__global__ void MapIndexToImageNodeKernel( uint n_hosts, uint* host_offset, uint* node_index );
+
+
 
 // Allocate GPU memory for new remote-source-node-map blocks
 template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::allocRemoteSourceNodeMapBlocks(
   std::vector< uint* >& i_remote_src_node_map,
-  std::vector< uint* >& i_local_spike_buf_map,
+  std::vector< uint* >& i_local_img_node_map,
   uint new_n_block )
 {
   // allocate new blocks if needed
   for ( uint ib = i_remote_src_node_map.size(); ib < new_n_block; ib++ )
   {
     uint* d_remote_src_node_blk_pt;
-    uint* d_local_spike_buf_blk_pt;
+    uint* d_local_img_node_blk_pt;
     // allocate GPU memory for new blocks
     CUDAMALLOCCTRL( "&d_remote_src_node_blk_pt", &d_remote_src_node_blk_pt, node_map_block_size_ * sizeof( uint ) );
-    CUDAMALLOCCTRL( "&d_local_spike_buf_blk_pt", &d_local_spike_buf_blk_pt, node_map_block_size_ * sizeof( uint ) );
+    CUDAMALLOCCTRL( "&d_local_img_node_blk_pt", &d_local_img_node_blk_pt, node_map_block_size_ * sizeof( uint ) );
 
     i_remote_src_node_map.push_back( d_remote_src_node_blk_pt );
-    i_local_spike_buf_map.push_back( d_local_spike_buf_blk_pt );
+    i_local_img_node_map.push_back( d_local_img_node_blk_pt );
   }
 
   return 0;
@@ -325,9 +327,12 @@ __global__ void fillTargetHostArrayFromMapKernel( uint** node_map,
   uint n_nodes,
   uint i_target_host );
 
-__global__ void addOffsetToSpikeBufferMapKernel( uint i_host, uint n_node_map, uint i_image_node_0 );
+__global__ void addOffsetToImageNodeMapKernel( uint group_local_id, uint gi_host, uint n_node_map, uint i_image_node_0 );
 
-// Initialize the maps for n_hosts hosts
+
+
+
+// Initialize the maps
 template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapInit()
@@ -336,23 +341,50 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapInit()
 
   cudaMemcpyToSymbol( node_map_block_size, &node_map_block_size_, sizeof( uint ) );
 
-  // allocate and init to 0 n. of elements in the map for each source host
-  CUDAMALLOCCTRL( "&d_n_remote_source_node_map_", &d_n_remote_source_node_map_, n_hosts_ * sizeof( uint ) );
-  gpuErrchk( cudaMemset( d_n_remote_source_node_map_, 0, n_hosts_ * sizeof( uint ) ) );
+  // number of host groups
+  uint nhg = host_group_.size();
+  // first evaluate how many elements must be allocated
+  uint elem_to_alloc = 0;
+  for (uint group_local_id=0; group_local_id<nhg; group_local_id++) {
+    uint nh = host_group_[group_local_id].size(); // number of hosts in the group
+    elem_to_alloc += nh;
+  }
+  uint *d_n_node_map;
+  // allocate the whole array and initialize each element to 0
+  CUDAMALLOCCTRL( "&d_n_node_map", &d_n_node_map, elem_to_alloc * sizeof( uint ) );
+  gpuErrchk( cudaMemset( d_n_node_map, 0, elem_to_alloc * sizeof( uint ) ) );
+  // now assign the proper address to each element of the array
+  d_n_remote_source_node_map_.push_back(d_n_node_map);
+  for (uint group_local_id=1; group_local_id<nhg; group_local_id++) {
+    uint nh = host_group_[group_local_id - 1].size(); // number of hosts in the group
+    d_n_remote_source_node_map_.push_back(d_n_remote_source_node_map_[group_local_id - 1] + nh);
+  }
 
-  // allocate and init to 0 n. of elements in the map for each source host
+  // allocate and init to 0 n. of elements in the map for each source host  
   CUDAMALLOCCTRL( "&d_n_local_source_node_map_", &d_n_local_source_node_map_, n_hosts_ * sizeof( uint ) );
   gpuErrchk( cudaMemset( d_n_local_source_node_map_, 0, n_hosts_ * sizeof( uint ) ) );
 
   // initialize maps
+  for (uint group_local_id=0; group_local_id<nhg; group_local_id++) {
+    uint nh = host_group_[group_local_id].size(); // number of hosts in the group
+    std::vector< std::vector< uint* > > rsn_map;
+    std::vector< std::vector< uint* > > lin_map;
+    for ( uint ih = 0; ih < nh; ih++ ) {
+      std::vector< uint* > rsn_ih_map;
+      std::vector< uint* > lin_ih_map;
+      rsn_map.push_back( rsn_ih_map );
+      lin_map.push_back( lin_ih_map );
+    }
+    h_remote_source_node_map_.push_back( rsn_map );
+    h_image_node_map_.push_back( lin_map );
+    
+    hc_remote_source_node_map_.push_back( std::vector< std::vector< uint > > (nh, std::vector< uint >() ) );
+    hc_image_node_map_.push_back( std::vector< std::vector< uint > > (nh, std::vector< uint >() ) );
+
+  }
+
   for ( int i_host = 0; i_host < n_hosts_; i_host++ )
   {
-    std::vector< uint* > rsn_map;
-    h_remote_source_node_map_.push_back( rsn_map );
-
-    std::vector< uint* > lsb_map;
-    h_local_spike_buffer_map_.push_back( lsb_map );
-
     std::vector< uint* > lsn_map;
     h_local_source_node_map_.push_back( lsn_map );
   }
@@ -362,7 +394,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapInit()
   // RemoteConnectionMapInitKernel // <<< , >>>
   //  (d_n_remote_source_node_map_,
   //   d_remote_source_node_map,
-  //   d_local_spike_buffer_map,
+  //   d_image_node_map,
   //   d_n_local_source_node_map_,
   //   d_local_source_node_map);
 
@@ -430,15 +462,23 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
   // h_n_local_source_node_map[target_host]
   // set its size and initialize to 0
   h_n_local_source_node_map_.resize( n_hosts_, 0 );
-  // vector of pointers to local spike buffer maps in device memory
-  // per source host hd_local_spike_buffer_map[source_host]
-  // type std::vector<int*>
-  // set its size and initialize to NULL
-  hd_local_spike_buffer_map_.resize( n_hosts_, NULL );
-  // number of elements in each remote-source-node->local-spike-buffer map
-  // h_n_remote_source_node_map[source_host]
-  // set its size and initialize to 0
-  h_n_remote_source_node_map_.resize( n_hosts_, 0 );
+
+  uint nhg = host_group_.size(); // number of local host groups
+  for (uint group_local_id=0; group_local_id<nhg; group_local_id++) {
+    uint nh = host_group_[group_local_id].size(); // number of hosts in the group
+    // vector of vectors of pointers to local image node maps in device memory
+    // per local host group and per source host hd_image_node_map[group_local_id][i_host]
+    // type std::vector< std::vector < uint** > > 
+    // set its size and initialize to NULL
+    std::vector < uint** > inm( nh, NULL );
+    hd_image_node_map_.push_back(inm);
+    
+    // number of elements in each remote-source-node->local-image-node map
+    // h_n_remote_source_node_map[group_local_id][i_host]
+    // set its size and initialize to 0
+    std::vector < uint > n_nm( nh, 0 );
+    h_n_remote_source_node_map_.push_back(n_nm);
+  }
   // loop on target hosts, skip self host
   for ( int tg_host = 0; tg_host < n_hosts_; tg_host++ )
   {
@@ -471,40 +511,53 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
     d_local_source_node_map_, &hd_local_source_node_map_[ 0 ], n_hosts_ * sizeof( uint** ), cudaMemcpyHostToDevice ) );
   gpuErrchk( cudaMemcpyToSymbol( local_source_node_map, &d_local_source_node_map_, sizeof( uint*** ) ) );
 
-  // loop on source hosts, skip self host
-  for ( int src_host = 0; src_host < n_hosts_; src_host++ )
-  {
-    if ( src_host != this_host_ )
-    {
-      // get number of elements in each map from device memory
-      uint n_node_map;
-      gpuErrchk(
-        cudaMemcpy( &n_node_map, &d_n_remote_source_node_map_[ src_host ], sizeof( uint ), cudaMemcpyDeviceToHost ) );
-      // put it in h_n_remote_source_node_map[src_host]
-      h_n_remote_source_node_map_[ src_host ] = n_node_map;
-      // Allocate array of local spike buffer map blocks
-      // and copy their address from host to device
-      uint n_blocks = h_local_spike_buffer_map_[ src_host ].size();
-      hd_local_spike_buffer_map_[ src_host ] = NULL;
-      if ( n_blocks > 0 )
-      {
-        CUDAMALLOCCTRL( "&hd_local_spike_buffer_map_[src_host]",
-          &hd_local_spike_buffer_map_[ src_host ],
-          n_blocks * sizeof( uint* ) );
-        gpuErrchk( cudaMemcpy( hd_local_spike_buffer_map_[ src_host ],
-          &h_local_spike_buffer_map_[ src_host ][ 0 ],
-          n_blocks * sizeof( uint* ),
-          cudaMemcpyHostToDevice ) );
+
+  hdd_image_node_map_.resize(nhg, NULL);
+  
+  for (uint group_local_id=0; group_local_id<nhg; group_local_id++) { // loop on local host groups
+    uint nh = host_group_[group_local_id].size(); // number of hosts in the group
+    for ( uint gi_host = 0; gi_host < nh; gi_host++ ) {// loop on hosts
+      int src_host = host_group_[group_local_id][gi_host];      
+      if ( src_host != this_host_ ) { // skip self host
+	// get number of elements in each map from device memory
+	uint n_node_map;
+	gpuErrchk(cudaMemcpy( &n_node_map, &d_n_remote_source_node_map_[group_local_id][gi_host],
+			      sizeof( uint ), cudaMemcpyDeviceToHost ) );
+	// put it in h_n_remote_source_node_map[src_host]
+	h_n_remote_source_node_map_[group_local_id][gi_host] = n_node_map;
+	// Allocate array of local image node map blocks
+	// and copy their address from host to device
+	uint n_blocks = h_image_node_map_[group_local_id][gi_host].size();
+	hd_image_node_map_[group_local_id][gi_host] = NULL;
+	if ( n_blocks > 0 ) {
+	  CUDAMALLOCCTRL( "&hd_image_node_map_[group_local_id][gi_host]",
+			  &hd_image_node_map_[group_local_id][gi_host],
+			  n_blocks * sizeof( uint* ) );
+	  gpuErrchk( cudaMemcpy( hd_image_node_map_[group_local_id][gi_host],
+				 &h_image_node_map_[group_local_id][gi_host][ 0 ],
+				 n_blocks * sizeof( uint* ),
+				 cudaMemcpyHostToDevice ) );
+	}
       }
     }
+
+    if ( nh > 0 ) {
+      CUDAMALLOCCTRL( "&hdd_image_node_map_[group_local_id]", &hdd_image_node_map_[group_local_id],
+		      nh * sizeof( uint** ) );
+      gpuErrchk( cudaMemcpy( hdd_image_node_map_[group_local_id],
+			     &hd_image_node_map_[group_local_id][ 0 ],
+			     nh * sizeof( uint** ),
+			     cudaMemcpyHostToDevice ) );
+    }
   }
-  // allocate d_local_spike_buffer_map and copy it from host to device
-  CUDAMALLOCCTRL( "&d_local_spike_buffer_map_", &d_local_spike_buffer_map_, n_hosts_ * sizeof( uint** ) );
-  gpuErrchk( cudaMemcpy( d_local_spike_buffer_map_,
-    &hd_local_spike_buffer_map_[ 0 ],
-    n_hosts_ * sizeof( uint** ),
+
+  // allocate d_image_node_map and copy it from host to device
+  CUDAMALLOCCTRL( "&d_image_node_map_", &d_image_node_map_, nhg * sizeof( uint*** ) );
+  gpuErrchk( cudaMemcpy( d_image_node_map_,
+    &hdd_image_node_map_[ 0 ],
+    nhg * sizeof( uint*** ),
     cudaMemcpyHostToDevice ) );
-  gpuErrchk( cudaMemcpyToSymbol( local_spike_buffer_map, &d_local_spike_buffer_map_, sizeof( uint*** ) ) );
+  gpuErrchk( cudaMemcpyToSymbol( local_image_node_map, &d_image_node_map_, sizeof( uint**** ) ) );
 
   // uint n_nodes = GetNLocalNodes(); // number of nodes
   //  n_target_hosts[i_node] is the number of remote target hosts
@@ -604,27 +657,86 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
     }
   }
 
-  addOffsetToSpikeBufferMap( n_nodes );
+  addOffsetToImageNodeMap( n_nodes );
 
+  for (uint group_local_id=0; group_local_id<nhg; group_local_id++) {
+    host_group_local_source_node_map_[group_local_id].resize(n_nodes);
+    uint nh = host_group_[group_local_id].size(); // number of hosts in the group
+    for ( uint gi_host = 0; gi_host < nh; gi_host++ ) {// loop on hosts
+      uint n_src = host_group_source_node_[group_local_id][gi_host].size();
+      host_group_source_node_vect_[group_local_id][gi_host].resize(n_src);
+      std::copy(host_group_source_node_[group_local_id][gi_host].begin(), host_group_source_node_[group_local_id][gi_host].end(),
+		host_group_source_node_vect_[group_local_id][gi_host].begin());
+      int src_host = host_group_[group_local_id][gi_host];
+      if ( src_host != this_host_ ) { // skip self host
+	host_group_local_node_index_[group_local_id][gi_host].resize(n_src);
+	// get number of elements in the map
+	uint n_node_map;
+	gpuErrchk(
+		  cudaMemcpy( &n_node_map, &d_n_remote_source_node_map_[group_local_id][ gi_host ], sizeof( uint ), cudaMemcpyDeviceToHost ) );
+
+	if (n_node_map > 0) {
+	  hc_remote_source_node_map_[group_local_id][gi_host].resize(n_node_map);
+	  hc_image_node_map_[group_local_id][gi_host].resize(n_node_map);
+	  // loop on remote-source-node-to-local-image-node map blocks
+	  uint n_map_blocks =  h_remote_source_node_map_[group_local_id][gi_host].size();
+	  for (uint ib=0; ib<n_map_blocks; ib++) {
+	    uint n_elem;
+	    if (ib<n_map_blocks-1) {
+	      n_elem = node_map_block_size_;
+	    }
+	    else {
+	      n_elem = (n_node_map - 1) % node_map_block_size_ + 1;
+	    }
+	    gpuErrchk(cudaMemcpy(&hc_remote_source_node_map_[group_local_id][gi_host][ib*node_map_block_size_],
+				 h_remote_source_node_map_[group_local_id][gi_host][ib], n_elem, cudaMemcpyDeviceToHost ));
+	    gpuErrchk(cudaMemcpy(&hc_image_node_map_[group_local_id][gi_host][ib*node_map_block_size_],
+				 h_image_node_map_[group_local_id][gi_host][ib], n_elem, cudaMemcpyDeviceToHost ));
+	  }
+       
+	  for (uint i=0; i<n_node_map; i++) {
+	    inode_t src_node = hc_remote_source_node_map_[group_local_id][gi_host][i];
+	    auto it = std::find(host_group_source_node_vect_[group_local_id][gi_host].begin(),
+				host_group_source_node_vect_[group_local_id][gi_host].end(), src_node);
+	    if (it == host_group_source_node_vect_[group_local_id][gi_host].end()) {
+	      throw ngpu_exception( "source node not found in host map" );
+	    }
+	    inode_t pos = it - host_group_source_node_vect_[group_local_id][gi_host].begin();
+	    host_group_local_node_index_[group_local_id][gi_host][pos] = hc_image_node_map_[group_local_id][gi_host][i];
+	  }
+	}
+      }
+      else { // only in the source, i.e. if src_host == this_host_       
+	for (uint i=0; i<n_src; i++) {
+	  inode_t i_source = host_group_source_node_vect_[group_local_id][gi_host][i];
+	  host_group_local_source_node_map_[group_local_id][i_source] = i;
+	  node_target_host_group_[i_source].insert(group_local_id);
+	}
+      }
+    }
+  }
+  
   return 0;
 }
 
 template < class ConnKeyT, class ConnStructT >
 int
-ConnectionTemplate< ConnKeyT, ConnStructT >::addOffsetToSpikeBufferMap( inode_t n_nodes )
+ConnectionTemplate< ConnKeyT, ConnStructT >::addOffsetToImageNodeMap( inode_t n_nodes )
 {
   uint i_image_node_0 = n_nodes;
 
-  for ( int i_host = 0; i_host < n_hosts_; i_host++ )
-  {
-    if ( i_host != this_host_ )
-    {
-      uint n_node_map = h_n_remote_source_node_map_[ i_host ];
-      if ( n_node_map > 0 )
-      {
-        addOffsetToSpikeBufferMapKernel<<< ( n_node_map + 1023 ) / 1024, 1024 >>>( i_host, n_node_map, i_image_node_0 );
-        gpuErrchk( cudaPeekAtLastError() );
-        gpuErrchk( cudaDeviceSynchronize() );
+  uint nhg = host_group_.size(); // number of local host groups
+  for (uint group_local_id=0; group_local_id<nhg; group_local_id++) {
+    uint nh = host_group_[group_local_id].size(); // number of hosts in the group
+    for ( uint gi_host = 0; gi_host < nh; gi_host++ ) {// loop on hosts
+      int src_host = host_group_[group_local_id][gi_host];      
+      if ( src_host != this_host_ ) { // skip self host
+	uint n_node_map = h_n_remote_source_node_map_[group_local_id][gi_host];
+	if ( n_node_map > 0 ) {
+	  addOffsetToImageNodeMapKernel<<< ( n_node_map + 1023 ) / 1024, 1024 >>>( group_local_id, gi_host, n_node_map, i_image_node_0 );
+	  gpuErrchk( cudaPeekAtLastError() );
+	  gpuErrchk( cudaDeviceSynchronize() );
+	}
       }
     }
   }
@@ -671,15 +783,25 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::_RemoteConnect( int source_host,
   // i_host_group = -1 for point-to-point MPI communication
   //              = 0 for the world group, which includes all hosts (i.e. all MPI processes)
   //              > 0 for all the other host groups
+  int group_local_id = 0;
   if (i_host_group>=0) { // not a point-to-point MPI communication
-    int group_local_id = host_group_local_id_[i_host_group];
-    if (group_local_id >= 0) { // this host is in group
-      // find the source host index in the host group
-      auto it = std::find(host_group_[group_local_id].begin(), host_group_[group_local_id].end(), source_host);
-      if (it == host_group_[group_local_id].end()) {
-	throw ngpu_exception( "source host not found in host group" );
+    int i_host;
+    if ( i_host_group == 0 ) { // world group
+      group_local_id = 1;
+      i_host = source_host;
+    }
+    else { // any host group other than poit-to-point and world group
+      group_local_id = host_group_local_id_[i_host_group];
+      if (group_local_id >= 0) { // this host is in group
+	// find the source host index in the host group
+	auto it = std::find(host_group_[group_local_id].begin(), host_group_[group_local_id].end(), source_host);
+	if (it == host_group_[group_local_id].end()) {
+	  throw ngpu_exception( "source host not found in host group" );
+	}
+	i_host = it - host_group_[group_local_id].begin();
       }
-      int i_host = it - host_group_[group_local_id].begin();
+    }
+    if (group_local_id >= 0) {
       for (inode_t i=0; i<n_source; i++) {
 	inode_t i_source = hGetNodeIndex(source, i);
 	host_group_source_node_[group_local_id][i_host].insert(i_source);
@@ -693,8 +815,11 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::_RemoteConnect( int source_host,
     return remoteConnectTarget< T1, T2 >( target_host, source, n_source, target, n_target, conn_spec, syn_spec );
   }
   // Check if target_host matches this_host
-  else if (this_host_ == target_host) {
-    return remoteConnectSource< T1, T2 >( source_host, source, n_source, target, n_target, conn_spec, syn_spec );
+  if (this_host_ == target_host) {
+    if (group_local_id < 0) {
+      throw ngpu_exception( "target host is not in host group" );
+    }
+    return remoteConnectSource< T1, T2 >( source_host, source, n_source, target, n_target, group_local_id, conn_spec, syn_spec );
   }
 
   return 0;
@@ -733,13 +858,14 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   inode_t n_source,
   T2 target,
   inode_t n_target,
+  int group_local_id,
   ConnSpec& conn_spec,
   SynSpec& syn_spec )
 {
   // n_nodes will be the first index for new mapping of remote source nodes
-  // to local spike buffers
-  // int spike_buffer_map_i0 = GetNNode();
-  uint spike_buffer_map_i0 = n_image_nodes_;
+  // to local image nodes
+  // int image_node_map_i0 = GetNNode();
+  uint image_node_map_i0 = n_image_nodes_;
   // syn_spec.port_ = syn_spec.port_ |
   //   (1 << (h_MaxPortSynNBits - max_syn_nbits_ - 1));
   syn_spec.syn_group_ = syn_spec.syn_group_ | ( 1 << max_syn_nbits_ );
@@ -858,11 +984,24 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   // and copy their address from host to device
   uint n_blocks = h_remote_source_node_map_[ source_host ].size();
   uint** d_node_map = NULL;
-  uint** d_spike_buffer_map = NULL;
+  uint** d_image_node_map = NULL;
+
+  int gi_host;
+  if ( group_local_id <= 1 ) { // point-to-point communication (0) and world group (1) include all hosts
+    gi_host = source_host;
+  }
+  else {
+    // find the source host index in the host group
+    auto it = std::find(host_group_[group_local_id].begin(), host_group_[group_local_id].end(), source_host);
+    if (it == host_group_[group_local_id].end()) {
+      throw ngpu_exception( "source host not found in host group" );
+    }
+    gi_host = it - host_group_[group_local_id].begin();
+  }
   // get current number of elements in the map
   uint n_node_map;
   gpuErrchk(
-    cudaMemcpy( &n_node_map, &d_n_remote_source_node_map_[ source_host ], sizeof( uint ), cudaMemcpyDeviceToHost ) );
+    cudaMemcpy( &n_node_map, &d_n_remote_source_node_map_[group_local_id][ gi_host ], sizeof( uint ), cudaMemcpyDeviceToHost ) );
 
   if ( n_blocks > 0 )
   {
@@ -877,7 +1016,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
     }
     CUDAMALLOCCTRL( "&d_node_map", &d_node_map, n_blocks * sizeof( uint* ) );
     gpuErrchk( cudaMemcpy( d_node_map,
-      &h_remote_source_node_map_[ source_host ][ 0 ],
+      &h_remote_source_node_map_[group_local_id][gi_host][ 0 ],
       n_blocks * sizeof( uint* ),
       cudaMemcpyHostToDevice ) );
   }
@@ -911,7 +1050,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   {
     // Allocate GPU memory for new remote-source-node-map blocks
     allocRemoteSourceNodeMapBlocks(
-      h_remote_source_node_map_[ source_host ], h_local_spike_buffer_map_[ source_host ], new_n_blocks );
+      h_remote_source_node_map_[group_local_id][gi_host], h_image_node_map_[group_local_id][gi_host], new_n_blocks );
     // free d_node_map
     if ( n_blocks > 0 )
     {
@@ -923,16 +1062,16 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
     // reallocate d_node_map and get it from host
     CUDAMALLOCCTRL( "&d_node_map", &d_node_map, n_blocks * sizeof( uint* ) );
     gpuErrchk( cudaMemcpy( d_node_map,
-      &h_remote_source_node_map_[ source_host ][ 0 ],
+      &h_remote_source_node_map_[group_local_id][gi_host][ 0 ],
       n_blocks * sizeof( uint* ),
       cudaMemcpyHostToDevice ) );
   }
   if ( n_blocks > 0 )
   {
-    // allocate d_spike_buffer_map and get it from host
-    CUDAMALLOCCTRL( "&d_spike_buffer_map", &d_spike_buffer_map, n_blocks * sizeof( uint* ) );
-    gpuErrchk( cudaMemcpy( d_spike_buffer_map,
-      &h_local_spike_buffer_map_[ source_host ][ 0 ],
+    // allocate d_image_node_map and get it from host
+    CUDAMALLOCCTRL( "&d_image_node_map", &d_image_node_map, n_blocks * sizeof( uint* ) );
+    gpuErrchk( cudaMemcpy( d_image_node_map,
+      &h_image_node_map_[group_local_id][gi_host][ 0 ],
       n_blocks * sizeof( uint* ),
       cudaMemcpyHostToDevice ) );
   }
@@ -950,10 +1089,10 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   // launch kernel that checks if nodes are already in map
   // if not insert them in the map
   // In the target host, put in the map the pair:
-  // (source_node_index, spike_buffer_map_i0 + i_node_to_map)
+  // (source_node_index, image_node_map_i0 + i_node_to_map)
   insertNodesInMapKernel<<< ( n_used_source_nodes + 1023 ) / 1024, 1024 >>>( d_node_map,
-    d_spike_buffer_map,
-    spike_buffer_map_i0,
+    d_image_node_map,
+    image_node_map_i0,
     n_node_map,
     d_sorted_source_node_index,
     d_node_to_map,
@@ -965,7 +1104,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   // update number of elements in remote source node map
   n_node_map += h_n_node_to_map;
   gpuErrchk(
-    cudaMemcpy( &d_n_remote_source_node_map_[ source_host ], &n_node_map, sizeof( uint ), cudaMemcpyHostToDevice ) );
+    cudaMemcpy( &d_n_remote_source_node_map_[group_local_id][gi_host], &n_node_map, sizeof( uint ), cudaMemcpyHostToDevice ) );
 
   // check for consistency between number of elements
   // and number of blocks in the map
@@ -977,7 +1116,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
     exit( -1 );
   }
 
-  // Sort the WHOLE key-pair map source_node_map, spike_buffer_map
+  // Sort the WHOLE key-pair map source_node_map, image_node_map
   // using block sort algorithm copass_sort
   // typical usage:
   // copass_sort::sort<uint, value_struct>(key_subarray, value_subarray, n,
@@ -985,8 +1124,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   // Determine temporary storage requirements for copass_sort
   int64_t storage_bytes = 0;
   void* d_storage = NULL;
-  copass_sort::sort< uint, uint >( &h_remote_source_node_map_[ source_host ][ 0 ],
-    &h_local_spike_buffer_map_[ source_host ][ 0 ],
+  copass_sort::sort< uint, uint >( &h_remote_source_node_map_[group_local_id][gi_host][ 0 ],
+    &h_image_node_map_[group_local_id][gi_host][ 0 ],
     n_node_map,
     node_map_block_size_,
     d_storage,
@@ -996,8 +1135,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   CUDAMALLOCCTRL( "&d_storage", &d_storage, storage_bytes );
 
   // Run sorting operation
-  copass_sort::sort< uint, uint >( &h_remote_source_node_map_[ source_host ][ 0 ],
-    &h_local_spike_buffer_map_[ source_host ][ 0 ],
+  copass_sort::sort< uint, uint >( &h_remote_source_node_map_[group_local_id][gi_host][ 0 ],
+    &h_image_node_map_[group_local_id][gi_host][ 0 ],
     n_node_map,
     node_map_block_size_,
     d_storage,
@@ -1007,7 +1146,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   // Launch kernel that searches source node indexes in the map
   // and set corresponding values of local_node_index
   setLocalNodeIndexKernel<<< ( n_source + 1023 ) / 1024, 1024 >>>(
-    source, n_source, d_source_node_flag, d_node_map, d_spike_buffer_map, n_node_map, d_local_node_index );
+    source, n_source, d_source_node_flag, d_node_map, d_image_node_map, n_node_map, d_local_node_index );
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
