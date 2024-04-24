@@ -124,6 +124,10 @@ public:
 
   // get local host groups
   virtual std::vector< std::vector< int > > &getHostGroup() = 0;
+
+  // return map of host group source nodes to local image nodes
+  virtual std::vector<std::vector< std::vector< inode_t > > > &getHostGroupLocalNodeIndex() = 0;
+
   
   // method to organize connections after creation and before using them in simulation
   virtual int organizeConnections( inode_t n_node ) = 0;
@@ -751,6 +755,12 @@ public:
   std::vector< std::vector< int > > &getHostGroup()
   {
     return host_group_;
+  }
+
+  // return map of host group source nodes to local image nodes
+  std::vector<std::vector< std::vector< inode_t > > > &getHostGroupLocalNodeIndex()
+  {
+    return host_group_local_node_index_;
   }
   
   int allocateNewBlocks( int new_n_block );

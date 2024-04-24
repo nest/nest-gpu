@@ -29,6 +29,20 @@ __global__ void PushSpikeFromRemote( uint n_spikes, uint* spike_buffer_id, float
 
 __global__ void PushSpikeFromRemote( uint n_spikes, uint* spike_buffer_id );
 
+
+// number of spikes that must be send to each host group
+// ExternalHostGroupSpikeNum[ group_local_id ]
+extern uint* h_ExternalHostGroupSpikeNum;
+
+// index of the first spike of the spike subarray that must be sent to the host group group_local_id
+// (the spikes to be sent to all host groups are flattened on a single one-dimensional array)
+// ExternalHostGroupSpikeIdx0[ group_local_id ]
+extern uint* h_ExternalHostGroupSpikeIdx0;
+
+// flattened one-dimensional array of spikes that must be sent to all host groups
+extern uint* h_ExternalHostGroupSpikeNodeId;
+
+
 extern __device__ uint NExternalTargetHost;
 extern __device__ uint MaxSpikePerHost;
 
@@ -59,8 +73,8 @@ extern __device__ uint** ExternalNodeTargetHostId;
 // extern uint **d_ExternalNodeId;
 extern __device__ uint** ExternalNodeId;
 
-// extern uint *d_ExternalSourceSpikeNum;
-// extern __device__ uint *ExternalSourceSpikeNum;
+// extern int **d_ExternalSourceSpikeNum;
+// extern __device__ int **ExternalSourceSpikeNum;
 
 extern uint* d_ExternalSourceSpikeNodeId;
 extern __device__ uint* ExternalSourceSpikeNodeId;
@@ -75,10 +89,12 @@ extern uint* h_ExternalTargetSpikeIdx0;
 extern uint* d_ExternalSourceSpikeIdx0;
 
 extern uint* h_ExternalTargetSpikeNum;
-extern uint* h_ExternalSourceSpikeNum;
+extern int** h_ExternalSourceSpikeNum;
 extern uint* h_ExternalSourceSpikeIdx0;
 extern uint* h_ExternalTargetSpikeNodeId;
-extern uint* h_ExternalSourceSpikeNodeId;
+extern uint** h_ExternalSourceSpikeNodeId;
+
+extern int *h_ExternalSourceSpikeDispl;
 
 // extern uint *h_ExternalSpikeNodeId;
 

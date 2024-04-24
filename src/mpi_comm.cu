@@ -133,7 +133,7 @@ NESTGPU::RecvSpikeFromRemote()
       continue; // skip self MPI proc
     }
     // start nonblocking MPI receive from MPI proc i_host
-    MPI_Irecv( &h_ExternalSourceSpikeNodeId[ i_host * max_spike_per_host_ ],
+    MPI_Irecv( &h_ExternalSourceSpikeNodeId[0][ i_host * max_spike_per_host_ ],
       max_spike_per_host_,
       MPI_INT,
       i_host,
@@ -142,9 +142,33 @@ NESTGPU::RecvSpikeFromRemote()
       &recv_mpi_request[ i_host ] );
   }
 
-  MPI_Status statuses[ n_hosts_ ];
+  // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  std::vector< std::vector< int > > &host_group = conn_->getHostGroup();
+  uint nhg = host_group.size();
+
+  //h_ExternalSourceSpikeNodeId = new uint*[ nhg + 1 ];
+  //h_ExternalSourceSpikeNodeId[0] = new uint[ max_remote_spike_num_ ];
+  for (uint ihg=0; ihg<nhg; ihg++) {
+    int idx0 = h_ExternalHostGroupSpikeIdx0[ihg]; // position of subarray of spikes that must be sent to host group ihg
+    uint* sendbuf = &h_ExternalHostGroupSpikeNodeId[idx0]; // send address
+    int sendcount = h_ExternalHostGroupSpikeNum[ihg]; // send count
+    void *recvbuf = &h_ExternalSourceSpikeNodeId[ihg+1]; //[ i_host * max_spike_per_host_ ] // receiving buffers
+    int *recvcounts = h_ExternalSourceSpikeNum[ihg];
+    int *displs = h_ExternalSourceSpikeDispl; // displacememnts of receiving buffers, all equal to max_spike_per_host_
+    
+    //const int recvcounts[], const int displs[] // specificare displacements tutti uguali, inizializzare in Init con dim=n_hosts_ totali
+
+    // Rimpiazzare MPI_COMM_WORLD con comunicatore del gruppo ihg
+    MPI_Iallgatherv(sendbuf, sendcount, MPI_INT, recvbuf, recvcounts, displs, MPI_INT,
+		    MPI_COMM_WORLD, &recv_mpi_request[ n_hosts_ + ihg ]);
+  }
+
+      // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+  
+  MPI_Status statuses[ n_hosts_ + nhg ];
   recv_mpi_request[ mpi_id ] = MPI_REQUEST_NULL;
-  MPI_Waitall( n_hosts_, recv_mpi_request, statuses );
+  MPI_Waitall( n_hosts_ + nhg, recv_mpi_request, statuses );
 
   for ( int i_host = 0; i_host < n_hosts_; i_host++ )
   {
@@ -155,7 +179,7 @@ NESTGPU::RecvSpikeFromRemote()
     }
     int count;
     MPI_Get_count( &statuses[ i_host ], MPI_INT, &count );
-    h_ExternalSourceSpikeNum[ i_host ] = count;
+    h_ExternalSourceSpikeNum[0][ i_host ] = count;
   }
   // Maybe the barrier is not necessary?
   MPI_Barrier( MPI_COMM_WORLD );
