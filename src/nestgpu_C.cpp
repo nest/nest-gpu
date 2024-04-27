@@ -1157,6 +1157,18 @@ extern "C"
     }
     END_ERR_PROP return ret;
   }
+  
+  int 
+  NESTGPU_CreateHostGroup(int *host_arr, int n_hosts)
+  {
+    int ret = 0;
+    BEGIN_ERR_PROP
+    {
+      ret = NESTGPU_instance->CreateHostGroup(host_arr, n_hosts);
+    }
+    END_ERR_PROP return ret;
+  }
+  
 
   char**
   NESTGPU_GetIntVarNames( uint i_node )

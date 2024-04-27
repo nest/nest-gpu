@@ -2012,29 +2012,33 @@ def Connect(source, target, conn_dict, syn_dict):
 NESTGPU_RemoteConnectSeqSeq = _nestgpu.NESTGPU_RemoteConnectSeqSeq
 NESTGPU_RemoteConnectSeqSeq.argtypes = (ctypes.c_int, ctypes.c_int,
                                           ctypes.c_int, ctypes.c_int,
-                                          ctypes.c_int, ctypes.c_int)
+                                          ctypes.c_int, ctypes.c_int,
+                                          ctypes.c_int)
 NESTGPU_RemoteConnectSeqSeq.restype = ctypes.c_int
 
 NESTGPU_RemoteConnectSeqGroup = _nestgpu.NESTGPU_RemoteConnectSeqGroup
 NESTGPU_RemoteConnectSeqGroup.argtypes = (ctypes.c_int, ctypes.c_int,
                                             ctypes.c_int, ctypes.c_int,
-                                            ctypes.c_void_p, ctypes.c_int)
+                                            ctypes.c_void_p, ctypes.c_int,
+                                            ctypes.c_int)
 NESTGPU_RemoteConnectSeqGroup.restype = ctypes.c_int
 
 NESTGPU_RemoteConnectGroupSeq = _nestgpu.NESTGPU_RemoteConnectGroupSeq
 NESTGPU_RemoteConnectGroupSeq.argtypes = (ctypes.c_int, ctypes.c_void_p,
                                             ctypes.c_int, ctypes.c_int,
-                                            ctypes.c_int, ctypes.c_int)
+                                            ctypes.c_int, ctypes.c_int,
+                                            ctypes.c_int)
 NESTGPU_RemoteConnectGroupSeq.restype = ctypes.c_int
 
 NESTGPU_RemoteConnectGroupGroup = _nestgpu.NESTGPU_RemoteConnectGroupGroup
 NESTGPU_RemoteConnectGroupGroup.argtypes = (ctypes.c_int, ctypes.c_void_p,
                                               ctypes.c_int, ctypes.c_int,
-                                              ctypes.c_void_p, ctypes.c_int)
+                                              ctypes.c_void_p, ctypes.c_int,
+                                              ctypes.c_int)
 NESTGPU_RemoteConnectGroupGroup.restype = ctypes.c_int
 
 def RemoteConnect(i_source_host, source, i_target_host, target,
-                  conn_dict, syn_dict): 
+                  conn_dict, syn_dict, host_group=-1):
     "Connect two node groups of differen mpi hosts"
     if (type(i_source_host)!=int) | (type(i_target_host)!=int):
         raise ValueError("Error in host index")
@@ -2078,7 +2082,8 @@ def RemoteConnect(i_source_host, source, i_target_host, target,
             raise ValueError("Unknown synapse parameter")
     if (type(source)==NodeSeq) & (type(target)==NodeSeq) :
         ret = NESTGPU_RemoteConnectSeqSeq(i_source_host, source.i0, source.n,
-                                            i_target_host, target.i0, target.n)
+                                            i_target_host, target.i0, target.n,
+                                            host_group)
 
     else:
         if type(source)!=NodeSeq:
@@ -2090,22 +2095,38 @@ def RemoteConnect(i_source_host, source, i_target_host, target,
         if (type(source)==NodeSeq) & (type(target)!=NodeSeq):
             ret = NESTGPU_RemoteConnectSeqGroup(i_source_host, source.i0,
                                                   source.n, i_target_host,
-                                                  target_arr_pt, len(target))
+                                                  target_arr_pt, len(target),
+                                                  host_group)
         elif (type(source)!=NodeSeq) & (type(target)==NodeSeq):
             ret = NESTGPU_RemoteConnectGroupSeq(i_source_host, source_arr_pt,
                                                   len(source),
                                                   i_target_host, target.i0,
-                                                  target.n)
+                                                  target.n, host_group)
         else:
             ret = NESTGPU_RemoteConnectGroupGroup(i_source_host,
                                                     source_arr_pt,
                                                     len(source),
                                                     i_target_host,
                                                     target_arr_pt,
-                                                    len(target))
+                                                    len(target), host_group)
     if GetErrorCode() != 0:
         raise ValueError(GetErrorMessage())
     return ret
+
+
+NESTGPU_CreateHostGroup = _nestgpu.NESTGPU_CreateHostGroup
+NESTGPU_CreateHostGroup.argtypes = (c_int_p, ctypes.c_int)
+NESTGPU_CreateHostGroup.restype = ctypes.c_int
+def CreateHostGroup(host_list):
+    "Create group of hosts and MPI communicator from list of host indexes"
+    n_hosts = len(host_list)
+    host_arr = (ctypes.c_int * n_hosts)(*host_list)
+    host_pt = ctypes.cast(host_arr, c_int_p)
+    ret = NESTGPU_CreateHostGroup(host_pt, n_hosts) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
 
 
 def SetStatus(gen_object, params, val=None):

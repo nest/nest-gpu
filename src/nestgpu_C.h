@@ -234,6 +234,8 @@ extern "C"
     uint n_target,
     int i_host_group );
 
+  int NESTGPU_CreateHostGroup(int *host_arr, int n_hosts);
+
   char** NESTGPU_GetIntVarNames( uint i_node );
 
   char** NESTGPU_GetScalVarNames( uint i_node );

@@ -334,6 +334,10 @@ public:
 
   // get algorithm for spike buffering and delivery
   virtual int getSpikeBufferAlgo() = 0;
+
+  // Method that creates a group of hosts for remote spike communication (i.e. a group of MPI processes)
+  // host_arr: array of host inexes, n_hosts: nomber of hosts in the group
+  virtual int CreateHostGroup(int *host_arr, int n_hosts) = 0;
 };
 
 

@@ -758,7 +758,11 @@ public:
     int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec );
-
+  
+  // Method that creates a group of hosts for remote spike communication (i.e. a group of MPI processes)
+  // host_arr: array of host inexes, n_hosts: nomber of hosts in the group
+  int CreateHostGroup(int *host_arr, int n_hosts);
+  
   std::vector< std::string > GetScalVarNames( int i_node );
 
   int GetNIntVar( int i_node );
