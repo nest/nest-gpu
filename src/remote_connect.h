@@ -1433,7 +1433,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int 
     throw ngpu_exception("Host groups must be defined before creating "
 			 "connections");
   }
-  // pushes all the host indexes in a vector, hg, and check whether this host is in the group 
+  // pushes all the host indexes in a vector, hg, and check whether this host is in the group
+  // TO IMPROVE BY USING AN UNORDERED SET, TO AVOID POSSIBLE REPETITIONS IN host_arr
+  // OR CHECK THAT THERE ARE NO REPETITIONS
   std::vector<int> hg;
   bool this_host_is_in_group = false;
   for (int ih=0; ih<n_hosts; ih++) {
@@ -1455,6 +1457,23 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int 
     // push a vector of empty unordered sets into host_group_source_node_
     std::vector< std::unordered_set< inode_t > > empty_i_node(n_hosts);
     host_group_source_node_.push_back(empty_i_node);
+
+#ifdef HAVE_MPI
+    // Get the group from the world communicator
+    MPI_Group world_group;
+    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+    // create new MPI group from host group hg
+    MPI_Group newgroup;
+    MPI_Group_incl(world_group, hg.size(), &hg[0], &newgroup);
+    // insert it in MPI groups vector
+    mpi_group_vect_.push_back(newgroup);
+    // create new MPI communicator
+    MPI_Comm newcomm;
+    MPI_Comm_create(MPI_COMM_WORLD, newgroup, &newcomm);
+    // insert it in MPI communicators vector
+    mpi_comm_vect_.push_back(newcomm);
+#endif
+    
   }
   else {
     // if this host is not in the group, set the entry of host_group_local_id_ to -1 

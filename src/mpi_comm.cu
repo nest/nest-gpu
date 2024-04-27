@@ -144,6 +144,7 @@ NESTGPU::RecvSpikeFromRemote()
 
   // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   std::vector< std::vector< int > > &host_group = conn_->getHostGroup();
+  std::vector<MPI_Comm> &mpi_comm_vect = conn_->getMPIComm();
   uint nhg = host_group.size();
 
   //h_ExternalSourceSpikeNodeId = new uint*[ nhg + 1 ];
@@ -160,7 +161,7 @@ NESTGPU::RecvSpikeFromRemote()
 
     // Rimpiazzare MPI_COMM_WORLD con comunicatore del gruppo ihg
     MPI_Iallgatherv(sendbuf, sendcount, MPI_INT, recvbuf, recvcounts, displs, MPI_INT,
-		    MPI_COMM_WORLD, &recv_mpi_request[ n_hosts_ + ihg ]);
+		    mpi_comm_vect[ihg], &recv_mpi_request[ n_hosts_ + ihg ]);
   }
 
       // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

@@ -125,6 +125,11 @@ public:
   // get local host groups
   virtual std::vector< std::vector< int > > &getHostGroup() = 0;
 
+#ifdef HAVE_MPI
+  // get local MPI communication groups
+  virtual std::vector<MPI_Comm> &getMPIComm() = 0;
+#endif
+  
   // return map of host group source nodes to local image nodes
   virtual std::vector<std::vector< std::vector< inode_t > > > &getHostGroupLocalNodeIndex() = 0;
 
@@ -511,7 +516,12 @@ class ConnectionTemplate : public Connection
   // from each source node (one_to_one, all_to_all, fixed_outdegree)
   // - false otherwise (fixed_indegree, fixed_total_number, pairwise_bernoulli)
   bool* use_all_source_nodes_; // [n_connection_rules]:
+#ifdef HAVE_MPI
+  std::vector<MPI_Group> mpi_group_vect_;
+  std::vector<MPI_Comm> mpi_comm_vect_;
+#endif
 
+  
   //////////////////////////////////////////////////
   // reverse-connection-related member variables
   //////////////////////////////////////////////////
@@ -757,6 +767,13 @@ public:
     return host_group_;
   }
 
+  // get MPI communicator of local host groups
+  std::vector<MPI_Comm> &getMPIComm()
+  {
+    return mpi_comm_vect_;
+  }
+
+  
   // return map of host group source nodes to local image nodes
   std::vector<std::vector< std::vector< inode_t > > > &getHostGroupLocalNodeIndex()
   {
