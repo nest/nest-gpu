@@ -125,6 +125,7 @@ NESTGPU::RecvSpikeFromRemote()
 
   double time_mark = getRealTime();
 
+  std::cout << "RSFR 0 this_host_ " << this_host_ << "\n";
   // loop on remote MPI proc
   for ( int i_host = 0; i_host < n_hosts_; i_host++ )
   {
@@ -142,14 +143,18 @@ NESTGPU::RecvSpikeFromRemote()
       &recv_mpi_request[ i_host ] );
   }
 
+  std::cout << "RSFR 1 this_host_ " << this_host_ << "\n";
+  
   // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   std::vector< std::vector< int > > &host_group = conn_->getHostGroup();
   std::vector<MPI_Comm> &mpi_comm_vect = conn_->getMPIComm();
   uint nhg = host_group.size();
-
+  
+  std::cout << "RSFR 2 this_host_ " << this_host_ << ", nhg " << nhg << "\n";
+  
   //h_ExternalSourceSpikeNodeId = new uint*[ nhg + 1 ];
   //h_ExternalSourceSpikeNodeId[0] = new uint[ max_remote_spike_num_ ];
-  for (uint ihg=0; ihg<nhg; ihg++) {
+  for (uint ihg=1; ihg<nhg; ihg++) {
     int idx0 = h_ExternalHostGroupSpikeIdx0[ihg]; // position of subarray of spikes that must be sent to host group ihg
     uint* sendbuf = &h_ExternalHostGroupSpikeNodeId[idx0]; // send address
     int sendcount = h_ExternalHostGroupSpikeNum[ihg]; // send count
@@ -161,31 +166,41 @@ NESTGPU::RecvSpikeFromRemote()
 
     // Rimpiazzare MPI_COMM_WORLD con comunicatore del gruppo ihg
     MPI_Iallgatherv(sendbuf, sendcount, MPI_INT, recvbuf, recvcounts, displs, MPI_INT,
-		    mpi_comm_vect[ihg], &recv_mpi_request[ n_hosts_ + ihg ]);
+		    mpi_comm_vect[ihg], &recv_mpi_request[ n_hosts_ + ihg -1 ]);
   }
+  std::cout << "RSFR 3 this_host_ " << this_host_ << "\n";
 
       // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
   
-  MPI_Status statuses[ n_hosts_ + nhg ];
+  MPI_Status statuses[ n_hosts_ + nhg - 1];
   recv_mpi_request[ mpi_id ] = MPI_REQUEST_NULL;
-  MPI_Waitall( n_hosts_ + nhg, recv_mpi_request, statuses );
-
+  MPI_Waitall( n_hosts_ + nhg - 1, recv_mpi_request, statuses );
+  
+  std::cout << "RSFR 4 this_host_ " << this_host_ << "\n";
+  
   for ( int i_host = 0; i_host < n_hosts_; i_host++ )
   {
     if ( ( int ) i_host == mpi_id )
     {
-      h_ExternalSourceSpikeNum[ i_host ] = 0;
+      h_ExternalSourceSpikeNum[0][ i_host ] = 0;
       continue;
     }
     int count;
+    std::cout << "RSFR 4a this_host_ " << this_host_ << ", i_host " << i_host << "\n";
     MPI_Get_count( &statuses[ i_host ], MPI_INT, &count );
+    std::cout << "RSFR 4b this_host_ " << this_host_ << ", i_host " << i_host << "\n";
     h_ExternalSourceSpikeNum[0][ i_host ] = count;
+    std::cout << "RSFR 4c this_host_ " << this_host_ << ", i_host " << i_host << "\n";
   }
+  
+  std::cout << "RSFR 5 this_host_ " << this_host_ << "\n";
+  
   // Maybe the barrier is not necessary?
   MPI_Barrier( MPI_COMM_WORLD );
   RecvSpikeFromRemote_comm_time_ += ( getRealTime() - time_mark );
-
+  
+  std::cout << "RSFR 6 this_host_ " << this_host_ << "\n";
   return 0;
 #else
   throw ngpu_exception( "MPI is not available in your build" );
@@ -210,7 +225,7 @@ NESTGPU::ConnectMpiInit( int argc, char* argv[] )
   mpi_flag_ = true;
   setNHosts( n_hosts );
   setThisHost( this_host );
-  conn_->remoteConnectionMapInit();
+  //conn_->remoteConnectionMapInit();
   recv_mpi_request = new MPI_Request[ n_hosts_ ];
 
   return 0;

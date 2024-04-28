@@ -451,8 +451,8 @@ template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode_t n_nodes )
 {
-  // std::cout << "In RemoteConnectionMapCalibrate " << i_host << " "
-  //	    << n_hosts_ << "\n";
+  std::cout << "In RemoteConnectionMapCalibrate " << this_host_ << " "
+  	    << n_hosts_ << "\n";
   //  vector of pointers to local source node maps in device memory
   //  per target host hd_local_source_node_map[target_host]
   //  type std::vector<uint*>
@@ -512,6 +512,10 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
   gpuErrchk( cudaMemcpyToSymbol( local_source_node_map, &d_local_source_node_map_, sizeof( uint*** ) ) );
 
 
+  std::cout << "In RemoteConnectionMapCalibrate ok2 " << this_host_ << " "
+  	    << n_hosts_ << "\n";
+
+  
   hdd_image_node_map_.resize(nhg, NULL);
   
   for (uint group_local_id=0; group_local_id<nhg; group_local_id++) { // loop on local host groups
@@ -550,6 +554,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
 			     cudaMemcpyHostToDevice ) );
     }
   }
+
+  std::cout << "In RemoteConnectionMapCalibrate ok3 " << this_host_ << " "
+  	    << n_hosts_ << "\n";
 
   // allocate d_image_node_map and copy it from host to device
   CUDAMALLOCCTRL( "&d_image_node_map_", &d_image_node_map_, nhg * sizeof( uint*** ) );
@@ -591,6 +598,10 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
     }
   }
 
+  std::cout << "In RemoteConnectionMapCalibrate ok4 " << this_host_ << " "
+  	    << n_hosts_ << "\n";
+
+  
   //////////////////////////////////////////////////////////////////////
   // Evaluate exclusive sum of reverse connections per target node
   // Determine temporary device storage requirements
@@ -641,6 +652,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
   // reset to 0 d_n_target_hosts[n_nodes] to reuse it in the next kernel
   gpuErrchk( cudaMemset( d_n_target_hosts_, 0, n_nodes * sizeof( uint ) ) );
 
+  std::cout << "In RemoteConnectionMapCalibrate ok5 " << this_host_ << " "
+  	    << n_hosts_ << "\n";
+
   // Loop on target hosts
   for ( int tg_host = 0; tg_host < n_hosts_; tg_host++ )
   {
@@ -659,15 +673,25 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
 
   addOffsetToImageNodeMap( n_nodes );
 
-  for (uint group_local_id=0; group_local_id<nhg; group_local_id++) {
+  std::cout << "In RemoteConnectionMapCalibrate ok6 " << this_host_ << " "
+  	    << n_hosts_ << "\n";
+
+  node_target_host_group_.resize(n_nodes);
+  for (uint group_local_id=1; group_local_id<nhg; group_local_id++) {
+    std::cout << "before0: this_host_ " << this_host_ << ", group_local_id " << group_local_id << ", n_nodes" << n_nodes << "\n";
+    std::cout << "before0b: this_host_ " << this_host_ << ", hg_lsnm_.size() " << host_group_local_source_node_map_.size() << ", nhg" << nhg << "\n";
     host_group_local_source_node_map_[group_local_id].resize(n_nodes);
+    std::cout << "after0a: this_host_ " << this_host_ << ", group_local_id " << group_local_id << ", n_nodes" << n_nodes << "\n";
     uint nh = host_group_[group_local_id].size(); // number of hosts in the group
+    std::cout << "after0b: this_host_ " << this_host_ << ", group_local_id " << group_local_id << ", n_nodes" << n_nodes << "\n";
     for ( uint gi_host = 0; gi_host < nh; gi_host++ ) {// loop on hosts
       uint n_src = host_group_source_node_[group_local_id][gi_host].size();
+      std::cout << "before: this_host_ " << this_host_ << ", gi_host " << gi_host << ", n_src " << n_src<< "\n";
       host_group_source_node_vect_[group_local_id][gi_host].resize(n_src);
       std::copy(host_group_source_node_[group_local_id][gi_host].begin(), host_group_source_node_[group_local_id][gi_host].end(),
 		host_group_source_node_vect_[group_local_id][gi_host].begin());
       int src_host = host_group_[group_local_id][gi_host];
+      std::cout << "after: this_host_ " << this_host_ << ", gi_host " << gi_host << ", src_host " << src_host << "\n";
       if ( src_host != this_host_ ) { // skip self host
 	host_group_local_node_index_[group_local_id][gi_host].resize(n_src);
 	// get number of elements in the map
@@ -715,7 +739,10 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
       }
     }
   }
-  
+
+  std::cout << "In RemoteConnectionMapCalibrate ok7 " << this_host_ << " "
+  	    << n_hosts_ << "\n";
+
   return 0;
 }
 
@@ -758,6 +785,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::_RemoteConnect( int source_host,
   ConnSpec& conn_spec,
   SynSpec& syn_spec )
 {
+  if (first_connection_flag_ == true) {
+    remoteConnectionMapInit();
+  }
   first_connection_flag_ = false;
   if ( source_host >= n_hosts_ )
   {
@@ -887,6 +917,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   uint* d_local_node_index; // [n_source]; // only on target host
   CUDAMALLOCCTRL( "&d_local_node_index", &d_local_node_index, n_source * sizeof( uint ) );
 
+  std::cout << "RCS 1 this_host_ " << this_host_ << "\n";
+  
   int64_t old_n_conn = n_conn_;
   // The connect command is performed on both source and target host using
   // the same initial seed and using as source node indexes the integers
@@ -898,10 +930,14 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
     return 0;
   }
 
+  std::cout << "RCS 2 this_host_ " << this_host_ << "\n";
+    
   // flag source nodes used in at least one new connection
   // Loop on all new connections and set source_node_flag[i_source]=true
   setUsedSourceNodes( old_n_conn, d_source_node_flag );
 
+  std::cout << "RCS 3 this_host_ " << this_host_ << "\n";
+  
   // Count source nodes actually used in new connections
   // Allocate n_used_source_nodes and initialize it to 0
   uint* d_n_used_source_nodes;
@@ -917,6 +953,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   uint n_used_source_nodes;
   gpuErrchk( cudaMemcpy( &n_used_source_nodes, d_n_used_source_nodes, sizeof( uint ), cudaMemcpyDeviceToHost ) );
 
+  std::cout << "RCS 4 this_host_ " << this_host_ << "\n";
+  
   // Define and allocate arrays of size n_used_source_nodes
   uint* d_unsorted_source_node_index; // [n_used_source_nodes];
   uint* d_sorted_source_node_index;   // [n_used_source_nodes];
@@ -949,6 +987,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
+  std::cout << "RCS 5 this_host_ " << this_host_ << "\n";
+  
   // Sort the arrays using unsorted_source_node_index as key
   // and i_source as value -> sorted_source_node_index
 
@@ -979,13 +1019,17 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
     n_used_source_nodes );
   //<END-CLANG-TIDY-SKIP>//
 
+  std::cout << "RCS 6 this_host_ " << this_host_ << "\n";
+  
   //////////////////////////////
   // Allocate array of remote source node map blocks
   // and copy their address from host to device
-  uint n_blocks = h_remote_source_node_map_[ source_host ].size();
+  //uint n_blocks = h_remote_source_node_map_[ source_host ].size();
   uint** d_node_map = NULL;
   uint** d_image_node_map = NULL;
 
+  std::cout << "RCS 7 this_host_ " << this_host_ << "\n";
+  
   int gi_host;
   if ( group_local_id <= 1 ) { // point-to-point communication (0) and world group (1) include all hosts
     gi_host = source_host;
@@ -998,6 +1042,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
     }
     gi_host = it - host_group_[group_local_id].begin();
   }
+  std::cout << "RCS 8 this_host_ " << this_host_ << "\n";
+  uint n_blocks = h_remote_source_node_map_[group_local_id][ gi_host ].size();
+  std::cout << "RCS 9 this_host_ " << this_host_ << "\n";
   // get current number of elements in the map
   uint n_node_map;
   gpuErrchk(
@@ -1010,8 +1057,11 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
     uint tmp_n_blocks = ( n_node_map - 1 ) / node_map_block_size_ + 1;
     if ( tmp_n_blocks != n_blocks )
     {
-      std::cerr << "Inconsistent number of elements " << n_node_map << " and number of blocks " << n_blocks
+      std::cerr << "aInconsistent number of elements " << n_node_map << " and number of blocks " << n_blocks
                 << " in remote_source_node_map\n";
+      std::cout << "group_local_id" << group_local_id << "\n";
+      std::cout << "gi_host" << gi_host << "\n";
+      
       exit( -1 );
     }
     CUDAMALLOCCTRL( "&d_node_map", &d_node_map, n_blocks * sizeof( uint* ) );
@@ -1452,11 +1502,20 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int 
     int group_local_id = host_group_.size();
     // push the local id in the array of local indexes  of all host groups
     host_group_local_id_.push_back(group_local_id);
-    // push the new group into the host_group_ vector 
+    // push the new group into the host_group_ vector
+    //// TEMPORARY
+    std::cout << "this_host_: " << this_host_ << ", host_group_.push_back: ( ";
+    for (uint ii=0; ii<hg.size(); ii++) {
+      std::cout << hg[ii] << " ";
+    }
+    std::cout << ")\n"; 
     host_group_.push_back(hg);
     // push a vector of empty unordered sets into host_group_source_node_
     std::vector< std::unordered_set< inode_t > > empty_i_node(n_hosts);
     host_group_source_node_.push_back(empty_i_node);
+    host_group_local_source_node_map_.push_back(std::vector< uint >());
+    std::vector< std::vector< inode_t > > hg_lni(hg.size(), std::vector< inode_t >());
+    host_group_local_node_index_.push_back(hg_lni);
 
 #ifdef HAVE_MPI
     // Get the group from the world communicator
