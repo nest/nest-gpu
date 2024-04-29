@@ -785,9 +785,19 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::_RemoteConnect( int source_host,
   ConnSpec& conn_spec,
   SynSpec& syn_spec )
 {
+  std::cout << "In _RemoteConnect** this_host_ " << this_host_
+	    << ", source_host " << source_host
+	    << ", target_host " << target_host
+	    << ", i_host_group " << i_host_group << "\n";
+
   if (first_connection_flag_ == true) {
     remoteConnectionMapInit();
   }
+  std::cout << "ok1 _RemoteConnect** this_host_ " << this_host_
+	    << ", source_host " << source_host
+	    << ", target_host " << target_host
+	    << ", i_host_group " << i_host_group << "\n";
+  
   first_connection_flag_ = false;
   if ( source_host >= n_hosts_ )
   {
@@ -815,10 +825,17 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::_RemoteConnect( int source_host,
   //              > 0 for all the other host groups
   int group_local_id = 0;
   if (i_host_group>=0) { // not a point-to-point MPI communication
-    int i_host;
+    int i_host = -10;
     if ( i_host_group == 0 ) { // world group
       group_local_id = 1;
       i_host = source_host;
+
+      std::cout << "ok2 _RemoteConnect** this_host_ " << this_host_
+		<< ", source_host " << source_host
+		<< ", target_host " << target_host
+		<< ", i_host " << i_host
+		<< ", glid " << group_local_id << "\n";
+
     }
     else { // any host group other than poit-to-point and world group
       group_local_id = host_group_local_id_[i_host_group];
@@ -830,13 +847,45 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::_RemoteConnect( int source_host,
 	}
 	i_host = it - host_group_[group_local_id].begin();
       }
+      std::cout << "ok3 _RemoteConnect** this_host_ " << this_host_
+		<< ", source_host " << source_host
+		<< ", target_host " << target_host
+		<< ", i_host " << i_host
+		<< ", glid " << group_local_id << "\n";
+
     }
+    std::cout << "ok4 _RemoteConnect** this_host_ " << this_host_
+	      << ", source_host " << source_host
+	      << ", target_host " << target_host
+	      << ", i_host " << i_host
+	      << ", glid " << group_local_id << "\n";
+    std::cout << "ok4b _RemoteConnect** this_host_ " << this_host_
+	      << ", source_host " << source_host
+	      << ", target_host " << target_host
+	      << ", host_group_source_node_[glid].size() "
+	      << host_group_source_node_[group_local_id].size() << "\n";
+    std::cout << "ok4c _RemoteConnect** this_host_ " << this_host_
+	      << ", source_host " << source_host
+	      << ", target_host " << target_host
+	      << ", host_group_source_node_[glid][ih].size() "
+	      << host_group_source_node_[group_local_id][i_host].size()
+	      << ", n_source " << n_source << "\n";
+    std::cout << "ok4d _RemoteConnect** this_host_ " << this_host_
+	      << ", source_host " << source_host
+	      << ", target_host " << target_host
+	      << ", source[0] " << *((int*)source) << "\n";
+
     if (group_local_id >= 0) {
       for (inode_t i=0; i<n_source; i++) {
 	inode_t i_source = hGetNodeIndex(source, i);
 	host_group_source_node_[group_local_id][i_host].insert(i_source);
       }
     }
+    std::cout << "ok5 _RemoteConnect** this_host_ " << this_host_
+	      << ", source_host " << source_host
+	      << ", target_host " << target_host
+	      << ", i_host " << i_host
+	      << ", glid " << group_local_id << "\n";
   }
   // if i_host_group<0, i.e. a point-to-point MPI communication is required
   // and this host is the source (but it is not a local connection) call RemoteConnectTarget
