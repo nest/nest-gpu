@@ -18,6 +18,8 @@ print("Building on host ", mpi_id, " ...")
 
 ngpu.SetKernelStatus("rnd_seed", 1234) # seed for GPU random numbers
 
+whg = ngpu.CreateHostGroup([0, 1, 2])
+
 neuron = ngpu.Create('iaf_psc_exp_g', 3)
 
 spike = ngpu.Create("spike_generator", 3)
@@ -44,9 +46,10 @@ for ish in range(3):
                         #ngpu.RemoteConnect(ish, spike[isn:isn+1], \
                         #                   ith, neuron[itn:itn+1], \
                         #                   conn_spec, syn_spec)
+                        print(f"PyRC this_host_ {mpi_id}, ish {ish}, isn {spike[isn]}, ith {ith}, itn {neuron[itn]}")
                         ngpu.RemoteConnect(ish, [spike[isn]], \
                                            ith, [neuron[itn]], \
-                                           conn_spec, syn_spec)
+                                           conn_spec, syn_spec, whg)
 
 i_neuron_arr = [neuron[0], neuron[1], neuron[2]]
 i_receptor_arr = [0, 0, 0]

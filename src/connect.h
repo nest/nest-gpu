@@ -125,6 +125,9 @@ public:
   // get local host groups
   virtual std::vector< std::vector< int > > &getHostGroup() = 0;
 
+  // get array of local indexes  of all host groups
+  virtual std::vector< int > &getHostGroupLocalId() = 0;
+
 #ifdef HAVE_MPI
   // get local MPI communication groups
   virtual std::vector<MPI_Comm> &getMPIComm() = 0;
@@ -769,6 +772,12 @@ public:
   std::vector< std::vector< int > > &getHostGroup()
   {
     return host_group_;
+  }
+
+  // get array of local indexes  of all host groups
+  std::vector< int > &getHostGroupLocalId()
+  {
+    return host_group_local_id_;
   }
 
   // get MPI communicator of local host groups
@@ -1547,6 +1556,36 @@ hGetNodeIndex( inode_t* i_node_0, inode_t i_node_rel )
 {
   return *( i_node_0 + i_node_rel );
 }
+
+inline inode_t
+copyNodeArrayToDevice( inode_t i_node, inode_t n_node )
+{
+  return i_node;
+}
+
+inline int
+freeNodeArrayFromDevice( inode_t i_node )
+{
+  return 0;
+}
+
+inline inode_t*
+copyNodeArrayToDevice( inode_t* h_node, inode_t n_node )
+{
+  inode_t* d_node;
+  CUDAMALLOCCTRL( "&d_node", &d_node, n_node * sizeof( inode_t ) );
+  gpuErrchk( cudaMemcpy( d_node, h_node, n_node * sizeof( inode_t ), cudaMemcpyHostToDevice ) );
+
+  return d_node;
+}
+
+inline int
+freeNodeArrayFromDevice( inode_t* d_node )
+{
+  CUDAFREECTRL( "d_node", d_node );
+  return 0;
+}
+
 
 template < class T, class ConnKeyT >
 __global__ void
@@ -3789,23 +3828,22 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setNHosts( int n_hosts )
     // The first two host groups correspond to poit-to-point communication and world group
     // Both include all hosts
     //////// SET SIZE TO 1 UNTIL DESIGN DECISION
+    ///////// spostere tutti i resize in init
     if ( host_group_.size() < 1 ) {
       host_group_.resize(1, seq);
       host_group_local_source_node_map_.resize(1);
       host_group_source_node_.resize(1);
+      host_group_source_node_vect_.resize(1);
       host_group_local_node_index_.resize(1);
     }
     else {
       host_group_[0] = seq; // point-to-point communication
       //host_group_[1] = seq; // world group commented until design decision
     }
-    //////// COMMENTED UNTIL DESIGN DECISION
-    /*
-    if ( host_group_local_id_.size() < 1 ) {
-      host_group_local_id_.resize(1);
-    }
-    host_group_local_id_[0] = 1; // world group
-    */
+    //if ( host_group_local_id_.size() < 1 ) {
+    //  host_group_local_id_.resize(1);
+    //}
+    //host_group_local_id_[0] = 0; // point-to-point communication
   }
 
   return 0;

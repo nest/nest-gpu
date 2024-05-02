@@ -32,15 +32,17 @@ __global__ void PushSpikeFromRemote( uint n_spikes, uint* spike_buffer_id );
 
 // number of spikes that must be send to each host group
 // ExternalHostGroupSpikeNum[ group_local_id ]
-extern uint* h_ExternalHostGroupSpikeNum;
+extern std::vector<uint> h_ExternalHostGroupSpikeNum;
 
 // index of the first spike of the spike subarray that must be sent to the host group group_local_id
 // (the spikes to be sent to all host groups are flattened on a single one-dimensional array)
 // ExternalHostGroupSpikeIdx0[ group_local_id ]
-extern uint* h_ExternalHostGroupSpikeIdx0;
+extern uint* d_ExternalHostGroupSpikeIdx0;
+extern std::vector<uint> h_ExternalHostGroupSpikeIdx0;
 
 // flattened one-dimensional array of spikes that must be sent to all host groups
-extern uint* h_ExternalHostGroupSpikeNodeId;
+extern uint* d_ExternalHostGroupSpikeNodeId;
+extern std::vector<uint> h_ExternalHostGroupSpikeNodeId;
 
 
 extern __device__ uint NExternalTargetHost;
@@ -84,21 +86,21 @@ extern __device__ float* ExternalSourceSpikeMul;
 
 extern uint* d_ExternalTargetSpikeIdx0;
 extern __device__ uint* ExternalTargetSpikeIdx0;
-extern uint* h_ExternalTargetSpikeIdx0;
+extern std::vector<uint> h_ExternalTargetSpikeIdx0;
 
 extern uint* d_ExternalSourceSpikeIdx0;
 
-extern uint* h_ExternalTargetSpikeNum;
-extern int** h_ExternalSourceSpikeNum;
-extern uint* h_ExternalSourceSpikeIdx0;
-extern uint* h_ExternalTargetSpikeNodeId;
-extern uint** h_ExternalSourceSpikeNodeId;
+extern std::vector<uint> h_ExternalTargetSpikeNum;
+extern std::vector< std::vector< int > > h_ExternalSourceSpikeNum;
+extern std::vector< uint > h_ExternalSourceSpikeIdx0;
+extern std::vector< uint > h_ExternalTargetSpikeNodeId;
+extern std::vector< std::vector < uint > > h_ExternalSourceSpikeNodeId;
 
-extern int *h_ExternalSourceSpikeDispl;
+extern std::vector< int > h_ExternalSourceSpikeDispl;
 
 // extern uint *h_ExternalSpikeNodeId;
 
-extern float* h_ExternalSpikeMul;
+extern std::vector < float > h_ExternalSpikeMul;
 
 __device__ void PushExternalSpike( uint i_source, float mul );
 

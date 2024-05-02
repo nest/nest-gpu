@@ -75,24 +75,24 @@ uint** d_ExternalHostGroupNodeId;
 // ExternalHostGroupSpikeNum[ group_local_id ]
 __device__ uint* ExternalHostGroupSpikeNum; // [ num. of local host groups ]
 uint* d_ExternalHostGroupSpikeNum;
-uint* h_ExternalHostGroupSpikeNum;
+std::vector<uint> h_ExternalHostGroupSpikeNum;
 
 // index of the first spike of the spike subarray that must be sent to the host group group_local_id
 // (the spikes to be sent to all host groups are flattened on a single one-dimensional array)
 // ExternalHostGroupSpikeIdx0[ group_local_id ]
 __device__ uint* ExternalHostGroupSpikeIdx0; // [ num. of local host groups ]
 uint* d_ExternalHostGroupSpikeIdx0;
-uint* h_ExternalHostGroupSpikeIdx0;
+std::vector<uint> h_ExternalHostGroupSpikeIdx0;
 
 // flattened one-dimensional array of spikes that must be sent to all host groups
 __device__ uint* ExternalHostGroupSpikeNodeId; // [MaxSpikeNum];
 uint* d_ExternalHostGroupSpikeNodeId;
-uint* h_ExternalHostGroupSpikeNodeId;
+std::vector<uint> h_ExternalHostGroupSpikeNodeId;
 
 // flattened one-dimensional array of multiplicity of spikes that must be sent to all host groups
 __device__ float* ExternalHostGroupSpikeMul; // [MaxSpikeNum];
 float* d_ExternalHostGroupSpikeMul;
-float* h_ExternalHostGroupSpikeMul;
+std::vector <float> h_ExternalHostGroupSpikeMul;
 
 __device__ uint NExternalTargetHost;
 __device__ uint MaxSpikePerHost;
@@ -135,21 +135,21 @@ __device__ float* ExternalSourceSpikeMul;
 
 uint* d_ExternalTargetSpikeIdx0;
 __device__ uint* ExternalTargetSpikeIdx0;
-uint* h_ExternalTargetSpikeIdx0;
+std::vector <uint> h_ExternalTargetSpikeIdx0;
 
 uint* d_ExternalSourceSpikeIdx0;
 
-uint* h_ExternalTargetSpikeNum;
-int** h_ExternalSourceSpikeNum;
-uint* h_ExternalSourceSpikeIdx0;
-uint* h_ExternalTargetSpikeNodeId;
-uint** h_ExternalSourceSpikeNodeId;
-uint* h_ExternalSourceSpikeNodeId_flat;
-int *h_ExternalSourceSpikeDispl;
+std::vector<uint> h_ExternalTargetSpikeNum;
+std::vector< std::vector< int > > h_ExternalSourceSpikeNum;
+std::vector<uint> h_ExternalSourceSpikeIdx0;
+std::vector<uint> h_ExternalTargetSpikeNodeId;
+std::vector<std::vector <uint> > h_ExternalSourceSpikeNodeId;
+std::vector<uint> h_ExternalSourceSpikeNodeId_flat;
+std::vector <int> h_ExternalSourceSpikeDispl;
 
 // uint *h_ExternalSpikeNodeId;
 
-float* h_ExternalSpikeMul;
+std::vector <float> h_ExternalSpikeMul;
 
 // Simple kernel for pushing remote spikes in local spike buffers
 // Version without spike multiplicity array
@@ -294,30 +294,33 @@ organizeExternalSpikesPerTargetHostGroup()
   const uint i_spike = blockIdx.x;
   if ( i_spike < *ExternalSpikeNum )
   {
-    // printf("ExternalSpikeNum: %d\ti_spike: %d\n", *ExternalSpikeNum,
-    // i_spike);
+    //printf("ExternalSpikeNum: %d\ti_spike: %d\n", *ExternalSpikeNum,
+    //	   i_spike);
     uint i_source = ExternalSpikeSourceNode[ i_spike ];
-    // printf("i_source: %d\n", i_source);
+    //printf("i_source: %d\n", i_source);
     uint Nhg = NExternalNodeTargetHostGroup[ i_source ];
-    // printf("Nhg: %d\n", Nhg);
+    //printf("Nhg: %d\n", Nhg);
 
     for ( uint ihg = threadIdx.x; ihg < Nhg; ihg += blockDim.x )
     {
-      // printf("ihg: %d\n", ihg);
+      printf("ihg: %d\n", ihg);
       uint group_local_id = ExternalNodeTargetHostGroupId[ i_source ][ ihg ];
-      // printf("group_local_id: %d\n", group_local_id);
+      printf("group_local_id: %d\n", group_local_id);
+      printf("i_source: %d\n", i_source);
       uint hg_node_id = ExternalHostGroupNodeId[ i_source ][ ihg ];
-      // printf("hg_node_id: %d\n", hg_node_id);
+      printf("hg_node_id: %d\n", hg_node_id);
       uint pos = atomicAdd( &ExternalHostGroupSpikeNum[ group_local_id ], 1 );
-      // printf("pos: %d\n", pos);
+      printf("pos: %d\n", pos);
       uint i_arr = ExternalHostGroupSpikeIdx0[ group_local_id ] + pos;
+      printf("i_arr: %d\n", i_arr);
       ExternalHostGroupSpikeNodeId[ i_arr ] = hg_node_id;
+      printf("ExternalHostGroupSpikeNodeId[ i_arr ]: %d\n", ExternalHostGroupSpikeNodeId[ i_arr ]);
       if ( have_remote_spike_mul )
       {
         float mul = ExternalSpikeMul[ i_spike ];
-        // printf("mul: %f\n", mul);
+        printf("mul: %f\n", mul);
         ExternalHostGroupSpikeMul[ i_arr ] = mul;
-        // printf("ExternalHostGroupSpikeMul assigned\n");
+        printf("ExternalHostGroupSpikeMul assigned\n");
       }
     }
   }
@@ -331,7 +334,8 @@ NESTGPU::ExternalSpikeReset()
   gpuErrchk( cudaMemset( d_ExternalSpikeNum, 0, sizeof( uint ) ) );
   gpuErrchk( cudaMemset( d_ExternalTargetSpikeNum, 0, n_hosts_ * sizeof( uint ) ) );
   gpuErrchk( cudaMemset( d_ExternalHostGroupSpikeNum, 0, conn_->getHostGroup().size() * sizeof( uint ) ) );
-
+  std::fill(h_ExternalHostGroupSpikeNum.begin(), h_ExternalHostGroupSpikeNum.end(), 0);
+  
   return 0;
 }
 
@@ -346,21 +350,15 @@ NESTGPU::ExternalSpikeInit()
   RecvSpikeFromRemote_CUDAcp_time_ = 0;
 
   uint n_node = GetNLocalNodes(); // number of nodes
-  // uint *h_NExternalNodeTargetHost = new uint[n_node];
-  // uint **h_ExternalNodeTargetHostId = new uint*[n_node];
-  // uint **h_ExternalNodeId = new uint*[n_node];
 
-  h_ExternalTargetSpikeIdx0 = new uint[ n_hosts_ + 1 ];
-  // h_ExternalSpikeNodeId = new uint[max_spike_per_host_];
-  h_ExternalTargetSpikeNum = new uint[ n_hosts_ ];
-  //h_ExternalSourceSpikeNum = new uint[ n_hosts_ ];
-  h_ExternalSourceSpikeIdx0 = new uint[ n_hosts_ + 1 ];
-  h_ExternalTargetSpikeNodeId = new uint[ max_remote_spike_num_ ];
-  //h_ExternalSourceSpikeNodeId = new uint[ max_remote_spike_num_ ];
+  h_ExternalTargetSpikeIdx0.resize( n_hosts_ + 1 );
+  h_ExternalTargetSpikeNum.resize( n_hosts_ );
+  h_ExternalSourceSpikeIdx0.resize( n_hosts_ + 1 );
+  h_ExternalTargetSpikeNodeId.resize( max_remote_spike_num_ );
 
-  h_ExternalHostGroupSpikeNodeId = new uint[ max_remote_spike_num_ ];
+  h_ExternalHostGroupSpikeNodeId.resize( max_remote_spike_num_ );
 
-  h_ExternalSourceSpikeDispl = new int[ n_hosts_ ];
+  h_ExternalSourceSpikeDispl.resize( n_hosts_ );
   h_ExternalSourceSpikeDispl[0] = 0;
   for (int ih=1; ih<n_hosts_; ih++ ) {
     h_ExternalSourceSpikeDispl[ih] = h_ExternalSourceSpikeDispl[ih-1] + max_spike_per_host_;
@@ -371,7 +369,7 @@ NESTGPU::ExternalSpikeInit()
 
   if ( remote_spike_mul_ )
   {
-    h_ExternalSpikeMul = new float[ max_spike_per_host_ ];
+    h_ExternalSpikeMul.resize( max_spike_per_host_ );
     CUDAMALLOCCTRL( "&d_ExternalSpikeMul", &d_ExternalSpikeMul, max_spike_per_host_ * sizeof( float ) );
     CUDAMALLOCCTRL( "&d_ExternalTargetSpikeMul", &d_ExternalTargetSpikeMul, max_remote_spike_num_ * sizeof( float ) );
     CUDAMALLOCCTRL( "&d_ExternalSourceSpikeMul", &d_ExternalSourceSpikeMul, max_remote_spike_num_ * sizeof( float ) );
@@ -386,7 +384,7 @@ NESTGPU::ExternalSpikeInit()
   CUDAMALLOCCTRL(
     "&d_ExternalTargetSpikeNodeId", &d_ExternalTargetSpikeNodeId, max_remote_spike_num_ * sizeof( uint ) );
   CUDAMALLOCCTRL(
-    "&d_ExternalHostGroupSpikeNodeId", &d_ExternalTargetSpikeNodeId, max_remote_spike_num_ * sizeof( uint ) );
+    "&d_ExternalHostGroupSpikeNodeId", &d_ExternalHostGroupSpikeNodeId, max_remote_spike_num_ * sizeof( uint ) );
 
   // CUDAMALLOCCTRL("&d_ExternalSourceSpikeNum",&d_ExternalSourceSpikeNum,
   // n_hosts*sizeof(int));
@@ -407,22 +405,24 @@ NESTGPU::ExternalSpikeInit()
   std::vector< std::vector< int > > &host_group = conn_->getHostGroup();
   uint nhg = host_group.size();
 
-  h_ExternalSourceSpikeNum = new int*[ nhg + 1 ];
-  h_ExternalSourceSpikeNodeId = new uint*[ nhg + 1 ];
+  //h_ExternalSourceSpikeNum.resize( nhg + 1 );
+  //h_ExternalSourceSpikeNodeId.resize( nhg + 1 );
+  h_ExternalSourceSpikeNum.resize( nhg );
+  h_ExternalSourceSpikeNodeId.resize( nhg );
 
   std::cout << "h_ExternalSourceSpikeNum[0] this_host_ " << this_host_ << ", n_hosts_ " << n_hosts_ << "\n";
-  h_ExternalSourceSpikeNum[0] = new int[ n_hosts_ ];
-  h_ExternalSourceSpikeNodeId[0] = new uint[ max_remote_spike_num_ ];
-  for (uint ihg=0; ihg<nhg; ihg++) {
-    h_ExternalSourceSpikeNum[ihg+1] = new int[ host_group[ihg].size() ];
-    h_ExternalSourceSpikeNodeId[ihg+1] = new uint[ max_remote_spike_num_ ];
+  h_ExternalSourceSpikeNum[0].resize( n_hosts_ );
+  h_ExternalSourceSpikeNodeId[0].resize( max_remote_spike_num_ );
+  for (uint ihg=1; ihg<nhg; ihg++) {
+    h_ExternalSourceSpikeNum[ihg].resize( host_group[ihg].size() );
+    h_ExternalSourceSpikeNodeId[ihg].resize( max_remote_spike_num_ );
   }
-  h_ExternalSourceSpikeNodeId_flat = new uint[ max_remote_spike_num_ ];
+  h_ExternalSourceSpikeNodeId_flat.resize( max_remote_spike_num_ );
   
-  std::cout << "ESI 2\n";
+  std::cout << "ESI 2 this_host_ " << this_host_ << ", nhg " << nhg << "\n";
   
-  h_ExternalHostGroupSpikeIdx0 = new uint[ nhg + 1 ];
-  h_ExternalHostGroupSpikeNum = new uint[ nhg ];
+  h_ExternalHostGroupSpikeIdx0.resize( nhg + 1 );
+  h_ExternalHostGroupSpikeNum.resize( nhg );
   CUDAMALLOCCTRL( "&d_ExternalHostGroupSpikeIdx0", &d_ExternalHostGroupSpikeIdx0, ( nhg + 1 ) * sizeof( uint ) );
   CUDAMALLOCCTRL( "&d_ExternalHostGroupSpikeNum", &d_ExternalHostGroupSpikeNum, nhg * sizeof( uint ) );
   
@@ -450,26 +450,49 @@ NESTGPU::ExternalSpikeInit()
   CUDAMALLOCCTRL("&hd_ExternalHostGroupNodeId[0]", &hd_ExternalHostGroupNodeId[0], ntg_tot*sizeof(uint));
   //uint pos = 0;
 
-  std::cout << "ESI 5\n";
+  std::cout << "ESI 5 this_host_ " << this_host_ << "\n";
   
   auto node_target_host_group_it = node_target_host_group_flat.begin();
   uint *host_group_node_id_pt = &host_group_node_id_flat[0];
+  std::cout << "ESI 5b this_host_ " << this_host_ << ", n_node " << n_node << ", nnthg.size " << n_node_target_host_group.size()
+	    << ", nthgf.size " << node_target_host_group_flat.size()
+	    << ", nthg.size " << node_target_host_group.size()
+	    << ", hglsnm.size " << host_group_local_source_node_map.size() << "\n";
+  std::cout << "ESI 5c this_host_ " << this_host_ << ", hd_ExternalNodeTargetHostGroupId.size " << hd_ExternalNodeTargetHostGroupId.size() << "\n";
+  std::cout << "ESI 5d this_host_ " << this_host_ << ", hd_ExternalHostGroupNodeId.size " << hd_ExternalHostGroupNodeId.size() << "\n";
+    
   for (inode_t i_node = 0; i_node<n_node; i_node++) {
     uint ntg = n_node_target_host_group[i_node];
-    std::copy(node_target_host_group[i_node].begin(), node_target_host_group[i_node].end(), node_target_host_group_it);
-    for (uint group_local_id=0; group_local_id<ntg; group_local_id++) {
-      inode_t node_pos = host_group_local_source_node_map[group_local_id][i_node];
-      *(host_group_node_id_pt + group_local_id) = node_pos;
+    std::cout << "ESI 5e this_host_ " << this_host_ << ", i_node " << i_node << ", ntg " << ntg
+	      << ", nthg[i_node].size " << node_target_host_group[i_node].size() << "\n";
+    if (node_target_host_group[i_node].size() != ntg) {
+      throw ngpu_exception( std::string( "Inconsistent number of target host groups for node " ) + std::to_string( i_node )
+			    + "\n\tn_node_target_host_group[i_node] = " + std::to_string( ntg )
+			    + "\n\tnode_target_host_group[i_node].size() = " + std::to_string( node_target_host_group[i_node].size() ) );
     }
-    node_target_host_group_it += ntg;
-    host_group_node_id_pt += ntg;
+    if (ntg > 0) {
+      std::copy(node_target_host_group[i_node].begin(), node_target_host_group[i_node].end(), node_target_host_group_it);
+      //for (uint group_local_id=0; group_local_id<ntg; group_local_id++) {
+      //for (auto hg_itr = node_target_host_group[i_node].begin(); hg_itr != node_target_host_group[i_node].end(); ++hg_itr) {
+      for (uint itg=0; itg<ntg; itg++) {
+	//uint group_local_id = *hg_itr;
+	uint group_local_id = node_target_host_group_it[itg];
+	inode_t node_pos = host_group_local_source_node_map[group_local_id][i_node];
+	//*(host_group_node_id_pt + group_local_id) = node_pos;
+	*(host_group_node_id_pt + itg) = node_pos;
+      }
+      node_target_host_group_it += ntg;
+      host_group_node_id_pt += ntg;
+    }
+    std::cout << "ESI 5f this_host_ " << this_host_ << ", i_node " << i_node << "\n";
     if (i_node < n_node - 1) {
       hd_ExternalNodeTargetHostGroupId[i_node + 1] = hd_ExternalNodeTargetHostGroupId[i_node] + ntg;
       hd_ExternalHostGroupNodeId[i_node + 1] = hd_ExternalHostGroupNodeId[i_node] + ntg; 
     }
+    std::cout << "ESI 5g this_host_ " << this_host_ << ", i_node " << i_node << "\n";
   }
 
-  std::cout << "ESI 6\n";
+  std::cout << "ESI 6 this_host_ " << this_host_ << "\n";
   
   gpuErrchk( cudaMemcpy( hd_ExternalNodeTargetHostGroupId[0], &node_target_host_group_flat[0], ntg_tot * sizeof( uint ),
 			 cudaMemcpyHostToDevice ) );
@@ -641,12 +664,24 @@ NESTGPU::organizeExternalSpikes( int n_ext_spikes )
   // probably missing some condition checking if host groups and/or point-to-point MPI communication are actually used
   countExternalSpikesPerTargetHostGroup<<< n_ext_spikes, 1024 >>>();
   CUDASYNC;
+  /// TEMPORARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  std::cout << "OES 1 this_host_ " << this_host_ << ", conn_->getHostGroup().size() " << conn_->getHostGroup().size() << "\n";
+  gpuErrchk( cudaMemcpy( &h_ExternalHostGroupSpikeNum[0], d_ExternalHostGroupSpikeNum, conn_->getHostGroup().size() * sizeof( uint ), cudaMemcpyDeviceToHost ) );
+  std::cout << "OES 2 this_host_ " << this_host_ << ", hgsn[0] " << h_ExternalHostGroupSpikeNum[0]
+	    << ", hgsn[1] " << h_ExternalHostGroupSpikeNum[1] << "\n";  
   prefix_scan( ( int* ) d_ExternalHostGroupSpikeIdx0, ( int* ) d_ExternalHostGroupSpikeNum, conn_->getHostGroup().size() + 1, true );
-  DBGCUDASYNC;
+  //DBGCUDASYNC;
+  CUDASYNC;
+  gpuErrchk( cudaMemcpy( &h_ExternalHostGroupSpikeIdx0[0], d_ExternalHostGroupSpikeIdx0, (conn_->getHostGroup().size() + 1)* sizeof( uint ), cudaMemcpyDeviceToHost ) );
+  std::cout << "OES 3 this_host_ " << this_host_ << ", hgsi0[0] " << h_ExternalHostGroupSpikeIdx0[0]
+	    << ", hgsi0[1] " << h_ExternalHostGroupSpikeIdx0[1]
+	    << ", hgsi0[2] " << h_ExternalHostGroupSpikeIdx0[2] << "\n";
+
   gpuErrchk( cudaMemset( d_ExternalHostGroupSpikeNum, 0, conn_->getHostGroup().size() * sizeof( uint ) ) );
   organizeExternalSpikesPerTargetHostGroup<<< n_ext_spikes, 1024 >>>();
   CUDASYNC;
-
+  std::cout << "OES 4 this_host_ " << this_host_ << "\n";
+    
   return 0;
 }
 
@@ -677,22 +712,25 @@ NESTGPU::CopySpikeFromRemote()
 	} 
     }
   }
-  std::cout << "CSFR 1 this_host_ " << this_host_ << "\n";
+  std::cout << "CSFR 1 this_host_ " << this_host_ << ", n_spike_tot " << n_spike_tot << "\n";
   // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   std::vector<std::vector< std::vector< inode_t > > > &host_group_local_node_index = conn_->getHostGroupLocalNodeIndex();
 
   std::vector< std::vector< int > > &host_group = conn_->getHostGroup();
   uint nhg = host_group.size();
-  for (uint ihg=1; ihg<nhg; ihg++) {
-    for (uint group_local_id=0; group_local_id<nhg; group_local_id++) {
-      uint nh = host_group[group_local_id].size(); // number of hosts in the group
-      // loop on hosts
-      for ( uint gi_host = 0; gi_host < nh; gi_host++ ) {
+  for (uint group_local_id=1; group_local_id<nhg; group_local_id++) {
+    uint nh = host_group[group_local_id].size(); // number of hosts in the group
+    // loop on hosts
+    for ( uint gi_host = 0; gi_host < nh; gi_host++ ) {
+      int i_host = host_group[group_local_id][gi_host];
+      if (i_host != this_host_) {
 	int n_spike = h_ExternalSourceSpikeNum[group_local_id][ gi_host ];
+	std::cout << "CSFR 1 this_host_ " << this_host_ << ", glid " << group_local_id << ", ih " << gi_host << ", n_spike " << n_spike << "\n";
 	for ( int i_spike = 0; i_spike < n_spike; i_spike++ ) {
 	  // pack spikes received from remote hosts
-	  inode_t node_pos = h_ExternalSourceSpikeNodeId[ihg+1][ gi_host * max_spike_per_host_ + i_spike ];
-	  inode_t node_local = host_group_local_node_index[group_local_id][gi_host][node_pos];	    
+	  inode_t node_pos = h_ExternalSourceSpikeNodeId[group_local_id][ gi_host * max_spike_per_host_ + i_spike ];
+	  inode_t node_local = host_group_local_node_index[group_local_id][gi_host][node_pos];
+	  std::cout << "CSFR 1 this_host_ " << this_host_ << ", ih " << gi_host << ", node_pos " << node_pos << ", node_local " << node_local << "\n";
 	  h_ExternalSourceSpikeNodeId_flat[ n_spike_tot ] = node_local;
 	  n_spike_tot++;
 	  if ( n_spike_tot >= max_remote_spike_num_ ) {
@@ -701,11 +739,11 @@ NESTGPU::CopySpikeFromRemote()
 	  } 
 	}
       }
-      
     }
   }
+
   // xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-  std::cout << "CSFR 2 this_host_ " << this_host_ << "\n";
+  std::cout << "CSFR 2 this_host_ " << this_host_ << ", n_spike_tot " << n_spike_tot << "\n";
   
   if ( n_spike_tot > 0 )
   {
@@ -713,13 +751,13 @@ NESTGPU::CopySpikeFromRemote()
     // Memcopy will be synchronized
     // copy to GPU memory cumulative sum of number of spikes per source host
     gpuErrchk( cudaMemcpyAsync( d_ExternalSourceSpikeIdx0,
-      h_ExternalSourceSpikeIdx0,
+      &h_ExternalSourceSpikeIdx0[0],
       ( n_hosts_ + 1 ) * sizeof( uint ),
       cudaMemcpyHostToDevice ) );
     DBGCUDASYNC;
     // copy to GPU memory packed spikes from remote hosts
     gpuErrchk( cudaMemcpyAsync( d_ExternalSourceSpikeNodeId,
-      h_ExternalSourceSpikeNodeId_flat,
+      &h_ExternalSourceSpikeNodeId_flat[0],
       n_spike_tot * sizeof( uint ),
       cudaMemcpyHostToDevice ) );
     DBGCUDASYNC;

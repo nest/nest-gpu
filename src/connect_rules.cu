@@ -485,12 +485,12 @@ NESTGPU::RemoteConnect( int i_source_host,
 {
   CheckUncalibrated( "Connections cannot be created after calibration" );
 
-  inode_t* d_target;
-  CUDAMALLOCCTRL( "&d_target", &d_target, n_target * sizeof( inode_t ) );
-  gpuErrchk( cudaMemcpy( d_target, target, n_target * sizeof( inode_t ), cudaMemcpyHostToDevice ) );
+  //inode_t* d_target;
+  //CUDAMALLOCCTRL( "&d_target", &d_target, n_target * sizeof( inode_t ) );
+  //gpuErrchk( cudaMemcpy( d_target, target, n_target * sizeof( inode_t ), cudaMemcpyHostToDevice ) );
   int ret =
-    conn_->remoteConnect( i_source_host, i_source, n_source, i_target_host, d_target, n_target, i_host_group, conn_spec, syn_spec );
-  CUDAFREECTRL( "d_target", d_target );
+    conn_->remoteConnect( i_source_host, i_source, n_source, i_target_host, target, n_target, i_host_group, conn_spec, syn_spec );
+  //CUDAFREECTRL( "d_target", d_target );
 
   return ret;
 }
@@ -508,12 +508,12 @@ NESTGPU::RemoteConnect( int i_source_host,
 {
   CheckUncalibrated( "Connections cannot be created after calibration" );
 
-  inode_t* d_source;
-  CUDAMALLOCCTRL( "&d_source", &d_source, n_source * sizeof( inode_t ) );
-  gpuErrchk( cudaMemcpy( d_source, source, n_source * sizeof( inode_t ), cudaMemcpyHostToDevice ) );
+  //inode_t* d_source;
+  //CUDAMALLOCCTRL( "&d_source", &d_source, n_source * sizeof( inode_t ) );
+  //gpuErrchk( cudaMemcpy( d_source, source, n_source * sizeof( inode_t ), cudaMemcpyHostToDevice ) );
   int ret =
-    conn_->remoteConnect( i_source_host, d_source, n_source, i_target_host, i_target, n_target, i_host_group, conn_spec, syn_spec );
-  CUDAFREECTRL( "d_source", d_source );
+    conn_->remoteConnect( i_source_host, source, n_source, i_target_host, i_target, n_target, i_host_group, conn_spec, syn_spec );
+  //CUDAFREECTRL( "d_source", d_source );
 
   return ret;
 }
@@ -531,16 +531,18 @@ NESTGPU::RemoteConnect( int i_source_host,
 {
   CheckUncalibrated( "Connections cannot be created after calibration" );
 
+  /*
   inode_t* d_source;
   CUDAMALLOCCTRL( "&d_source", &d_source, n_source * sizeof( inode_t ) );
   gpuErrchk( cudaMemcpy( d_source, source, n_source * sizeof( inode_t ), cudaMemcpyHostToDevice ) );
   inode_t* d_target;
   CUDAMALLOCCTRL( "&d_target", &d_target, n_target * sizeof( inode_t ) );
   gpuErrchk( cudaMemcpy( d_target, target, n_target * sizeof( inode_t ), cudaMemcpyHostToDevice ) );
+  */
   int ret =
-    conn_->remoteConnect( i_source_host, d_source, n_source, i_target_host, d_target, n_target, i_host_group, conn_spec, syn_spec );
-  CUDAFREECTRL( "d_source", d_source );
-  CUDAFREECTRL( "d_target", d_target );
+    conn_->remoteConnect( i_source_host, source, n_source, i_target_host, target, n_target, i_host_group, conn_spec, syn_spec );
+  //CUDAFREECTRL( "d_source", d_source );
+  //CUDAFREECTRL( "d_target", d_target );
 
   return ret;
 }
