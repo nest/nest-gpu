@@ -1027,17 +1027,9 @@ public:
     int i_host_group,
     ConnSpec& conn_spec,
     SynSpec& syn_spec )
-  {
-    std::cout << "Begin remoteConnect** this_host_ " << this_host_
-	      << ", source_host " << source_host
-	      << ", target_host " << target_host << "\n";
-      
+  {      
     return _RemoteConnect< inode_t*, inode_t* >(
       source_host, source, n_source, target_host, target, n_target, i_host_group, conn_spec, syn_spec );
-
-    std::cout << "End remoteConnect** this_host_ " << this_host_
-	      << ", source_host " << source_host
-	      << ", target_host " << target_host << "\n";
 
   }
 

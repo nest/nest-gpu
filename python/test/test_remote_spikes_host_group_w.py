@@ -42,11 +42,7 @@ for ish in range(3):
                         delay = 100 + 100.0*ith + 50.0*itn
                         weight = 5.0 + 10.0*isn
                         syn_spec = {'weight': weight, 'delay': delay}
-                        #print (ish, [spike[isn]], ith, [neuron[itn]])
-                        #ngpu.RemoteConnect(ish, spike[isn:isn+1], \
-                        #                   ith, neuron[itn:itn+1], \
-                        #                   conn_spec, syn_spec)
-                        print(f"PyRC this_host_ {mpi_id}, ish {ish}, isn {spike[isn]}, ith {ith}, itn {neuron[itn]}")
+                        #print(f"PyRC this_host_ {mpi_id}, ish {ish}, isn {spike[isn]}, ith {ith}, itn {neuron[itn]}")
                         ngpu.RemoteConnect(ish, [spike[isn]], \
                                            ith, [neuron[itn]], \
                                            conn_spec, syn_spec, whg)
@@ -90,7 +86,7 @@ plt.plot(t, V3)
 delay = 100 + 100.0*mpi_id + 100.0
 plt.xlim(delay, delay+150)
 
-print("Check")
+#print("Check")
 i_fig = 0
 spike_list = []
 for ith in range(3):

@@ -18,14 +18,11 @@ print("Building on host ", mpi_id, " ...")
 
 ngpu.SetKernelStatus("rnd_seed", 1234) # seed for GPU random numbers
 
-print(f"PyBHG this_host_ {mpi_id}")
-
 hg04 = ngpu.CreateHostGroup([0, 4])
 dummy = ngpu.CreateHostGroup([1, 3])
 whg = ngpu.CreateHostGroup([0, 2, 4])
 hg24 = ngpu.CreateHostGroup([2, 4])
 hg02 = ngpu.CreateHostGroup([0, 2])
-print(f"PyAHG this_host_ {mpi_id}")
 
 neuron = ngpu.Create('iaf_psc_exp_g', 3)
 
@@ -49,8 +46,6 @@ if (mpi_id % 2)==0:
 
 conn_spec = {"rule": "one_to_one"}
 
-print(f"PyBC this_host_ {mpi_id}")
-
 for ish in range(3):
     for ith in range(3):
         if ish != ith:
@@ -60,11 +55,7 @@ for ish in range(3):
                         delay = 100 + 100.0*ith + 50.0*itn
                         weight = 5.0 + 10.0*isn
                         syn_spec = {'weight': weight, 'delay': delay}
-                        #print (ish, [spike[isn]], ith, [neuron[itn]])
-                        #ngpu.RemoteConnect(ish, spike[isn:isn+1], \
-                            #                   ith, neuron[itn:itn+1], \
-                            #                   conn_spec, syn_spec)
-                        print(f"PyRC this_host_ {mpi_id}, ish {ish*2}, isn {spike[isn]}, ith {ith*2}, itn {neuron[itn]}")
+                        #print(f"PyRC this_host_ {mpi_id}, ish {ish*2}, isn {spike[isn]}, ith {ith*2}, itn {neuron[itn]}")
                         hg = whg
                         if (ish*2==0 and ith*2==2):
                             hg = -1
@@ -118,7 +109,6 @@ if (mpi_id % 2)==0:
     delay = 100 + 100.0*my_id + 100.0
     plt.xlim(delay, delay+150)
 
-    print("Check")
     i_fig = 0
     spike_list = []
     for ith in range(3):
@@ -146,11 +136,11 @@ if (mpi_id % 2)==0:
         
 if (mpi_id==0):
     print(spike_list)
-    print("hg04", hg04)
-    print("dummy", dummy)
-    print("whg", whg)
-    print("hg24", hg24)
-    print("hg02", hg02)
+    #print("hg04", hg04)
+    #print("dummy", dummy)
+    #print("whg", whg)
+    #print("hg24", hg24)
+    #print("hg02", hg02)
 
 ngpu.MpiFinalize()
 
