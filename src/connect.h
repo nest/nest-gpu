@@ -101,6 +101,7 @@ public:
   // get number of reverse connections
   virtual int getNRevConn() = 0;
 
+  virtual int* getDevSpikeNumPt() = 0;
 
   virtual uint* getDevRevSpikeNumPt() = 0;
 
@@ -134,9 +135,11 @@ public:
 #endif
   
   // return map of host group source nodes to local image nodes
-  virtual std::vector<std::vector< std::vector< inode_t > > > &getHostGroupLocalNodeIndex() = 0;
+  virtual std::vector<std::vector< std::vector< int > > > &getHostGroupLocalNodeIndex() = 0;
 
-  
+  // get point-to-point MPI communication activation matrix
+  virtual std::vector< std::vector < bool > > &getP2PHostConnMatrix() = 0;
+
   // method to organize connections after creation and before using them in simulation
   virtual int organizeConnections( inode_t n_node ) = 0;
 
@@ -328,7 +331,7 @@ public:
   // add an offset to the remote source node indexes in the image node maps
   virtual int addOffsetToImageNodeMap( inode_t n_nodes ) = 0;
 
-  virtual int initInputSpikeBuffer( inode_t n_local_nodes, inode_t n_nodes ) = 0;
+  virtual int initInputSpikeBuffer( inode_t n_local_nodes, inode_t n_nodes, int max_remote_spike_num ) = 0;
 
   virtual int deliverSpikes() = 0;
 
@@ -528,7 +531,9 @@ class ConnectionTemplate : public Connection
   std::vector<MPI_Comm> mpi_comm_vect_;
 #endif
 
-  
+  // point-to-point MPI communication activation matrix
+  std::vector< std::vector < bool > > p2p_host_conn_matrix_;
+
   //////////////////////////////////////////////////
   // reverse-connection-related member variables
   //////////////////////////////////////////////////
@@ -641,7 +646,7 @@ class ConnectionTemplate : public Connection
   // same as above, but ordered
   std::vector<std::vector< std::vector< inode_t > > > host_group_source_node_vect_;
   // map of host group source nodes to local image nodes
-  std::vector<std::vector< std::vector< inode_t > > > host_group_local_node_index_;
+  std::vector<std::vector< std::vector< int > > > host_group_local_node_index_;
 
   // local ids of the host groups to which each node should send spikes
   std::vector< std::unordered_set< int > > node_target_host_group_; // [n_local_nodes ][num. of target host groups ]
@@ -729,6 +734,12 @@ public:
     return n_rev_conn_;
   }
 
+  int*
+  getDevSpikeNumPt()
+  {
+    return d_n_spikes_;
+  }
+  
   uint*
   getDevRevSpikeNumPt()
   {
@@ -786,9 +797,13 @@ public:
     return mpi_comm_vect_;
   }
 
+  // get point-to-point MPI communication activation matrix
+  std::vector< std::vector < bool > > &getP2PHostConnMatrix() {
+    return p2p_host_conn_matrix_;
+  }
   
   // return map of host group source nodes to local image nodes
-  std::vector<std::vector< std::vector< inode_t > > > &getHostGroupLocalNodeIndex()
+  std::vector<std::vector< std::vector< int > > > &getHostGroupLocalNodeIndex()
   {
     return host_group_local_node_index_;
   }
@@ -1109,7 +1124,7 @@ public:
   //////////////////////////////////////////////////
   // class ConnectionTemplate input-spike-buffer-related methods
   //////////////////////////////////////////////////
-  int initInputSpikeBuffer( inode_t n_local_nodes, inode_t n_nodes );
+  int initInputSpikeBuffer( inode_t n_local_nodes, inode_t n_nodes, int max_remote_spike_num );
 
   int deliverSpikes();
 
@@ -2768,6 +2783,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::organizeConnections( inode_t n_node
   }
   else if ( getSpikeBufferAlgo() == OUTPUT_SPIKE_BUFFER_ALGO )
   {
+    CUDAMALLOCCTRL( "&d_conn_group_idx0_", &d_conn_group_idx0_, ( n_node + 1 ) * sizeof( iconngroup_t ) );
     gpuErrchk( cudaMemset( d_conn_group_idx0_, 0, ( n_node + 1 ) * sizeof( iconngroup_t ) ) );
   }
 
@@ -3812,6 +3828,10 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setNHosts( int n_hosts )
   initConnRandomGenerator();
   
   if (n_hosts > 1) {
+    p2p_host_conn_matrix_.resize(n_hosts);
+    for (int i_host=0; i_host < n_hosts; i_host++) {
+      p2p_host_conn_matrix_[i_host].resize(n_hosts, false);
+    }
     // sequence of all hosts indexes
     std::vector< int > seq;
     for (int i=0; i < n_hosts; i++) {

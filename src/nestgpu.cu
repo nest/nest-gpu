@@ -415,7 +415,7 @@ NESTGPU::Calibrate()
 
   conn_->calibrate();
 
-  conn_->initInputSpikeBuffer( GetNLocalNodes(), GetNTotalNodes() );
+  conn_->initInputSpikeBuffer( GetNLocalNodes(), GetNTotalNodes(), 1000000); // max_remote_spike_num_ );
 
   poiss_conn::organizeDirectConnections( conn_ );
   for ( unsigned int i = 0; i < node_vect_.size(); i++ )
@@ -625,11 +625,11 @@ NESTGPU::SimulationStep()
   {
     node_vect_[ i ]->Update( it_, neural_time_ );
   }
-  gpuErrchk( cudaPeekAtLastError() );
+  DBGCUDASYNC;
 
   neuron_Update_time_ += ( getRealTime() - time_mark );
   multimeter_->WriteRecords( neural_time_, time_idx );
-
+  
   if ( n_hosts_ > 1 )
   {
     int n_ext_spikes;
@@ -652,8 +652,7 @@ NESTGPU::SimulationStep()
     RecvSpikeFromRemote_time_ += ( getRealTime() - time_mark );
     CopySpikeFromRemote();
   }
-
-
+  
   if ( conn_->getSpikeBufferAlgo() == INPUT_SPIKE_BUFFER_ALGO )
   {
     conn_->deliverSpikes();
@@ -665,7 +664,6 @@ NESTGPU::SimulationStep()
     // Call will get delayed until ClearGetSpikesArrays()
     // afterwards the value of n_spikes will be available
     gpuErrchk( cudaMemcpyAsync( &n_spikes, d_SpikeNum, sizeof( int ), cudaMemcpyDeviceToHost ) );
-
     ClearGetSpikeArrays();
     gpuErrchk( cudaDeviceSynchronize() );
     if ( n_spikes > 0 )
@@ -685,7 +683,7 @@ NESTGPU::SimulationStep()
       NestedLoop_time_ += ( getRealTime() - time_mark );
     }
   }
-
+  
   time_mark = getRealTime();
   for ( unsigned int i = 0; i < node_vect_.size(); i++ )
   {
@@ -748,7 +746,7 @@ NESTGPU::SimulationStep()
 
   gpuErrchk( cudaPeekAtLastError() );
   SpikeReset_time_ += ( getRealTime() - time_mark );
-
+  
   if ( n_hosts_ > 1 )
   {
     time_mark = getRealTime();
@@ -802,7 +800,7 @@ NESTGPU::SimulationStep()
   }
 
   it_++;
-
+    
   return 0;
 }
 

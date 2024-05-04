@@ -675,7 +675,7 @@ NESTGPU::CopySpikeFromRemote()
 	} 
     }
   }
-  std::vector<std::vector< std::vector< inode_t > > > &host_group_local_node_index = conn_->getHostGroupLocalNodeIndex();
+  std::vector<std::vector< std::vector< int > > > &host_group_local_node_index = conn_->getHostGroupLocalNodeIndex();
 
   std::vector< std::vector< int > > &host_group = conn_->getHostGroup();
   uint nhg = host_group.size();
@@ -689,13 +689,15 @@ NESTGPU::CopySpikeFromRemote()
 	for ( int i_spike = 0; i_spike < n_spike; i_spike++ ) {
 	  // pack spikes received from remote hosts
 	  inode_t node_pos = h_ExternalSourceSpikeNodeId[group_local_id][ gi_host * max_spike_per_host_ + i_spike ];
-	  inode_t node_local = host_group_local_node_index[group_local_id][gi_host][node_pos];
-	  h_ExternalSourceSpikeNodeId_flat[ n_spike_tot ] = node_local;
-	  n_spike_tot++;
-	  if ( n_spike_tot >= max_remote_spike_num_ ) {
-	    throw ngpu_exception( std::string( "Number of spikes to be received remotely " ) + std::to_string( n_spike_tot )
-				  + " larger than limit " + std::to_string( max_remote_spike_num_ ) );
-	  } 
+	  int node_local = host_group_local_node_index[group_local_id][gi_host][node_pos];
+	  if (node_local >= 0) {
+	    h_ExternalSourceSpikeNodeId_flat[ n_spike_tot ] = node_local;
+	    n_spike_tot++;
+	    if ( n_spike_tot >= max_remote_spike_num_ ) {
+	      throw ngpu_exception( std::string( "Number of spikes to be received remotely " ) + std::to_string( n_spike_tot )
+				    + " larger than limit " + std::to_string( max_remote_spike_num_ ) );
+	    }
+	  }
 	}
       }
     }
@@ -722,10 +724,10 @@ NESTGPU::CopySpikeFromRemote()
     MapIndexToImageNodeKernel<<< n_hosts_, 1024 >>>(
       n_hosts_, d_ExternalSourceSpikeIdx0, d_ExternalSourceSpikeNodeId );
     DBGCUDASYNC;
-    
+
     PushSpikeFromRemote<<< ( n_spike_tot + 1023 ) / 1024, 1024 >>>( n_spike_tot, d_ExternalSourceSpikeNodeId );
     DBGCUDASYNC;
   }
-  
+
   return n_spike_tot;
 }

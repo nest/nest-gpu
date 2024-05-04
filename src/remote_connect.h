@@ -665,10 +665,11 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
       host_group_source_node_vect_[group_local_id][gi_host].resize(n_src);
       std::copy(host_group_source_node_[group_local_id][gi_host].begin(), host_group_source_node_[group_local_id][gi_host].end(),
 		host_group_source_node_vect_[group_local_id][gi_host].begin());
-
+      
+      host_group_local_node_index_[group_local_id][gi_host].resize(n_src);
+      std::fill(host_group_local_node_index_[group_local_id][gi_host].begin(), host_group_local_node_index_[group_local_id][gi_host].end(), -1);
       int src_host = host_group_[group_local_id][gi_host];
       if ( src_host != this_host_ ) { // skip self host
-	host_group_local_node_index_[group_local_id][gi_host].resize(n_src);
 	// get number of elements in the map
 	uint n_node_map;
 	gpuErrchk(
@@ -817,12 +818,16 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::_RemoteConnect( int source_host,
   // if i_host_group<0, i.e. a point-to-point MPI communication is required
   // and this host is the source (but it is not a local connection) call RemoteConnectTarget
   // Check if source_host matches this_host
-  else if (this_host_ == source_host) {
-    int ret = remoteConnectTarget< T1, T2 >( target_host, d_source, n_source, d_target, n_target, conn_spec, syn_spec );
-    freeNodeArrayFromDevice(d_source);
-    freeNodeArrayFromDevice(d_target);
+  else {
+    //p2p_flag_ = true;
+    p2p_host_conn_matrix_[source_host][target_host] = true;
+    if (this_host_ == source_host) {
+      int ret = remoteConnectTarget< T1, T2 >( target_host, d_source, n_source, d_target, n_target, conn_spec, syn_spec );
+      freeNodeArrayFromDevice(d_source);
+      freeNodeArrayFromDevice(d_target);
 
-    return ret;
+      return ret;
+    }
   }
   // Check if target_host matches this_host
   if (this_host_ == target_host) {
@@ -1035,7 +1040,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
       std::cout << "group_local_id" << group_local_id << "\n";
       std::cout << "gi_host" << gi_host << "\n";
       
-      exit( -1 );
+      //exit( -1 );
+      throw ngpu_exception( "Error" );
     }
     CUDAMALLOCCTRL( "&d_node_map", &d_node_map, n_blocks * sizeof( uint* ) );
     gpuErrchk( cudaMemcpy( d_node_map,
@@ -1136,7 +1142,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectSource( int source_hos
   {
     std::cerr << "Inconsistent number of elements " << n_node_map << " and number of blocks " << n_blocks
               << " in remote_source_node_map\n";
-    exit( -1 );
+    //exit( -1 );
+    throw ngpu_exception( "Error" );
   }
   
   // Sort the WHOLE key-pair map source_node_map, image_node_map
@@ -1331,7 +1338,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectTarget( int target_hos
     {
       std::cerr << "Inconsistent number of elements " << n_node_map << " and number of blocks " << n_blocks
                 << " in local_source_node_map\n";
-      exit( -1 );
+      //exit( -1 );
+      throw ngpu_exception( "Error" );
     }
     CUDAMALLOCCTRL( "&d_node_map", &d_node_map, n_blocks * sizeof( uint* ) );
     gpuErrchk( cudaMemcpy(
@@ -1411,7 +1419,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectTarget( int target_hos
   {
     std::cerr << "Inconsistent number of elements " << n_node_map << " and number of blocks " << n_blocks
               << " in local_source_node_map\n";
-    exit( -1 );
+    //exit( -1 );
+    throw ngpu_exception( "Error" );
   }
 
   // Sort the WHOLE map source_node_map
@@ -1482,7 +1491,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int 
     host_group_source_node_vect_.push_back(empty_node_vect);
     
     host_group_local_source_node_map_.push_back(std::vector< uint >());
-    std::vector< std::vector< inode_t > > hg_lni(hg.size(), std::vector< inode_t >());
+    std::vector< std::vector< int > > hg_lni(hg.size(), std::vector< int >());
     host_group_local_node_index_.push_back(hg_lni);
   }
 #ifdef HAVE_MPI

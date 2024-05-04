@@ -18,7 +18,7 @@ def STDPUpdate(w, Dt, tau_plus, tau_minus, Wplus, alpha, mu_plus, mu_minus, \
             w1 = 0.0
     return w1
 
-
+ngpu.SetKernelStatus({'spike_buffer_algo': 0})
 Dt_offset = 2.0 # time difference between presynaptic and postsynaptic spike
 N=400 # number of presynaptic and postsynaptic neurons
 Dt_max = 5.0 # maximum axonal/dendritic delay

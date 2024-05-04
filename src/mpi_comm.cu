@@ -49,6 +49,10 @@ NESTGPU::SendSpikeToRemote( int n_ext_spikes )
   MPI_Comm_rank( MPI_COMM_WORLD, &mpi_id );
 
   double time_mark = getRealTime();
+
+  // get point-to-point MPI communication activation matrix
+  std::vector< std::vector < bool > > &p2p_host_conn_matrix = conn_->getP2PHostConnMatrix();
+  
   gpuErrchk( cudaMemcpy(
     &h_ExternalTargetSpikeNum[0], d_ExternalTargetSpikeNum, n_hosts_ * sizeof( int ), cudaMemcpyDeviceToHost ) );
   SendSpikeToRemote_CUDAcp_time_ += ( getRealTime() - time_mark );
@@ -80,8 +84,8 @@ NESTGPU::SendSpikeToRemote( int n_ext_spikes )
       h_ExternalTargetSpikeIdx0[ i ] = 0;
     }
   }
+  
   // prepare array for sending spikes to host groups through MPI communicators
-
   int n_hg_spike_tot = 0;
   // copy spikes from GPU to CPU memory
   if ( n_ext_spikes > 0 ) {
@@ -109,8 +113,8 @@ NESTGPU::SendSpikeToRemote( int n_ext_spikes )
   // loop on remote MPI proc
   for ( int ih = 0; ih < n_hosts_; ih++ )
   {
-    if ( ( int ) ih == mpi_id )
-    { // skip self MPI proc
+    if ( ( int ) ih == mpi_id || p2p_host_conn_matrix[this_host_][ih]==false)
+    { // skip self MPI proc and unused point-to-point MPI communications
       continue;
     }
     // get index and size of spike packet that must be sent to MPI proc ih
@@ -147,11 +151,15 @@ NESTGPU::RecvSpikeFromRemote()
 
   double time_mark = getRealTime();
 
+  // get point-to-point MPI communication activation matrix
+  std::vector< std::vector < bool > > &p2p_host_conn_matrix = conn_->getP2PHostConnMatrix();
+
   // loop on remote MPI proc
   for ( int i_host = 0; i_host < n_hosts_; i_host++ )
   {
-    if ( ( int ) i_host == mpi_id )
+    if ( ( int ) i_host == mpi_id || p2p_host_conn_matrix[i_host][this_host_]==false)
     {
+      recv_mpi_request[ i_host ] = MPI_REQUEST_NULL;
       continue; // skip self MPI proc
     }
     // start nonblocking MPI receive from MPI proc i_host
@@ -164,7 +172,7 @@ NESTGPU::RecvSpikeFromRemote()
       &recv_mpi_request[ i_host ] );
   }
   MPI_Status statuses[ n_hosts_ ];
-  recv_mpi_request[ mpi_id ] = MPI_REQUEST_NULL;
+  //recv_mpi_request[ mpi_id ] = MPI_REQUEST_NULL;
   //MPI_Waitall( n_hosts_ + nhg - 1, recv_mpi_request, statuses );
   MPI_Waitall( n_hosts_, recv_mpi_request, statuses );
 
@@ -184,8 +192,9 @@ NESTGPU::RecvSpikeFromRemote()
     uint *recvbuf = &h_ExternalSourceSpikeNodeId[ihg][0]; //[ i_host * max_spike_per_host_ ] // receiving buffers
     int *recvcounts = &h_ExternalSourceSpikeNum[ihg][0];
     int *displs = &h_ExternalSourceSpikeDispl[0]; // displacememnts of receiving buffers, all equal to max_spike_per_host_
-    
+
     MPI_Allgather(&sendcount, 1, MPI_INT, recvcounts, 1, MPI_INT, mpi_comm_vect[ihg-1]);
+    
     MPI_Allgatherv(sendbuf, sendcount, MPI_INT, recvbuf, recvcounts, displs, MPI_INT, mpi_comm_vect[ihg-1]);
 
   }
@@ -203,8 +212,10 @@ NESTGPU::RecvSpikeFromRemote()
       h_ExternalSourceSpikeNum[0][ i_host ] = 0;
       continue;
     }
-    int count;
-    MPI_Get_count( &statuses[ i_host ], MPI_INT, &count );
+    int count = 0;
+    if (p2p_host_conn_matrix[i_host][this_host_]==true) {
+      MPI_Get_count( &statuses[ i_host ], MPI_INT, &count );
+    }
     h_ExternalSourceSpikeNum[0][ i_host ] = count;
   }
   

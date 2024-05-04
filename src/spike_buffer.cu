@@ -111,8 +111,8 @@ PushSpike( int i_spike_buffer, float mul )
 #ifdef HAVE_N_OUT_CONNECTIONS
       spike_n_connections_[ pos ] = n_out_connections_[ i_spike_buffer ];
 #endif
-      // printf("PushSpike i_conn: %ld\tpos: %d\tspike_first_connection[pos]: %ld\n",
-      //  i_conn, pos, spike_first_connection_[pos]);
+      //printf("PushSpike i_spike_buffer: %d\ti_conn: %ld\tpos: %d\tspike_first_connection[pos]: %ld\n",
+      //i_spike_buffer, i_conn, pos, spike_first_connection_[pos]);
     }
   }
 
