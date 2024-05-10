@@ -415,7 +415,18 @@ NESTGPU::Calibrate()
 
   conn_->calibrate();
 
-  conn_->initInputSpikeBuffer( GetNLocalNodes(), GetNTotalNodes(), 1000000); // max_remote_spike_num_ );
+  int max_delay_num = max_spike_buffer_size_;
+  
+  max_spike_num_ = ( int ) round( max_spike_num_fact_ * GetNTotalNodes() * max_delay_num );
+  max_spike_num_ = ( max_spike_num_ > 1 ) ? max_spike_num_ : 1;
+
+  max_spike_per_host_ = ( int ) round( max_spike_per_host_fact_ * GetNLocalNodes() * max_delay_num );
+  max_spike_per_host_ = ( max_spike_per_host_ > 1 ) ? max_spike_per_host_ : 1;
+
+  max_remote_spike_num_ = max_spike_per_host_ * n_hosts_ * max_remote_spike_num_fact_;
+  max_remote_spike_num_ = ( max_remote_spike_num_ > 1 ) ? max_remote_spike_num_ : 1;
+  
+  conn_->initInputSpikeBuffer( GetNLocalNodes(), GetNTotalNodes(), max_remote_spike_num_ );
 
   poiss_conn::organizeDirectConnections( conn_ );
   for ( unsigned int i = 0; i < node_vect_.size(); i++ )
@@ -431,8 +442,6 @@ NESTGPU::Calibrate()
     conn_->freeConnectionKey();
   }
 
-  int max_delay_num = max_spike_buffer_size_;
-
   unsigned int n_spike_buffers = GetNTotalNodes();
   NestedLoop::Init( n_spike_buffers );
 
@@ -444,15 +453,6 @@ NESTGPU::Calibrate()
   neural_time_ = t_min_;
 
   NodeGroupArrayInit();
-
-  max_spike_num_ = ( int ) round( max_spike_num_fact_ * GetNTotalNodes() * max_delay_num );
-  max_spike_num_ = ( max_spike_num_ > 1 ) ? max_spike_num_ : 1;
-
-  max_spike_per_host_ = ( int ) round( max_spike_per_host_fact_ * GetNLocalNodes() * max_delay_num );
-  max_spike_per_host_ = ( max_spike_per_host_ > 1 ) ? max_spike_per_host_ : 1;
-
-  max_remote_spike_num_ = max_spike_per_host_ * n_hosts_ * max_remote_spike_num_fact_;
-  max_remote_spike_num_ = ( max_remote_spike_num_ > 1 ) ? max_remote_spike_num_ : 1;
 
   SpikeInit( max_spike_num_ );
   spikeBufferInit( GetNTotalNodes(), max_spike_buffer_size_, conn_->getSpikeBufferAlgo() );
