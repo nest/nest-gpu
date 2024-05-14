@@ -12,7 +12,7 @@ for fn in test_iaf_psc_exp_g.py test_iaf_psc_alpha.py test_fixed_total_number.py
     echo $fn : ${pass_str[$res]}
 done
 for fn in syn_group connect getarr setvar2 group_param; do
-    python3 test_$fn.py 2>&1 | grep -v dyl | grep -v 'Time:' | grep -v 'storage bytes:' > tmp
+    python3 test_$fn.py 2>&1 | grep -v dyl | grep -v 'Time:' | grep -v 'storage bytes:' | grep -v Indexing | grep -v 'Total number' > tmp
     diff -qs tmp logp3_$fn.txt 2>&1 >> log.txt
     res=$?
     echo $fn : ${pass_str[$res]}    

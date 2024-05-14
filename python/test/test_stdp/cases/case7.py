@@ -21,6 +21,7 @@ def STDPUpdate(w, Dt, tau_plus, tau_minus, Wplus, alpha, mu_plus, mu_minus, \
     return w1
 
 
+ngpu.SetKernelStatus({'spike_buffer_algo': 0})
 # postsynaptic and presynaptic neurons
 neuron_post = ngpu.Create("parrot_neuron")
 ngpu.ActivateRecSpikeTimes(neuron_post, 20)

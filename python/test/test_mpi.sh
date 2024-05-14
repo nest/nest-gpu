@@ -11,3 +11,4 @@ for fn in test_brunel_mpi.py test_brunel_outdegree_mpi.py test_izh_psc_exp_2s_mp
     fi
     echo $fn : ${mpi_pass_str[$res]}
 done
+. test_remote_connect.sh

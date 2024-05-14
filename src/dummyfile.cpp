@@ -1,5 +1,6 @@
 #include <config.h>
-int dummy_function_for_nestgpu()
+int
+dummy_function_for_nestgpu()
 #include <config.h>
 {
 #include <config.h>

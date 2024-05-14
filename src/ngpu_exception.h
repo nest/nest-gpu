@@ -27,34 +27,50 @@
 
 #ifndef NGPUEXCEPTION_H
 #define NGPUEXCEPTION_H
-#include <string>
 #include <cstring>
 #include <exception>
+#include <string>
 
 ///////////////////////////////////
 // ngpu_exception class definition
 // in case of errors displays a message and stop the execution
 //////////////////////////////////
-class ngpu_exception: public std::exception
+class ngpu_exception : public std::exception
 {
-  const char *Message; // error message
-  
- public:
+  const char* Message; // error message
+
+public:
   // constructors
-  ngpu_exception(const char *ch)  {Message=strdup(ch);}
-  ngpu_exception(std::string s)  {Message=strdup(s.c_str());}
+  ngpu_exception( const char* ch )
+  {
+    Message = strdup( ch );
+  }
+  ngpu_exception( std::string s )
+  {
+    Message = strdup( s.c_str() );
+  }
   // throw method
-  virtual const char* what() const throw()
+  virtual const char*
+  what() const throw()
   {
     return Message;
   }
 };
 
 #define BEGIN_TRY try
-#define END_TRY catch (ngpu_exception &e){ \
-    std::cerr << "Error: " << e.what() << "\n"; }			\
-  catch (bad_alloc&) { std::cerr << "Error allocating memory." << "\n"; } \
-  catch (...) { std::cerr << "Unrecognized error\n"; }
-
+#define END_TRY                                 \
+  catch ( ngpu_exception & e )                  \
+  {                                             \
+    std::cerr << "Error: " << e.what() << "\n"; \
+  }                                             \
+  catch ( bad_alloc& )                          \
+  {                                             \
+    std::cerr << "Error allocating memory."     \
+              << "\n";                          \
+  }                                             \
+  catch ( ... )                                 \
+  {                                             \
+    std::cerr << "Unrecognized error\n";        \
+  }
 
 #endif

@@ -20,74 +20,84 @@
  *
  */
 
-
-
-
-
+#include "cuda_error.h"
+#include "input_spike_buffer.h"
+#include "send_spike.h"
 #include <config.h>
 #include <stdio.h>
-#include "send_spike.h"
-#include "cuda_error.h"
 
-int *d_SpikeNum;
-int *d_SpikeSourceIdx;
-int *d_SpikeConnIdx;
-float *d_SpikeHeight;
-int *d_SpikeTargetNum;
+int* d_SpikeNum;
+int* d_SpikeSourceIdx;
+int* d_SpikeConnIdx;
+float* d_SpikeMul;
+int* d_SpikeTargetNum;
 
 __device__ int MaxSpikeNum;
-__device__ int *SpikeNum;
-__device__ int *SpikeSourceIdx;
-__device__ int *SpikeConnIdx;
-__device__ float *SpikeHeight;
-__device__ int *SpikeTargetNum;
+__device__ int* SpikeNum;
+__device__ int* SpikeSourceIdx;
+__device__ int* SpikeConnIdx;
+__device__ float* SpikeMul;
+__device__ int* SpikeTargetNum;
 
-__device__ void SendSpike(int i_source, int i_conn, float height,
-			  int target_num)
+__device__ void
+SendSpike( int i_source, int i_conn, float mul, int target_num )
 {
-  int pos = atomicAdd(SpikeNum, 1);
-  if (pos>=MaxSpikeNum) {
-    printf("Number of spikes larger than MaxSpikeNum: %d\n", MaxSpikeNum);
+  int pos = atomicAdd( SpikeNum, 1 );
+  if ( pos >= MaxSpikeNum )
+  {
+    printf( "Number of spikes larger than MaxSpikeNum: %d\n", MaxSpikeNum );
     *SpikeNum = MaxSpikeNum;
     return;
   }
-  SpikeSourceIdx[pos] = i_source;
-  SpikeConnIdx[pos] = i_conn;
-  SpikeHeight[pos] = height;
-  SpikeTargetNum[pos] = target_num;
+  SpikeSourceIdx[ pos ] = i_source;
+  SpikeConnIdx[ pos ] = i_conn;
+  SpikeMul[ pos ] = mul;
+  SpikeTargetNum[ pos ] = target_num;
 }
 
-__global__ void DeviceSpikeInit(int *spike_num, int *spike_source_idx,
-				int *spike_conn_idx, float *spike_height,
-				int *spike_target_num,
-				int max_spike_num)
+__global__ void
+DeviceSpikeInit( int* spike_num,
+  int* spike_source_idx,
+  int* spike_conn_idx,
+  float* spike_mul,
+  int* spike_target_num,
+  int max_spike_num )
 {
   SpikeNum = spike_num;
   SpikeSourceIdx = spike_source_idx;
   SpikeConnIdx = spike_conn_idx;
-  SpikeHeight = spike_height;
+  SpikeMul = spike_mul;
   SpikeTargetNum = spike_target_num;
   MaxSpikeNum = max_spike_num;
   *SpikeNum = 0;
 }
 
-
-void SpikeInit(int max_spike_num)
+void
+SpikeInit( int max_spike_num )
 {
-  //h_SpikeTargetNum = new int[PrefixScan::AllocSize];
+  // h_SpikeTargetNum = new int[PrefixScan::AllocSize];
 
-  CUDAMALLOCCTRL("&d_SpikeNum",&d_SpikeNum, sizeof(int));
-  CUDAMALLOCCTRL("&d_SpikeSourceIdx",&d_SpikeSourceIdx, max_spike_num*sizeof(int));
-  CUDAMALLOCCTRL("&d_SpikeConnIdx",&d_SpikeConnIdx, max_spike_num*sizeof(int));
-  CUDAMALLOCCTRL("&d_SpikeHeight",&d_SpikeHeight, max_spike_num*sizeof(float));
-  CUDAMALLOCCTRL("&d_SpikeTargetNum",&d_SpikeTargetNum, max_spike_num*sizeof(int));
-  //printf("here: SpikeTargetNum size: %d", max_spike_num);
-  DeviceSpikeInit<<<1,1>>>(d_SpikeNum, d_SpikeSourceIdx, d_SpikeConnIdx,
-			   d_SpikeHeight, d_SpikeTargetNum, max_spike_num);
+  CUDAMALLOCCTRL( "&d_SpikeNum", &d_SpikeNum, sizeof( int ) );
+  CUDAMALLOCCTRL( "&d_SpikeSourceIdx", &d_SpikeSourceIdx, max_spike_num * sizeof( int ) );
+  CUDAMALLOCCTRL( "&d_SpikeConnIdx", &d_SpikeConnIdx, max_spike_num * sizeof( int ) );
+  CUDAMALLOCCTRL( "&d_SpikeMul", &d_SpikeMul, max_spike_num * sizeof( float ) );
+  CUDAMALLOCCTRL( "&d_SpikeTargetNum", &d_SpikeTargetNum, max_spike_num * sizeof( int ) );
+  // printf("here: SpikeTargetNum size: %d", max_spike_num);
+  DeviceSpikeInit<<< 1, 1 >>>(
+    d_SpikeNum, d_SpikeSourceIdx, d_SpikeConnIdx, d_SpikeMul, d_SpikeTargetNum, max_spike_num );
   gpuErrchk( cudaPeekAtLastError() );
 }
 
-__global__ void SpikeReset()
+__global__ void
+SpikeReset()
 {
-  *SpikeNum = 0;
+  if ( input_spike_buffer_ns::algo_ == INPUT_SPIKE_BUFFER_ALGO )
+  {
+    // printf("Resetting n_spikes\n");
+    *input_spike_buffer_ns::n_spikes_ = 0;
+  }
+  else
+  {
+    *SpikeNum = 0;
+  }
 }

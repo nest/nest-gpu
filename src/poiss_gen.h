@@ -20,21 +20,19 @@
  *
  */
 
-
-
-
-
 #ifndef POISSGEN_H
 #define POISSGEN_H
 
-#include <iostream>
-#include <string>
+#include "base_neuron.h"
+#include "connect.h"
+#include "copass_kernels.h"
+#include "cuda_error.h"
+#include "neuron_models.h"
+#include "node_group.h"
 #include <curand.h>
 #include <curand_kernel.h>
-#include "cuda_error.h"
-#include "node_group.h"
-#include "base_neuron.h"
-#include "neuron_models.h"
+#include <iostream>
+#include <string>
 
 /*
 const int N_POISS_GEN_SCAL_PARAM = 4;
@@ -46,10 +44,6 @@ const std::string poiss_gen_scal_param_name[] = {
 };
 */
 
-namespace poiss_conn
-{
-  int OrganizeDirectConnections();
-};
 /* BeginUserDocs: device, generator
 
 Short description
@@ -83,24 +77,24 @@ EndUserDocs */
 
 class poiss_gen : public BaseNeuron
 {
-  curandState *d_curand_state_;
-  uint *d_poiss_key_array_;
+  // Connection *conn_;
+  curandState* d_curand_state_;
+  void* d_poiss_key_array_;
   int64_t i_conn0_;
-  int64_t n_conn_;
-  float *d_mu_arr_;
+  int64_t n_dir_conn_;
+  float* d_mu_arr_;
   int max_delay_;
-  
- public:
-  
-  int Init(int i_node_0, int n_node, int n_port, int i_group);
 
-  int Calibrate(double, float);
-		
-  int Update(long long it, double t1);
-  int SendDirectSpikes(long long time_idx);
+public:
+  int Init( int i_node_0, int n_node, int n_port, int i_group );
+
+  int Calibrate( double, float );
+
+  int Update( long long it, double t1 );
+
+  int SendDirectSpikes( long long time_idx );
+
   int buildDirectConnections();
 };
-
-
 
 #endif

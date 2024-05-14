@@ -23,7 +23,7 @@ ngpu.Connect([neuron[2]], spike_det, conn_dict, syn_dict3)
 
 record_n = ngpu.CreateRecord("", ["spike"], [neuron[0]], [0])
 
-record_sd = ngpu.CreateRecord("", ["spike_height"], [spike_det[0]], [0])
+record_sd = ngpu.CreateRecord("", ["spike_mul"], [spike_det[0]], [0])
 
 ngpu.Simulate()
 

@@ -48,7 +48,7 @@ class NodeSeq(object):
     def __init__(self, i0, n=1):
         if i0 == None:
             i0 = 0
-            n = -1
+            n = 0 # -1
         self.i0 = i0
         self.n = n
 
@@ -1394,7 +1394,6 @@ def SetNeuronStatus(nodes, var_name, val):
     if (type(nodes)!=list) & (type(nodes)!=tuple) & (type(nodes)!=NodeSeq):
         raise ValueError("Unknown node type")
     if (type(val)==dict):
-        # print("pok0")
         if ((type(nodes)==NodeSeq
              and (IsNeuronScalParam(nodes.i0, var_name)
                   or IsNeuronScalVar(nodes.i0, var_name)
@@ -1404,10 +1403,8 @@ def SetNeuronStatus(nodes, var_name, val):
             or IsNeuronScalVar(nodes[0], var_name)
             or IsNeuronPortParam(nodes[0], var_name)
             or IsNeuronPortVar(nodes[0], var_name)):
-            # print("pok1")
             for dict_param_name in val:
                 pval = val[dict_param_name]
-                # print("pok2 ", dict_param_name, pval) 
                 if dict_param_name=="array":
                     arr = (ctypes.c_float * len(pval))(*pval)
                     array_pt = ctypes.cast(arr, ctypes.c_void_p)
@@ -1417,7 +1414,6 @@ def SetNeuronStatus(nodes, var_name, val):
                 elif dict_param_name=="distribution":
                     distr_idx = distribution_dict[pval]
                     SetDistributionIntParam("distr_idx", distr_idx)
-                    # print("pok3 distr_idx", distr_idx) 
                 else:
                     if IsDistributionFloatParam(dict_param_name):
                         if ((type(nodes)==NodeSeq
@@ -1425,11 +1421,8 @@ def SetNeuronStatus(nodes, var_name, val):
                                  or IsNeuronScalVar(nodes.i0, var_name)))
                             or IsNeuronScalParam(nodes[0], var_name)
                             or IsNeuronScalVar(nodes[0], var_name)):
-                            # print("pok4")
                             SetDistributionIntParam("vect_size", 1)
-                            # print("pok5 ", dict_param_name, pval)
                             SetDistributionScalParam(dict_param_name, pval)
-                            # print("pok6 ", dict_param_name, pval)
                         elif ((type(nodes)==NodeSeq
                             and (IsNeuronPortParam(nodes.i0, var_name)
                                  or IsNeuronPortVar(nodes.i0, var_name)))
@@ -1442,16 +1435,12 @@ def SetNeuronStatus(nodes, var_name, val):
                     else:
                         print("Parameter name: ", dict_param_name)
                         raise ValueError("Unknown distribution parameter")
-                    # print("pok7")
             # set values from array or from distribution
             if type(nodes)==NodeSeq:
-                # print("pok8")
                 if IsNeuronScalParam(nodes.i0, var_name):
                     SetNeuronScalParamDistr(nodes.i0, nodes.n, var_name)
                 elif IsNeuronScalVar(nodes.i0, var_name):
-                    # print("pok9")
                     SetNeuronScalVarDistr(nodes.i0, nodes.n, var_name)
-                    # print("pok10")
                 elif IsNeuronPortParam(nodes.i0, var_name):
                     SetNeuronPortParamDistr(nodes.i0, nodes.n, var_name)
                 elif IsNeuronPortVar(nodes.i0, var_name):
@@ -1621,6 +1610,42 @@ def HostNum():
         raise ValueError(GetErrorMessage())
     return ret
 
+
+NESTGPU_getCUDAMemHostUsed = _nestgpu.NESTGPU_getCUDAMemHostUsed
+NESTGPU_getCUDAMemHostUsed.restype = ctypes.c_size_t
+def getCUDAMemHostUsed():
+    "Get CUDA memory currently used by this host"
+    ret = NESTGPU_getCUDAMemHostUsed()
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_getCUDAMemHostPeak = _nestgpu.NESTGPU_getCUDAMemHostPeak
+NESTGPU_getCUDAMemHostPeak.restype = ctypes.c_size_t
+def getCUDAMemHostPeak():
+    "Get maximum CUDA memory used by this host"
+    ret = NESTGPU_getCUDAMemHostPeak()
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_getCUDAMemTotal = _nestgpu.NESTGPU_getCUDAMemTotal
+NESTGPU_getCUDAMemTotal.restype = ctypes.c_size_t
+def getCUDAMemTotal():
+    "Get total CUDA memory"
+    ret = NESTGPU_getCUDAMemTotal()
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
+NESTGPU_getCUDAMemFree = _nestgpu.NESTGPU_getCUDAMemFree
+NESTGPU_getCUDAMemFree.restype = ctypes.c_size_t
+def getCUDAMemFree():
+    "Get free CUDA memory"
+    ret = NESTGPU_getCUDAMemFree()
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
 
 NESTGPU_MpiFinalize = _nestgpu.NESTGPU_MpiFinalize
 NESTGPU_MpiFinalize.restype = ctypes.c_int
@@ -1987,29 +2012,33 @@ def Connect(source, target, conn_dict, syn_dict):
 NESTGPU_RemoteConnectSeqSeq = _nestgpu.NESTGPU_RemoteConnectSeqSeq
 NESTGPU_RemoteConnectSeqSeq.argtypes = (ctypes.c_int, ctypes.c_int,
                                           ctypes.c_int, ctypes.c_int,
-                                          ctypes.c_int, ctypes.c_int)
+                                          ctypes.c_int, ctypes.c_int,
+                                          ctypes.c_int)
 NESTGPU_RemoteConnectSeqSeq.restype = ctypes.c_int
 
 NESTGPU_RemoteConnectSeqGroup = _nestgpu.NESTGPU_RemoteConnectSeqGroup
 NESTGPU_RemoteConnectSeqGroup.argtypes = (ctypes.c_int, ctypes.c_int,
                                             ctypes.c_int, ctypes.c_int,
-                                            ctypes.c_void_p, ctypes.c_int)
+                                            ctypes.c_void_p, ctypes.c_int,
+                                            ctypes.c_int)
 NESTGPU_RemoteConnectSeqGroup.restype = ctypes.c_int
 
 NESTGPU_RemoteConnectGroupSeq = _nestgpu.NESTGPU_RemoteConnectGroupSeq
 NESTGPU_RemoteConnectGroupSeq.argtypes = (ctypes.c_int, ctypes.c_void_p,
                                             ctypes.c_int, ctypes.c_int,
-                                            ctypes.c_int, ctypes.c_int)
+                                            ctypes.c_int, ctypes.c_int,
+                                            ctypes.c_int)
 NESTGPU_RemoteConnectGroupSeq.restype = ctypes.c_int
 
 NESTGPU_RemoteConnectGroupGroup = _nestgpu.NESTGPU_RemoteConnectGroupGroup
 NESTGPU_RemoteConnectGroupGroup.argtypes = (ctypes.c_int, ctypes.c_void_p,
                                               ctypes.c_int, ctypes.c_int,
-                                              ctypes.c_void_p, ctypes.c_int)
+                                              ctypes.c_void_p, ctypes.c_int,
+                                              ctypes.c_int)
 NESTGPU_RemoteConnectGroupGroup.restype = ctypes.c_int
 
 def RemoteConnect(i_source_host, source, i_target_host, target,
-                  conn_dict, syn_dict): 
+                  conn_dict, syn_dict, host_group=-1):
     "Connect two node groups of differen mpi hosts"
     if (type(i_source_host)!=int) | (type(i_target_host)!=int):
         raise ValueError("Error in host index")
@@ -2053,7 +2082,8 @@ def RemoteConnect(i_source_host, source, i_target_host, target,
             raise ValueError("Unknown synapse parameter")
     if (type(source)==NodeSeq) & (type(target)==NodeSeq) :
         ret = NESTGPU_RemoteConnectSeqSeq(i_source_host, source.i0, source.n,
-                                            i_target_host, target.i0, target.n)
+                                            i_target_host, target.i0, target.n,
+                                            host_group)
 
     else:
         if type(source)!=NodeSeq:
@@ -2065,22 +2095,38 @@ def RemoteConnect(i_source_host, source, i_target_host, target,
         if (type(source)==NodeSeq) & (type(target)!=NodeSeq):
             ret = NESTGPU_RemoteConnectSeqGroup(i_source_host, source.i0,
                                                   source.n, i_target_host,
-                                                  target_arr_pt, len(target))
+                                                  target_arr_pt, len(target),
+                                                  host_group)
         elif (type(source)!=NodeSeq) & (type(target)==NodeSeq):
             ret = NESTGPU_RemoteConnectGroupSeq(i_source_host, source_arr_pt,
                                                   len(source),
                                                   i_target_host, target.i0,
-                                                  target.n)
+                                                  target.n, host_group)
         else:
             ret = NESTGPU_RemoteConnectGroupGroup(i_source_host,
                                                     source_arr_pt,
                                                     len(source),
                                                     i_target_host,
                                                     target_arr_pt,
-                                                    len(target))
+                                                    len(target), host_group)
     if GetErrorCode() != 0:
         raise ValueError(GetErrorMessage())
     return ret
+
+
+NESTGPU_CreateHostGroup = _nestgpu.NESTGPU_CreateHostGroup
+NESTGPU_CreateHostGroup.argtypes = (c_int_p, ctypes.c_int)
+NESTGPU_CreateHostGroup.restype = ctypes.c_int
+def CreateHostGroup(host_list):
+    "Create group of hosts and MPI communicator from list of host indexes"
+    n_hosts = len(host_list)
+    host_arr = (ctypes.c_int * n_hosts)(*host_list)
+    host_pt = ctypes.cast(host_arr, c_int_p)
+    ret = NESTGPU_CreateHostGroup(host_pt, n_hosts) 
+    if GetErrorCode() != 0:
+        raise ValueError(GetErrorMessage())
+    return ret
+
 
 
 def SetStatus(gen_object, params, val=None):
@@ -2220,7 +2266,7 @@ def GetConnections(source=None, target=None, syn_group=-1):
 NESTGPU_GetConnectionStatus = _nestgpu.NESTGPU_GetConnectionStatus
 NESTGPU_GetConnectionStatus.argtypes = (c_int64_p, ctypes.c_int64,
                                         c_int_p, c_int_p,
-                                         c_int_p, c_char_p,
+                                         c_int_p, c_int_p,
                                          c_float_p, c_float_p)
 NESTGPU_GetConnectionStatus.restype = ctypes.c_int
 def GetConnectionStatus(conn):
@@ -2237,14 +2283,13 @@ def GetConnectionStatus(conn):
     i_source = (ctypes.c_int * n_conn)()
     i_target = (ctypes.c_int * n_conn)()
     i_port = (ctypes.c_int * n_conn)()
-    i_syn_group = (ctypes.c_char * n_conn)()
+    i_syn_group = (ctypes.c_int * n_conn)()
     delay = (ctypes.c_float * n_conn)()
     weight = (ctypes.c_float * n_conn)()
     
     NESTGPU_GetConnectionStatus(conn_arr, n_conn, i_source,
                                 i_target, i_port, i_syn_group,
                                 delay, weight)
-        
     status_list = []
     for i in range(n_conn):
         status_dict = {}
@@ -2257,8 +2302,9 @@ def GetConnectionStatus(conn):
         status_dict["weight"] = weight[i]
         
         status_list.append(status_dict)
-
+        
     return status_list
+
 
 NESTGPU_IsConnectionFloatParam = _nestgpu.NESTGPU_IsConnectionFloatParam
 NESTGPU_IsConnectionFloatParam.argtypes = (c_char_p,)
@@ -2972,7 +3018,7 @@ def IsIntParam(param_name):
 
     c_param_name = ctypes.create_string_buffer(to_byte_str(param_name),
                                                len(param_name)+1)
-    ret = (NESTGPU_IsIntParam(c_param_name)!=0) 
+    ret = (NESTGPU_IsIntParam(c_param_name)!=0)
     if GetErrorCode() != 0:
         raise ValueError(GetErrorMessage())
     return ret

@@ -20,7 +20,7 @@
  *
  */
 
-//#define OPTIMIZE_FOR_MEMORY
+// #define OPTIMIZE_FOR_MEMORY
 
 #include <config.h>
 #include <iostream>
@@ -29,11 +29,12 @@
 
 #include "cuda_error.h"
 #include "spike_buffer.h"
-//#include "connect.h"
-#include "send_spike.h"
-#include "node_group.h"
+// #include "connect.h"
 #include "connect.h"
+#include "input_spike_buffer.h"
+#include "node_group.h"
 #include "remote_spike.h"
+#include "send_spike.h"
 
 #define LAST_SPIKE_TIME_GUARD 0x70000000
 
@@ -41,344 +42,378 @@ extern __constant__ double NESTGPUTime;
 extern __constant__ long long NESTGPUTimeIdx;
 extern __constant__ float NESTGPUTimeResolution;
 extern __constant__ NodeGroupStruct NodeGroupArray[];
-extern __device__ int16_t *NodeGroupMap;
+extern __device__ int16_t* NodeGroupMap;
 
 __constant__ bool ExternalSpikeFlag;
 __device__ int MaxSpikeBufferSize;
 __device__ int NSpikeBuffer;
-__device__ int MaxDelayNum;
 
 int h_NSpikeBuffer;
-bool ConnectionSpikeTimeFlag;
 
-float *d_LastSpikeHeight; // [NSpikeBuffer];
-__device__ float *LastSpikeHeight; //
+float* d_LastSpikeMul;          // [NSpikeBuffer];
+__device__ float* LastSpikeMul; //
 
-long long *d_LastSpikeTimeIdx; // [NSpikeBuffer];
-__device__ long long *LastSpikeTimeIdx; //
+long long* d_LastSpikeTimeIdx;          // [NSpikeBuffer];
+__device__ long long* LastSpikeTimeIdx; //
 
-long long *d_LastRevSpikeTimeIdx; // [NSpikeBuffer];
-__device__ long long *LastRevSpikeTimeIdx; //
-
-unsigned short *d_ConnectionSpikeTime; // [NConnection];
-__device__ unsigned short *ConnectionSpikeTime; //
+long long* d_LastRevSpikeTimeIdx;          // [NSpikeBuffer];
+__device__ long long* LastRevSpikeTimeIdx; //
 
 extern __constant__ int n_local_nodes;
 
 //////////////////////////////////////////////////////////////////////
 
-int *d_SpikeBufferSize; // [NSpikeBuffer];
-__device__ int *SpikeBufferSize; // [NSpikeBuffer];
+int* d_SpikeBufferSize;          // [NSpikeBuffer];
+__device__ int* SpikeBufferSize; // [NSpikeBuffer];
 // SpikeBufferSize[i_spike_buffer];
 // where i_spike_buffer is the source node index
 // number of spikes stored in the buffer
 
-int *d_SpikeBufferIdx0; // [NSpikeBuffer];
-__device__ int *SpikeBufferIdx0; // [NSpikeBuffer];
+int* d_SpikeBufferIdx0;          // [NSpikeBuffer];
+__device__ int* SpikeBufferIdx0; // [NSpikeBuffer];
 // SpikeBufferIdx0[i_spike_buffer];
 // where i_spike_buffer is the source node index
 // index of most recent spike stored in the buffer
 
-int *d_SpikeBufferTimeIdx; // [NSpikeBuffer*MaxSpikeBufferNum];
-__device__ int *SpikeBufferTimeIdx; // [NSpikeBuffer*MaxSpikeBufferNum];
+int* d_SpikeBufferTimeIdx;          // [NSpikeBuffer*MaxSpikeBufferNum];
+__device__ int* SpikeBufferTimeIdx; // [NSpikeBuffer*MaxSpikeBufferNum];
 // SpikeBufferTimeIdx[i_spike*NSpikeBuffer+i_spike_buffer];
 // time index of the spike
 
-int *d_SpikeBufferConnIdx; // [NSpikeBuffer*MaxSpikeBufferNum];
-__device__ int *SpikeBufferConnIdx; // [NSpikeBuffer*MaxSpikeBufferNum];
+int* d_SpikeBufferConnIdx;          // [NSpikeBuffer*MaxSpikeBufferNum];
+__device__ int* SpikeBufferConnIdx; // [NSpikeBuffer*MaxSpikeBufferNum];
 // SpikeBufferConnIdx[i_spike*NSpikeBuffer+i_spike_buffer];
 // index of the next connection group that will emit this spike
 
-float *d_SpikeBufferHeight; // [NSpikeBuffer*MaxSpikeBufferNum];
-__device__ float *SpikeBufferHeight; // [NSpikeBuffer*MaxSpikeBufferNum];
-// SpikeBufferHeight[i_spike*NSpikeBuffer+i_spike_buffer];
-// spike height
-
+float* d_SpikeBufferMul;          // [NSpikeBuffer*MaxSpikeBufferNum];
+__device__ float* SpikeBufferMul; // [NSpikeBuffer*MaxSpikeBufferNum];
+// SpikeBufferMul[i_spike*NSpikeBuffer+i_spike_buffer];
+// spike mul
 
 ////////////////////////////////////////////////////////////
 // push a new spike in spike buffer of a node
 ////////////////////////////////////////////////////////////
 // i_spike_buffer : node index
-// height: spike multiplicity
+// mul: spike multiplicity
 ////////////////////////////////////////////////////////////
-__device__ void PushSpike(int i_spike_buffer, float height)
+
+__device__ void
+PushSpike( int i_spike_buffer, float mul )
 {
+  if ( input_spike_buffer_ns::algo_ == INPUT_SPIKE_BUFFER_ALGO )
+  {
+    int64_t i_conn = first_out_connection_[ i_spike_buffer ];
+    if ( i_conn >= 0 )
+    {
+      uint pos = atomicAdd( input_spike_buffer_ns::n_spikes_, 1 );
+      spike_first_connection_[ pos ] = i_conn;
+      spike_mul_[ pos ] = mul;
+#ifdef HAVE_N_OUT_CONNECTIONS
+      spike_n_connections_[ pos ] = n_out_connections_[ i_spike_buffer ];
+#endif
+      //printf("PushSpike i_spike_buffer: %d\ti_conn: %ld\tpos: %d\tspike_first_connection[pos]: %ld\n",
+      //i_spike_buffer, i_conn, pos, spike_first_connection_[pos]);
+    }
+  }
+
   int den_delay_idx = 0;
-  if (i_spike_buffer<n_local_nodes) {
-    LastSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx;
-    LastSpikeHeight[i_spike_buffer] = height;
-    int i_group = NodeGroupMap[i_spike_buffer];
-    float *den_delay_arr = NodeGroupArray[i_group].den_delay_arr_;
-    // check if node has dendritic delay
-    if (den_delay_arr != NULL) {
-      int i_neuron = i_spike_buffer - NodeGroupArray[i_group].i_node_0_;
-      int n_param = NodeGroupArray[i_group].n_param_;
-      // dendritic delay index is stored in the parameter array
-      // den_delay_arr points to the dendritic delay if the first
-      // node of the group. The other are separate by steps = n_param
-      den_delay_idx = (int)round(den_delay_arr[i_neuron*n_param]
-				 /NESTGPUTimeResolution);
-      //printf("isb %d\tden_delay_idx: %d\n", i_spike_buffer, den_delay_idx);
+
+  if ( i_spike_buffer < n_local_nodes )
+  {
+    LastSpikeTimeIdx[ i_spike_buffer ] = NESTGPUTimeIdx;
+    LastSpikeMul[ i_spike_buffer ] = mul;
+    int i_group = NodeGroupMap[ i_spike_buffer ];
+
+    if ( input_spike_buffer_ns::algo_ != INPUT_SPIKE_BUFFER_ALGO )
+    {
+      float* den_delay_arr = NodeGroupArray[ i_group ].den_delay_arr_;
+      // check if node has dendritic delay
+      if ( den_delay_arr != nullptr )
+      {
+        int i_neuron = i_spike_buffer - NodeGroupArray[ i_group ].i_node_0_;
+        int n_param = NodeGroupArray[ i_group ].n_param_;
+        // dendritic delay index is stored in the parameter array
+        // den_delay_arr points to the dendritic delay if the first
+        // node of the group. The other are separate by steps = n_param
+        den_delay_idx = ( int ) round( den_delay_arr[ i_neuron * n_param ] / NESTGPUTimeResolution );
+        // printf("isb %d\tden_delay_idx: %d\n", i_spike_buffer, den_delay_idx);
+      }
+      // printf("Node %d spikes at time %lld , den_delay_idx: %d\n",
+      //	 i_spike_buffer, NESTGPUTimeIdx, den_delay_idx);
+      if ( den_delay_idx == 0 )
+      {
+        // last time when spike is sent back to dendrites (e.g. for STDP)
+        LastRevSpikeTimeIdx[ i_spike_buffer ] = NESTGPUTimeIdx;
+      }
     }
-    // printf("Node %d spikes at time %lld , den_delay_idx: %d\n",
-    //	 i_spike_buffer, NESTGPUTimeIdx, den_delay_idx); 
-    if (den_delay_idx==0) {
-      // last time when spike is sent back to dendrites (e.g. for STDP)
-      LastRevSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx;
-    }
-    
-    if (ExternalSpikeFlag) {
+
+    if ( ExternalSpikeFlag )
+    {
       // if active spike should eventually be sent to remote connections
-      //printf("PushExternalSpike i_spike_buffer: %d height: %f\n",
-      //	   i_spike_buffer, height);
-      if (have_remote_spike_height) {
-	PushExternalSpike(i_spike_buffer, height);
+      // printf("PushExternalSpike i_spike_buffer: %d mul: %f\n",
+      //	   i_spike_buffer, mul);
+      if ( have_remote_spike_mul )
+      {
+        PushExternalSpike( i_spike_buffer, mul );
       }
-      else {
-	PushExternalSpike(i_spike_buffer);
+      else
+      {
+        PushExternalSpike( i_spike_buffer );
       }
     }
-    
+
     // if recording  spike counts is activated, increase counter
-    if (NodeGroupArray[i_group].spike_count_ != NULL) {
-      int i_node_0 = NodeGroupArray[i_group].i_node_0_;
-      NodeGroupArray[i_group].spike_count_[i_spike_buffer-i_node_0]++;
+    // printf("spike from isb: %d\tig: %d\n", i_spike_buffer, i_group);
+    if ( NodeGroupArray[ i_group ].spike_count_ != nullptr )
+    {
+      int i_node_0 = NodeGroupArray[ i_group ].i_node_0_;
+      NodeGroupArray[ i_group ].spike_count_[ i_spike_buffer - i_node_0 ]++;
+      // printf("spike from isb: %d\tinode0: %d\tcount: %d\n", i_spike_buffer,  i_node_0,
+      //      NodeGroupArray[ i_group ].spike_count_[ i_spike_buffer - i_node_0 ]);
     }
-    
+
     // check if recording spike times is activated
-    int max_n_rec_spike_times = NodeGroupArray[i_group].max_n_rec_spike_times_;
-    if (max_n_rec_spike_times != 0) {
-      int i_node_rel = i_spike_buffer - NodeGroupArray[i_group].i_node_0_;
-      int n_rec_spike_times =
-	NodeGroupArray[i_group].n_rec_spike_times_[i_node_rel];
-      if (n_rec_spike_times>=max_n_rec_spike_times-1) {
-	printf("Maximum number of recorded spike times exceeded"
-	       " for spike buffer %d\n", i_spike_buffer);
+    int max_n_rec_spike_times = NodeGroupArray[ i_group ].max_n_rec_spike_times_;
+    if ( max_n_rec_spike_times != 0 )
+    {
+      int i_node_rel = i_spike_buffer - NodeGroupArray[ i_group ].i_node_0_;
+      int n_rec_spike_times = NodeGroupArray[ i_group ].n_rec_spike_times_[ i_node_rel ];
+      if ( n_rec_spike_times >= max_n_rec_spike_times - 1 )
+      {
+        printf(
+          "Maximum number of recorded spike times exceeded"
+          " for spike buffer %d\n",
+          i_spike_buffer );
       }
-      else { // record spike time
-	NodeGroupArray[i_group].rec_spike_times_
-	  [i_node_rel*max_n_rec_spike_times + n_rec_spike_times]
-	  = NESTGPUTime;
-	NodeGroupArray[i_group].n_rec_spike_times_[i_node_rel]++;
+      else
+      { // record spike time
+        NodeGroupArray[ i_group ].rec_spike_times_[ i_node_rel * max_n_rec_spike_times + n_rec_spike_times ] =
+          NESTGPUTime;
+        NodeGroupArray[ i_group ].n_rec_spike_times_[ i_node_rel ]++;
       }
     }
   }
 
-  // spike should be stored if there are output connections
-  // or if dendritic delay is > 0
-  uint conn_group_num = ConnGroupIdx0[i_spike_buffer + 1]
-    - ConnGroupIdx0[i_spike_buffer];
-  if (conn_group_num>0 || den_delay_idx>0) {
-    int Ns = SpikeBufferSize[i_spike_buffer]; // n. of spikes in buffer
-    if (Ns>=MaxSpikeBufferSize) {
-      printf("Maximum number of spikes in spike buffer exceeded"
-	     " for spike buffer %d\n", i_spike_buffer);
-      //exit(0);
-      return;
+  if ( input_spike_buffer_ns::algo_ != INPUT_SPIKE_BUFFER_ALGO )
+  {
+    // spike should be stored if there are output connections
+    // or if dendritic delay is > 0
+    uint conn_group_num = ConnGroupIdx0[ i_spike_buffer + 1 ] - ConnGroupIdx0[ i_spike_buffer ];
+    if ( conn_group_num > 0 || den_delay_idx > 0 )
+    {
+      int Ns = SpikeBufferSize[ i_spike_buffer ]; // n. of spikes in buffer
+      if ( Ns >= MaxSpikeBufferSize )
+      {
+        printf(
+          "Maximum number of spikes in spike buffer exceeded"
+          " for spike buffer %d\n",
+          i_spike_buffer );
+        // exit(0);
+        return;
+      }
+      ///////////////////////////////////
+      // push_front new spike in buffer
+      //////////////////////////////////
+      SpikeBufferSize[ i_spike_buffer ]++; // increase n. of spikes in buffer
+      // the index of the most recent spike is0 should be decreased by 1
+      int is0 = ( SpikeBufferIdx0[ i_spike_buffer ] + MaxSpikeBufferSize - 1 ) % MaxSpikeBufferSize;
+      SpikeBufferIdx0[ i_spike_buffer ] = is0;
+      int i_arr = is0 * NSpikeBuffer + i_spike_buffer; // spike index in array
+      SpikeBufferTimeIdx[ i_arr ] = 0;                 // time index is initialized to 0
+      SpikeBufferConnIdx[ i_arr ] = 0;                 // connect. group index is initialized to 0
+      SpikeBufferMul[ i_arr ] = mul;                   // spike multiplicity
     }
-    ///////////////////////////////////
-    // push_front new spike in buffer
-    //////////////////////////////////
-    SpikeBufferSize[i_spike_buffer]++; // increase n. of spikes in buffer
-    // the index of the most recent spike is0 should be decreased by 1
-    int is0 = (SpikeBufferIdx0[i_spike_buffer] + MaxSpikeBufferSize - 1)
-      % MaxSpikeBufferSize;
-    SpikeBufferIdx0[i_spike_buffer] = is0;
-    int i_arr = is0*NSpikeBuffer+i_spike_buffer; // spike index in array
-    SpikeBufferTimeIdx[i_arr] = 0; // time index is initialized to 0
-    SpikeBufferConnIdx[i_arr] = 0; // connect. group index is initialized to 0
-    SpikeBufferHeight[i_arr] = height; // spike multiplicity
   }
 }
 
 ////////////////////////////////////////////////////////////
 // Update spike buffer of a node
 ////////////////////////////////////////////////////////////
-__global__ void SpikeBufferUpdate()
+__global__ void
+SpikeBufferUpdate()
 {
   int i_spike_buffer = threadIdx.x + blockIdx.x * blockDim.x;
-  if (i_spike_buffer>=NSpikeBuffer) return;
+  if ( i_spike_buffer >= NSpikeBuffer )
+  {
+    return;
+  }
 
   int den_delay_idx = 0;
-  if (i_spike_buffer<n_local_nodes) {
-    int i_group=NodeGroupMap[i_spike_buffer];
-    float *den_delay_arr = NodeGroupArray[i_group].den_delay_arr_;
+  if ( i_spike_buffer < n_local_nodes )
+  {
+    int i_group = NodeGroupMap[ i_spike_buffer ];
+    float* den_delay_arr = NodeGroupArray[ i_group ].den_delay_arr_;
     // check if node has dendritic delay
-    if (den_delay_arr != NULL) {
-      int i_neuron = i_spike_buffer - NodeGroupArray[i_group].i_node_0_;
-      int n_param = NodeGroupArray[i_group].n_param_;
+    if ( den_delay_arr != nullptr )
+    {
+      int i_neuron = i_spike_buffer - NodeGroupArray[ i_group ].i_node_0_;
+      int n_param = NodeGroupArray[ i_group ].n_param_;
       // dendritic delay index is stored in the parameter array
       // den_delay_arr points to the dendritic delay if the first
       // node of the group. The other are separate by steps = n_param
-      den_delay_idx = (int)round(den_delay_arr[i_neuron*n_param]
-				 /NESTGPUTimeResolution);
-      //printf("isb update %d\tden_delay_idx: %d\n", i_spike_buffer, den_delay_idx);
+      den_delay_idx = ( int ) round( den_delay_arr[ i_neuron * n_param ] / NESTGPUTimeResolution );
+      // printf("isb update %d\tden_delay_idx: %d\n", i_spike_buffer,
+      // den_delay_idx);
     }
   }
   // flag for sending spikes back through dendrites (e.g. for STDP)
   bool rev_spike = false;
-  int is0 = SpikeBufferIdx0[i_spike_buffer]; // index of most recent spike
-  int Ns = SpikeBufferSize[i_spike_buffer]; // n. of spikes in buffer
-  for (int is=0; is<Ns; is++) {
-    int is1 = (is0  + is)%MaxSpikeBufferSize;
-    int i_arr = is1*NSpikeBuffer+i_spike_buffer; // spike index in array
-    int i_conn = SpikeBufferConnIdx[i_arr];
-    int spike_time_idx = SpikeBufferTimeIdx[i_arr];
-    //if (i_spike_buffer==1) {
-    //printf("is %d st %d dd %d\n", is, spike_time_idx, den_delay_idx);
-    //}
-    if (spike_time_idx+1 == den_delay_idx) {
+  int is0 = SpikeBufferIdx0[ i_spike_buffer ]; // index of most recent spike
+  int Ns = SpikeBufferSize[ i_spike_buffer ];  // n. of spikes in buffer
+  for ( int is = 0; is < Ns; is++ )
+  {
+    int is1 = ( is0 + is ) % MaxSpikeBufferSize;
+    int i_arr = is1 * NSpikeBuffer + i_spike_buffer; // spike index in array
+    int i_conn = SpikeBufferConnIdx[ i_arr ];
+    int spike_time_idx = SpikeBufferTimeIdx[ i_arr ];
+    // if (i_spike_buffer==1) {
+    // printf("is %d st %d dd %d\n", is, spike_time_idx, den_delay_idx);
+    // }
+    if ( spike_time_idx + 1 == den_delay_idx )
+    {
       rev_spike = true;
     }
     // connection index in array
-    //int i_conn_arr = i_conn*NSpikeBuffer+i_spike_buffer;
-    //int ig = ConnGroupIdx0[i_spike_buffer] + i_conn;
+    // int i_conn_arr = i_conn*NSpikeBuffer+i_spike_buffer;
+    // int ig = ConnGroupIdx0[i_spike_buffer] + i_conn;
     // if spike time matches connection group delay deliver it
     // to global spike array
-    
-    uint conn_group_i0 = ConnGroupIdx0[i_spike_buffer];
-    uint conn_group_num = ConnGroupIdx0[i_spike_buffer+1] - conn_group_i0;
+
+    uint conn_group_i0 = ConnGroupIdx0[ i_spike_buffer ];
+    uint conn_group_num = ConnGroupIdx0[ i_spike_buffer + 1 ] - conn_group_i0;
     int ig = conn_group_i0 + i_conn;
-    
-    
-    if (i_conn<conn_group_num) {
+
+    if ( i_conn < conn_group_num )
+    {
 #ifdef OPTIMIZE_FOR_MEMORY
-      int64_t conn_group_i_conn0 = ConnGroupIConn0[ig];
-      uint i_block = (uint)(conn_group_i_conn0 / ConnBlockSize);
+      int64_t conn_group_i_conn0 = ConnGroupIConn0[ ig ];
+      uint i_block = ( uint ) ( conn_group_i_conn0 / ConnBlockSize );
       int64_t i_block_conn = conn_group_i_conn0 % ConnBlockSize;
-      uint source_delay = SourceDelayArray[i_block][i_block_conn];
+      uint source_delay = SourceDelayArray[ i_block ][ i_block_conn ];
       int conn_group_delay = source_delay & PortMask;
       // check if spike time matches connection group delay
-      if (spike_time_idx+1 == conn_group_delay) {
+      if ( spike_time_idx + 1 == conn_group_delay )
+      {
 #else
-      if (spike_time_idx+1 == ConnGroupDelay[ig]) {
-	int64_t conn_group_i_conn0 = ConnGroupIConn0[ig];
+      if ( spike_time_idx + 1 == ConnGroupDelay[ ig ] )
+      {
+        int64_t conn_group_i_conn0 = ConnGroupIConn0[ ig ];
 #endif
-	float height = SpikeBufferHeight[i_arr]; // spike multiplicity
-	// deliver spike
-	int64_t conn_group_n_conn = ConnGroupIConn0[ig+1] - conn_group_i_conn0;
-	//SendSpike(i_spike_buffer, i_conn, height, ConnGroupNConn[ig]);
-	SendSpike(i_spike_buffer, i_conn, height, conn_group_n_conn);
-	// increase index of the next conn. group that will emit this spike
-	i_conn++;
-	SpikeBufferConnIdx[i_arr] = i_conn;
+        float mul = SpikeBufferMul[ i_arr ]; // spike multiplicity
+        // deliver spike
+        int64_t conn_group_n_conn = ConnGroupIConn0[ ig + 1 ] - conn_group_i_conn0;
+        // SendSpike(i_spike_buffer, i_conn, mul, ConnGroupNConn[ig]);
+        SendSpike( i_spike_buffer, i_conn, mul, conn_group_n_conn );
+        // increase index of the next conn. group that will emit this spike
+        i_conn++;
+        SpikeBufferConnIdx[ i_arr ] = i_conn;
       }
     }
     // Check if the oldest spike should be removed from the buffer:
     // check if it is the oldest spike of the buffer
     // and if its connection group index is over the last connection group
     // and if spike time is greater than the dendritic delay
-    //if (is==Ns-1 && i_conn>=ConnGroupNum[i_spike_buffer]
-    if (is==Ns-1 && i_conn>=conn_group_num
-	&& spike_time_idx+1>=den_delay_idx) {
+    // if (is==Ns-1 && i_conn>=ConnGroupNum[i_spike_buffer]
+    if ( is == Ns - 1 && i_conn >= conn_group_num && spike_time_idx + 1 >= den_delay_idx )
+    {
       // in this case we don't need any more to keep track of the oldest spike
-      SpikeBufferSize[i_spike_buffer]--; // so remove it from buffer
+      SpikeBufferSize[ i_spike_buffer ]--; // so remove it from buffer
     }
-    else {
-      SpikeBufferTimeIdx[i_arr]++;
+    else
+    {
+      SpikeBufferTimeIdx[ i_arr ]++;
       // increase time index
     }
   }
-    
-  if (rev_spike) {
-    LastRevSpikeTimeIdx[i_spike_buffer] = NESTGPUTimeIdx+1;
+
+  if ( rev_spike )
+  {
+    LastRevSpikeTimeIdx[ i_spike_buffer ] = NESTGPUTimeIdx + 1;
   }
 }
 
-__global__ void InitLastSpikeTimeIdx(unsigned int n_spike_buffers,
-				       int spike_time_idx)
+__global__ void
+InitLastSpikeTimeIdx( unsigned int n_spike_buffers, int spike_time_idx )
 {
   unsigned int i_spike_buffer = threadIdx.x + blockIdx.x * blockDim.x;
-  if (i_spike_buffer>=n_spike_buffers) {
+  if ( i_spike_buffer >= n_spike_buffers )
+  {
     return;
   }
-  LastSpikeTimeIdx[i_spike_buffer] = spike_time_idx;
-  LastRevSpikeTimeIdx[i_spike_buffer] = spike_time_idx;
+  LastSpikeTimeIdx[ i_spike_buffer ] = spike_time_idx;
+  LastRevSpikeTimeIdx[ i_spike_buffer ] = spike_time_idx;
 }
 
-
-int SpikeBufferInit(uint n_spike_buffers, int max_spike_buffer_size)
+int
+spikeBufferInit( uint n_spike_buffers, int max_spike_buffer_size, int spike_buffer_algo )
 {
-  //unsigned int n_spike_buffers = net_connection->connection_.size();
+  // unsigned int n_spike_buffers = net_connection->connection_.size();
   h_NSpikeBuffer = n_spike_buffers;
-  int max_delay_num = h_MaxDelayNum;
-  //printf("mdn: %d\n", max_delay_num);
-  
-  CUDAMALLOCCTRL("&d_LastSpikeTimeIdx",&d_LastSpikeTimeIdx, n_spike_buffers*sizeof(long long));
-  CUDAMALLOCCTRL("&d_LastSpikeHeight",&d_LastSpikeHeight, n_spike_buffers*sizeof(float));
-  CUDAMALLOCCTRL("&d_LastRevSpikeTimeIdx",&d_LastRevSpikeTimeIdx, n_spike_buffers
-		       *sizeof(long long));
-  
-  CUDAMALLOCCTRL("&d_SpikeBufferSize",&d_SpikeBufferSize, n_spike_buffers*sizeof(int));
-  CUDAMALLOCCTRL("&d_SpikeBufferIdx0",&d_SpikeBufferIdx0, n_spike_buffers*sizeof(int));
-  CUDAMALLOCCTRL("&d_SpikeBufferTimeIdx",&d_SpikeBufferTimeIdx,
-		       n_spike_buffers*max_spike_buffer_size*sizeof(int));
-  CUDAMALLOCCTRL("&d_SpikeBufferConnIdx",&d_SpikeBufferConnIdx,
-		       n_spike_buffers*max_spike_buffer_size*sizeof(int));
-  CUDAMALLOCCTRL("&d_SpikeBufferHeight",&d_SpikeBufferHeight,
-		       n_spike_buffers*max_spike_buffer_size*sizeof(float));
-  gpuErrchk(cudaMemsetAsync(d_SpikeBufferSize, 0, n_spike_buffers*sizeof(int)));
-  gpuErrchk(cudaMemsetAsync(d_SpikeBufferIdx0, 0, n_spike_buffers*sizeof(int)));
 
-  if (ConnectionSpikeTimeFlag){
-    //h_conn_spike_time = new unsigned short[n_conn];
-    CUDAMALLOCCTRL("&d_ConnectionSpikeTime",&d_ConnectionSpikeTime,
-			 NConn*sizeof(unsigned short));
-    //gpuErrchk(cudaMemset(d_ConnectionSpikeTime, 0,
-    //			 n_conn*sizeof(unsigned short)));
+  CUDAMALLOCCTRL( "&d_LastSpikeTimeIdx", &d_LastSpikeTimeIdx, n_spike_buffers * sizeof( long long ) );
+  CUDAMALLOCCTRL( "&d_LastSpikeMul", &d_LastSpikeMul, n_spike_buffers * sizeof( float ) );
+  CUDAMALLOCCTRL( "&d_LastRevSpikeTimeIdx", &d_LastRevSpikeTimeIdx, n_spike_buffers * sizeof( long long ) );
+  if ( spike_buffer_algo == INPUT_SPIKE_BUFFER_ALGO )
+  {
+    max_spike_buffer_size = 0;
+    d_SpikeBufferSize = NULL;
+    d_SpikeBufferIdx0 = NULL;
+    d_SpikeBufferTimeIdx = NULL;
+    d_SpikeBufferConnIdx = NULL;
+    d_SpikeBufferMul = NULL;
+  }
+  else
+  {
+    CUDAMALLOCCTRL( "&d_SpikeBufferSize", &d_SpikeBufferSize, n_spike_buffers * sizeof( int ) );
+    CUDAMALLOCCTRL( "&d_SpikeBufferIdx0", &d_SpikeBufferIdx0, n_spike_buffers * sizeof( int ) );
+    CUDAMALLOCCTRL(
+      "&d_SpikeBufferTimeIdx", &d_SpikeBufferTimeIdx, n_spike_buffers * max_spike_buffer_size * sizeof( int ) );
+    CUDAMALLOCCTRL(
+      "&d_SpikeBufferConnIdx", &d_SpikeBufferConnIdx, n_spike_buffers * max_spike_buffer_size * sizeof( int ) );
+    CUDAMALLOCCTRL( "&d_SpikeBufferMul", &d_SpikeBufferMul, n_spike_buffers * max_spike_buffer_size * sizeof( float ) );
+    gpuErrchk( cudaMemsetAsync( d_SpikeBufferSize, 0, n_spike_buffers * sizeof( int ) ) );
+    gpuErrchk( cudaMemsetAsync( d_SpikeBufferIdx0, 0, n_spike_buffers * sizeof( int ) ) );
   }
 
-  /*
-  if(ConnectionSpikeTimeFlag) {
-    cudaMemcpyAsync(d_ConnectionGroupTargetSpikeTime,
-	       h_ConnectionGroupTargetSpikeTime,
-	       n_spike_buffers*max_delay_num*sizeof(unsigned short*),
-	       cudaMemcpyHostToDevice);
-  }
-  */
-  
-  DeviceSpikeBufferInit<<<1,1>>>(n_spike_buffers, max_delay_num,
-			   max_spike_buffer_size,
-			   d_LastSpikeTimeIdx, d_LastSpikeHeight,	 
-			   d_ConnectionSpikeTime,
-			   d_SpikeBufferSize, d_SpikeBufferIdx0,
-			   d_SpikeBufferTimeIdx,
-			   d_SpikeBufferConnIdx, d_SpikeBufferHeight,
-			   d_LastRevSpikeTimeIdx
-				 );
+  DeviceSpikeBufferInit<<< 1, 1 >>>( n_spike_buffers,
+    max_spike_buffer_size,
+    d_LastSpikeTimeIdx,
+    d_LastSpikeMul,
+    d_SpikeBufferSize,
+    d_SpikeBufferIdx0,
+    d_SpikeBufferTimeIdx,
+    d_SpikeBufferConnIdx,
+    d_SpikeBufferMul,
+    d_LastRevSpikeTimeIdx );
   gpuErrchk( cudaPeekAtLastError() );
-  
-  InitLastSpikeTimeIdx
-    <<<(n_spike_buffers+1023)/1024, 1024>>>
-    (n_spike_buffers, LAST_SPIKE_TIME_GUARD);
+
+  InitLastSpikeTimeIdx <<< ( n_spike_buffers + 1023 ) / 1024, 1024 >>>( n_spike_buffers, LAST_SPIKE_TIME_GUARD );
   gpuErrchk( cudaPeekAtLastError() );
-  gpuErrchk(cudaMemsetAsync(d_LastSpikeHeight, 0,
-		       n_spike_buffers*sizeof(unsigned short)));
-  
+  gpuErrchk( cudaMemsetAsync( d_LastSpikeMul, 0, n_spike_buffers * sizeof( unsigned short ) ) );
+
   return 0;
 }
 
-__global__ void DeviceSpikeBufferInit(int n_spike_buffers, int max_delay_num,
-				int max_spike_buffer_size,
-				long long *last_spike_time_idx,
-				float *last_spike_height,
-				unsigned short *conn_spike_time,
-				int *spike_buffer_size, int *spike_buffer_idx0,
-				int *spike_buffer_time,
-				int *spike_buffer_conn,
-				float *spike_buffer_height,
-				long long *last_rev_spike_time_idx)
+__global__ void
+DeviceSpikeBufferInit( int n_spike_buffers,
+  int max_spike_buffer_size,
+  long long* last_spike_time_idx,
+  float* last_spike_mul,
+  int* spike_buffer_size,
+  int* spike_buffer_idx0,
+  int* spike_buffer_time,
+  int* spike_buffer_conn,
+  float* spike_buffer_mul,
+  long long* last_rev_spike_time_idx )
 {
   NSpikeBuffer = n_spike_buffers;
-  MaxDelayNum = max_delay_num;
   MaxSpikeBufferSize = max_spike_buffer_size;
   LastSpikeTimeIdx = last_spike_time_idx;
-  LastSpikeHeight = last_spike_height;
-  ConnectionSpikeTime = conn_spike_time;
+  LastSpikeMul = last_spike_mul;
   SpikeBufferSize = spike_buffer_size;
   SpikeBufferIdx0 = spike_buffer_idx0;
   SpikeBufferTimeIdx = spike_buffer_time;
   SpikeBufferConnIdx = spike_buffer_conn;
-  SpikeBufferHeight = spike_buffer_height;
+  SpikeBufferMul = spike_buffer_mul;
   LastRevSpikeTimeIdx = last_rev_spike_time_idx;
 }

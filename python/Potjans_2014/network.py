@@ -291,11 +291,14 @@ class Network:
         ngpu.SetRandomSeed(master_seed)
         if('remove_conn_key' in ngpu.GetKernelStatus()):
             ngpu.SetKernelStatus({'print_time': self.sim_dict['print_time'],
+                                  'spike_buffer_algo': 0,
                                   'remove_conn_key': self.sim_dict['remove_conn_key']})
         else:
-            ngpu.SetKernelStatus({'print_time': self.sim_dict['print_time']})
+            ngpu.SetKernelStatus({'print_time': self.sim_dict['print_time'],
+                                  'spike_buffer_algo': 0})
             print("Cannot set remove_conn_key in NEST GPU version < 2.0")
-            
+        # 'conn_struct_type': self.sim_dict['conn_struct_type'],
+
         self.sim_resolution = self.sim_dict['sim_resolution']
 
         if hasattr(ngpu, "SetNestedLoopAlgo"):
