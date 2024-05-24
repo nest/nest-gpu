@@ -591,13 +591,14 @@ __global__ void copass_last_step_kernel( position_t* part_size,
 //////////////////////////////////////////////////
 __global__ void case2_inc_partitions_kernel( position_t* part_size, int* sorted_extra_elem_idx, position_t tot_diff );
 
-// find the number of elements <= val
-// in a sorted array array[i+1]>=array[i]
+
+// Find the number of elements <= val in a sorted array array[i+1]>=array[i]
+// The algorithm works only for blockDim.x >= 2
+// The array must be sorted, otherwise the behavior will be unpredictable
 template < class KeyT, class ArrayT, uint bsize >
 __device__ void
 search_block_up( ArrayT array, position_t size, KeyT val, position_t* num_up )
 {
-  __shared__ KeyT shared_array[ bsize + 1 ];
   __shared__ position_t left;
   __shared__ position_t right;
 
@@ -623,61 +624,53 @@ search_block_up( ArrayT array, position_t size, KeyT val, position_t* num_up )
   {
     left = 0;
     right = size - 1;
+    // printf("search_block_up bid:%d tid:0 size:%d\n", (int)blockIdx.x, (int)size);
+    // printf("search_block_up arr[0]: %d arr[n-1] %d val %d\n", (int)getKey(array, 0),
+    // 	   (int)getKey(array, size-1), (int)val);
   }
-
-  position_t step = size - 1;
-
-  // if (tid == 0) {
-  //   printf("bid:%d tid:0 step:%ld size:%ld\n", blockIdx.x, step, size);
-  //   printf("arr[n-1]: %d arr[n-2] %d val %d\n", getKey(array, size-1),
-  //       getKey(array, size-2), val);
-  // }
   __syncthreads();
-  while ( step > 1 && ( right - left ) > 1 )
+  while ( ( right - left ) > blockDim.x )
   {
-    position_t pos;
-    position_t new_step = ( step + blockDim.x - 1 ) / blockDim.x;
-    int n_steps = ( int ) ( ( step + new_step - 1 ) / new_step );
-    step = new_step;
-    if ( tid == 0 )
+    // for tid = 0 : pos0 = left; tid <= blockDim.x - 1 => pos0 < right   
+    position_t pos0 = left + tid * ( right - left ) / blockDim.x;
+    // for tid = blockDim.x - 1 : pos1 = right   
+    position_t pos1 = left + ( tid + 1 ) * ( right - left ) / blockDim.x;
+    // the condition ( right - left ) > blockDim.x ensures that pos1 >= pos0 + 1
+    KeyT val0 = getKey( array, pos0 );
+    KeyT val1 = getKey( array, pos1 );
+    if ( val0 <= val && val1 > val )
     {
-      pos = left;
-      shared_array[ 0 ] = getKey( array, left );
-      shared_array[ n_steps ] = getKey( array, right );
-      // printf("bid:%d tid:0 n_steps:%d sa:%d right:%ld arr:%d step: %ld\n",
-      //      blockIdx.x, n_steps, (int)shared_array[n_steps], right,
-      //      (int)getKey(array, right), step);
-    }
-    else if ( tid < n_steps )
-    {
-      pos = left + step * tid;
-      if ( ( right - pos ) >= 1 )
-      {
-        shared_array[ tid ] = getKey( array, pos );
-        // printf("bid:%d tid:%ld sa:%ld pos:%ld arr:%ld\n", blockIdx.x, tid,
-        //            shared_array[tid], pos, array[pos]);
-      }
-    }
-    __syncthreads();
-    if ( ( tid < n_steps ) && ( ( right - pos ) >= 1 ) && ( shared_array[ tid ] <= val )
-      && ( shared_array[ tid + 1 ] > val ) )
-    {
-      left = pos;
-      right = min( pos + step, right );
-      // printf("bid:%d good tid:%d sa0:%d sa1:%d l:%ld r:%ld\n", blockIdx.x,
-      //      tid, (int)shared_array[tid], (int)shared_array[tid+1],
-      //      left, right);
+      left = pos0;
+      right = pos1;
+      // printf("search_block_up narrowing bid:%d tid:%d sa0:%d sa1:%d l:%d r:%d\n", (int)blockIdx.x,
+      //     (int)tid, (int)val0, (int)val1, (int)left, (int)right);
     }
     __syncthreads();
   }
-
+  // now ( right - left ) <= blockDim.x ), step must be = 1
+  if ( ( right - left ) > 1 && tid < right - left ) {
+    position_t pos0 = left + tid;
+    position_t pos1 = left + tid + 1; // for tid = right - left - 1 : pos1 = right
+    KeyT val0 = getKey( array, pos0 );
+    KeyT val1 = getKey( array, pos1 );
+    if ( val0 <= val && val1 > val )
+    {
+      left = pos0;
+      right = pos1;
+      // printf("search_block_up last bid:%d tid:%d sa0:%d sa1:%d l:%d r:%d\n", (int)blockIdx.x,
+      //     (int)tid, (int)val0, (int)val1, (int)left, (int)right);
+    }
+  }
+  __syncthreads();
+    
   if ( threadIdx.x == 0 )
   {
     *num_up = right;
-    // printf("Kernel block: %ld\tnum_up: %ld\n", blockIdx.x, right);
-    // printf("bid: %ld\tleft: %ld\tright: %ld\n", blockIdx.x, left, right);
+    // printf("search_block_up final bid: %d\tleft: %d\tright: %d\n",
+    //	   (int)blockIdx.x, (int)left, (int)right);
   }
 }
+
 
 template < class KeyT, class ArrayT, uint bsize >
 __global__ void
@@ -693,13 +686,13 @@ search_multi_up_kernel( ArrayT* subarray, KeyT* val_pt, position_t* num_up, posi
   }
 }
 
-// find the number of elements < val
-// in a sorted array array[i+1]>=array[i]
+// Find the number of elements < val in a sorted array array[i+1]>=array[i]
+// The algorithm works only for blockDim.x >= 2
+// The array must be sorted, otherwise the behavior will be unpredictable
 template < class KeyT, class ArrayT, uint bsize >
 __device__ void
 search_block_down( ArrayT array, position_t size, KeyT val, position_t* num_down )
 {
-  __shared__ KeyT shared_array[ bsize + 1 ];
   __shared__ position_t left;
   __shared__ position_t right;
 
@@ -725,61 +718,53 @@ search_block_down( ArrayT array, position_t size, KeyT val, position_t* num_down
   {
     left = 0;
     right = size - 1;
+    // printf("search_block_down bid:%d tid:0 size:%d\n", (int)blockIdx.x, (int)size);
+    // printf("search_block_down arr[0]: %d arr[n-1] %d val %d\n", (int)getKey(array, 0),
+    // 	   (int)getKey(array, size-1), (int)val);
   }
-
-  position_t step = size - 1;
-
-  // if (tid == 0) {
-  //   printf("bid:%d tid:0 step:%ld size:%ld\n", blockIdx.x, step, size);
-  //   printf("arr[n-1]: %d arr[n-2] %d val %d\n", getKey(array, size-1),
-  //	   getKey(array, size-2), val);
-  // }
   __syncthreads();
-  while ( step > 1 && ( right - left ) > 1 )
+  while ( ( right - left ) > blockDim.x )
   {
-    position_t pos;
-    position_t new_step = ( step + blockDim.x - 1 ) / blockDim.x;
-    int n_steps = ( int ) ( ( step + new_step - 1 ) / new_step );
-    step = new_step;
-    if ( tid == 0 )
+    // for tid = 0 : pos0 = left; tid <= blockDim.x - 1 => pos0 < right   
+    position_t pos0 = left + tid * ( right - left ) / blockDim.x;
+    // for tid = blockDim.x - 1 : pos1 = right   
+    position_t pos1 = left + ( tid + 1 ) * ( right - left ) / blockDim.x;
+    // the condition ( right - left ) > blockDim.x ensures that pos1 >= pos0 + 1
+    KeyT val0 = getKey( array, pos0 );
+    KeyT val1 = getKey( array, pos1 );
+    if ( val0 < val && val1 >= val )
     {
-      pos = left;
-      shared_array[ 0 ] = getKey( array, left );
-      shared_array[ n_steps ] = getKey( array, right );
-      // printf("bid:%d tid:0 n_steps:%d sa:%d right:%ld arr:%d step: %ld\n",
-      //      blockIdx.x, n_steps, (int)shared_array[n_steps], right,
-      //      (int)getKey(array, right), step);
-    }
-    else if ( tid < n_steps )
-    {
-      pos = left + step * tid;
-      if ( ( right - pos ) >= 1 )
-      {
-        shared_array[ tid ] = getKey( array, pos );
-        // printf("bid:%d tid:%ld sa:%ld pos:%ld arr:%ld\n", blockIdx.x, tid,
-        //	     shared_array[tid], pos, array[pos]);
-      }
-    }
-    __syncthreads();
-    if ( ( tid < n_steps ) && ( ( right - pos ) >= 1 ) && ( shared_array[ tid ] < val )
-      && ( shared_array[ tid + 1 ] >= val ) )
-    {
-      left = pos;
-      right = min( pos + step, right );
-      // printf("bid:%d good tid:%d sa0:%d sa1:%d l:%ld r:%ld\n", blockIdx.x,
-      //      tid, (int)shared_array[tid], (int)shared_array[tid+1],
-      //      left, right);
+      left = pos0;
+      right = pos1;
+      // printf("search_block_down narrowing bid:%d tid:%d sa0:%d sa1:%d l:%d r:%d\n", (int)blockIdx.x,
+      //     (int)tid, (int)val0, (int)val1, (int)left, (int)right);
     }
     __syncthreads();
   }
-
+  // now ( right - left ) <= blockDim.x ), step must be = 1
+  if ( ( right - left ) > 1 && tid < right - left ) {
+    position_t pos0 = left + tid;
+    position_t pos1 = left + tid + 1; // for tid = right - left - 1 : pos1 = right
+    KeyT val0 = getKey( array, pos0 );
+    KeyT val1 = getKey( array, pos1 );
+    if ( val0 < val && val1 >= val )
+    {
+      left = pos0;
+      right = pos1;
+      // printf("search_block_down last bid:%d tid:%d sa0:%d sa1:%d l:%d r:%d\n", (int)blockIdx.x,
+      //     (int)tid, (int)val0, (int)val1, (int)left, (int)right);
+    }
+  }
+  __syncthreads();
+    
   if ( threadIdx.x == 0 )
   {
     *num_down = right;
-    // printf("Kernel block: %ld\tnum_up: %ld\n", blockIdx.x, right);
-    // printf("bid: %ld\tleft: %ld\tright: %ld\n", blockIdx.x, left, right);
+    // printf("search_block_down final bid: %d\tleft: %d\tright: %d\n",
+    //	   (int)blockIdx.x, (int)left, (int)right);
   }
 }
+
 
 template < class KeyT, class ArrayT, uint bsize >
 __global__ void
@@ -1112,10 +1097,9 @@ __global__ void
 eval_t_tilde_kernel( ArrayT* subarray, position_t* m_u, position_t* m_d, int* arg_max, KeyT* t_tilde )
 {
   int i = *arg_max;
-  int m_tilde = ( m_u[ i ] + m_d[ i ] ) / 2;
-  m_tilde = max( m_tilde - 1, 0 );
+  position_t m_tilde = ( m_u[ i ] + m_d[ i ] ) / 2;
   *t_tilde = getKey( subarray[ i ], m_tilde );
-  // printf("m_tilde: %d\t *t_tilde: %d\n", m_tilde, *t_tilde);
+  // printf("m_tilde: %d\t *t_tilde: %d\n", (int)m_tilde, (int)*t_tilde);
 }
 
 template < class KeyT, class ArrayT >
