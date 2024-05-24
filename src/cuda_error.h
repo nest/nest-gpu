@@ -177,4 +177,6 @@ gpuAssert( cudaError_t code, const char* file, int line, bool abort = true )
   gpuErrchk( cudaPeekAtLastError() );           \
   gpuErrchk( cudaDeviceSynchronize() );	        \
   std::cout << "Time from start at " << __FILE__ << ":" << __LINE__ << "\t" << getRealTime() - start_real_time_ << std::endl;
+#else
+#define PRINT_TIME
 #endif
