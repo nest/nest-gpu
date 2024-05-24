@@ -3,6 +3,7 @@
 #define REMOTECONNECTH
 // #include <cub/cub.cuh>
 #include <vector>
+#include "getRealTime.h"
 // #include "nestgpu.h"
 #include "connect.h"
 #include "copass_sort.h"
@@ -451,6 +452,8 @@ template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode_t n_nodes )
 {
+  PRINT_TIME;
+  
   //  vector of pointers to local source node maps in device memory
   //  per target host hd_local_source_node_map[target_host]
   //  type std::vector<uint*>
@@ -503,6 +506,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
       }
     }
   }
+
+  PRINT_TIME;
+  
   // allocate d_local_source_node_map and copy it from host to device
   CUDAMALLOCCTRL( "&d_local_source_node_map", &d_local_source_node_map_, n_hosts_ * sizeof( uint** ) );
   gpuErrchk( cudaMemcpy(
@@ -537,7 +543,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
 	}
       }
     }
-
+    PRINT_TIME;
+    
     if ( nh > 0 ) {
       CUDAMALLOCCTRL( "&hdd_image_node_map_[group_local_id]", &hdd_image_node_map_[group_local_id],
 		      nh * sizeof( uint** ) );
@@ -556,6 +563,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
     cudaMemcpyHostToDevice ) );
   gpuErrchk( cudaMemcpyToSymbol( local_image_node_map, &d_image_node_map_, sizeof( uint**** ) ) );
 
+  PRINT_TIME;
+  
   // uint n_nodes = GetNLocalNodes(); // number of nodes
   //  n_target_hosts[i_node] is the number of remote target hosts
   //  on which each local node
@@ -569,6 +578,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
   // representing the prefix scan (cumulative sum) of d_n_target_hosts
   CUDAMALLOCCTRL( "&d_n_target_hosts_cumul_", &d_n_target_hosts_cumul_, ( n_nodes + 1 ) * sizeof( uint ) );
 
+  PRINT_TIME;
+  
   // For each local node, count the number of remote target hosts
   // on which it has outgoing connections, i.e. n_target_hosts[i_node]
   // Loop on target hosts
@@ -588,6 +599,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
     }
   }
 
+  PRINT_TIME;
+  
   //////////////////////////////////////////////////////////////////////
   // Evaluate exclusive sum of reverse connections per target node
   // Determine temporary device storage requirements
@@ -612,6 +625,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
   gpuErrchk(
     cudaMemcpy( &n_target_hosts_sum, &d_n_target_hosts_cumul_[ n_nodes ], sizeof( uint ), cudaMemcpyDeviceToHost ) );
 
+  PRINT_TIME;
+  
   //////////////////////////////////////////////////////////////////////
   // allocate global array with remote target hosts of all nodes
   CUDAMALLOCCTRL( "&d_target_host_array_", &d_target_host_array_, n_target_hosts_sum * sizeof( uint ) );
@@ -626,6 +641,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
   // Launch kernel to evaluate the pointers d_node_target_hosts
   // and d_node_target_host_i_map from the positions in target_host_array
   // given by  n_target_hosts_cumul
+  
+  PRINT_TIME;
+  
   setTargetHostArrayNodePointersKernel<<< ( n_nodes + 1023 ) / 1024, 1024 >>>( d_target_host_array_,
     d_target_host_i_map_,
     d_n_target_hosts_cumul_,
@@ -635,9 +653,13 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
+  PRINT_TIME;
+  
   // reset to 0 d_n_target_hosts[n_nodes] to reuse it in the next kernel
   gpuErrchk( cudaMemset( d_n_target_hosts_, 0, n_nodes * sizeof( uint ) ) );
 
+  PRINT_TIME;
+  
   // Loop on target hosts
   for ( int tg_host = 0; tg_host < n_hosts_; tg_host++ )
   {
@@ -654,8 +676,12 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
     }
   }
 
+  PRINT_TIME;
+  
   addOffsetToImageNodeMap( n_nodes );
 
+  PRINT_TIME;
+  
   node_target_host_group_.resize(n_nodes);
   for (uint group_local_id=1; group_local_id<nhg; group_local_id++) {
     host_group_local_source_node_map_[group_local_id].resize(n_nodes);
@@ -719,7 +745,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
       }
     }
   }
-
+  PRINT_TIME;
+ 
   return 0;
 }
 

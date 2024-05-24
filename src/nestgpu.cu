@@ -150,6 +150,7 @@ NESTGPU::setThisHost( int i_host )
 
 NESTGPU::NESTGPU()
 {
+  start_real_time_ = getRealTime();
   n_hosts_ = 1;
   this_host_ = 0;
   external_spike_flag_ = false;
@@ -175,7 +176,7 @@ NESTGPU::NESTGPU()
   cuda_error_ns::mem_used_ = 0;
   cuda_error_ns::mem_max_ = 0;
 
-  start_real_time_ = getRealTime();
+
   max_spike_buffer_size_ = 20;
   t_min_ = 0.0;
   sim_time_ = 1000.0; // Simulation time in ms
@@ -340,7 +341,10 @@ NESTGPU::setConnStructType( int conn_struct_type )
 
   // set time resolution in connection object
   conn_->setTimeResolution( time_resolution_ );
-
+  
+  // set start real time in connection object
+  conn_->setStartRealTime( start_real_time_ );
+  
   return 0;
 }
 

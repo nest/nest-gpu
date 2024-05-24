@@ -171,7 +171,7 @@ gpuAssert( cudaError_t code, const char* file, int line, bool abort = true )
   }
 #endif
 
-//#define ACTIVATE_PRINT_TIME
+#define ACTIVATE_PRINT_TIME
 #ifdef ACTIVATE_PRINT_TIME
 #define PRINT_TIME                              \
   gpuErrchk( cudaPeekAtLastError() );           \

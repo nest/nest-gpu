@@ -272,6 +272,8 @@ public:
   // set the time resolution. Must be consistent with the value stored in the nestgpu class
   virtual int setTimeResolution( float time_resolution ) = 0;
 
+  virtual int setStartRealTime( double start_real_time ) = 0;
+
   // set number of hosts
   virtual int setNHosts( int n_hosts ) = 0;
 
@@ -381,6 +383,8 @@ class ConnectionTemplate : public Connection
   std::vector< ConnStructT* > conn_struct_vect_;
 
   float time_resolution_;
+
+  double start_real_time_;
 
   std::vector< std::vector< curandGenerator_t > > conn_random_generator_;
 
@@ -668,6 +672,8 @@ public:
 
   int setTimeResolution( float time_resolution );
 
+  int setStartRealTime( double start_real_time );
+  
   int _setMaxNodeNBits( int max_node_nbits );
 
   int _setMaxDelayNBits( int max_delay_nbits );
@@ -3798,6 +3804,15 @@ int
 ConnectionTemplate< ConnKeyT, ConnStructT >::setTimeResolution( float time_resolution )
 {
   time_resolution_ = time_resolution;
+
+  return 0;
+}
+
+template < class ConnKeyT, class ConnStructT >
+int
+ConnectionTemplate< ConnKeyT, ConnStructT >::setStartRealTime( double start_real_time )
+{
+  start_real_time_ = start_real_time;
 
   return 0;
 }
