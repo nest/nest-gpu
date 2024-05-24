@@ -1475,8 +1475,12 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int 
     }
     hg.push_back(i_host);
   }
-  // the code in the block is executed only if this host is in the group
-  if (this_host_is_in_group) {
+  
+  // if this host is not in the group, set the entry of host_group_local_id_ to -1
+  if (!this_host_is_in_group) {
+    host_group_local_id_.push_back(-1);
+  }
+  else { // the code in the block is executed only if this host is in the group
     // set the local id of the group to be the current size of the local host group array
     int group_local_id = host_group_.size();
     // push the local id in the array of local indexes  of all host groups
@@ -1496,6 +1500,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int 
   }
 #ifdef HAVE_MPI
   if (mpi_flag) {
+    // It is mandatory that the collective creation of MPI_Group and MPI_Comm are executed on all MPI processess
+    // no matter if they are actually used or not
     // Get the group from the world communicator
     MPI_Group world_group;
     MPI_Comm_group(MPI_COMM_WORLD, &world_group);
@@ -1505,26 +1511,19 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int 
     // create new MPI communicator
     MPI_Comm newcomm;
     MPI_Comm_create(MPI_COMM_WORLD, newgroup, &newcomm);
+    // They are inserted in the vectors only if they are actually needed
+    // Note that the two vectors will be indexed by the local group id, in the same way as host_group_
     if (this_host_is_in_group) {
       // insert them in MPI groups and comm vectors
       mpi_group_vect_.push_back(newgroup);
       mpi_comm_vect_.push_back(newcomm);
     }
+  }
 #endif
-    
-  }
-  else {
-    // if this host is not in the group, set the entry of host_group_local_id_ to -1 
-    host_group_local_id_.push_back(-1);
-  }
-  
   // return as output the index of the last entry in host_group_local_id_
   // which correspond to the newly created group
   return host_group_local_id_.size() - 1;
 }
-
-
-
 
 
 #endif // REMOTECONNECTH
