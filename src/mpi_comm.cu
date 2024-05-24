@@ -257,6 +257,15 @@ NESTGPU::ConnectMpiInit( int argc, char* argv[] )
 }
 
 int
+NESTGPU::FakeConnectMpiInit(int n_hosts, int this_host)
+{
+  setNHosts( n_hosts );
+  setThisHost( this_host );
+
+  return 0;
+}
+
+int
 NESTGPU::MpiFinalize()
 {
 #ifdef HAVE_MPI

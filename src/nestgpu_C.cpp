@@ -804,6 +804,17 @@ extern "C"
   }
 
   int
+  NESTGPU_FakeConnectMpiInit(int n_hosts, int this_host)
+  {
+    int ret = 0;
+    BEGIN_ERR_PROP
+    {
+      ret = NESTGPU_instance->FakeConnectMpiInit(n_hosts, this_host);
+    }
+    END_ERR_PROP return ret;
+  }
+
+  int
   NESTGPU_MpiFinalize()
   {
     int ret = 0;

@@ -2431,5 +2431,5 @@ NESTGPU::RemoteCreate( int i_host, std::string model_name, inode_t n_nodes /*=1*
 // Method that creates a group of hosts for remote spike communication (i.e. a group of MPI processes)
 // host_arr: array of host inexes, n_hosts: nomber of hosts in the group
 int NESTGPU::CreateHostGroup(int *host_arr, int n_hosts) {
-  return conn_->CreateHostGroup(host_arr, n_hosts);
+  return conn_->CreateHostGroup(host_arr, n_hosts, mpi_flag_);
 }

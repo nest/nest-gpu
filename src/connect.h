@@ -343,7 +343,7 @@ public:
 
   // Method that creates a group of hosts for remote spike communication (i.e. a group of MPI processes)
   // host_arr: array of host inexes, n_hosts: nomber of hosts in the group
-  virtual int CreateHostGroup(int *host_arr, int n_hosts) = 0;
+  virtual int CreateHostGroup(int *host_arr, int n_hosts, bool mpi_flag) = 0;
 };
 
 
@@ -1146,7 +1146,7 @@ public:
   //////////////////////////////////////////////////
   // Method that creates a group of hosts for remote spike communication (i.e. a group of MPI processes)
   // host_arr: array of host inexes, n_hosts: nomber of hosts in the group
-  int CreateHostGroup(int *host_arr, int n_hosts);
+  int CreateHostGroup(int *host_arr, int n_hosts, bool mpi_flag);
 
 };
 

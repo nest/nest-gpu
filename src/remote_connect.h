@@ -1456,7 +1456,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectTarget( int target_hos
 // host_arr: array of host inexes, n_hosts: nomber of hosts in the group
 template < class ConnKeyT, class ConnStructT >
 int
-ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int n_hosts)
+ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int n_hosts, bool mpi_flag)
 {
   if (first_connection_flag_ == false) {
     throw ngpu_exception("Host groups must be defined before creating "
@@ -1495,19 +1495,21 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int 
     host_group_local_node_index_.push_back(hg_lni);
   }
 #ifdef HAVE_MPI
-  // Get the group from the world communicator
-  MPI_Group world_group;
-  MPI_Comm_group(MPI_COMM_WORLD, &world_group);
-  // create new MPI group from host group hg
-  MPI_Group newgroup;
-  MPI_Group_incl(world_group, hg.size(), &hg[0], &newgroup);
-  // create new MPI communicator
-  MPI_Comm newcomm;
-  MPI_Comm_create(MPI_COMM_WORLD, newgroup, &newcomm);
-  if (this_host_is_in_group) {
-    // insert them in MPI groups and comm vectors
-    mpi_group_vect_.push_back(newgroup);
-    mpi_comm_vect_.push_back(newcomm);
+  if (mpi_flag) {
+    // Get the group from the world communicator
+    MPI_Group world_group;
+    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+    // create new MPI group from host group hg
+    MPI_Group newgroup;
+    MPI_Group_incl(world_group, hg.size(), &hg[0], &newgroup);
+    // create new MPI communicator
+    MPI_Comm newcomm;
+    MPI_Comm_create(MPI_COMM_WORLD, newgroup, &newcomm);
+    if (this_host_is_in_group) {
+      // insert them in MPI groups and comm vectors
+      mpi_group_vect_.push_back(newgroup);
+      mpi_comm_vect_.push_back(newcomm);
+    }
 #endif
     
   }
