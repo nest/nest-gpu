@@ -388,6 +388,7 @@ NESTGPU::Calibrate()
 {
   CheckUncalibrated( "Calibration can be made only once" );
 
+  PRINT_TIME;
   if ( verbosity_level_ >= 1 )
   {
     std::cout << HostIdStr() << "Calibrating ...\n";
@@ -413,8 +414,12 @@ NESTGPU::Calibrate()
 
   conn_->organizeConnections( GetNTotalNodes() );
 
+  PRINT_TIME;
+  
   conn_->calibrate();
 
+  PRINT_TIME;
+    
   int max_delay_num = max_spike_buffer_size_;
   
   max_spike_num_ = ( int ) round( max_spike_num_fact_ * GetNTotalNodes() * max_delay_num );
@@ -428,7 +433,12 @@ NESTGPU::Calibrate()
   
   conn_->initInputSpikeBuffer( GetNLocalNodes(), GetNTotalNodes(), max_remote_spike_num_ );
 
+  PRINT_TIME;
+  
   poiss_conn::organizeDirectConnections( conn_ );
+
+  PRINT_TIME;
+  
   for ( unsigned int i = 0; i < node_vect_.size(); i++ )
   {
     if ( node_vect_[ i ]->has_dir_conn_ )
@@ -437,6 +447,8 @@ NESTGPU::Calibrate()
     }
   }
 
+  PRINT_TIME;
+  
   if ( remove_conn_key_ )
   {
     conn_->freeConnectionKey();
@@ -445,6 +457,8 @@ NESTGPU::Calibrate()
   unsigned int n_spike_buffers = GetNTotalNodes();
   NestedLoop::Init( n_spike_buffers );
 
+  PRINT_TIME;
+  
   // temporary
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
@@ -454,14 +468,25 @@ NESTGPU::Calibrate()
 
   NodeGroupArrayInit();
 
+  PRINT_TIME;
+  
   SpikeInit( max_spike_num_ );
+
+  PRINT_TIME;
+  
   spikeBufferInit( GetNTotalNodes(), max_spike_buffer_size_, conn_->getSpikeBufferAlgo() );
 
+  PRINT_TIME;
+  
   if ( n_hosts_ > 1 )
   {
     conn_->remoteConnectionMapCalibrate( GetNLocalNodes() );
 
+    PRINT_TIME;
+
     ExternalSpikeInit();
+
+    PRINT_TIME;
   }
 
   if ( conn_->getRevConnFlag() )
@@ -471,12 +496,18 @@ NESTGPU::Calibrate()
 
   multimeter_->OpenFiles();
 
+  PRINT_TIME;
+
   for ( unsigned int i = 0; i < node_vect_.size(); i++ )
   {
     node_vect_[ i ]->Calibrate( t_min_, time_resolution_ );
   }
 
+  PRINT_TIME;
+  
   SynGroupCalibrate();
+
+  PRINT_TIME;
 
   gpuErrchk( cudaMemcpyToSymbolAsync( NESTGPUTimeResolution, &time_resolution_, sizeof( float ) ) );
 
