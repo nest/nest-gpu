@@ -16,4 +16,4 @@
 # the directory where sbatch was executed.
 
 ###export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK}
-srun python3 hpc_benchmark_wg_fake.py --seed $1
+srun python3 hpc_benchmark_wg_fake.py --fake_mpi_proc_num 640 --fake_mpi_proc_id 113

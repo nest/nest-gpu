@@ -276,13 +276,6 @@ def build_network():
     # total number of incomining inhibitory connections
     CI = int(1. * NI / params['scale'])
 
-    # number of indegrees from each MPI process
-    # here the indegrees are equally distributed among the
-    # neuron populations in all the MPI processes
-
-    CE_distrib = int(1.0 * CE / (mpi_np))
-    CI_distrib = int(1.0 * CI / (mpi_np))
-
     rank_print('Creating excitatory stimulus generator.')
 
     # Convert synapse weight from mV to pA
@@ -333,12 +326,21 @@ def build_network():
     rank_print('Creating local connections.')
     rank_print('Connecting excitatory -> excitatory population.')
 
+    # number of indegrees from current MPI process
+    CE_local = CE // mpi_np
+    if ( (2*mpi_id) % mpi_np ) < ( CE % mpi_np ):
+        CE_local = CE_local + 1
+        
+    CI_local = CI // mpi_np
+    if ( (2*mpi_id) % mpi_np ) < ( CI % mpi_np ):
+        CI_local = CI_local + 1
+
     if params['use_all_to_all']:
         i_conn_rule = {'rule': 'all_to_all'}
         e_conn_rule = {'rule': 'all_to_all'}
     else:
-        i_conn_rule = {'rule': 'fixed_indegree', 'indegree': CI_distrib}
-        e_conn_rule = {'rule': 'fixed_indegree', 'indegree': CE_distrib}
+        i_conn_rule = {'rule': 'fixed_indegree', 'indegree': CI_local}
+        e_conn_rule = {'rule': 'fixed_indegree', 'indegree': CE_local}
 
     brunel_params["connection_rules"] = {"inhibitory": i_conn_rule, "excitatory": e_conn_rule}
     
@@ -357,6 +359,24 @@ def build_network():
             if(i!=j):
                 rank_print('Connecting excitatory {} -> excitatory {} population.'.format(i, j))
 
+               # number of indegrees from each MPI process
+                # here the indegrees are equally distributed among the
+                # neuron populations in all the MPI processes
+                CE_distrib = CE // mpi_np
+                if ( (i + j) % mpi_np ) < ( CE % mpi_np ):
+                    CE_distrib = CE_distrib + 1
+                    
+                CI_distrib = CI // mpi_np
+                if ( (i + j) % mpi_np ) < ( CI % mpi_np ):
+                    CI_distrib = CI_distrib + 1
+
+                if params['use_all_to_all']:
+                    i_conn_rule = {'rule': 'all_to_all'}
+                    e_conn_rule = {'rule': 'all_to_all'}
+                else:
+                    i_conn_rule = {'rule': 'fixed_indegree', 'indegree': CI_distrib}
+                    e_conn_rule = {'rule': 'fixed_indegree', 'indegree': CE_distrib}
+                
                 my_remoteconnect(i, E_pops[i], j, neurons[j],
                                     e_conn_rule, syn_dict_ex, hg)
 
