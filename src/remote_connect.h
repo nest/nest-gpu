@@ -681,6 +681,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
   addOffsetToImageNodeMap( n_nodes );
 
   PRINT_TIME;
+
+  uint n_src_max = 0;
   
   node_target_host_group_.resize(n_nodes);
   for (uint group_local_id=1; group_local_id<nhg; group_local_id++) {
@@ -688,12 +690,25 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
     uint nh = host_group_[group_local_id].size(); // number of hosts in the group
     for ( uint gi_host = 0; gi_host < nh; gi_host++ ) {// loop on hosts
       uint n_src = host_group_source_node_[group_local_id][gi_host].size();
+      n_src_max = max(n_src_max, n_src);
       host_group_source_node_vect_[group_local_id][gi_host].resize(n_src);
       std::copy(host_group_source_node_[group_local_id][gi_host].begin(), host_group_source_node_[group_local_id][gi_host].end(),
 		host_group_source_node_vect_[group_local_id][gi_host].begin());
       
       host_group_local_node_index_[group_local_id][gi_host].resize(n_src);
-      std::fill(host_group_local_node_index_[group_local_id][gi_host].begin(), host_group_local_node_index_[group_local_id][gi_host].end(), -1);
+
+      /////////////// check that the following is not needed
+      //std::fill(host_group_local_node_index_[group_local_id][gi_host].begin(), host_group_local_node_index_[group_local_id][gi_host].end(), -1);
+    }
+  }
+  
+  PRINT_TIME;
+  std::vector<uint> tmp_node_map(n_src_max, 0);
+  
+    
+  for (uint group_local_id=1; group_local_id<nhg; group_local_id++) {
+    uint nh = host_group_[group_local_id].size(); // number of hosts in the group
+    for ( uint gi_host = 0; gi_host < nh; gi_host++ ) {// loop on hosts
       int src_host = host_group_[group_local_id][gi_host];
       if ( src_host != this_host_ ) { // skip self host
 	// get number of elements in the map
@@ -722,21 +737,20 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
        
 	  for (uint i=0; i<n_node_map; i++) {
 	    inode_t src_node = hc_remote_source_node_map_[group_local_id][gi_host][i];
-	    auto it = std::find(host_group_source_node_vect_[group_local_id][gi_host].begin(),
-				host_group_source_node_vect_[group_local_id][gi_host].end(), src_node);
-	    if (it == host_group_source_node_vect_[group_local_id][gi_host].end()) {
-	      throw ngpu_exception( "source node not found in host map" );
-	    }
-	    inode_t pos = it - host_group_source_node_vect_[group_local_id][gi_host].begin();
-	    host_group_local_node_index_[group_local_id][gi_host][pos] = hc_image_node_map_[group_local_id][gi_host][i];
+	    tmp_node_map[src_node] = hc_image_node_map_[group_local_id][gi_host][i];
+	  }
+	  for (uint i=0; i<host_group_source_node_vect_[group_local_id][gi_host].size(); i++) {
+	    inode_t src_node = host_group_source_node_vect_[group_local_id][gi_host][i];
+	    inode_t pos = tmp_node_map[src_node];
+	    //if (pos<0) {
+	    //  throw ngpu_exception( "source node not found in host map" );
+	    //}
+	    host_group_local_node_index_[group_local_id][gi_host][i] = pos;
 	  }
 	}
-
-	gpuErrchk(
-		  cudaMemcpy( &n_node_map, &d_n_remote_source_node_map_[group_local_id][ gi_host ], sizeof( uint ), cudaMemcpyDeviceToHost ) );
-	
       }
-      else { // only in the source, i.e. if src_host == this_host_       
+      else { // only in the source, i.e. if src_host == this_host_
+	uint n_src = host_group_source_node_[group_local_id][gi_host].size();
 	for (uint i=0; i<n_src; i++) {
 	  inode_t i_source = host_group_source_node_vect_[group_local_id][gi_host][i];
 	  host_group_local_source_node_map_[group_local_id][i_source] = i;
