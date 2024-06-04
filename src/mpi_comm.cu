@@ -125,6 +125,7 @@ NESTGPU::SendSpikeToRemote( int n_ext_spikes )
 
     // nonblocking sent of spike packet to MPI proc ih
     MPI_Isend( &h_ExternalTargetSpikeNodeId[ array_idx ], n_spikes, MPI_INT, ih, tag, MPI_COMM_WORLD, &request );
+    MPI_Request_free(&request);
 
     // printf("MPI_Send nspikes (src,tgt,nspike): "
     //	   "%d %d %d\n", mpi_id, ih, n_spikes);
