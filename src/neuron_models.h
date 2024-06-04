@@ -21,15 +21,13 @@
  */
 
 
-
-
-
 #ifndef NEURONMODELS_H
 #define NEURONMODELS_H
 
-enum NeuronModels {
+enum NeuronModels
+{
   i_null_model = 0,
-  i_iaf_psc_exp_g_model,  
+  i_iaf_psc_exp_g_model,
   i_iaf_psc_exp_hc_model,
   i_iaf_psc_exp_model,
   i_iaf_psc_alpha_model,
@@ -57,8 +55,7 @@ enum NeuronModels {
   N_NEURON_MODELS
 };
 
-const std::string neuron_model_name[N_NEURON_MODELS] = {
-  "",
+const std::string neuron_model_name[ N_NEURON_MODELS ] = { "",
   "iaf_psc_exp_g",
   "iaf_psc_exp_hc",
   "iaf_psc_exp",
@@ -83,7 +80,6 @@ const std::string neuron_model_name[N_NEURON_MODELS] = {
   "izhikevich_psc_exp_2s",
   "izhikevich_psc_exp",
   "user_m1",
-  "user_m2"
-};
+  "user_m2" };
 
 #endif

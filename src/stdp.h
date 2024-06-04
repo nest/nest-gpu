@@ -21,9 +21,6 @@
  */
 
 
-
-
-
 #ifndef STDP_H
 #define STDP_H
 
@@ -41,7 +38,7 @@ Description
 
 The STDP class is a type of synapse model used to create
 synapses that enable spike timing dependent plasticity
-(as defined in [1]_). 
+(as defined in [1]_).
 Here the weight dependence exponent can be set separately
 for potentiation and depression.
 
@@ -72,25 +69,30 @@ References
 EndUserDocs */
 
 
-class STDP : public SynModel
-{
- public:
-  STDP() {Init();}
-  int Init();
-};
-
 namespace stdp_ns
 {
-  enum ParamIndexes {
-    i_tau_plus = 0, i_tau_minus, i_lambda, i_alpha, i_mu_plus, i_mu_minus,
-    i_Wmax, // i_den_delay,
-    N_PARAM
-  };
+enum ParamIndexes
+{
+  i_tau_plus = 0,
+  i_tau_minus,
+  i_lambda,
+  i_alpha,
+  i_mu_plus,
+  i_mu_minus,
+  i_Wmax, // i_den_delay,
+  N_PARAM
+};
 
-  const std::string stdp_param_name[N_PARAM] = {
-    "tau_plus", "tau_minus", "lambda", "alpha", "mu_plus", "mu_minus", "Wmax"
-    //, "den_delay"
-  };
+const std::string stdp_param_name[ N_PARAM ] = {
+  "tau_plus",
+  "tau_minus",
+  "lambda",
+  "alpha",
+  "mu_plus",
+  "mu_minus",
+  "Wmax"
+  //, "den_delay"
+};
 
 }
 

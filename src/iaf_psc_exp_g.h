@@ -21,9 +21,6 @@
  */
 
 
-
-
-
 // adapted from:
 // https://github.com/nest/nest-simulator/blob/master/models/iaf_psc_exp.h
 
@@ -31,12 +28,12 @@
 #ifndef IAFPSCEXPG_H
 #define IAFPSCEXPG_H
 
+#include "base_neuron.h"
+#include "cuda_error.h"
+#include "neuron_models.h"
+#include "node_group.h"
 #include <iostream>
 #include <string>
-#include "cuda_error.h"
-#include "node_group.h"
-#include "base_neuron.h"
-#include "neuron_models.h"
 
 
 /* BeginUserDocs: neuron, integrate-and-fire, current-based
@@ -50,7 +47,7 @@ Description
 +++++++++++
 
 iaf_psc_exp_g is an implementation of a leaky integrate-and-fire model
-with exponential shaped postsynaptic currents (PSCs) according to 
+with exponential shaped postsynaptic currents (PSCs) according to
 equations 1, 2, 4 and 5 of [1]_ and equation 3 of [2]_.
 Thus, postsynaptic currents have an infinitely short rise time.
 
@@ -116,7 +113,7 @@ References
        DOI: https://doi.org/10.1007/s004220050570
 .. [4] Potjans TC. and Diesmann M. 2014. The cell-type specific cortical
        microcircuit: relating structure and activity in a full-scale spiking
-       network model. Cerebral Cortex. 24(3):785–806. 
+       network model. Cerebral Cortex. 24(3):785–806.
        DOI: https://doi.org/10.1093/cercor/bhs358.
 
 See also
@@ -129,75 +126,67 @@ EndUserDocs */
 
 namespace iaf_psc_exp_g_ns
 {
-enum ScalVarIndexes {
-  i_I_syn = 0,        // postsynaptic current for exc. inputs
-  i_V_m_rel,          // membrane potential relative to E_L
-  i_refractory_step,  // refractory step counter
+enum ScalVarIndexes
+{
+  i_I_syn = 0,       // postsynaptic current for exc. inputs
+  i_V_m_rel,         // membrane potential relative to E_L
+  i_refractory_step, // refractory step counter
   N_SCAL_VAR
 };
 
-enum ScalParamIndexes {
-  i_I_e = 0,         // External current in pA
+enum ScalParamIndexes
+{
+  i_I_e = 0, // External current in pA
   N_SCAL_PARAM
 };
 
-enum GroupParamIndexes {
-  i_tau_m = 0,       // Membrane time constant in ms
-  i_C_m,             // Membrane capacitance in pF
-  i_E_L,             // Resting potential in mV
-  i_Theta_rel,       // Threshold, RELATIVE TO RESTING POTENTIAL(!)
-                     // i.e. the real threshold is (E_L_+Theta_rel_)
-  i_V_reset_rel,     // relative reset value of the membrane potential
-  i_tau_syn,         // Time constant of synaptic current in ms
-  i_t_ref,           // Refractory period in ms
+enum GroupParamIndexes
+{
+  i_tau_m = 0,   // Membrane time constant in ms
+  i_C_m,         // Membrane capacitance in pF
+  i_E_L,         // Resting potential in mV
+  i_Theta_rel,   // Threshold, RELATIVE TO RESTING POTENTIAL(!)
+                 // i.e. the real threshold is (E_L_+Theta_rel_)
+  i_V_reset_rel, // relative reset value of the membrane potential
+  i_tau_syn,     // Time constant of synaptic current in ms
+  i_t_ref,       // Refractory period in ms
   N_GROUP_PARAM
 };
 
 
- 
-const std::string iaf_psc_exp_g_scal_var_name[N_SCAL_VAR] = {
-  "I_syn",
-  "V_m_rel",
-  "refractory_step"
-};
+const std::string iaf_psc_exp_g_scal_var_name[ N_SCAL_VAR ] = { "I_syn", "V_m_rel", "refractory_step" };
 
-const std::string iaf_psc_exp_g_scal_param_name[N_SCAL_PARAM] = {
-  "I_e"
-};
+const std::string iaf_psc_exp_g_scal_param_name[ N_SCAL_PARAM ] = { "I_e" };
 
-const std::string iaf_psc_exp_g_group_param_name[N_GROUP_PARAM] = {
-  "tau_m",
+const std::string iaf_psc_exp_g_group_param_name[ N_GROUP_PARAM ] = { "tau_m",
   "C_m",
   "E_L",
   "Theta_rel",
   "V_reset_rel",
   "tau_syn",
-  "t_ref"
-};
- 
-} // namespace
- 
+  "t_ref" };
 
+} // namespace
 
 
 class iaf_psc_exp_g : public BaseNeuron
 {
   float time_resolution_;
 
- public:
+public:
   ~iaf_psc_exp_g();
-  
-  int Init(int i_node_0, int n_neuron, int n_port, int i_group,
-	   unsigned long long *seed);
-  int Calibrate(double /*time_min*/, float time_res) {
+
+  int Init( int i_node_0, int n_neuron, int n_port, int i_group, unsigned long long* seed );
+  int
+  Calibrate( double /*time_min*/, float time_res )
+  {
     time_resolution_ = time_res;
     return 0;
   }
-  
-  int Update(long long it, double t1);
+
+  int Update( long long it, double t1 );
 
   int Free();
-
 };
 
 
