@@ -324,6 +324,7 @@ int ConnectMpi::SendSpikeToRemote(int n_hosts, int max_spike_per_host)
     // nonblocking sent of spike packet to MPI proc ih
     MPI_Isend(&h_ExternalTargetSpikeNodeId[array_idx],
 	      n_spikes, MPI_INT, ih, tag, MPI_COMM_WORLD, &request);
+    MPI_Request_free(&request);
     //printf("MPI_Send nspikes (src,tgt,nspike): "
     //	   "%d %d %d\n", mpi_id, ih, n_spikes);
     //printf("MPI_Send 1st-neuron-idx (src,tgt,idx): "
