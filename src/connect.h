@@ -3194,6 +3194,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::connectFixedIndegree( curandGenerat
   }
 
   // printf("Generating connections with fixed_indegree rule...\n");
+  int64_t conn_source_ids_offset = 0;
   int64_t n_prev_conn = 0;
   int ib0 = ( int ) ( old_n_conn / conn_block_size_ );
   for ( int ib = ib0; ib < new_n_block; ib++ )
@@ -3225,8 +3226,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::connectFixedIndegree( curandGenerat
     if ( remote_source_flag )
     {
       setSource< T1 > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-        d_conn_source_ids_, ( uint* ) d_conn_storage_, n_block_conn, source, n_source );
+        d_conn_source_ids_ + conn_source_ids_offset, ( uint* ) d_conn_storage_, n_block_conn, source, n_source );
       DBGCUDASYNC;
+      conn_source_ids_offset += n_block_conn;
     }
     else
     {
