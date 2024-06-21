@@ -1582,7 +1582,7 @@ def ConnectMpiInit():
     array_char_pt_type = c_char_p * argc
     c_var_name_list=[]
     for i in range(argc):
-        c_arg = ctypes.create_string_buffer(to_byte_str(sys.argv[i]), 100)
+        c_arg = ctypes.create_string_buffer(to_byte_str(sys.argv[i]), len(sys.argv[i])+1)
         c_var_name_list.append(c_arg)        
     ret = NESTGPU_ConnectMpiInit(ctypes.c_int(argc),
                                    array_char_pt_type(*c_var_name_list))
