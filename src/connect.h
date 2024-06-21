@@ -272,6 +272,8 @@ public:
   // set the time resolution. Must be consistent with the value stored in the nestgpu class
   virtual int setTimeResolution( float time_resolution ) = 0;
 
+  virtual int setStartRealTime( double start_real_time ) = 0;
+
   // set number of hosts
   virtual int setNHosts( int n_hosts ) = 0;
 
@@ -343,7 +345,7 @@ public:
 
   // Method that creates a group of hosts for remote spike communication (i.e. a group of MPI processes)
   // host_arr: array of host inexes, n_hosts: nomber of hosts in the group
-  virtual int CreateHostGroup(int *host_arr, int n_hosts) = 0;
+  virtual int CreateHostGroup(int *host_arr, int n_hosts, bool mpi_flag) = 0;
 };
 
 
@@ -381,6 +383,8 @@ class ConnectionTemplate : public Connection
   std::vector< ConnStructT* > conn_struct_vect_;
 
   float time_resolution_;
+
+  double start_real_time_;
 
   std::vector< std::vector< curandGenerator_t > > conn_random_generator_;
 
@@ -668,6 +672,8 @@ public:
 
   int setTimeResolution( float time_resolution );
 
+  int setStartRealTime( double start_real_time );
+  
   int _setMaxNodeNBits( int max_node_nbits );
 
   int _setMaxDelayNBits( int max_delay_nbits );
@@ -1146,7 +1152,7 @@ public:
   //////////////////////////////////////////////////
   // Method that creates a group of hosts for remote spike communication (i.e. a group of MPI processes)
   // host_arr: array of host inexes, n_hosts: nomber of hosts in the group
-  int CreateHostGroup(int *host_arr, int n_hosts);
+  int CreateHostGroup(int *host_arr, int n_hosts, bool mpi_flag);
 
 };
 
@@ -3093,6 +3099,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::connectFixedTotalNumber( curandGene
     allocateNewBlocks( new_n_block );
   }
   // printf("Generating connections with fixed_total_number rule...\n");
+  int64_t conn_source_ids_offset = 0;
   int ib0 = ( int ) ( old_n_conn / conn_block_size_ );
   for ( int ib = ib0; ib < new_n_block; ib++ )
   {
@@ -3123,8 +3130,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::connectFixedTotalNumber( curandGene
     if ( remote_source_flag )
     {
       setSource< T1 > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-        d_conn_source_ids_, ( uint* ) d_conn_storage_, n_block_conn, source, n_source );
+        d_conn_source_ids_ + conn_source_ids_offset, ( uint* ) d_conn_storage_, n_block_conn, source, n_source );
       DBGCUDASYNC;
+      conn_source_ids_offset += n_block_conn;
     }
     else
     {
@@ -3186,6 +3194,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::connectFixedIndegree( curandGenerat
   }
 
   // printf("Generating connections with fixed_indegree rule...\n");
+  int64_t conn_source_ids_offset = 0;
   int64_t n_prev_conn = 0;
   int ib0 = ( int ) ( old_n_conn / conn_block_size_ );
   for ( int ib = ib0; ib < new_n_block; ib++ )
@@ -3217,8 +3226,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::connectFixedIndegree( curandGenerat
     if ( remote_source_flag )
     {
       setSource< T1 > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-        d_conn_source_ids_, ( uint* ) d_conn_storage_, n_block_conn, source, n_source );
+        d_conn_source_ids_ + conn_source_ids_offset, ( uint* ) d_conn_storage_, n_block_conn, source, n_source );
       DBGCUDASYNC;
+      conn_source_ids_offset += n_block_conn;
     }
     else
     {
@@ -3798,6 +3808,15 @@ int
 ConnectionTemplate< ConnKeyT, ConnStructT >::setTimeResolution( float time_resolution )
 {
   time_resolution_ = time_resolution;
+
+  return 0;
+}
+
+template < class ConnKeyT, class ConnStructT >
+int
+ConnectionTemplate< ConnKeyT, ConnStructT >::setStartRealTime( double start_real_time )
+{
+  start_real_time_ = start_real_time;
 
   return 0;
 }

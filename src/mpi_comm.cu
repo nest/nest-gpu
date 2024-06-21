@@ -125,6 +125,7 @@ NESTGPU::SendSpikeToRemote( int n_ext_spikes )
 
     // nonblocking sent of spike packet to MPI proc ih
     MPI_Isend( &h_ExternalTargetSpikeNodeId[ array_idx ], n_spikes, MPI_INT, ih, tag, MPI_COMM_WORLD, &request );
+    MPI_Request_free(&request);
 
     // printf("MPI_Send nspikes (src,tgt,nspike): "
     //	   "%d %d %d\n", mpi_id, ih, n_spikes);
@@ -254,6 +255,15 @@ NESTGPU::ConnectMpiInit( int argc, char* argv[] )
 #else
   throw ngpu_exception( "MPI is not available in your build" );
 #endif
+}
+
+int
+NESTGPU::FakeConnectMpiInit(int n_hosts, int this_host)
+{
+  setNHosts( n_hosts );
+  setThisHost( this_host );
+
+  return 0;
 }
 
 int

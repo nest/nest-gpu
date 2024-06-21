@@ -102,7 +102,7 @@ ngpu.ConnectMpiInit()
 mpi_id = ngpu.HostId()
 mpi_np = ngpu.HostNum()
 
-hg = ngpu.CreateHostGroup(list(range(mpi_np)))
+hg = ngpu.CreateHostGroup([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
 ###############################################################################
 # Parameter section

@@ -3,6 +3,7 @@
 #define REMOTECONNECTH
 // #include <cub/cub.cuh>
 #include <vector>
+#include "getRealTime.h"
 // #include "nestgpu.h"
 #include "connect.h"
 #include "copass_sort.h"
@@ -451,6 +452,8 @@ template < class ConnKeyT, class ConnStructT >
 int
 ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode_t n_nodes )
 {
+  PRINT_TIME;
+  
   //  vector of pointers to local source node maps in device memory
   //  per target host hd_local_source_node_map[target_host]
   //  type std::vector<uint*>
@@ -503,6 +506,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
       }
     }
   }
+
+  PRINT_TIME;
+  
   // allocate d_local_source_node_map and copy it from host to device
   CUDAMALLOCCTRL( "&d_local_source_node_map", &d_local_source_node_map_, n_hosts_ * sizeof( uint** ) );
   gpuErrchk( cudaMemcpy(
@@ -537,7 +543,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
 	}
       }
     }
-
+    PRINT_TIME;
+    
     if ( nh > 0 ) {
       CUDAMALLOCCTRL( "&hdd_image_node_map_[group_local_id]", &hdd_image_node_map_[group_local_id],
 		      nh * sizeof( uint** ) );
@@ -556,6 +563,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
     cudaMemcpyHostToDevice ) );
   gpuErrchk( cudaMemcpyToSymbol( local_image_node_map, &d_image_node_map_, sizeof( uint**** ) ) );
 
+  PRINT_TIME;
+  
   // uint n_nodes = GetNLocalNodes(); // number of nodes
   //  n_target_hosts[i_node] is the number of remote target hosts
   //  on which each local node
@@ -569,6 +578,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
   // representing the prefix scan (cumulative sum) of d_n_target_hosts
   CUDAMALLOCCTRL( "&d_n_target_hosts_cumul_", &d_n_target_hosts_cumul_, ( n_nodes + 1 ) * sizeof( uint ) );
 
+  PRINT_TIME;
+  
   // For each local node, count the number of remote target hosts
   // on which it has outgoing connections, i.e. n_target_hosts[i_node]
   // Loop on target hosts
@@ -588,6 +599,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
     }
   }
 
+  PRINT_TIME;
+  
   //////////////////////////////////////////////////////////////////////
   // Evaluate exclusive sum of reverse connections per target node
   // Determine temporary device storage requirements
@@ -612,6 +625,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
   gpuErrchk(
     cudaMemcpy( &n_target_hosts_sum, &d_n_target_hosts_cumul_[ n_nodes ], sizeof( uint ), cudaMemcpyDeviceToHost ) );
 
+  PRINT_TIME;
+  
   //////////////////////////////////////////////////////////////////////
   // allocate global array with remote target hosts of all nodes
   CUDAMALLOCCTRL( "&d_target_host_array_", &d_target_host_array_, n_target_hosts_sum * sizeof( uint ) );
@@ -626,6 +641,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
   // Launch kernel to evaluate the pointers d_node_target_hosts
   // and d_node_target_host_i_map from the positions in target_host_array
   // given by  n_target_hosts_cumul
+  
+  PRINT_TIME;
+  
   setTargetHostArrayNodePointersKernel<<< ( n_nodes + 1023 ) / 1024, 1024 >>>( d_target_host_array_,
     d_target_host_i_map_,
     d_n_target_hosts_cumul_,
@@ -635,9 +653,13 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
 
+  PRINT_TIME;
+  
   // reset to 0 d_n_target_hosts[n_nodes] to reuse it in the next kernel
   gpuErrchk( cudaMemset( d_n_target_hosts_, 0, n_nodes * sizeof( uint ) ) );
 
+  PRINT_TIME;
+  
   // Loop on target hosts
   for ( int tg_host = 0; tg_host < n_hosts_; tg_host++ )
   {
@@ -654,20 +676,39 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
     }
   }
 
+  PRINT_TIME;
+  
   addOffsetToImageNodeMap( n_nodes );
 
+  PRINT_TIME;
+
+  uint n_src_max = 0;
+  
   node_target_host_group_.resize(n_nodes);
   for (uint group_local_id=1; group_local_id<nhg; group_local_id++) {
     host_group_local_source_node_map_[group_local_id].resize(n_nodes);
     uint nh = host_group_[group_local_id].size(); // number of hosts in the group
     for ( uint gi_host = 0; gi_host < nh; gi_host++ ) {// loop on hosts
       uint n_src = host_group_source_node_[group_local_id][gi_host].size();
+      n_src_max = max(n_src_max, n_src);
       host_group_source_node_vect_[group_local_id][gi_host].resize(n_src);
       std::copy(host_group_source_node_[group_local_id][gi_host].begin(), host_group_source_node_[group_local_id][gi_host].end(),
 		host_group_source_node_vect_[group_local_id][gi_host].begin());
       
       host_group_local_node_index_[group_local_id][gi_host].resize(n_src);
-      std::fill(host_group_local_node_index_[group_local_id][gi_host].begin(), host_group_local_node_index_[group_local_id][gi_host].end(), -1);
+
+      /////////////// check that the following is not needed
+      //std::fill(host_group_local_node_index_[group_local_id][gi_host].begin(), host_group_local_node_index_[group_local_id][gi_host].end(), -1);
+    }
+  }
+  
+  PRINT_TIME;
+  std::vector<uint> tmp_node_map(n_src_max, 0);
+  
+    
+  for (uint group_local_id=1; group_local_id<nhg; group_local_id++) {
+    uint nh = host_group_[group_local_id].size(); // number of hosts in the group
+    for ( uint gi_host = 0; gi_host < nh; gi_host++ ) {// loop on hosts
       int src_host = host_group_[group_local_id][gi_host];
       if ( src_host != this_host_ ) { // skip self host
 	// get number of elements in the map
@@ -696,21 +737,20 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
        
 	  for (uint i=0; i<n_node_map; i++) {
 	    inode_t src_node = hc_remote_source_node_map_[group_local_id][gi_host][i];
-	    auto it = std::find(host_group_source_node_vect_[group_local_id][gi_host].begin(),
-				host_group_source_node_vect_[group_local_id][gi_host].end(), src_node);
-	    if (it == host_group_source_node_vect_[group_local_id][gi_host].end()) {
-	      throw ngpu_exception( "source node not found in host map" );
-	    }
-	    inode_t pos = it - host_group_source_node_vect_[group_local_id][gi_host].begin();
-	    host_group_local_node_index_[group_local_id][gi_host][pos] = hc_image_node_map_[group_local_id][gi_host][i];
+	    tmp_node_map[src_node] = hc_image_node_map_[group_local_id][gi_host][i];
+	  }
+	  for (uint i=0; i<host_group_source_node_vect_[group_local_id][gi_host].size(); i++) {
+	    inode_t src_node = host_group_source_node_vect_[group_local_id][gi_host][i];
+	    inode_t pos = tmp_node_map[src_node];
+	    //if (pos<0) {
+	    //  throw ngpu_exception( "source node not found in host map" );
+	    //}
+	    host_group_local_node_index_[group_local_id][gi_host][i] = pos;
 	  }
 	}
-
-	gpuErrchk(
-		  cudaMemcpy( &n_node_map, &d_n_remote_source_node_map_[group_local_id][ gi_host ], sizeof( uint ), cudaMemcpyDeviceToHost ) );
-	
       }
-      else { // only in the source, i.e. if src_host == this_host_       
+      else { // only in the source, i.e. if src_host == this_host_
+	uint n_src = host_group_source_node_[group_local_id][gi_host].size();
 	for (uint i=0; i<n_src; i++) {
 	  inode_t i_source = host_group_source_node_vect_[group_local_id][gi_host][i];
 	  host_group_local_source_node_map_[group_local_id][i_source] = i;
@@ -719,7 +759,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectionMapCalibrate( inode
       }
     }
   }
-
+  PRINT_TIME;
+ 
   return 0;
 }
 
@@ -1456,7 +1497,7 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::remoteConnectTarget( int target_hos
 // host_arr: array of host inexes, n_hosts: nomber of hosts in the group
 template < class ConnKeyT, class ConnStructT >
 int
-ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int n_hosts)
+ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int n_hosts, bool mpi_flag)
 {
   if (first_connection_flag_ == false) {
     throw ngpu_exception("Host groups must be defined before creating "
@@ -1475,8 +1516,12 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int 
     }
     hg.push_back(i_host);
   }
-  // the code in the block is executed only if this host is in the group
-  if (this_host_is_in_group) {
+  
+  // if this host is not in the group, set the entry of host_group_local_id_ to -1
+  if (!this_host_is_in_group) {
+    host_group_local_id_.push_back(-1);
+  }
+  else { // the code in the block is executed only if this host is in the group
     // set the local id of the group to be the current size of the local host group array
     int group_local_id = host_group_.size();
     // push the local id in the array of local indexes  of all host groups
@@ -1495,34 +1540,31 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::CreateHostGroup(int *host_arr, int 
     host_group_local_node_index_.push_back(hg_lni);
   }
 #ifdef HAVE_MPI
-  // Get the group from the world communicator
-  MPI_Group world_group;
-  MPI_Comm_group(MPI_COMM_WORLD, &world_group);
-  // create new MPI group from host group hg
-  MPI_Group newgroup;
-  MPI_Group_incl(world_group, hg.size(), &hg[0], &newgroup);
-  // create new MPI communicator
-  MPI_Comm newcomm;
-  MPI_Comm_create(MPI_COMM_WORLD, newgroup, &newcomm);
-  if (this_host_is_in_group) {
-    // insert them in MPI groups and comm vectors
-    mpi_group_vect_.push_back(newgroup);
-    mpi_comm_vect_.push_back(newcomm);
+  if (mpi_flag) {
+    // It is mandatory that the collective creation of MPI_Group and MPI_Comm are executed on all MPI processess
+    // no matter if they are actually used or not
+    // Get the group from the world communicator
+    MPI_Group world_group;
+    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+    // create new MPI group from host group hg
+    MPI_Group newgroup;
+    MPI_Group_incl(world_group, hg.size(), &hg[0], &newgroup);
+    // create new MPI communicator
+    MPI_Comm newcomm;
+    MPI_Comm_create(MPI_COMM_WORLD, newgroup, &newcomm);
+    // They are inserted in the vectors only if they are actually needed
+    // Note that the two vectors will be indexed by the local group id, in the same way as host_group_
+    if (this_host_is_in_group) {
+      // insert them in MPI groups and comm vectors
+      mpi_group_vect_.push_back(newgroup);
+      mpi_comm_vect_.push_back(newcomm);
+    }
+  }
 #endif
-    
-  }
-  else {
-    // if this host is not in the group, set the entry of host_group_local_id_ to -1 
-    host_group_local_id_.push_back(-1);
-  }
-  
   // return as output the index of the last entry in host_group_local_id_
   // which correspond to the newly created group
   return host_group_local_id_.size() - 1;
 }
-
-
-
 
 
 #endif // REMOTECONNECTH

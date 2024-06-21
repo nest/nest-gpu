@@ -151,6 +151,8 @@ extern "C"
   int NESTGPU_EndSimulation();
 
   int NESTGPU_ConnectMpiInit( int argc, char* argv[] );
+  
+  int NESTGPU_FakeConnectMpiInit(int n_hosts, int this_host);
 
   int NESTGPU_MpiFinalize();
 

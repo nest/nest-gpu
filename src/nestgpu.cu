@@ -150,6 +150,7 @@ NESTGPU::setThisHost( int i_host )
 
 NESTGPU::NESTGPU()
 {
+  start_real_time_ = getRealTime();
   n_hosts_ = 1;
   this_host_ = 0;
   external_spike_flag_ = false;
@@ -175,7 +176,7 @@ NESTGPU::NESTGPU()
   cuda_error_ns::mem_used_ = 0;
   cuda_error_ns::mem_max_ = 0;
 
-  start_real_time_ = getRealTime();
+
   max_spike_buffer_size_ = 20;
   t_min_ = 0.0;
   sim_time_ = 1000.0; // Simulation time in ms
@@ -340,7 +341,10 @@ NESTGPU::setConnStructType( int conn_struct_type )
 
   // set time resolution in connection object
   conn_->setTimeResolution( time_resolution_ );
-
+  
+  // set start real time in connection object
+  conn_->setStartRealTime( start_real_time_ );
+  
   return 0;
 }
 
@@ -388,6 +392,7 @@ NESTGPU::Calibrate()
 {
   CheckUncalibrated( "Calibration can be made only once" );
 
+  PRINT_TIME;
   if ( verbosity_level_ >= 1 )
   {
     std::cout << HostIdStr() << "Calibrating ...\n";
@@ -413,8 +418,12 @@ NESTGPU::Calibrate()
 
   conn_->organizeConnections( GetNTotalNodes() );
 
+  PRINT_TIME;
+  
   conn_->calibrate();
 
+  PRINT_TIME;
+    
   int max_delay_num = max_spike_buffer_size_;
   
   max_spike_num_ = ( int ) round( max_spike_num_fact_ * GetNTotalNodes() * max_delay_num );
@@ -428,7 +437,12 @@ NESTGPU::Calibrate()
   
   conn_->initInputSpikeBuffer( GetNLocalNodes(), GetNTotalNodes(), max_remote_spike_num_ );
 
+  PRINT_TIME;
+  
   poiss_conn::organizeDirectConnections( conn_ );
+
+  PRINT_TIME;
+  
   for ( unsigned int i = 0; i < node_vect_.size(); i++ )
   {
     if ( node_vect_[ i ]->has_dir_conn_ )
@@ -437,6 +451,8 @@ NESTGPU::Calibrate()
     }
   }
 
+  PRINT_TIME;
+  
   if ( remove_conn_key_ )
   {
     conn_->freeConnectionKey();
@@ -445,6 +461,8 @@ NESTGPU::Calibrate()
   unsigned int n_spike_buffers = GetNTotalNodes();
   NestedLoop::Init( n_spike_buffers );
 
+  PRINT_TIME;
+  
   // temporary
   gpuErrchk( cudaPeekAtLastError() );
   gpuErrchk( cudaDeviceSynchronize() );
@@ -454,14 +472,25 @@ NESTGPU::Calibrate()
 
   NodeGroupArrayInit();
 
+  PRINT_TIME;
+  
   SpikeInit( max_spike_num_ );
+
+  PRINT_TIME;
+  
   spikeBufferInit( GetNTotalNodes(), max_spike_buffer_size_, conn_->getSpikeBufferAlgo() );
 
+  PRINT_TIME;
+  
   if ( n_hosts_ > 1 )
   {
     conn_->remoteConnectionMapCalibrate( GetNLocalNodes() );
 
+    PRINT_TIME;
+
     ExternalSpikeInit();
+
+    PRINT_TIME;
   }
 
   if ( conn_->getRevConnFlag() )
@@ -471,12 +500,18 @@ NESTGPU::Calibrate()
 
   multimeter_->OpenFiles();
 
+  PRINT_TIME;
+
   for ( unsigned int i = 0; i < node_vect_.size(); i++ )
   {
     node_vect_[ i ]->Calibrate( t_min_, time_resolution_ );
   }
 
+  PRINT_TIME;
+  
   SynGroupCalibrate();
+
+  PRINT_TIME;
 
   gpuErrchk( cudaMemcpyToSymbolAsync( NESTGPUTimeResolution, &time_resolution_, sizeof( float ) ) );
 
@@ -2431,5 +2466,5 @@ NESTGPU::RemoteCreate( int i_host, std::string model_name, inode_t n_nodes /*=1*
 // Method that creates a group of hosts for remote spike communication (i.e. a group of MPI processes)
 // host_arr: array of host inexes, n_hosts: nomber of hosts in the group
 int NESTGPU::CreateHostGroup(int *host_arr, int n_hosts) {
-  return conn_->CreateHostGroup(host_arr, n_hosts);
+  return conn_->CreateHostGroup(host_arr, n_hosts, mpi_flag_);
 }

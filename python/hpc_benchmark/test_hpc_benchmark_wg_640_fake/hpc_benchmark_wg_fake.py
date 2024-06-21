@@ -92,16 +92,22 @@ from argparse import ArgumentParser
 parser = ArgumentParser()
 parser.add_argument("--path", type=str, default=".")
 parser.add_argument("--seed", type=int, default=12345)
+parser.add_argument("--fake_mpi_proc_num", type=int, default=0)
+parser.add_argument("--fake_mpi_proc_id", type=int, default=0)
 args = parser.parse_args()
 
 M_INFO = 10
 M_ERROR = 30
 
-ngpu.ConnectMpiInit()
+if args.fake_mpi_proc_num > 0:
+    ngpu.FakeConnectMpiInit(args.fake_mpi_proc_num, args.fake_mpi_proc_id)
+else:
+    ngpu.ConnectMpiInit()
 
 mpi_id = ngpu.HostId()
 mpi_np = ngpu.HostNum()
 
+#hg = ngpu.CreateHostGroup([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
 hg = ngpu.CreateHostGroup(list(range(mpi_np)))
 
 ###############################################################################
@@ -110,7 +116,7 @@ hg = ngpu.CreateHostGroup(list(range(mpi_np)))
 
 
 params = {
-    'scale': 0.1,             # scaling factor of the network size
+    'scale': 20.0,             # scaling factor of the network size
                              # total network size = scale*11250 neurons
     'seed': args.seed,       # seed for random number generation
     'simtime': 250.,         # total simulation time in ms
@@ -121,7 +127,7 @@ params = {
                              # neurons to file
     'show_plot': False,      # switch to show plot at the end of simulation
                              # disabled by default for benchmarking
-    'raster_plot': True,    # when record_spikes=True, depicts a raster plot
+    'raster_plot': False,    # when record_spikes=True, depicts a raster plot
     'path_name': args.path,  # path where all files will have to be written
     'log_file': 'log',       # naming scheme for the log files
     'use_all_to_all': False, # Connect using all to all rule
@@ -408,7 +414,11 @@ def run_simulation():
     ngpu.SetKernelStatus({
         "verbosity_level": 4,
         "rnd_seed": params["seed"],
-        "time_resolution": params['dt']
+        "time_resolution": params['dt'],
+        "max_node_n_bits": 28,
+        "max_syn_n_bits": 1,
+        "max_spike_num_fact": 0.01,
+        "max_spike_per_host_fact": 0.01
         })
     seed = ngpu.GetKernelStatus("rnd_seed")
     
@@ -422,6 +432,9 @@ def run_simulation():
 
     time_calibrate = perf_counter_ns()
 
+    if args.fake_mpi_proc_num > 0:
+        quit()
+    
     ngpu.Simulate(params['presimtime'])
 
     time_presimulate = perf_counter_ns()

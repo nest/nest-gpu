@@ -110,7 +110,7 @@ hg = ngpu.CreateHostGroup(list(range(mpi_np)))
 
 
 params = {
-    'scale': 0.1,             # scaling factor of the network size
+    'scale': 20.0,             # scaling factor of the network size
                              # total network size = scale*11250 neurons
     'seed': args.seed,       # seed for random number generation
     'simtime': 250.,         # total simulation time in ms
@@ -121,13 +121,16 @@ params = {
                              # neurons to file
     'show_plot': False,      # switch to show plot at the end of simulation
                              # disabled by default for benchmarking
-    'raster_plot': True,    # when record_spikes=True, depicts a raster plot
+    'raster_plot': False,    # when record_spikes=True, depicts a raster plot
     'path_name': args.path,  # path where all files will have to be written
     'log_file': 'log',       # naming scheme for the log files
     'use_all_to_all': False, # Connect using all to all rule
     'check_conns': False,    # Get ConnectionId objects after build. VERY SLOW!
     'use_dc_input': False,   # Use DC input instead of Poisson generators
     'verbose_log': False,    # Enable verbose output per MPI process
+    'ignore_and_fire': True,  # if True, all connection weights but those from poisson generator are set to zero
+    'ignore_and_fire_rate': 50000.0, # rate of poisson generator when the 'ignore_and_fire' flag is True
+    'ignore_and_fire_weight': 10.75 # weight of poisson generator connections when the 'ignore_and_fire' flag is True 
 }
 
 
@@ -229,7 +232,7 @@ brunel_params = {
     'stdp_delay': 1.5,
 
     'eta': 1.685,  # scaling of external stimulus
-    'filestem': params['path_name']
+    'filestem': params['path_name'],
 }
 
 ###############################################################################
@@ -275,23 +278,22 @@ def build_network():
     # total number of incomining inhibitory connections
     CI = int(1. * NI / params['scale'])
 
-    # number of indegrees from each MPI process
-    # here the indegrees are equally distributed among the
-    # neuron populations in all the MPI processes
-
-    CE_distrib = int(1.0 * CE / (mpi_np))
-    CI_distrib = int(1.0 * CI / (mpi_np))
-
     rank_print('Creating excitatory stimulus generator.')
 
     # Convert synapse weight from mV to pA
     conversion_factor = convert_synapse_weight(model_params['tau_m'], model_params['tau_syn_ex'], model_params['C_m'])
     JE_pA = conversion_factor * brunel_params['JE']
+    if mpi_id==0:
+       rank_print("Synaptic weights: JE={}; JI={}".format(JE_pA, JE_pA*brunel_params['g']))
 
     nu_thresh = model_params['Theta_rel'] / ( CE * model_params['tau_m'] / model_params['C_m'] * JE_pA * np.exp(1.) * tau_syn)
     nu_ext = nu_thresh * brunel_params['eta']
     rate = nu_ext * CE * 1000.
-    if not params['use_dc_input']:
+    if params['ignore_and_fire']:
+        brunel_params["poisson_rate"] = params['ignore_and_fire_rate']
+        E_stim= ngpu.Create('poisson_generator', 1, 1, {'rate': params['ignore_and_fire_rate']})
+        JE_pA = 0.0
+    elif not params['use_dc_input']:
         brunel_params["poisson_rate"] = rate
         E_stim= ngpu.Create('poisson_generator', 1, 1, {'rate': rate})
     else:
@@ -321,10 +323,12 @@ def build_network():
     else:
         syn_dict_ex = {'weight': JE_pA, 'delay': brunel_params['delay']}
 
-    if mpi_id==0:
-       rank_print("Synaptic weights: JE={}; JI={}".format(JE_pA, JE_pA*brunel_params['g']))
-
-    if not params["use_dc_input"]:
+    if params['ignore_and_fire']:
+        rank_print('Connecting stimulus generators.')
+        syn_dict_stim = {'weight': params['ignore_and_fire_weight'], 'delay': brunel_params['delay']}
+        # connect Poisson generator to neuron
+        my_connect(E_stim, neurons[mpi_id], {'rule': 'all_to_all'}, syn_dict_stim)
+    elif not params["use_dc_input"]:
         rank_print('Connecting stimulus generators.')
         # connect Poisson generator to neuron
         my_connect(E_stim, neurons[mpi_id], {'rule': 'all_to_all'}, syn_dict_ex)
@@ -332,12 +336,21 @@ def build_network():
     rank_print('Creating local connections.')
     rank_print('Connecting excitatory -> excitatory population.')
 
+    # number of indegrees from current MPI process
+    CE_local = CE // mpi_np
+    if ( (2*mpi_id) % mpi_np ) < ( CE % mpi_np ):
+        CE_local = CE_local + 1
+        
+    CI_local = CI // mpi_np
+    if ( (2*mpi_id) % mpi_np ) < ( CI % mpi_np ):
+        CI_local = CI_local + 1
+
     if params['use_all_to_all']:
         i_conn_rule = {'rule': 'all_to_all'}
         e_conn_rule = {'rule': 'all_to_all'}
     else:
-        i_conn_rule = {'rule': 'fixed_indegree', 'indegree': CI_distrib}
-        e_conn_rule = {'rule': 'fixed_indegree', 'indegree': CE_distrib}
+        i_conn_rule = {'rule': 'fixed_indegree', 'indegree': CI_local}
+        e_conn_rule = {'rule': 'fixed_indegree', 'indegree': CE_local}
 
     brunel_params["connection_rules"] = {"inhibitory": i_conn_rule, "excitatory": e_conn_rule}
     
@@ -355,6 +368,24 @@ def build_network():
         for j in range(mpi_np):
             if(i!=j):
                 rank_print('Connecting excitatory {} -> excitatory {} population.'.format(i, j))
+
+                # number of indegrees from each MPI process
+                # here the indegrees are equally distributed among the
+                # neuron populations in all the MPI processes
+                CE_distrib = CE // mpi_np
+                if ( (i + j) % mpi_np ) < ( CE % mpi_np ):
+                    CE_distrib = CE_distrib + 1
+                    
+                CI_distrib = CI // mpi_np
+                if ( (i + j) % mpi_np ) < ( CI % mpi_np ):
+                    CI_distrib = CI_distrib + 1
+                    
+                if params['use_all_to_all']:
+                    i_conn_rule = {'rule': 'all_to_all'}
+                    e_conn_rule = {'rule': 'all_to_all'}
+                else:
+                    i_conn_rule = {'rule': 'fixed_indegree', 'indegree': CI_distrib}
+                    e_conn_rule = {'rule': 'fixed_indegree', 'indegree': CE_distrib}
 
                 my_remoteconnect(i, E_pops[i], j, neurons[j],
                                     e_conn_rule, syn_dict_ex, hg)
@@ -408,7 +439,11 @@ def run_simulation():
     ngpu.SetKernelStatus({
         "verbosity_level": 4,
         "rnd_seed": params["seed"],
-        "time_resolution": params['dt']
+        "time_resolution": params['dt'],
+        "max_node_n_bits": 28,
+        "max_syn_n_bits": 1,
+        "max_spike_num_fact": 0.01,
+        "max_spike_per_host_fact": 0.01
         })
     seed = ngpu.GetKernelStatus("rnd_seed")
     

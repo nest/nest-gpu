@@ -593,6 +593,8 @@ public:
 
   int ConnectMpiInit( int argc, char* argv[] );
 
+  int FakeConnectMpiInit(int n_hosts, int this_host);
+
   int MpiFinalize();
 
   void
