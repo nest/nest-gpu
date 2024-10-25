@@ -209,6 +209,14 @@ function( NESTGPU_POST_PROCESS_COMPILE_FLAGS )
 endfunction()
 
 
+function( NESTGPU_PROCESS_WITH_NVTX )
+  set( HAVE_NVTX OFF PARENT_SCOPE )
+  if ( with-nvtx )
+    set( HAVE_NVTX ON PARENT_SCOPE )
+  endif()
+endfunction()
+
+
 function( NEST_PROCESS_VERSION_SUFFIX )
   if ( with-version-suffix )
     foreach ( flag ${with-version-suffix} )

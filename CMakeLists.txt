@@ -64,6 +64,7 @@ set( with-includes OFF CACHE STRING "Add additional include paths [default=OFF].
 set( with-defines OFF CACHE STRING "Additional defines, e.g. '-DXYZ=1' [default=OFF]. Separate multiple defines by ';'." )
 set( with-max-rreg-count "55" CACHE STRING "Set a maximum amount of register used when compiling [default=55]. Separate multiple flags by ';'." )
 set( with-ptxas-options OFF CACHE STRING "Options for ptxas compiling [default=OFF]. Separate multiple flags by ';'." )
+set( with-nvtx OFF CACHE STRING "Enable compilation with NVTX ranges." )
 
 # generic build configuration
 set( with-version-suffix OFF CACHE STRING "Set a user defined version suffix [default='']." )
@@ -130,6 +131,7 @@ nest_process_with_optimize()
 nest_process_with_debug()
 nest_process_with_warning()
 nestgpu_post_process_compile_flags()
+nestgpu_process_with_nvtx()
 
 nest_process_version_suffix()
 

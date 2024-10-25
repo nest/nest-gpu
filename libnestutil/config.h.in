@@ -48,6 +48,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #cmakedefine HAVE_UNISTD_H 1
 
+/* Define to 1 for compiling with nvtx ranges. */
+#cmakedefine HAVE_NVTX 1
+
 /* Version number of package */
 #define VERSION @NEST_GPU_VERSION_STRING@
 
