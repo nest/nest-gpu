@@ -57,6 +57,7 @@ izhikevich_psc_exp_5s.h \
 izhikevich_psc_exp.h \
 locate.h \
 multimeter.h \
+nested_loop.h \
 nestgpu.h \
 neuron_models.h \
 ngpu_exception.h \
@@ -116,6 +117,7 @@ izhikevich_psc_exp_5s.cu \
 izhikevich_psc_exp.cu \
 locate.cu \
 multimeter.cu \
+nested_loop.cu \
 nestgpu.cu \
 neuron_models.cu \
 node_group.cu \

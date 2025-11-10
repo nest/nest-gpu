@@ -64,6 +64,7 @@ set ( nestgpu_sources
 	izhikevich_psc_exp.h
 	locate.h
 	multimeter.h
+	nested_loop.h
 	nestgpu_C.h
 	nestgpu.h
 	neuron_models.h
@@ -120,9 +121,9 @@ set ( nestgpu_sources
 	izhikevich_psc_exp_2s.cu
 	izhikevich_psc_exp_5s.cu
 	izhikevich_psc_exp.cu
-	locate.cu
 	multimeter.cu
 	nestgpu.cu
+	nested_loop.cu
 	neuron_models.cu
 	node_group.cu
 	parrot_neuron.cu
