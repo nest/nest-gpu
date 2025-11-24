@@ -41,7 +41,7 @@ V_m=[row[1]+E_L for row in data_list]
 #    for i in range(len(t)):
 #        f.write("%s\t%s\n" % (t[i], V_m[i]))
 
-data = np.loadtxt('../test/test_fast_iaf_psc_exp_nest.txt', delimiter="\t")
+data = np.loadtxt('test_fast_iaf_psc_exp_nest.txt', delimiter="\t")
 t1=[x[0] for x in data ]
 V_m1=[x[1] for x in data ]
 #print (len(t))
