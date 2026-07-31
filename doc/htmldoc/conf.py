@@ -133,8 +133,3 @@ html_css_files = [
 html_logo =  'static/img/nestgpu-logo.png'
 html_theme_options = {'logo_only': True,
                       'display_version': True}
-
-def setup(app):
-    app.connect('config-inited', config_inited_handler)
-#    app.add_css_file('css/custom.css')
-#    app.add_css_file('css/pygments.css')
