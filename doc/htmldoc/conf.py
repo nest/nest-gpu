@@ -36,6 +36,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path().resolve()))
 
 source_dir = Path(__file__).resolve().parent.resolve()
+
+# Add the extension modules to the path
+sys.path.append(str(source_dir / "_ext"))
 doc_build_dir = source_dir / "models"
 
 print("doc_build_dir", str(doc_build_dir))
@@ -69,7 +72,7 @@ extensions = [
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ['templates']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'manni'
@@ -98,7 +101,7 @@ from extractor_userdocs import relative_glob, ExtractUserDocs
 
 def config_inited_handler(app, config):
     ExtractUserDocs(
-        listoffiles=relative_glob("../src/*.h", basedir=source_dir),
+        listoffiles=relative_glob("../../src/*.h", basedir=source_dir),
         basedir=source_dir,
         outdir=str(doc_build_dir)
     )
@@ -120,14 +123,14 @@ html_show_copyright = False
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ['static']
 
 html_css_files = [
     'css/custom.css',
     'css/pygments.css',
 ]
 
-html_logo =  'logo/nestgpu-logo.png'
+html_logo =  'static/img/nestgpu-logo.png'
 html_theme_options = {'logo_only': True,
                       'display_version': True}
 
