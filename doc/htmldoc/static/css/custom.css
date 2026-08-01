@@ -1,346 +1,453 @@
-.wy-breadcrumbs-aside {
-    display: none !important;
+/*
+ * Adapted from the NEST Simulator documentation
+ * (doc/htmldoc/static/css/custom.css)
+ *
+ * Sphinx theme: sphinx-material
+ * https://bashtage.github.io/sphinx-material/index.html
+ * Sphinx material theme properties use 'md' in variable names
+ * Extension for grid / cards in reStructuredText see sphinx-design
+ * https://sphinx-design.readthedocs.io/
+ * Sphinx design properties use 'sd' in variable names
+ */
+
+/* Define colors */
+:root {
+    --nest-orange: #ff6633;
+    --nest-blue: #0E6A93;
+    --nest-dkblue: #072f42;
+    --nest-brown: #4b210c;
+    --sd-color-primary: var(--nest-orange);
+    --sd-color-secondary: #666;
+    --sd-color-warning: #f22;
+    --sd-color-success: var(--nest-brown);
+    --sd-color-dark: var(--nest-dkblue);
+    --sd-color-primary-highlight: #e05a2d;
+    --sd-color-muted: #adadad;
+    --sd-color-info: var(--nest-blue);
+    --sd-color-card-border-hover: var(--nest-orange);
+    --sd-color-tabs-underline: #fff;
+    --sd-fontsize-dropdown-title: 0.8rem;
 }
 
-.keep-us-sustainable {
-    background-color: #272525;
+/* Define base font color and style */
+body {
+    background: #fff;
+    color: #666;
+    font-family: 'Droid Sans', Arial, Helvetica, sans-serif;
 }
 
-.rst-content dl:not(.docutils) [class^="sig-prename descclassname"] {
-    display: none;
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
 }
 
-.rst-content dl:not(.docutils) dt {
-    color: #272727;
-    background: none;
-    border-left: none;
-    border-top: none;
-
+* {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
 }
 
-.rst-content dl:not(.docutils) dt[class^="sig sig-object py"] {
-	margin: 6px 0;
-	font-size: medium;
-	line-height: normal;
-	background: #ff663329;
-	color: #272727;
-	border-left: solid 3px #ff663385;
-	border-top: none;
-	padding: 6px;
-	position: relative;
+/* links */
+a { color: var(--nest-orange); }
+a:visited,
+a:active { color: var(--nest-orange); }
+a:hover { color: var(--nest-orange); text-decoration: underline; }
+
+p { margin: 0 0 1.5em; }
+
+/* set api function and class names style */
+.sig-prename.descclassname {
+    display: None;
 }
 
-.rst-content dl:not(.docutils) dl dt {
-    border-left: none;
-    color: #272727;
-    background: none;
-}
-
-.rst-content code, .rst-content tt, code {
-    border: none;
-    font-size: 85%;
-    background: None;
-    padding-left: 2px;
-    padding-right: 2px;
-}
-
-t.rst-content tt.literal, .rst-content tt.literal, .rst-content code.literal { 
-    color: #111;
-
-}
-.rst-content tt.xref, a .rst-content tt, .rst-content tt.xref, .rst-content code.xref { 
-    color: #f63;
-}
-
-p {
-    margin-bottom: 12px;
-}
-
-.wy-nav-content {
-    max-width: 950px;
-}
-
-.wy-side-nav-search {
-    background: linear-gradient(45deg, #fff, #eee);
-    color: #888;
-    border-bottom: 1px solid #e1e4e5;
-}
-
-.wy-side-nav-search input[type=text] {
-    border-color: #f63;
-}
-
-.wy-nav-side {
-   background: linear-gradient(90deg, #fff, #eee);
-   color: #888;
-   border-right: 1px solid #e1e4e5;
-}
-
-.wy-menu-vertical a,
-.wy-menu-vertical a:visited {
-   color: #444;
-}
-
-.wy-menu-vertical a:hover {
-    color: #aaa;
-}
-
-.wy-menu-vertical header, .wy-menu-vertical p.caption {
-    background-color: #c1c1c1;
-    color: #6f6f6f;
-    border-top: 1px solid #aaa;
-}
-
-.wy-menu-vertical li.current a {
-    color: #888;
-}
-
-.wy-nav-top {
-    display: none;
-    background: linear-gradient(90deg, #fff, #eee);;
-    color: #888;
-    padding: .4045em .809em;
-    position: relative;
-    line-height: 50px;
-    text-align: center;
-    font-size: 100%;
-    border-bottom: 1px solid #e1e4e5;
-}
-
-.wy-nav-top a {
-    color: #f63;
+.sig.sig-object.py {
     font-weight: bold;
+    background-color: #ffd1c1;
+    font-family: "Roboto Mono", "Courier New", Courier, monospace;
 }
 
-@media screen and (max-width: 768px) {
-    .wy-nav-top {
-        display: block;
-    }
+dt:target {
+    margin-top: -0.55rem;
+    padding-top: 0.45rem;
 }
 
-video {
-    margin-bottom: 20px;
-    background-color: lightgrey;
-    border: 1px solid lightgrey;
+.center {
+    text-align: center;
+    font-style: italic;
 }
 
-a:visited {
-    color: #f63;
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4,
+.md-typeset h5,
+.md-typeset h6 {
+    font-weight: 600;
 }
 
-a {
-    color: #f63;
-    text-decoration: none;
-    background-color: transparent;
-    cursor: pointer;
+[id] {
+    scroll-margin-top: 4rem;
 }
 
-a:hover {
-    color: #f63;
-    text-decoration: underline;
+[data-md-color-primary=orange] .md-tabs {
+    background-color: var(--nest-orange);
 }
 
-.rst-content dl:not(.docutils) dt  em[class^='property']{
-     display:none;
+div[role="main"] .md-header {
+    background-color: var(--nest-orange);
+    scale: 140%;
+    padding-top: 0.3rem;
+    height: 2.6rem;
+    transition: background-color .25s, color .25s, box-shadow .25s;
+    box-shadow: 0 0 .2rem rgba(0, 0, 0, .1), 0 .2rem .4rem rgba(0, 0, 0, .2);
 }
 
-.rst-content pre.literal-block, .rst-content div[class^='highlight'] pre, .rst-content .linenodiv pre {
-    line-height: 1.3em;
+div[role="main"] .md-source {
+    display: none;
 }
 
-.highlight {
-    background: rgba(255, 165, 0, 0.1);
+.md-typeset blockquote {
+    border-left: none;
 }
 
-.rst-content .admonition-title::before {
-    display:none;
+[data-md-color-primary="orange"] .md-header,
+[data-md-color-primary="orange"] .md-hero {
+    background-color: var(--nest-orange);
 }
 
-.rst-content .admonition-title {
-    background: #333333;
+[data-md-color-primary="orange"] .md-nav__link--active,
+[data-md-color-primary="orange"] .md-nav__link:active {
+    color: var(--nest-orange);
 }
 
-.rst-content .danger .admonition-title {
-    background: #ff1133;
-}
-
-.rst-content .seealso .admonition-title, .rst-content .note .admonition-title {
-    background: #ffbb33;
-}
-
-.rst-content .warning .admonition-title {
-    background: #ff6633;
-
-}
-
-.wy-plain-list-disc, .rst-content .section ul, .rst-content .toctree-wrapper ul, article ul {
-    margin-bottom: 12px;
-}
-
-.rst-content .pull-quote {
-    background: #f0f3f3;
-    padding: 0.5em;
-    border: 1px solid #ff6633;
+[data-md-color-primary="orange"] .md-typeset a {
+    color: var(--nest-orange);
+    background-color: #ffffff8a;
     border-radius: 5px;
 }
 
-.rst-content .admonition {
-    background: #e9e9e9;
-
+.md-typeset details {
+    background-color: white;
+    border-left: none;
 }
 
-/* override table width restrictions */
-@media screen and (min-width: 767px) {
-
-   .wy-table-responsive table td {
-      /* !important prevents the common CSS stylesheets from overriding
-         this as on RTD they are loaded after this stylesheet */
-      white-space: normal !important;
-   }
-
-   .wy-table-responsive {
-      overflow: visible !important;
-      word-wrap: break-word;
-   }
-
+.md-typeset summary::after {
+    display: none;
 }
 
-/*html body div.wy-table-responsive {
-  margin-bottom: 0;
+.md-typeset details > summary::before {
+    display: none;
 }
 
-html body div.wy-table-responsive .footnote td {
-  padding-top: 1px;
-  padding-bottom: 4px;
-}*/
-
-.maroon {
-    color: maroon;
+/* dropdowns */
+.md-typeset details > summary {
+    background-color: #ff663310;
 }
 
-.red {
-    color: red;
+/* settings for icons */
+.md-typeset .sd-card-title img,
+.md-typeset .sd-card-header img {
+    border: none;
+    opacity: 0.9;
+    height: 60px;
+    margin-right: 1.2em;
+    margin-bottom: 0.5em;
 }
 
-.magenta {
-    color: magenta;
+.md-typeset .sd-summary-title img {
+    border: none;
+    opacity: 0.9;
+    width: auto;
+    height: 64px;
+    margin-right: 2em;
+    margin-bottom: 0.5em;
 }
 
-.pink {
-    color: pink;
+/* admonitions */
+.md-typeset .admonition,
+.md-typeset .admonition.tip {
+    border-left: .2rem solid var(--nest-blue);
+    border-radius: 5px;
 }
 
-.orange {
-    color: #f63;
+.md-typeset .admonition > .admonition-title::before,
+.md-typeset .admonition.important > .admonition-title::before,
+.md-typeset .admonition.tip > .admonition-title::before {
+    color: #fff;
 }
 
-.darkgreen {
-    color: #004f00;
+.md-typeset .admonition > .admonition-title,
+.md-typeset .admonition.tip > .admonition-title {
+    background-color: var(--nest-blue);
+    color: #fff;
 }
 
-.green {
-    color: green;
+.md-typeset .admonition {
+    background-color: #fff;
+    box-shadow: 0 .125rem .25rem var(--sd-color-shadow);
+    margin-left: 17px;
+    margin-right: 15px;
 }
 
-.teal {
-    color: teal;
+.md-typeset .admonition.seealso > .admonition-title,
+.md-typeset .admonition.important > .admonition-title {
+    background-color: var(--nest-dkblue);
 }
 
-.cyan {
-    color: cyan;
+.md-typeset .admonition.seealso,
+.md-typeset .admonition.important {
+    border-left: .2rem solid var(--nest-dkblue);
 }
 
-.aqua {
-    color: aqua;
+.md-typeset .admonition.warning {
+    border-left-color: #be1717;
 }
 
-.blue {
-    color: blue;
+.md-typeset .admonition.warning > .admonition-title {
+    background-color: #be1717;
 }
 
-.navy {
-    color: navy;
+.md-typeset .admonition.danger > .admonition-title {
+    background-color: black;
 }
 
-.purple {
-    color: purple;
+div.admonition .md-typeset a > code {
+    color: white;
 }
 
-.under {
-    text-decoration: underline;
+/* navigation */
+.md-nav__extra_link {
+    color: var(--nest-orange);
 }
 
-.over {
-    text-decoration: overline;
+.md-nav__link,
+.md-nav__link:focus,
+.md-nav__link:hover {
+    color: var(--nest-orange);
 }
 
-.blink {
-    text-decoration: blink;
+ul.md-tabs__list li.md-tabs__item a.md-tabs__link {
+    color: #fff;
+    opacity: 0.9;
 }
 
-.strike {
-    text-decoration: line-through;
+a.md-tabs__link,
+a.md-source {
+    color: #fff;
 }
 
-@media screen and (min-width: 1270px)  {
-    /* Pop out the in-page links to the right instead of the lef */
-    /*div.wy-side-scroll li.toctree-l1.current > ul {
-     */
-   div[class^='contents'] {
-     position: fixed;
-     margin-left: 0px;
-     overflow-y: auto;
-     padding-left: 15px;
-     border-left: 1px solid #e1e4e5;
-         border-left-color: #e1e4e5;
-         border-left-style: solid;
-         border-left-width: 1px;
-     border-right: 1px, #e0e0e0, solid;
-         border-right-width: 1px;
-         border-right-color: #e0e0e0;
-         border-right-style: solid;
-     height: 100%;
-     width: 250px;
-     top: 0px;
-     left: 1250px;
-     padding-right: 10px;
-     background: linear-gradient(90deg, #fcfcfc, rgba(0, 0, 0, 0));
-     padding-top: 70px;
+div.md-header-nav__source a.md-source div.md-source__repository,
+div.md-source__icon {
+    color: #fff;
+}
+
+span.md-nav__link.caption {
+    padding-top: 0.6rem;
+    padding-bottom: 0.1rem;
+}
+
+/* remove logo from header */
+.md-header-nav__button {
+    display: none;
+}
+
+/* remove space between the md_tabs bar and the header section */
+.md-container {
+    padding-top: 0px;
+}
+
+/* label the secondary (per page) navigation */
+nav.md-nav.md-nav--secondary label.md-nav__title {
+    visibility: hidden;
+}
+
+nav.md-nav.md-nav--secondary label.md-nav__title:after {
+    content: "Page Contents";
+    visibility: visible;
+    display: block;
+    position: static;
+}
+
+/***********************************
+ * Adjust settings for sphinx design
+ ***********************************/
+.sd-card-header .sd-card-text {
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+}
+
+details.sd-dropdown:not([open]).sd-card {
+    width: max-content;
+}
+
+.sd-card-body {
+    padding: 0.6rem;
+}
+
+.sd-container,
+.sd-container-fluid,
+.sd-container-lg,
+.sd-container-md,
+.sd-container-sm,
+.sd-container-xl {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.sd-tab-set > input:checked + label {
+    border-color: var(--nest-orange) !important;
+    color: var(--nest-orange) !important;
+}
+
+.sd-tab-set > input:not(:checked) + label:hover {
+    color: var(--nest-brown) !important;
+    border-color: #f632 !important;
+}
+
+/* ************************************
+ * Define styles for the layout template
+ * ***********************************/
+.wrapper {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 50px;
+}
+
+header.wrapper {
+    padding: 0;
+}
+
+header {
+    background-color: var(--nest-blue);
+    padding: 0;
+    height: 180px;
+}
+
+#background {
+    max-width: 73rem;
+    height: 100%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+}
+
+#banner {
+    position: static;
+    float: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+#logo img {
+    height: 180px;
+    width: auto;
+    max-width: 100%;
+    display: block;
+    padding-top: 0;
+}
+
+.icon {
+    margin: 0 auto;
+    height: 95px;
+    display: block;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* Contain floats */
+.clearfix:before,
+.clearfix:after,
+.row:before,
+.row:after {
+    content: " ";
+    display: table;
+}
+
+.clearfix:after,
+.container:after,
+.row:after {
+    clear: both;
+}
+
+/****************************************
+ * MEDIAQUERIES
+ ****************************************/
+
+@media only screen and (min-width: 2048px) {
+    .md-typeset .sd-card-title img {
+        width: auto;
+        height: 60px;
     }
-    }
-    .rst-content .section ul p {
-        margin-bottom: 0px;
+}
+
+@media only screen and (min-width: 1024px) {
+    header {
+        background-color: var(--nest-blue);
+        padding: 15px 0;
+        height: 180px;
     }
 }
 
- /*   div.wy-side-scroll li.toctree-l1.current a {
-        border-right: none;
+@media only screen and (max-width: 1023px) {
+    header {
+        background-color: var(--nest-blue);
+        padding: 0 0;
+        height: 180px;
     }
 
-    div.wy-side-scroll li.toctree-l1.current ul {
-        max-width: 400px;
+    #banner {
+        padding-top: 50px;
+    }
+}
+
+/*
+LARGER MOBILE DEVICES
+This is for mobile devices with a bit larger screens.
+*/
+@media only screen and (min-width: 481px) {
+    #banner {
+        float: left;
+        text-align: left;
+        margin: 0 0 0 50px;
+    }
+}
+
+/*
+TABLET & SMALLER LAPTOPS
+*/
+@media only screen and (min-width: 920px) {
+    header {
+        padding: 0;
     }
 
-    div.wy-side-scroll li.toctree-l1.current ul, li.toctree-l1.current li, li.toctree-l1.current a {
-        background-color: transparent !important;
+    #banner {
+        float: left;
+        text-align: left;
+        margin: 55px 0 0 50px;
+    }
+}
+
+@media only screen and (max-width: 76.1875em) {
+    html [data-md-color-primary="orange"] .md-nav--primary .md-nav__title--site {
+        background-color: #fff;
     }
 
-    /* All items should now be visible regardless of expandy state */
-    /*div.wy-side-scroll li.toctree-l1.current ul {
-      display: block !important;
+    [data-md-color-primary="orange"] .md-nav__source {
+        background-color: #000;
     }
 
-    /* hide the expandy buttons */
-   /* div.wy-side-scroll li.toctree-l1.current span.toctree-expand {
-        display: none !important;
+    html .md-nav--primary .md-nav__title {
+        white-space: initial;
     }
 
-    /* Make the padding correct */
-    /*div.wy-side-scroll li.toctree-l2 li.toctree-l3 > a {
-      padding: .4045em 4.045em !important;
+    /* Make hamburger menu on small devices visible */
+    .md-icon.md-icon--menu.md-header-nav__button {
+        display: flex;
     }
-
-    div.wy-side-scroll li.toctree-l4 > a {
-      padding: .4045em 5.663em !important;
-  }
-} */
+}
