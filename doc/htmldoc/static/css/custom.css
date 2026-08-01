@@ -320,7 +320,7 @@ header.wrapper {
 }
 
 header {
-    background-color: var(--nest-blue);
+    background-color: var(--nest-orange);
     padding: 0;
     height: 180px;
 }
@@ -343,11 +343,17 @@ header {
 }
 
 #logo img {
-    height: 180px;
+    height: 150px;
     width: auto;
     max-width: 100%;
     display: block;
-    padding-top: 0;
+    /* White panel behind the logo, floating on the orange banner. The padding
+       is what makes the white margin around the artwork visible; with
+       box-sizing: border-box it shrinks the image inside the same total
+       height. */
+    padding: 15px;
+    background-color: #fff;
+    border: 5px solid #fff;
 }
 
 .icon {
@@ -388,7 +394,7 @@ html {
 
 @media only screen and (min-width: 1024px) {
     header {
-        background-color: var(--nest-blue);
+        background-color: var(--nest-orange);
         padding: 15px 0;
         height: 180px;
     }
@@ -396,7 +402,7 @@ html {
 
 @media only screen and (max-width: 1023px) {
     header {
-        background-color: var(--nest-blue);
+        background-color: var(--nest-orange);
         padding: 0 0;
         height: 180px;
     }

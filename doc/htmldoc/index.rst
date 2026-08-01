@@ -38,29 +38,6 @@ Welcome to NEST GPU's documentation!
           To start using it, have a look at the examples in the `python/examples <https://github.com/nest/nest-gpu/tree/main/python/examples>`_
           and `c++/examples <https://github.com/nest/nest-gpu/tree/main/c%2B%2B/examples>`_ folders.
 
-       .. grid-item::
-
-          .. button-ref:: download/download
-             :ref-type: doc
-             :shadow:
-             :color: primary
-
-             Download NEST GPU
-
-          .. button-ref:: installation/index
-             :ref-type: doc
-             :shadow:
-             :color: primary
-
-             Install NEST GPU
-
-          .. button-ref:: guides/index
-             :ref-type: doc
-             :shadow:
-             :color: primary
-
-             User guide
-
 How to cite us
 --------------
 
