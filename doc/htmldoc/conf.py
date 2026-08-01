@@ -68,6 +68,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx_tabs.tabs',
     'sphinx_design',
+    'notfound.extension',
     'nbsphinx'
 ]
 
