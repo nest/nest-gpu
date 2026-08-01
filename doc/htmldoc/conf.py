@@ -67,6 +67,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx_tabs.tabs',
+    'sphinx_design',
     'nbsphinx'
 ]
 

@@ -358,6 +358,11 @@ header {
 
 html {
     scroll-behavior: smooth;
+    /* Always reserve room for the vertical scrollbar. Without this, moving
+       between a short page (no scrollbar) and a long one (scrollbar) changes
+       the viewport width, which shifts the centred content grid and looks
+       like the page zooming in and out. */
+    scrollbar-gutter: stable;
 }
 
 /* Contain floats */
