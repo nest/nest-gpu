@@ -15,9 +15,6 @@ Table of Contents
    Examples <examples/index>
    Model Directory <models/index>
 
-   Impressum <https://nest-initiative.org/impressum/>
-   Data protection <https://www.nest-initiative.org/data-protection/>
-
 .. toctree::
    :maxdepth: 2
    :caption: Getting Involved
