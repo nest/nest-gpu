@@ -63,7 +63,6 @@ master_doc = 'contents'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx_rtd_theme',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
@@ -116,7 +115,8 @@ def setup(app):
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_material'
+html_title = 'NEST GPU Documentation'
 
 html_show_sphinx = False
 html_show_copyright = False
@@ -131,5 +131,32 @@ html_css_files = [
 ]
 
 html_logo =  'static/img/nestgpu-logo.png'
-html_theme_options = {'logo_only': True,
-                      'display_version': True}
+
+# Theme options are theme-specific and customize the look and feel of a theme
+# further.  For a list of options available for each theme, see the
+# documentation.
+html_theme_options = {
+    # Specify a base_url used to generate sitemap.xml.
+    'base_url': 'https://nest-gpu.readthedocs.io/en/latest/',
+    'html_minify': False,
+    'html_prettify': False,
+    'css_minify': True,
+    # Set the color and the accent color
+    'color_primary': 'orange',
+    'color_accent': 'white',
+    'theme_color': 'ff6633',
+    'master_doc': False,
+    # Set the repo location to get a badge with stats
+    'repo_url': 'https://github.com/nest/nest-gpu/',
+    'repo_name': 'NEST GPU',
+    'nav_links': [{'href': 'contents', 'internal': True, 'title': 'NEST GPU docs home'}],
+    # Visible levels of the global TOC; -1 means unlimited
+    'globaltoc_depth': 1,
+    # If False, expand all TOC entries
+    'globaltoc_collapse': True,
+    # If True, show hidden TOC entries
+    'globaltoc_includehidden': True,
+    'version_dropdown': False,
+}
+
+html_sidebars = {'**': ['logo-text.html', 'globaltoc.html', 'localtoc.html', 'searchbox.html']}
