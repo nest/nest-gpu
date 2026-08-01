@@ -100,18 +100,19 @@ exclude_patterns = [
     'Thumbs.db',
 ]
 
+# Only projects that are actually cross-referenced from the documentation are
+# listed here: every entry causes an inventory download on each build. Add a
+# mapping back when a :doc: or :ref: role starts pointing at that project.
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'nest': ('https://nest-simulator.readthedocs.io/en/latest/', None),
     'nestml': ('https://nestml.readthedocs.io/en/latest/', None),
-    'pynn': ('http://neuralensemble.org/docs/PyNN/', None),
-    'elephant': ('https://elephant.readthedocs.io/en/latest/', None),
-    'desktop': ('https://nest-desktop.readthedocs.io/en/latest/', None),
-    'neuromorph': ('https://electronicvisions.github.io/hbp-sp9-guidebook/', None),
-    'arbor': ('https://arbor.readthedocs.io/en/latest/', None),
-    'tvb': ('http://docs.thevirtualbrain.org/', None),
-    'extmod': ('https://nest-extension-module.readthedocs.io/en/latest/', None),
 }
+
+# sphinx-material puts functions into html_context, which Sphinx cannot pickle
+# for its configuration cache. The resulting warning is harmless and cannot be
+# fixed from here.
+suppress_warnings = ['config.cache']
 
 
 # Extract documentation from header files in src/
