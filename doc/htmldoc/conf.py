@@ -55,7 +55,7 @@ author = u'nest-simulator'
 release = '1'
 
 source_suffix = '.rst'
-master_doc = 'contents'
+master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
 
@@ -149,7 +149,7 @@ html_theme_options = {
     # Set the repo location to get a badge with stats
     'repo_url': 'https://github.com/nest/nest-gpu/',
     'repo_name': 'NEST GPU',
-    'nav_links': [{'href': 'contents', 'internal': True, 'title': 'NEST GPU docs home'}],
+    'nav_links': [{'href': 'index', 'internal': True, 'title': 'NEST GPU docs home'}],
     # Visible levels of the global TOC; -1 means unlimited
     'globaltoc_depth': 1,
     # If False, expand all TOC entries

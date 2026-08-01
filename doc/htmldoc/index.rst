@@ -40,10 +40,30 @@ If you use NEST GPU in your work, please cite the publications on our :doc:`publ
 
 
 .. toctree::
+   :maxdepth: 1
+   :caption: USAGE
+   :hidden:
+
+   Download <download/download>
+   Install <installation/index>
+   Guides <guides/index>
+   Examples <examples/index>
+   Model Directory <models/index>
+
+.. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: COMMUNITY
+   :hidden:
 
+   Community <community>
+   Publications <publications>
 
+.. toctree::
+   :caption: RELATED PROJECTS
+   :hidden:
+
+   NEST Simulator <https://nest-simulator.readthedocs.io/en/latest/>
+   NESTML <https://nestml.readthedocs.io/en/latest/>
 
 ..
    Indices and tables
