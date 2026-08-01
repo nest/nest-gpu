@@ -5,5 +5,4 @@ sphinx-copybutton >= 0.5.2
 sphinx-design
 sphinx-material
 sphinx-notfound-page >= 0.8.3
-sphinx-tabs
 tqdm
