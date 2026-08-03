@@ -70,8 +70,12 @@ extensions = [
     'sphinx_carousel.carousel',
     'sphinx_copybutton',
     'notfound.extension',
-    'nbsphinx'
+    'nbsphinx',
+    'sphinxcontrib.bibtex',
 ]
+
+bibtex_bibfiles = ['refs.bib']
+bibtex_default_style = 'unsrt'
 
 copybutton_prompt_text = ">>> "
 # The output lines will not be copied if set to True

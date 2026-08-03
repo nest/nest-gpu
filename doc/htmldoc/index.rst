@@ -88,6 +88,7 @@ If you use NEST GPU in your work, please cite the publications on our :doc:`publ
    Guides <guides/index>
    Examples <examples/index>
    Model Directory <models/index>
+   Publications <publications>
 
 .. toctree::
    :maxdepth: 2
@@ -95,7 +96,6 @@ If you use NEST GPU in your work, please cite the publications on our :doc:`publ
    :hidden:
 
    Community <community>
-   Publications <publications>
 
 .. toctree::
    :caption: RELATED PROJECTS
