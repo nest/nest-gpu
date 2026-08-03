@@ -13,6 +13,19 @@
 /* Define colors */
 :root {
     --nest-orange: #ff6633;
+    --nest-slate: #12222c;
+    /* The header zone the banner artwork spans as one continuous image:
+       #header, with the fixed app bar overlaying its top, plus the tab strip
+       directly below it. Kept in step with H in doc/tools/generate_banner.py. */
+    --header-h: 180px;
+    --banner-h: calc(var(--header-h) + 2.4rem);
+    /* Distance from the viewport edge to the centred 73rem content column, so
+       the banner artwork can start where the page content starts and travel
+       with it as the window widens, instead of clinging to the viewport edge.
+       In vw because percentages in background-position resolve against
+       (element width - image width), not the element width -- this is off by
+       half the scrollbar width, which is invisible in abstract artwork. */
+    --content-gutter: max(0px, calc((100vw - 73rem) / 2));
     --nest-blue: #0E6A93;
     --nest-dkblue: #072f42;
     --nest-brown: #4b210c;
@@ -88,28 +101,31 @@ dt:target {
     scroll-margin-top: 4rem;
 }
 
+/* No orange strip below the banner: the tab strip carries on the same artwork,
+   offset by the height of #header above it, so the two join seamlessly. */
 [data-md-color-primary=orange] .md-tabs {
-    background-color: var(--nest-orange);
-}
-
-div[role="main"] .md-header {
-    background-color: var(--nest-orange);
-    scale: 140%;
-    padding-top: 0.3rem;
-    height: 2.6rem;
-    transition: background-color .25s, color .25s, box-shadow .25s;
-    box-shadow: 0 0 .2rem rgba(0, 0, 0, .1), 0 .2rem .4rem rgba(0, 0, 0, .2);
-}
-
-div[role="main"] .md-source {
-    display: none;
+    background-color: var(--nest-slate);
+    background-image: url("../img/banner.svg");
+    background-repeat: no-repeat;
+    background-position: var(--content-gutter) calc(-1 * var(--header-h));
+    background-size: auto var(--banner-h);
 }
 
 .md-typeset blockquote {
     border-left: none;
 }
 
-[data-md-color-primary="orange"] .md-header,
+/* No orange bar above the banner either, show banner.svg as background image.
+   `background-attachment: fixed` anchors the image to the viewport. */
+[data-md-color-primary="orange"] .md-header {
+    background-color: var(--nest-slate);
+    background-image: url("../img/banner.svg");
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: var(--content-gutter) top;
+    background-size: auto var(--banner-h);
+}
+
 [data-md-color-primary="orange"] .md-hero {
     background-color: var(--nest-orange);
 }
@@ -319,10 +335,15 @@ header.wrapper {
     padding: 0;
 }
 
-header {
-    background-color: var(--nest-orange);
+/* Use the banner created by doc/tools/generate_banner.py as header. */
+#header {
+    background-color: var(--nest-slate);
+    background-image: url("../img/banner.svg");
+    background-repeat: no-repeat;
+    background-position: var(--content-gutter) top;
+    background-size: auto var(--banner-h);
     padding: 0;
-    height: 180px;
+    height: var(--header-h);
 }
 
 #background {
@@ -331,6 +352,10 @@ header {
     margin: 0 auto;
     display: flex;
     align-items: center;
+    /* The app bar is fixed and covers the top part of #header, so centring
+       has to happen in the band below it -- otherwise the logo is clipped. */
+    padding-top: 2.4rem;
+    box-sizing: border-box;
 }
 
 #banner {
@@ -343,17 +368,10 @@ header {
 }
 
 #logo img {
-    height: 150px;
+    height: 100px;
     width: auto;
     max-width: 100%;
     display: block;
-    /* White panel behind the logo, floating on the orange banner. The padding
-       is what makes the white margin around the artwork visible; with
-       box-sizing: border-box it shrinks the image inside the same total
-       height. */
-    padding: 15px;
-    background-color: #fff;
-    border: 5px solid #fff;
 }
 
 .icon {
@@ -420,7 +438,7 @@ This is for mobile devices with a bit larger screens.
     #banner {
         float: left;
         text-align: left;
-        margin: 0 0 0 50px;
+        margin: 0 0 0 0.8rem;
     }
 }
 
@@ -435,7 +453,7 @@ TABLET & SMALLER LAPTOPS
     #banner {
         float: left;
         text-align: left;
-        margin: 55px 0 0 50px;
+        margin: 0 0 0 0.8rem;
     }
 }
 
