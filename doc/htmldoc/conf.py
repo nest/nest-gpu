@@ -67,6 +67,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx_design',
+    'sphinx_carousel.carousel',
     'sphinx_copybutton',
     'notfound.extension',
     'nbsphinx'
@@ -152,6 +153,8 @@ html_css_files = [
 ]
 
 html_logo =  'static/img/logos/nestgpu-logo.png'
+
+html_favicon = 'static/img/nest_favicon.ico'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

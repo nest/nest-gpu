@@ -1,6 +1,7 @@
 nbsphinx
 numpy
 sphinx >= 6.2.1, <8.2.0
+sphinx-carousel
 sphinx-copybutton >= 0.5.2
 sphinx-design
 sphinx-material

@@ -38,6 +38,39 @@ Welcome to NEST GPU's documentation!
           To start using it, have a look at the examples in the `python/examples <https://github.com/nest/nest-gpu/tree/main/python/examples>`_
           and `c++/examples <https://github.com/nest/nest-gpu/tree/main/c%2B%2B/examples>`_ folders.
 
+  .. grid-item::
+
+     .. grid:: 1 1 1 1
+       :gutter: 2
+
+       .. grid-item-card::
+
+          .. carousel::
+              :show_indicators:
+              :show_fade:
+              :show_dark:
+              :data-bs-ride: carousel
+
+                .. figure:: static/img/placeholder_example_1.svg
+                  :target: examples/index.html
+
+                  Placeholder caption 1
+
+                .. figure:: static/img/placeholder_example_2.svg
+                  :target: examples/index.html
+
+                  Placeholder caption 2
+
+                .. figure:: static/img/placeholder_example_3.svg
+                  :target: examples/index.html
+
+                  Placeholder caption 3
+
+                .. figure:: static/img/placeholder_example_4.svg
+                  :target: examples/index.html
+
+                  Placeholder caption 4
+
 How to cite us
 --------------
 
