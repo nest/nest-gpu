@@ -151,7 +151,7 @@ html_css_files = [
     'css/pygments.css',
 ]
 
-html_logo =  'static/img/nestgpu-logo.png'
+html_logo =  'static/img/logos/nestgpu-logo.png'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
