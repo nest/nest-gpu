@@ -323,6 +323,50 @@ details.sd-dropdown:not([open]).sd-card {
 }
 
 /* ************************************
+ * Define styles for the sphinx carousel
+ * ***********************************/
+/* Fix the aspect ratio so that that the box does not dynamically change size when cycling. */
+.scbs-carousel-item img {
+    aspect-ratio: 2 / 1;
+    object-fit: contain;
+    width: 100%;
+    height: auto;
+}
+
+/* ************************************
+ * Define styles for the publication entries
+ * ***********************************/
+/* One card per publication */
+.nest-publication-card {
+    margin-bottom: 1.5rem;
+}
+
+/* Citation of publication goes to the left side of the header and a figure to the right side. */
+.nest-publication ul,
+.nest-publication ul li {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+/* Figure reference below the figure both for the publication list and the carousel in similar style. */
+.nest-publication figcaption,
+.scbs-carousel-caption h5 {
+    font-style: italic;
+    font-weight: normal;
+    color: #666;
+    text-align: center;
+    /* The theme upper-cases every h5, which sphinx_carousel uses for the
+       reference line. */
+    text-transform: none;
+}
+
+/* Drop the "Figure N" prefix that numfig adds. */
+.nest-publication figcaption .caption-number {
+    display: none;
+}
+
+/* ************************************
  * Define styles for the layout template
  * ***********************************/
 .wrapper {
