@@ -43,33 +43,42 @@ Welcome to NEST GPU's documentation!
      .. grid:: 1 1 1 1
        :gutter: 2
 
-       .. grid-item-card::
+       .. grid-item-card:: Highlights
 
           .. carousel::
               :show_indicators:
               :show_fade:
               :show_dark:
+              :show_captions_below:
               :data-bs-ride: carousel
 
-                .. figure:: static/img/placeholder_example_1.svg
-                  :target: examples/index.html
+                .. figure:: static/img/publication_figs/Golosio2026_fig4.jpg
+                  :target: publications.html
 
-                  Placeholder caption 1
+                  Golosio et al. (2026) Fig. 4
 
-                .. figure:: static/img/placeholder_example_2.svg
-                  :target: examples/index.html
+                  Large-scale spiking neural network simulations using up to thousands of GPUs
 
-                  Placeholder caption 2
+                .. figure:: static/img/publication_figs/Golosio2023_figA3def.jpg
+                  :target: publications.html
 
-                .. figure:: static/img/placeholder_example_3.svg
-                  :target: examples/index.html
+                  Golosio et al. (2023) Fig. A3d-f
 
-                  Placeholder caption 3
+                  Statistical match of network activity with NEST CPU (here for a cortical microcircuit model)
 
-                .. figure:: static/img/placeholder_example_4.svg
-                  :target: examples/index.html
+                .. figure:: static/img/publication_figs/Golosio2026_fig1.jpg
+                  :target: publications.html
 
-                  Placeholder caption 4
+                  Golosio et al. (2026) Fig. 1
+
+                  Point-to-point and collective communication using MPI for GPU clusters
+
+                .. figure:: static/img/publication_figs/Golosio2026_fig3.jpg
+                  :target: publications.html
+
+                  Golosio et al. (2026) Fig. 3
+
+                  Fast onboard network construction and simulation of multi-area model
 
 How to cite us
 --------------
