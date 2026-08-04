@@ -33,6 +33,10 @@
 import sys
 import json
 from pathlib import Path
+
+from pybtex.plugin import register_plugin
+from pybtex.style.formatting.unsrt import Style as UnsrtStyle
+from pybtex.style.template import field, sentence, tag
 sys.path.insert(0, str(Path().resolve()))
 
 source_dir = Path(__file__).resolve().parent.resolve()
@@ -70,12 +74,23 @@ extensions = [
     'sphinx_carousel.carousel',
     'sphinx_copybutton',
     'notfound.extension',
-    'nbsphinx',
     'sphinxcontrib.bibtex',
 ]
 
 bibtex_bibfiles = ['refs.bib']
-bibtex_default_style = 'unsrt'
+
+# Wrap the title in 'strong' so that it appears bold incitations
+class BoldTitleStyle(UnsrtStyle):
+    def format_title(self, e, which_field, as_sentence=True):
+        formatted_title = tag('strong')[
+            field(which_field, apply_func=lambda text: text.capitalize())
+        ]
+        if as_sentence:
+            return sentence[formatted_title]
+        return formatted_title
+
+register_plugin('pybtex.style.formatting', 'unsrt_bold_title', BoldTitleStyle)
+bibtex_default_style = 'unsrt_bold_title'
 
 copybutton_prompt_text = ">>> "
 # The output lines will not be copied if set to True
