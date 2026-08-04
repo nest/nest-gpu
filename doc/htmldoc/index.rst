@@ -92,7 +92,6 @@ If you use NEST GPU in your work, please cite the publications on our :doc:`publ
    :caption: USAGE
    :hidden:
 
-   Download <download/download>
    Install <installation/index>
    Guides <guides/index>
    Examples <examples/index>
