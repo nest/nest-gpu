@@ -47,7 +47,7 @@ Change parallelization scheme
 External libraries
 ------------------
 
-+-----------------------------------------------+----------------------------------------------------------------
++-----------------------------------------------+----------------------------------------------------------------+
 | ``-Dwith-ltdl=[OFF|ON]``                      | Build with ltdl library. To set a specific ltdl, give the      |
 |                                               | install path. NEST GPU uses ltdl for dynamic loading of        |
 |                                               | external user modules. [default=OFF]                           |
