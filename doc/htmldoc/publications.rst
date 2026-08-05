@@ -165,7 +165,7 @@ NEST GPU Publications
    - First publication of the new GPU library in CUDA-C/C++, tested on a
      single consumer NVIDIA GPU
    - Developed under the name NeuronGPU; the code soon after joined the NEST
-     Initiative and was renamed to NEST GPU
+     Initiative e.V. and was renamed to NEST GPU
    - Novel spike-delivery algorithm
    - LIF and AdEx neuron models with current- or conductance-based synapses,
      and stimulating and recording devices

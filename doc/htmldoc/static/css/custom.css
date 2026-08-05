@@ -16,9 +16,11 @@
     --nest-slate: #12222c;
     /* The header zone the banner artwork spans as one continuous image:
        #header, with the fixed app bar overlaying its top, plus the tab strip
-       directly below it. Kept in step with H in doc/tools/generate_banner.py. */
-    --header-h: 180px;
-    --banner-h: calc(var(--header-h) + 2.4rem);
+       directly below it. --banner-h must equal H in
+       doc/tools/generate_banner.py so the artwork renders 1:1; #header absorbs
+       the tab strip growing with the root font-size. */
+    --banner-h: 228px;
+    --header-h: calc(var(--banner-h) - 2.4rem);
     /* Distance from the viewport edge to the centred 73rem content column, so
        the banner artwork can start where the page content starts and travel
        with it as the window widens, instead of clinging to the viewport edge.
