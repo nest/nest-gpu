@@ -1,5 +1,5 @@
-Welcome to NEST GPU's documentation!
-====================================
+Welcome to the NEST GPU documentation!
+======================================
 
 .. grid::
   :gutter: 2
@@ -11,32 +11,30 @@ Welcome to NEST GPU's documentation!
 
        .. grid-item::
 
-          `NEST GPU <https://github.com/nest/nest-gpu>`__ is a GPU-MPI library for simulation of large-scale networks of spiking
-          neurons. Can be used in Python, in C++ and in C.
+           `NEST GPU <https://github.com/nest/nest-gpu>`__ is a GPU library for the simulation of large-scale spiking neural networks.
+           It is written in CUDA-C++ and supports multi-GPU simulations through MPI.
+           Originally developed under the name NeuronGPU, the code joined the NEST Initiative e.V. and follows the concepts and practices already established by the CPU-based `NEST Simulator <https://nest-simulator.readthedocs.io>`_.
+           The Python interface allows users to define neurons, connections, and synapse properties using commands familiar from PyNEST.
+           Under the hood, the design mirrors NEST Simulator where applicable, while enabling efficient simulations on the largest GPU-powered computing systems.
 
-          .. note::
+           To get started with NEST GPU, install it on your system or browse the latest publications:
 
-             NEST GPU was developed under the
-             name  `NeuronGPU <https://github.com/golosio/NeuronGPU>`__  before
-             it has been integrated in the NEST Initiative, see  `Golosio et
-             al. (2021) <https://www.frontiersin.org/articles/10.3389/fncom.2021.627620/full>`__.
-             Currently this repository is being adapted to the NEST development
-             workflow.
+           .. grid:: 2
 
-          With this library it is possible to run relatively fast simulations of
-          large-scale networks of spiking neurons employing GPUs. 
-          For instance, on a single NVIDIA GeForce RTX 2080 Ti GPU board it is 
-          possible to simulate the activity of 1 million multisynapse AdEx neurons
-          with 1000 synapse per neuron in little more than 70 seconds per second
-          of neural activity using the fifth-order Runge-Kutta method with adaptive
-          stepsize as differential equations solver.
-          The MPI communication is also very efficient. The Python interface is
-          very similar to that of the NEST simulator: the most used commands are
-          practically identical, dictionaries are used to define neurons,
-          connections and synapsis properties in the same way.
+             .. grid-item-card::
+                :link-type: doc
+                :link: installation/index
+                :class-card: nest-button
 
-          To start using it, have a look at the examples in the `python/examples <https://github.com/nest/nest-gpu/tree/main/python/examples>`_
-          and `c++/examples <https://github.com/nest/nest-gpu/tree/main/c%2B%2B/examples>`_ folders.
+                Install NEST GPU
+
+             .. grid-item-card::
+                :link-type: doc
+                :link: publications
+                :class-card: nest-button
+
+                NEST GPU publications
+
 
   .. grid-item::
 
