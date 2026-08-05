@@ -47,7 +47,7 @@ def network(seed=NET_SEED, col=ORANGE, edge_col="#ffffff", edge_op=0.22):
     """Irregular network of neurons; density and opacity fall away across the
     blend zone so it dissolves into the card field instead of stopping."""
     r = random.Random(seed)
-    out, pts = [], []
+    edges, nodes, pts = [], [], []
     # rows scale with the band height, so density stays put if H changes
     cols, rows = 22, max(2, round(H / 26))
     for j in range(rows):
@@ -63,15 +63,18 @@ def network(seed=NET_SEED, col=ORANGE, edge_col="#ffffff", edge_op=0.22):
             if math.hypot(x2 - x1, y2 - y1) < 62 and r.random() < 0.30:
                 op = edge_op * min(w1, w2)
                 if op >= 0.02:
-                    out.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}"'
-                               f' x2="{x2:.1f}" y2="{y2:.1f}"'
-                               f' stroke="{edge_col}" stroke-width="1"'
-                               f' opacity="{op:.2f}"/>')
+                    edges.append(f'<line x1="{x1:.1f}" y1="{y1:.1f}"'
+                                 f' x2="{x2:.1f}" y2="{y2:.1f}"'
+                                 f' opacity="{op:.2f}"/>')
     for x, y, w in pts:
-        out.append(f'<circle cx="{x:.1f}" cy="{y:.1f}"'
-                   f' r="{r.uniform(2.0, 4.4):.1f}" fill="{col}"'
-                   f' opacity="{r.uniform(0.35, 0.95) * w:.2f}"/>')
-    return out
+        nodes.append(f'<circle cx="{x:.1f}" cy="{y:.1f}"'
+                     f' r="{r.uniform(2.0, 4.4):.1f}"'
+                     f' opacity="{r.uniform(0.35, 0.95) * w:.2f}"/>')
+    # The colours are the same for every edge and every node, so they are
+    # carried by a group instead of being repeated on each element; likewise
+    # stroke-width, whose SVG default is already 1.
+    return ([f'<g stroke="{edge_col}">'] + edges + ['</g>']
+            + [f'<g fill="{col}">'] + nodes + ['</g>'])
 
 
 def iso_cards(seed=CARD_SEED, col=ORANGE):
@@ -100,10 +103,11 @@ def iso_cards(seed=CARD_SEED, col=ORANGE):
                  0.30),
             )
             for d, shade in faces:
-                out.append(f'<path d="{d}" fill="{col}"'
-                           f' opacity="{op * shade:.2f}" stroke="{col}"'
-                           f' stroke-width="1" stroke-opacity="{op:.2f}"/>')
-    return out
+                out.append(f'<path d="{d}" opacity="{op * shade:.2f}"'
+                           f' stroke-opacity="{op:.2f}"/>')
+    # Every face shares fill, stroke and stroke-width, so the group carries
+    # them once rather than all paths carrying them each.
+    return [f'<g fill="{col}" stroke="{col}">'] + out + ['</g>']
 
 
 def banner():
