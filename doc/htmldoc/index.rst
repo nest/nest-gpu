@@ -97,6 +97,7 @@ If you use NEST GPU in your work, please cite the publications on our :doc:`publ
    Examples <examples/index>
    Model Directory <models/index>
    Publications <publications>
+   License <license>
 
 .. toctree::
    :maxdepth: 2
