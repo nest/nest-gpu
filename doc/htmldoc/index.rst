@@ -104,7 +104,9 @@ If you use NEST GPU in your work, please cite the publications on our :doc:`publ
    :caption: COMMUNITY
    :hidden:
 
-   Community <community>
+   Contact us and contribute <contribute>
+   What's new? <whats_new>
+   NEST Homepage <https://nest-simulator.org>
 
 .. toctree::
    :caption: RELATED PROJECTS

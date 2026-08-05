@@ -367,6 +367,19 @@ details.sd-dropdown:not([open]).sd-card {
 }
 
 /* ************************************
+ * Define styles for the call-to-action buttons
+ * ***********************************/
+/* Button cards pick up the slate of the header banner. */
+.nest-button {
+    background-color: var(--nest-slate);
+    border-color: var(--nest-slate);
+}
+
+.nest-button .sd-card-text {
+    color: #fff;
+}
+
+/* ************************************
  * Define styles for the layout template
  * ***********************************/
 .wrapper {
