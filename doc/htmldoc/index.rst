@@ -6,77 +6,67 @@ Welcome to the NEST GPU documentation!
 
   .. grid-item::
 
-     .. grid:: 1 1 1 1
-       :gutter: 2
+     `NEST GPU <https://github.com/nest/nest-gpu>`__ is a GPU library for the simulation of large-scale spiking neural networks.
+     It is written in CUDA-C++ and supports multi-GPU simulations through MPI.
+     Originally developed under the name NeuronGPU, the code joined the NEST Initiative e.V. and follows the concepts and practices already established by the CPU-based `NEST Simulator <https://nest-simulator.readthedocs.io>`_.
+     The Python interface allows users to define neurons, connections, and synapse properties using commands familiar from PyNEST.
+     Under the hood, the design mirrors NEST Simulator where applicable, while enabling efficient simulations on the largest GPU-powered computing systems.
 
-       .. grid-item::
+     To get started with NEST GPU, install it on your system or browse the latest publications:
 
-           `NEST GPU <https://github.com/nest/nest-gpu>`__ is a GPU library for the simulation of large-scale spiking neural networks.
-           It is written in CUDA-C++ and supports multi-GPU simulations through MPI.
-           Originally developed under the name NeuronGPU, the code joined the NEST Initiative e.V. and follows the concepts and practices already established by the CPU-based `NEST Simulator <https://nest-simulator.readthedocs.io>`_.
-           The Python interface allows users to define neurons, connections, and synapse properties using commands familiar from PyNEST.
-           Under the hood, the design mirrors NEST Simulator where applicable, while enabling efficient simulations on the largest GPU-powered computing systems.
+     .. grid:: 2
 
-           To get started with NEST GPU, install it on your system or browse the latest publications:
+       .. grid-item-card::
+          :link-type: doc
+          :link: installation/index
+          :class-card: nest-button
 
-           .. grid:: 2
+          Install NEST GPU
 
-             .. grid-item-card::
-                :link-type: doc
-                :link: installation/index
-                :class-card: nest-button
+       .. grid-item-card::
+          :link-type: doc
+          :link: publications
+          :class-card: nest-button
 
-                Install NEST GPU
-
-             .. grid-item-card::
-                :link-type: doc
-                :link: publications
-                :class-card: nest-button
-
-                NEST GPU publications
+          NEST GPU publications
 
 
-  .. grid-item::
+  .. grid-item-card:: Highlights
 
-     .. grid:: 1 1 1 1
-       :gutter: 2
+     .. carousel::
+         :show_indicators:
+         :show_fade:
+         :show_dark:
+         :show_captions_below:
+         :data-bs-ride: carousel
 
-       .. grid-item-card:: Highlights
+           .. figure:: static/img/publication_figs/Golosio2026_fig4.jpg
+             :target: publications.html
 
-          .. carousel::
-              :show_indicators:
-              :show_fade:
-              :show_dark:
-              :show_captions_below:
-              :data-bs-ride: carousel
+             Golosio et al. (2026) Fig. 4
 
-                .. figure:: static/img/publication_figs/Golosio2026_fig4.jpg
-                  :target: publications.html
+             Large-scale spiking neural network simulations using up to thousands of GPUs
 
-                  Golosio et al. (2026) Fig. 4
+           .. figure:: static/img/publication_figs/Golosio2023_figA3def.jpg
+             :target: publications.html
 
-                  Large-scale spiking neural network simulations using up to thousands of GPUs
+             Golosio et al. (2023) Fig. A3d-f
 
-                .. figure:: static/img/publication_figs/Golosio2023_figA3def.jpg
-                  :target: publications.html
+             Statistical match of network activity with NEST CPU (here for a cortical microcircuit model)
 
-                  Golosio et al. (2023) Fig. A3d-f
+           .. figure:: static/img/publication_figs/Golosio2026_fig1.jpg
+             :target: publications.html
 
-                  Statistical match of network activity with NEST CPU (here for a cortical microcircuit model)
+             Golosio et al. (2026) Fig. 1
 
-                .. figure:: static/img/publication_figs/Golosio2026_fig1.jpg
-                  :target: publications.html
+             Point-to-point and collective communication using MPI for GPU clusters
 
-                  Golosio et al. (2026) Fig. 1
+           .. figure:: static/img/publication_figs/Golosio2026_fig3.jpg
+             :target: publications.html
 
-                  Point-to-point and collective communication using MPI for GPU clusters
+             Golosio et al. (2026) Fig. 3
 
-                .. figure:: static/img/publication_figs/Golosio2026_fig3.jpg
-                  :target: publications.html
-
-                  Golosio et al. (2026) Fig. 3
-
-                  Fast onboard network construction and simulation of multi-area model
+             Fast onboard network construction and simulation of multi-area model
 
 
 .. toctree::
