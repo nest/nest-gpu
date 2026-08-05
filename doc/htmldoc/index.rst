@@ -80,12 +80,6 @@ Welcome to NEST GPU's documentation!
 
                   Fast onboard network construction and simulation of multi-area model
 
-How to cite us
---------------
-
-If you use NEST GPU in your work, please cite the publications on our :doc:`publication list <publications>`.
-
-
 
 .. toctree::
    :maxdepth: 1
@@ -97,6 +91,7 @@ If you use NEST GPU in your work, please cite the publications on our :doc:`publ
    Examples <examples/index>
    Model Directory <models/index>
    Publications <publications>
+   Cite NEST GPU <cite_nest_gpu>
    License <license>
 
 .. toctree::
