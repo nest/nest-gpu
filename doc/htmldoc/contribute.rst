@@ -11,6 +11,10 @@ NEST GPU users and developers are encouraged to get in touch via the routes esta
 * You can also contact the NEST community through the :ref:`mailing list <contribute_mailing_list>`
   or in the :ref:`open video conference <contribute_video_conference>`,
   where NEST GPU-specific topics are equally welcome to discuss.
+* In general NEST GPU aims to adhere to the development workflow of the NEST simulator.
+  You can inspect the
+  `NEST developer space <https://nest-simulator.readthedocs.io/en/stable/developer_space/index.html#>`_
+  for further useful information and guidelines.
 
 .. _contribute_github:
 
