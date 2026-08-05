@@ -281,6 +281,16 @@ def make_hierarchy(tags, *basetags):
     return {basetags: tree}
 
 
+# Intro prose of the generated model directory. It lives here because
+# models/index.rst is generated on every build; editing that file directly is
+# lost on the next run.
+MODEL_DIRECTORY_INTRO = """\
+You can find below a list of natively available models for neurons, synapses, and devices.
+New neuron models can be added either by following the guide :ref:`implement_new_neuron_models`
+or using the `NESTML modeling language <https://nestml.readthedocs.io/en/latest/running/running_nest_gpu.html>`_.
+"""
+
+
 def rst_index(hierarchy, current_tags=[], underlines='=-~', top=True, available=None):
     """
     Create an index page from a given hierarchical dict of documents.
@@ -330,6 +340,10 @@ def rst_index(hierarchy, current_tags=[], underlines='=-~', top=True, available=
             page_title += ": " + ", ".join(current_tags)
         output.append(page_title)
         output.append(underlines[0]*len(page_title)+"\n")
+        if not current_tags:
+            # Only the unfiltered directory gets the intro; the per-tag
+            # indices (index_<tag>.rst) carry the title alone.
+            output.append(MODEL_DIRECTORY_INTRO)
         if len(hierarchy.keys()) != 1:
             underlines = underlines[1:]
 
