@@ -1,7 +1,7 @@
 .. _whats_new:
 
-What's new
-==========
+What's new?
+===========
 
 This page contains links to the release notes of all published versions of
 NEST GPU. On the linked pages, you will find information about new features,
