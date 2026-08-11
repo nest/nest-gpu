@@ -1,7 +1,7 @@
 Install NEST GPU
 ================
 
-The NEST GPU installation procedure is similar to the one of NEST CPU (compare with `Install NEST from source <https://nest-simulator.readthedocs.io/en/stable/installation/developer.html#dev-install>`_).
+The NEST GPU installation procedure is similar to the one of NEST CPU (compare with :ref:`nest:dev_install`).
 
 Requirements
 ------------
@@ -29,7 +29,11 @@ Requirements
 
    sudo apt install -y \
    nvidia-cuda-toolkit \
-   libomp-dev
+   libomp-dev \
+   cmake \
+   openmpi-bin \
+   openmpi-common \
+   libopenmpi-dev
 
 * The Python packages can be installed using a venv environment (recommended):
 
@@ -51,7 +55,7 @@ or also directly from your system:
    python3-all-dev \
    python3-numpy \
    python3-scipy \
-   python3-matplotlib
+   python3-matplotlib \
    python3-mpi4py
 
 NEST GPU installation from source
