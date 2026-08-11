@@ -13,7 +13,7 @@ NEST GPU users and developers are encouraged to get in touch via the routes esta
   where NEST GPU-specific topics are equally welcome to discuss.
 * In general NEST GPU aims to adhere to the development workflow of the NEST simulator.
   You can inspect the
-  `NEST developer space <https://nest-simulator.readthedocs.io/en/stable/developer_space/index.html#>`_
+  :doc:`NEST developer space <nest:developer_space/index>`
   for further useful information and guidelines.
 
 .. _contribute_github:
@@ -60,8 +60,8 @@ NEST GPU users and developers are encouraged to get in touch via the routes esta
 .. grid:: 3
 
   .. grid-item-card::
-       :link-type: url
-       :link: https://nest-simulator.readthedocs.io/en/stable/developer_space/guidelines/mailing_list_guidelines.html
+       :link-type: doc
+       :link: nest:developer_space/guidelines/mailing_list_guidelines
        :class-card: nest-button
 
        See mailing list

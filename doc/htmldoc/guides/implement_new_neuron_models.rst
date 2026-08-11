@@ -10,7 +10,7 @@ number of new models in the same simulation and greater flexibility in
 the model definition.
 
 Alternatively, new neuron models can also be implemented using the
-`NESTML modeling language <https://nestml.readthedocs.io/en/latest/running/running_nest_gpu.html>`_.
+:doc:`NESTML modeling language <nestml:running/running_nest_gpu>`.
 
 Basic approach with 5-th order Runge Kutta
 ------------------------------------------

@@ -287,7 +287,7 @@ def make_hierarchy(tags, *basetags):
 MODEL_DIRECTORY_INTRO = """\
 You can find below a list of natively available models for neurons, synapses, and devices.
 New neuron models can be added either by following the guide :ref:`implement_new_neuron_models`
-or using the `NESTML modeling language <https://nestml.readthedocs.io/en/latest/running/running_nest_gpu.html>`_.
+or using the :doc:`NESTML modeling language <nestml:running/running_nest_gpu>`.
 """
 
 
