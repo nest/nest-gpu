@@ -76,7 +76,6 @@ Welcome to the NEST GPU documentation!
 
    Install <installation/index>
    Guides <guides/index>
-   Examples <examples/index>
    Model Directory <models/index>
    Publications <publications>
    Cite NEST GPU <cite_nest_gpu>

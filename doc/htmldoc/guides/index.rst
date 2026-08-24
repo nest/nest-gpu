@@ -1,7 +1,7 @@
 Guides
 ======
 
-Here you can find details on some topics about NEST GPU.
+Here you can find details on some topics about NEST GPU:
 
 .. toctree::
     :maxdepth: 1
@@ -11,4 +11,6 @@ Here you can find details on some topics about NEST GPU.
     implement_new_neuron_models
     how_to_record_spikes
     multigpu_simulations
+
+Further examples are in the directory `python/examples <https://github.com/nest/nest-gpu/tree/main/python/examples>`_.
     
