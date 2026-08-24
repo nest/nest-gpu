@@ -39,8 +39,8 @@ Requirements
 
 .. code-block:: sh
 
-   python3 -m venv nestgpu-env
-   source nestgpu-env/bin/activate
+   python3 -m venv venv-nestgpu
+   source venv-nestgpu/bin/activate
    pip install --upgrade pip
 
    pip install numpy scipy matplotlib mpi4py
@@ -119,8 +119,8 @@ Environment variables
    * - ``PYTHONPATH``
      - Search path for non-standard Python module locations. Will be newly set or prepended to the already existing
        variable if it is already set.
-   * - ``PATH``
-     - Search path for binaries. Will be newly set or prepended to the already existing variable if it is already set.
+   * - ``NESTGPU_LIB``
+     - Path to the shared object file of the NEST GPU library.
 
 * You can set the environment variables in your active shell session:
 
