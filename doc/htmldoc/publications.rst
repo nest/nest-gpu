@@ -43,7 +43,7 @@ NEST GPU Publications
      model :cite:p:`Schmidt2018` more than ten times faster than in
      :ref:`Tiddia et al. (2022) <tiddia2022>`
    - Collective communication: balanced random network scaled up to 1,024
-     NVIDIA A100 GPUs (about 230.4 million neurons and :math:`2.59 \times 10^{12}`
+     NVIDIA A100 GPUs (about 230.4 million neurons and 2.59 trillion
      synapses), with network construction in less than a minute
 
 2023
@@ -125,7 +125,7 @@ NEST GPU Publications
    - Simulation of the multi-area model of 32 vision-related areas of macaque
      monkey cortex (about 4 million neurons and 24 billion synapses)
      :cite:p:`Schmidt2018`
-   - Spiking statistics matched with the NEST simulator
+   - Matching spiking statistics with the NEST simulator implementation
    - 3.1 times (2.4 times) faster than the NEST simulator with the model in
      its metastable (ground) state, running on 32 NVIDIA A100 GPUs
 
@@ -169,7 +169,7 @@ NEST GPU Publications
    - Novel spike-delivery algorithm
    - LIF and AdEx neuron models with current- or conductance-based synapses,
      and stimulating and recording devices
-   - Match of single-neuron subthreshold dynamics and statistical network
+   - Matching single-neuron subthreshold dynamics and statistical network
      activity with the NEST simulator
    - Close-to-realtime simulation of the cortical microcircuit model (about
      80,000 neurons and 300 million synapses) :cite:p:`Potjans2014`; simulation performance result entered constructive community race :cite:p:`Senk2026`

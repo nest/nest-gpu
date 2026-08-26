@@ -15,11 +15,7 @@ Requirements
   If you are using Ubuntu, `here <https://linuxhint.com/install-nvidia-drivers-on-ubuntu/>`_
   you can find a guide to install the NVIDIA drivers for the GPU card on your machine.
 
-* To use the NEST GPU Python interface you need `Python 3 <https://www.python.org/>`_,
-  `Numpy <https://numpy.org/>`_, `Scipy <https://scipy.org/>`_, and
-  `Matplotlib <https://matplotlib.org/>`_.
-  If you want to run parallel simulations with MPI (on per default), you can use `Open MPI <https://www.open-mpi.org/>`_ and also get
-  `MPI4Py <https://mpi4py.readthedocs.io>`_.
+* If you want to run parallel simulations with MPI (on per default), you can use `Open MPI <https://www.open-mpi.org/>`_.
 
 * You can obtain the base packages from your system, for example: 
 
@@ -35,7 +31,7 @@ Requirements
    openmpi-common \
    libopenmpi-dev
 
-* The Python packages can be installed using a venv environment (recommended):
+* We recommend to install the following Python packages using a venv environment:
 
 .. code-block:: sh
 
@@ -44,19 +40,6 @@ Requirements
    pip install --upgrade pip
 
    pip install numpy scipy matplotlib mpi4py
-
-or also directly from your system:
-
-.. code-block:: sh
-
-   sudo apt update
-
-   sudo apt install -y \
-   python3-all-dev \
-   python3-numpy \
-   python3-scipy \
-   python3-matplotlib \
-   python3-mpi4py
 
 NEST GPU installation from source
 ---------------------------------
@@ -139,21 +122,17 @@ Environment variables
 Installation tests
 ------------------
 
-* For a quick installation check, just run:
+* To quickly check if Python can load the ``nestgpu`` module run:
 
 .. code-block:: sh
 
    python3 -c "import nestgpu"
 
-* To check the correctness of NEST GPU installation more in depth you can find some tests in the directory
-  ``SOURCE_DIR/python/test``. Each Python script tests a specific feature of the library, and to perform
-  all the tests you can run the bash scripts `test_all.sh` (which runs all the tests that do
-  not employ MPI) and `test_mpi.sh`.
+* To check the correctness of the NEST GPU installation more in depth you can find some tests in the directory
+  ``SOURCE_DIR/python/test``.
+  Each Python script tests a specific feature of the library.
+  To run all non-MPI tests you can execute the bash script `test_all.sh`, and for the MPI-related tests run `test_mpi.sh`.
   If everything worked well, for every test you should see a line indicating `TEST PASSED` or `MPI TEST PASSED`.
-
-* If some test did not pass, you can have a look at the `log.txt` file given in output
-  by the bash scripts to see the output of the Python tests.
-
 
 .. toctree::
    :hidden:
