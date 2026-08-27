@@ -1,13 +1,30 @@
 .. _randomness_in_nestgpu_simulations:
 
+==================================
 Randomness in NEST GPU Simulations
 ==================================
 
-As in NEST, random numbers are used in several occasions for neural network simulations, such
-as the randomization of node and connection parameters. NEST GPU uses random generators from
-the curand library of CUDA to obtain random numbers following different distributions.
+As in NEST, random numbers are used in several occasions for neural network creation, such
+as the randomization of node and connection parameters and when stochastic input or stochastic 
+connection rules are employed in the simulation. NEST GPU uses random generators from the 
+`curand <https://docs.nvidia.com/cuda/curand/index.html>`_ library of CUDA to obtain random numbers following different distributions.
 
-The following describes the distributions that are implemented in NEST GPU.
+Random numbers for simulation
+=============================
+
+Similar to the CPU version of NEST, the randomness for a simulation can be set
+throughout a master seed, which is part of the kernel parameters. This is used
+both for the probabilistic connection rules, the creation of parameter 
+distributions as described below and the stochastic input generation. It can be
+set as follows:
+
+.. code-block:: python
+
+   nestgpu.SetKernelStatus("rnd_seed", 1234)
+
+
+Random numbers for network parameters
+=====================================
 
 Normal distribution
 -------------------
@@ -65,5 +82,3 @@ passing a Python array to the parameter. This way, also the
 distributions implemented in Python scientific libraries can
 be used for simulation. The array can be simply passed when
 setting the node or connection parameter.
-
-
