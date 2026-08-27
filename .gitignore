@@ -45,3 +45,9 @@ python/mpi_mem_check/full_*.dat
 python/mpi_mem_check/log*.txt
 python/mpi_mem_check/report.nsys-rep
 .vscode/
+
+# Sphinx documentation build output and model pages
+doc/_build/
+doc/models/
+doc/htmldoc/_build/
+doc/htmldoc/models/

@@ -1,5 +1,9 @@
-nbsphinx
 numpy
-sphinx_rtd_theme
-sphinx-tabs
+sphinx >= 6.2.1, <8.2.0
+sphinx-carousel
+sphinx-copybutton >= 0.5.2
+sphinx-design
+sphinx-material
+sphinx-notfound-page >= 0.8.3
+sphinxcontrib-bibtex >= 2.6.0
 tqdm

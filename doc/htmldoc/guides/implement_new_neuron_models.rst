@@ -1,3 +1,5 @@
+.. _implement_new_neuron_models:
+
 Implement new neuron models
 ===========================
 
@@ -6,6 +8,9 @@ approaches, two that do not require any experience with programming
 languages, the other more advanced, which allows to use an arbitrary
 number of new models in the same simulation and greater flexibility in
 the model definition.
+
+Alternatively, new neuron models can also be implemented using the
+:doc:`NESTML modeling language <nestml:running/running_nest_gpu>`.
 
 Basic approach with 5-th order Runge Kutta
 ------------------------------------------

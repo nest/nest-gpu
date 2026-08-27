@@ -281,7 +281,17 @@ def make_hierarchy(tags, *basetags):
     return {basetags: tree}
 
 
-def rst_index(hierarchy, current_tags=[], underlines='=-~', top=True):
+# Intro prose of the generated model directory. It lives here because
+# models/index.rst is generated on every build; editing that file directly is
+# lost on the next run.
+MODEL_DIRECTORY_INTRO = """\
+You can find below a list of natively available models for neurons, synapses, and devices.
+New neuron models can be added either by following the guide :ref:`implement_new_neuron_models`
+or using the :doc:`NESTML modeling language <nestml:running/running_nest_gpu>`.
+"""
+
+
+def rst_index(hierarchy, current_tags=[], underlines='=-~', top=True, available=None):
     """
     Create an index page from a given hierarchical dict of documents.
     The given `hierarchy` is pretty-printed and returned as a string.
@@ -307,9 +317,16 @@ def rst_index(hierarchy, current_tags=[], underlines='=-~', top=True):
         text = t
         if t != t.upper():
             text = t.title()  # title-case any tag that is not an acronym
-        title = ':doc:`{text} <{filename}>`'.format(
-            text=text,
-            filename=link or "index_"+t)
+        target = link or "index_"+t
+        if available is None or target in available:
+            title = ':doc:`{text} <{filename}>`'.format(
+                text=text,
+                filename=target)
+        else:
+            # No index page was generated for this tag (see CreateTagIndices,
+            # which skips indices linking fewer than two distinct files), so
+            # render the heading as plain text instead of a broken link.
+            title = text
         text = title+'\n'+ul*len(title)+'\n'
         return text
 
@@ -323,6 +340,10 @@ def rst_index(hierarchy, current_tags=[], underlines='=-~', top=True):
             page_title += ": " + ", ".join(current_tags)
         output.append(page_title)
         output.append(underlines[0]*len(page_title)+"\n")
+        if not current_tags:
+            # Only the unfiltered directory gets the intro; the per-tag
+            # indices (index_<tag>.rst) carry the title alone.
+            output.append(MODEL_DIRECTORY_INTRO)
         if len(hierarchy.keys()) != 1:
             underlines = underlines[1:]
 
@@ -337,7 +358,7 @@ def rst_index(hierarchy, current_tags=[], underlines='=-~', top=True):
         if title and not len(hierarchy) == 1:   # not print title if already selected by current_tags
             output.append(mktitle(title, underlines[0]))
         if isinstance(items, dict):
-            output.append(rst_index(items, current_tags, underlines[1:], top=False))
+            output.append(rst_index(items, current_tags, underlines[1:], top=False, available=available))
         else:
             for item in sorted(items):
                 output.append(mkitem(item))
@@ -393,6 +414,10 @@ def CreateTagIndices(tags, outdir="userdocs/"):
     depth = min(4, len(taglist))    # how many levels of indices to create at most
     nindices = sum([comb(len(taglist), L) for L in range(depth-1)])
     log.info("indices down to level %d → %d possible keyword combinations", depth, nindices)
+    # First pass: decide which indices are worth generating. The set of index
+    # documents that will exist has to be known before any of them is written,
+    # so that headings do not link to index pages that were skipped below.
+    selected = list()
     for current_tags in tqdm(chain(*[combinations(taglist, L) for L in range(depth-1)]), unit="idx",
                              desc="keyword indices", total=nindices):
         current_tags = sorted(current_tags)
@@ -406,8 +431,14 @@ def CreateTagIndices(tags, outdir="userdocs/"):
         if nfiles < 2:
             log.warning("skipping index for %s, as it links only to %d distinct file(s)", set(hier.keys()), nfiles)
             continue
+        selected.append((indexname, hier, current_tags))
+
+    available = set(os.path.splitext(name)[0] for name, _, _ in selected)
+
+    # Second pass: write the index files, linking only to indices that exist.
+    for indexname, hier, current_tags in selected:
         log.debug("generating index for %s...", str(current_tags))
-        indextext = rst_index(hier, current_tags)
+        indextext = rst_index(hier, current_tags, available=available)
         with open(os.path.join(outdir, indexname), 'w') as outfile:
             outfile.write(indextext)
         indexfiles.append(indexname)
@@ -509,11 +540,43 @@ def ExtractUserDocs(listoffiles, basedir='..', outdir='doc_build/'):
     indexfiles = CreateTagIndices(tags, outdir=outdir)
     data.write(indexfiles, "indexfiles")
 
+    # The tag list of each model page is written during extraction, before it
+    # is known which tag indices are worth generating, so some of those links
+    # point at index pages that do not exist. Turn them into plain text.
+    available = set(os.path.splitext(name)[0] for name in indexfiles)
+    link_re = re.compile(r":doc:`(?P<label>[^`<]+) <(?P<target>index_[^`>]+)>`")
+
+    def keep_only_existing(match):
+        if match.group("target") in available:
+            return match.group(0)
+        return match.group("label").strip()
+
+    for name in set(name for names in tags.values() for name in names):
+        path = os.path.join(outdir, name)
+        with open(path) as modelfile:
+            text = modelfile.read()
+        fixed = link_re.sub(keep_only_existing, text)
+        if fixed != text:
+            with open(path, "w") as modelfile:
+                modelfile.write(fixed)
+
     toc_list = [name[:-4] for names in tags.values() for name in names]
     idx_list = [indexfile[:-4] for indexfile in indexfiles]
 
     with open(os.path.join(outdir, "toc-tree.json"), "w") as tocfile:
         json.dump(list(set(toc_list)) + list(set(idx_list)), tocfile)
+
+    # Append a hidden toctree to the model directory so that every generated
+    # page is reachable from the document tree. Without it Sphinx reports
+    # "document isn't included in any toctree" for each model page, since the
+    # directory links them with :doc: roles only.
+    entries = sorted(set(toc_list) | set(idx_list))
+    with open(os.path.join(outdir, "index.rst"), "a") as indexfile:
+        indexfile.write("\n\n.. toctree::\n   :hidden:\n\n")
+        for entry in entries:
+            if entry == "index":
+                continue
+            indexfile.write("   %s\n" % entry)
 
 if __name__ == '__main__':
     ExtractUserDocs(

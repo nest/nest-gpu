@@ -1,0 +1,536 @@
+/*
+ * Adapted from the NEST Simulator documentation
+ * (doc/htmldoc/static/css/custom.css)
+ *
+ * Sphinx theme: sphinx-material
+ * https://bashtage.github.io/sphinx-material/index.html
+ * Sphinx material theme properties use 'md' in variable names
+ * Extension for grid / cards in reStructuredText see sphinx-design
+ * https://sphinx-design.readthedocs.io/
+ * Sphinx design properties use 'sd' in variable names
+ */
+
+/* Define colors */
+:root {
+    --nest-orange: #ff6633;
+    --nest-slate: #12222c;
+    /* The header zone the banner artwork spans as one continuous image:
+       #header, with the fixed app bar overlaying its top, plus the tab strip
+       directly below it. --banner-h must equal H in
+       doc/tools/generate_banner.py so the artwork renders 1:1; #header absorbs
+       the tab strip growing with the root font-size. */
+    --banner-h: 228px;
+    --header-h: calc(var(--banner-h) - 2.4rem);
+    /* Distance from the viewport edge to the centred 73rem content column, so
+       the banner artwork can start where the page content starts and travel
+       with it as the window widens, instead of clinging to the viewport edge.
+       In vw because percentages in background-position resolve against
+       (element width - image width), not the element width -- this is off by
+       half the scrollbar width, which is invisible in abstract artwork. */
+    --content-gutter: max(0px, calc((100vw - 73rem) / 2));
+    --nest-blue: #0E6A93;
+    --nest-dkblue: #072f42;
+    --nest-brown: #4b210c;
+    --sd-color-primary: var(--nest-orange);
+    --sd-color-secondary: #666;
+    --sd-color-warning: #f22;
+    --sd-color-success: var(--nest-brown);
+    --sd-color-dark: var(--nest-dkblue);
+    --sd-color-primary-highlight: #e05a2d;
+    --sd-color-muted: #adadad;
+    --sd-color-info: var(--nest-blue);
+    --sd-color-card-border-hover: var(--nest-orange);
+    --sd-color-tabs-underline: #fff;
+    --sd-fontsize-dropdown-title: 0.8rem;
+}
+
+/* Define base font color and style */
+body {
+    background: #fff;
+    color: #666;
+    font-family: 'Droid Sans', Arial, Helvetica, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+}
+
+/* links */
+a { color: var(--nest-orange); }
+a:visited,
+a:active { color: var(--nest-orange); }
+a:hover { color: var(--nest-orange); text-decoration: underline; }
+
+p { margin: 0 0 1.5em; }
+
+/* set api function and class names style */
+.sig-prename.descclassname {
+    display: None;
+}
+
+.sig.sig-object.py {
+    font-weight: bold;
+    background-color: #ffd1c1;
+    font-family: "Roboto Mono", "Courier New", Courier, monospace;
+}
+
+dt:target {
+    margin-top: -0.55rem;
+    padding-top: 0.45rem;
+}
+
+.center {
+    text-align: center;
+    font-style: italic;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4,
+.md-typeset h5,
+.md-typeset h6 {
+    font-weight: 600;
+}
+
+[id] {
+    scroll-margin-top: 4rem;
+}
+
+/* No orange strip below the banner: the tab strip carries on the same artwork,
+   offset by the height of #header above it, so the two join seamlessly. */
+[data-md-color-primary=orange] .md-tabs {
+    background-color: var(--nest-slate);
+    background-image: url("../img/banner.svg");
+    background-repeat: no-repeat;
+    background-position: var(--content-gutter) calc(-1 * var(--header-h));
+    background-size: auto var(--banner-h);
+}
+
+.md-typeset blockquote {
+    border-left: none;
+}
+
+/* No orange bar above the banner either, show banner.svg as background image.
+   `background-attachment: fixed` anchors the image to the viewport. */
+[data-md-color-primary="orange"] .md-header {
+    background-color: var(--nest-slate);
+    background-image: url("../img/banner.svg");
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: var(--content-gutter) top;
+    background-size: auto var(--banner-h);
+}
+
+[data-md-color-primary="orange"] .md-hero {
+    background-color: var(--nest-orange);
+}
+
+[data-md-color-primary="orange"] .md-nav__link--active,
+[data-md-color-primary="orange"] .md-nav__link:active {
+    color: var(--nest-orange);
+}
+
+[data-md-color-primary="orange"] .md-typeset a {
+    color: var(--nest-orange);
+    background-color: #ffffff8a;
+    border-radius: 5px;
+}
+
+.md-typeset details {
+    background-color: white;
+    border-left: none;
+}
+
+.md-typeset summary::after {
+    display: none;
+}
+
+.md-typeset details > summary::before {
+    display: none;
+}
+
+/* dropdowns */
+.md-typeset details > summary {
+    background-color: #ff663310;
+}
+
+/* settings for icons */
+.md-typeset .sd-card-title img,
+.md-typeset .sd-card-header img {
+    border: none;
+    opacity: 0.9;
+    height: 60px;
+    margin-right: 1.2em;
+    margin-bottom: 0.5em;
+}
+
+.md-typeset .sd-summary-title img {
+    border: none;
+    opacity: 0.9;
+    width: auto;
+    height: 64px;
+    margin-right: 2em;
+    margin-bottom: 0.5em;
+}
+
+/* admonitions */
+.md-typeset .admonition,
+.md-typeset .admonition.tip {
+    border-left: .2rem solid var(--nest-blue);
+    border-radius: 5px;
+}
+
+.md-typeset .admonition > .admonition-title::before,
+.md-typeset .admonition.important > .admonition-title::before,
+.md-typeset .admonition.tip > .admonition-title::before {
+    color: #fff;
+}
+
+.md-typeset .admonition > .admonition-title,
+.md-typeset .admonition.tip > .admonition-title {
+    background-color: var(--nest-blue);
+    color: #fff;
+}
+
+.md-typeset .admonition {
+    background-color: #fff;
+    box-shadow: 0 .125rem .25rem var(--sd-color-shadow);
+    margin-left: 17px;
+    margin-right: 15px;
+}
+
+.md-typeset .admonition.seealso > .admonition-title,
+.md-typeset .admonition.important > .admonition-title {
+    background-color: var(--nest-dkblue);
+}
+
+.md-typeset .admonition.seealso,
+.md-typeset .admonition.important {
+    border-left: .2rem solid var(--nest-dkblue);
+}
+
+.md-typeset .admonition.warning {
+    border-left-color: #be1717;
+}
+
+.md-typeset .admonition.warning > .admonition-title {
+    background-color: #be1717;
+}
+
+.md-typeset .admonition.danger > .admonition-title {
+    background-color: black;
+}
+
+div.admonition .md-typeset a > code {
+    color: white;
+}
+
+/* navigation */
+.md-nav__extra_link {
+    color: var(--nest-orange);
+}
+
+.md-nav__link,
+.md-nav__link:focus,
+.md-nav__link:hover {
+    color: var(--nest-orange);
+}
+
+ul.md-tabs__list li.md-tabs__item a.md-tabs__link {
+    color: #fff;
+    opacity: 0.9;
+}
+
+a.md-tabs__link,
+a.md-source {
+    color: #fff;
+}
+
+div.md-header-nav__source a.md-source div.md-source__repository,
+div.md-source__icon {
+    color: #fff;
+}
+
+span.md-nav__link.caption {
+    padding-top: 0.6rem;
+    padding-bottom: 0.1rem;
+}
+
+/* remove logo from header */
+.md-header-nav__button {
+    display: none;
+}
+
+/* remove space between the md_tabs bar and the header section */
+.md-container {
+    padding-top: 0px;
+}
+
+/* label the secondary (per page) navigation */
+nav.md-nav.md-nav--secondary label.md-nav__title {
+    visibility: hidden;
+}
+
+nav.md-nav.md-nav--secondary label.md-nav__title:after {
+    content: "Page Contents";
+    visibility: visible;
+    display: block;
+    position: static;
+}
+
+/***********************************
+ * Adjust settings for sphinx design
+ ***********************************/
+.sd-card-header .sd-card-text {
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+}
+
+details.sd-dropdown:not([open]).sd-card {
+    width: max-content;
+}
+
+.sd-card-body {
+    padding: 0.6rem;
+}
+
+.sd-container,
+.sd-container-fluid,
+.sd-container-lg,
+.sd-container-md,
+.sd-container-sm,
+.sd-container-xl {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.sd-tab-set > input:checked + label {
+    border-color: var(--nest-orange) !important;
+    color: var(--nest-orange) !important;
+}
+
+.sd-tab-set > input:not(:checked) + label:hover {
+    color: var(--nest-brown) !important;
+    border-color: #f632 !important;
+}
+
+/* ************************************
+ * Define styles for the sphinx carousel
+ * ***********************************/
+/* Fix the aspect ratio so that that the box does not dynamically change size when cycling. */
+.scbs-carousel-item img {
+    aspect-ratio: 2 / 1;
+    object-fit: contain;
+    width: 100%;
+    height: auto;
+}
+
+/* ************************************
+ * Define styles for the publication entries
+ * ***********************************/
+/* One card per publication */
+.nest-publication-card {
+    margin-bottom: 1.5rem;
+}
+
+/* Citation of publication goes to the left side of the header and a figure to the right side. */
+.nest-publication ul,
+.nest-publication ul li {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+/* Figure reference below the figure both for the publication list and the carousel in similar style. */
+.nest-publication figcaption,
+.scbs-carousel-caption h5 {
+    font-style: italic;
+    font-weight: normal;
+    color: #666;
+    text-align: center;
+    /* The theme upper-cases every h5, which sphinx_carousel uses for the
+       reference line. */
+    text-transform: none;
+}
+
+/* Drop the "Figure N" prefix that numfig adds. */
+.nest-publication figcaption .caption-number {
+    display: none;
+}
+
+/* ************************************
+ * Define styles for the call-to-action buttons
+ * ***********************************/
+/* Button cards pick up the slate of the header banner. */
+.nest-button {
+    background-color: var(--nest-slate);
+    border-color: var(--nest-slate);
+}
+
+.nest-button .sd-card-text {
+    color: #fff;
+}
+
+/* ************************************
+ * Define styles for the layout template
+ * ***********************************/
+.wrapper {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 50px;
+}
+
+header.wrapper {
+    padding: 0;
+}
+
+/* Use the banner created by doc/tools/generate_banner.py as header. */
+#header {
+    background-color: var(--nest-slate);
+    background-image: url("../img/banner.svg");
+    background-repeat: no-repeat;
+    background-position: var(--content-gutter) top;
+    background-size: auto var(--banner-h);
+    padding: 0;
+    height: var(--header-h);
+}
+
+#background {
+    max-width: 73rem;
+    height: 100%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    /* The app bar is fixed and covers the top part of #header, so centring
+       has to happen in the band below it -- otherwise the logo is clipped. */
+    padding-top: 2.4rem;
+    box-sizing: border-box;
+}
+
+#banner {
+    position: static;
+    float: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+#logo img {
+    height: 100px;
+    width: auto;
+    max-width: 100%;
+    display: block;
+}
+
+.icon {
+    margin: 0 auto;
+    height: 95px;
+    display: block;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* Contain floats */
+.clearfix:before,
+.clearfix:after,
+.row:before,
+.row:after {
+    content: " ";
+    display: table;
+}
+
+.clearfix:after,
+.container:after,
+.row:after {
+    clear: both;
+}
+
+/****************************************
+ * MEDIAQUERIES
+ ****************************************/
+
+@media only screen and (min-width: 2048px) {
+    .md-typeset .sd-card-title img {
+        width: auto;
+        height: 60px;
+    }
+}
+
+@media only screen and (min-width: 1024px) {
+    header {
+        background-color: var(--nest-orange);
+        padding: 15px 0;
+        height: 180px;
+    }
+}
+
+@media only screen and (max-width: 1023px) {
+    header {
+        background-color: var(--nest-orange);
+        padding: 0 0;
+        height: 180px;
+    }
+
+    #banner {
+        padding-top: 50px;
+    }
+}
+
+/*
+LARGER MOBILE DEVICES
+This is for mobile devices with a bit larger screens.
+*/
+@media only screen and (min-width: 481px) {
+    #banner {
+        float: left;
+        text-align: left;
+        margin: 0 0 0 0.8rem;
+    }
+}
+
+/*
+TABLET & SMALLER LAPTOPS
+*/
+@media only screen and (min-width: 920px) {
+    header {
+        padding: 0;
+    }
+
+    #banner {
+        float: left;
+        text-align: left;
+        margin: 0 0 0 0.8rem;
+    }
+}
+
+@media only screen and (max-width: 76.1875em) {
+    html [data-md-color-primary="orange"] .md-nav--primary .md-nav__title--site {
+        background-color: #fff;
+    }
+
+    [data-md-color-primary="orange"] .md-nav__source {
+        background-color: #000;
+    }
+
+    html .md-nav--primary .md-nav__title {
+        white-space: initial;
+    }
+
+    /* Make hamburger menu on small devices visible */
+    .md-icon.md-icon--menu.md-header-nav__button {
+        display: flex;
+    }
+}
