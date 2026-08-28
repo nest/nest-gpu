@@ -1,7 +1,7 @@
 .. _randomness_in_nestgpu_simulations:
 
 ==================================
-Randomness in NEST GPU Simulations
+Randomness in NEST GPU simulations
 ==================================
 
 As in NEST, random numbers are used in several occasions for neural network creation, such
