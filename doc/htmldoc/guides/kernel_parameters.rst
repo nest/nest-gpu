@@ -7,7 +7,9 @@ NEST GPU provides a set of configurable kernel parameters that control the globa
 
 The parameters are divided into three categories based on their data type:
 - :ref:`kernel-float-parameters`
+
 - :ref:`kernel-int-parameters`
+
 - :ref:`kernel-bool-parameters`
 
 ---
@@ -54,7 +56,7 @@ Integer parameters manage seed generation, verbosity, bit-width constraints for 
    * - Parameter Name
      - Description
    * - ``rnd_seed``
-     - Base random number generator (RNG) seed for stochastic processes and network initialization as mentioned in :doc:`random_number_seed`.
+     - Base random number generator (RNG) seed for stochastic processes and network initialization as mentioned in :ref:`random_number_seed`.
    * - ``verbosity_level``
      - Controls the amount of logging information and runtime messages printed to standard output.
    * - ``max_spike_buffer_size``
