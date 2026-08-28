@@ -7,13 +7,17 @@ Randomness in NEST GPU Simulations
 As in NEST, random numbers are used in several occasions for neural network creation, such
 as the randomization of node and connection parameters and when stochastic input or stochastic 
 connection rules are employed in the simulation. NEST GPU uses random generators from the 
-`curand <https://docs.nvidia.com/cuda/curand/index.html>`_ library of CUDA to obtain random numbers following different distributions.
+`curand <https://docs.nvidia.com/cuda/curand/index.html>`_ library of CUDA to obtain random
+numbers following different distributions.
+
+.. _random_number_seed:
 
 Random numbers for simulation
 =============================
 
 Similar to the CPU version of NEST, the randomness for a simulation can be set
-throughout a master seed, which is part of the kernel parameters. This is used
+throughout a master seed, which is part of the kernel parameters (see 
+:doc:`kernel_parameters` for more information in this regard). This is used
 both for the probabilistic connection rules, the creation of parameter 
 distributions as described below and the stochastic input generation. It can be
 set as follows:
@@ -22,6 +26,8 @@ set as follows:
 
    nestgpu.SetKernelStatus("rnd_seed", 1234)
 
+
+.. _random_number_params:
 
 Random numbers for network parameters
 =====================================
@@ -35,8 +41,8 @@ how the distribution can be used to randomize the membrane potential of a neuron
 
 .. code-block:: python
 
-   n=ngpu.Create('aeif_cond_beta', 10000, 3)
-   ngpu.SetStatus(n, 'V_m', {'distribution':'normal','mu':1.0, 'sigma':0.5})
+   n=nestgpu.Create('aeif_cond_beta', 10000, 3)
+   nestgpu.SetStatus(n, 'V_m', {'distribution':'normal','mu':1.0, 'sigma':0.5})
 
 
 Normal clipped distribution
@@ -48,8 +54,8 @@ alongside mean and standard deviation, as shown in an example similar to the one
 
 .. code-block:: python
 
-   n=ngpu.Create('aeif_cond_beta', 10000, 3)
-   ngpu.SetStatus(n, 'V_m', {'distribution':'normal_clipped','mu':1.0, 'sigma':0.5, 'low':0.1, 'high':2.0})
+   n=nestgpu.Create('aeif_cond_beta', 10000, 3)
+   nestgpu.SetStatus(n, 'V_m', {'distribution':'normal_clipped','mu':1.0, 'sigma':0.5, 'low':0.1, 'high':2.0})
 
 
 Lognormal clipped distribution
@@ -68,9 +74,9 @@ as synaptic weights and delays.
    low = 0.1
    high = 100
 
-   neuron1 = ngpu.Create("aeif_cond_beta_multisynapse", 5000)
-   neuron2 = ngpu.Create("aeif_cond_beta_multisynapse", 5000)
-   ngpu.Connect(neuron1, neuron2, {'rule': 'one_to_one'}, {'delay': {'distribution': 'lognormal_clipped', 'mu': mu, 'sigma':sigma, 'low': low, 'high': high},                   
+   neuron1 = nestgpu.Create("aeif_cond_beta_multisynapse", 5000)
+   neuron2 = nestgpu.Create("aeif_cond_beta_multisynapse", 5000)
+   nestgpu.Connect(neuron1, neuron2, {'rule': 'one_to_one'}, {'delay': {'distribution': 'lognormal_clipped', 'mu': mu, 'sigma':sigma, 'low': low, 'high': high},                   
                                                          'weight': {'distribution': 'lognormal_clipped', 'mu': mu, 'sigma': sigma, 'low': low, 'high': high}})
 
 
