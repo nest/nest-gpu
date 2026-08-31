@@ -134,28 +134,38 @@ are parallelized and mapped onto the GPU threads.
 The available algorithms, which can be selected via configuration scripts, include:
 
 .. list-table::
-   :widths: 20 80
+   :widths: 5 25 70
    :header-rows: 1
 
-   * - ID & Name
+   * - ID
+     - Name
      - Description
-   * - **0: BlockStep**
+   * - **0**
+     - **BlockStep**
      - Divides the iteration space into blocks, stepping through segments to balance the workload across GPU threads.
-   * - **1: CumulSum**
+   * - **1**
+     - **CumulSum**
      - Utilizes prefix-sum (*scan*) operations to compute memory offsets dynamically, preventing race conditions during parallel construction.
-   * - **2: Simple**
+   * - **2**
+     - **Simple**
      - A straightforward, baseline implementation with minimal optimization. Useful primarily for debugging or very small networks where advanced overhead is unnecessary.
-   * - **3: ParallelInner**
+   * - **3**
+     - **ParallelInner**
      - Parallelizes the innermost loop of the connection generation routine.
-   * - **4: ParallelOuter**
+   * - **4**
+     - **ParallelOuter**
      - Parallelizes the outermost loop of the connection generation routine, often preferred when dealing with large source populations.
-   * - **5: Frame1D**
+   * - **5**
+     - **Frame1D**
      - Subdivides the network space into 1D spatial frames to enhance memory locality and coalescing during execution.
-   * - **6: Frame2D**
+   * - **6**
+     - **Frame2D**
      - Extends spatial frame decomposition into 2D grids, ideal for topologically structured or layered 2D neural sheets.
-   * - **7: Smart1D**
+   * - **7**
+     - **Smart1D**
      - An adaptive, heuristic-driven 1D algorithm that automatically optimizes thread mapping based on network density and population size.
-   * - **8: Smart2D**
+   * - **8**
+     - **Smart2D**
      - An adaptive, heuristic-driven 2D algorithm designed to dynamically select the best spatial mapping strategy for complex 2D network topographies.
 
 The default choice for the ``spike_buffer_algo`` parameter is 0, i.e., the BlockStep algorithm. 
