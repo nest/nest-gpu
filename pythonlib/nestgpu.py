@@ -1994,8 +1994,7 @@ def Connect(source, target, conn_dict, syn_dict):
                         if (not SynSpecIsFloatPtParam(arr_param_name)):
                             raise ValueError("Synapse parameter cannot be set"
                                              " by arrays")
-                        array_pt = ctypes.cast(arr, ctypes.c_void_p)
-                        SetSynSpecFloatPtParam(arr_param_name, array_pt)
+                        SetSynSpecFloatPtParam(arr_param_name, arr)
                     elif dict_param_name=="distribution":
                         distr_idx = distribution_dict[pval]
                         distr_param_name = param_name + "_distribution"
@@ -3335,4 +3334,3 @@ def ConnectDistributedFixedIndegree(source_host_list, source_group_list, target_
     
     gc.enable()
     return ret
-
