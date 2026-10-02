@@ -116,39 +116,32 @@ EndUserDocs */
 
 #define MAX_PORT_NUM 20
 
-struct izhikevich_cond_beta_rk5
-{
+struct izhikevich_cond_beta_rk5 {
   int i_node_0_;
 };
 
-class izhikevich_cond_beta : public BaseNeuron
-{
+class izhikevich_cond_beta : public BaseNeuron {
 public:
-  RungeKutta5< izhikevich_cond_beta_rk5 > rk5_;
+  RungeKutta5<izhikevich_cond_beta_rk5> rk5_;
   float h_min_;
   float h_;
   izhikevich_cond_beta_rk5 rk5_data_struct_;
 
-  int Init( int i_node_0, int n_neuron, int n_port, int i_group );
+  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
 
-  int Calibrate( double time_min, float time_resolution );
+  int Calibrate(double time_min, float time_resolution);
 
-  int Update( long long it, double t1 );
+  int Update(long long it, double t1);
 
-  int
-  GetX( int i_neuron, int n_node, double* x )
-  {
-    return rk5_.GetX( i_neuron, n_node, x );
+  int GetX(int i_neuron, int n_node, double *x) {
+    return rk5_.GetX(i_neuron, n_node, x);
   }
 
-  int
-  GetY( int i_var, int i_neuron, int n_node, float* y )
-  {
-    return rk5_.GetY( i_var, i_neuron, n_node, y );
+  int GetY(int i_var, int i_neuron, int n_node, float *y) {
+    return rk5_.GetY(i_var, i_neuron, n_node, y);
   }
 
-  template < int N_PORT >
-  int UpdateNR( long long it, double t1 );
+  template <int N_PORT> int UpdateNR(long long it, double t1);
 };
 
 #endif

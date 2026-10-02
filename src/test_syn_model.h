@@ -25,32 +25,18 @@
 
 #include "syn_model.h"
 
-class TestSynModel : public SynModel
-{
+class TestSynModel : public SynModel {
   int _Init();
 
 public:
-  TestSynModel()
-  {
-    _Init();
-  }
-  int
-  Init()
-  {
-    return _Init();
-  }
+  TestSynModel() { _Init(); }
+  int Init() { return _Init(); }
 };
 
-namespace test_syn_model_ns
-{
-enum ParamIndexes
-{
-  i_fact = 0,
-  i_offset,
-  N_PARAM
-};
+namespace test_syn_model_ns {
+enum ParamIndexes { i_fact = 0, i_offset, N_PARAM };
 
-const std::string test_syn_model_param_name[ N_PARAM ] = { "fact", "offset" };
+const std::string test_syn_model_param_name[N_PARAM] = {"fact", "offset"};
 
 } // namespace test_syn_model_ns
 

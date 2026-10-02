@@ -33,36 +33,33 @@
 #include <iostream>
 #include <string>
 
-namespace user_m2_hc_ns
-{
-enum ScalVarIndexes
-{
+namespace user_m2_hc_ns {
+enum ScalVarIndexes {
   i_I_syn = 0,       // postsynaptic current for exc. inputs
   i_V_m_rel,         // membrane potential relative to E_L
   i_refractory_step, // refractory step counter
   N_SCAL_VAR
 };
 
-enum ScalParamIndexes
-{
+enum ScalParamIndexes {
   i_I_e = 0, // External current in pA
   N_SCAL_PARAM
 };
 
-const std::string user_m2_hc_scal_var_name[ N_SCAL_VAR ] = { "I_syn", "V_m_rel", "refractory_step" };
+const std::string user_m2_hc_scal_var_name[N_SCAL_VAR] = {"I_syn", "V_m_rel",
+                                                          "refractory_step"};
 
-const std::string user_m2_hc_scal_param_name[ N_SCAL_PARAM ] = { "I_e" };
+const std::string user_m2_hc_scal_param_name[N_SCAL_PARAM] = {"I_e"};
 
 } // namespace user_m2_hc_ns
 
-class user_m2_hc : public BaseNeuron
-{
+class user_m2_hc : public BaseNeuron {
 public:
   ~user_m2_hc();
 
-  int Init( int i_node_0, int n_neuron, int n_port, int i_group );
+  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
 
-  int Update( long long it, double t1 );
+  int Update(long long it, double t1);
 
   int Free();
 };

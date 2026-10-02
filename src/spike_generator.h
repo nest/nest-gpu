@@ -76,42 +76,39 @@ poisson_generator
 EndUserDocs
 */
 
-class spike_generator : public BaseNeuron
-{
-  int* d_n_spikes_;
-  int* d_i_spike_;
-  int** d_spike_time_idx_;
-  float** d_spike_gen_mul_;
-  int** h_spike_time_idx_;
-  float** h_spike_gen_mul_;
-  std::vector< std::vector< float > > spike_time_vect_;
-  std::vector< std::vector< float > > spike_mul_vect_;
+class spike_generator : public BaseNeuron {
+  int *d_n_spikes_;
+  int *d_i_spike_;
+  int **d_spike_time_idx_;
+  float **d_spike_gen_mul_;
+  int **h_spike_time_idx_;
+  float **h_spike_gen_mul_;
+  std::vector<std::vector<float>> spike_time_vect_;
+  std::vector<std::vector<float>> spike_mul_vect_;
 
-  int SetSpikes( int irel_node,
-    int n_spikes,
-    float* spike_time,
-    float* spike_gen_mul,
-    float time_min,
-    float time_resolution );
+  int SetSpikes(int irel_node, int n_spikes, float *spike_time,
+                float *spike_gen_mul, float time_min, float time_resolution);
 
 public:
   ~spike_generator();
 
-  int Init( int i_node_0, int n_node, int n_port, int i_group );
+  int Init(int i_node_0, int n_node, int n_port, int i_group);
 
   int Free();
 
-  int Update( long long i_time, double t1 );
+  int Update(long long i_time, double t1);
 
-  int Calibrate( double time_min, float time_resolution );
+  int Calibrate(double time_min, float time_resolution);
 
-  int SetArrayParam( int i_neuron, int n_neuron, std::string param_name, float* array, int array_size );
+  int SetArrayParam(int i_neuron, int n_neuron, std::string param_name,
+                    float *array, int array_size);
 
-  int SetArrayParam( int* i_neuron, int n_neuron, std::string param_name, float* array, int array_size );
+  int SetArrayParam(int *i_neuron, int n_neuron, std::string param_name,
+                    float *array, int array_size);
 
-  int GetArrayParamSize( int i_neuron, std::string param_name );
+  int GetArrayParamSize(int i_neuron, std::string param_name);
 
-  float* GetArrayParam( int i_neuron, std::string param_name );
+  float *GetArrayParam(int i_neuron, std::string param_name);
 };
 
 #endif

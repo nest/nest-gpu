@@ -17,9 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // #define PRINT_VRB
 
-unsigned int
-nextPowerOf2( unsigned int n )
-{
+unsigned int nextPowerOf2(unsigned int n) {
   n--;
   n |= n >> 1;
   n |= n >> 2;
@@ -49,126 +47,103 @@ void cudaReusableAlloc(void *d_storage, int64_t &st_bytes,
 // atomically set old_index = *arg_max_pt,
 // check whether array[index]>array[old_index].
 // If it is true, set *arg_max_pt=index
-__device__ int
-atomicArgMax( position_t* array, int* arg_max_pt, int index )
-{
+__device__ int atomicArgMax(position_t *array, int *arg_max_pt, int index) {
   int old_index = *arg_max_pt;
   int assumed_index;
-  do
-  {
-    if ( array[ old_index ] >= array[ index ] )
-    {
+  do {
+    if (array[old_index] >= array[index]) {
       break;
     }
     assumed_index = old_index;
-    old_index = atomicCAS( arg_max_pt, assumed_index, index );
-  } while ( assumed_index != old_index );
+    old_index = atomicCAS(arg_max_pt, assumed_index, index);
+  } while (assumed_index != old_index);
 
   return old_index;
 }
 
-__global__ void
-copass_last_step_kernel( position_t* part_size,
-  position_t* m_d,
-  uint k,
-  position_t tot_diff,
-  position_t* diff,
-  position_t* diff_cumul,
-  position_t* num_down )
-{
+__global__ void copass_last_step_kernel(position_t *part_size, position_t *m_d,
+                                        uint k, position_t tot_diff,
+                                        position_t *diff,
+                                        position_t *diff_cumul,
+                                        position_t *num_down) {
   int i = threadIdx.x;
-  if ( i >= k )
-  {
+  if (i >= k) {
     return;
   }
   position_t nd = *num_down;
 
-  if ( i < nd )
-  {
-    part_size[ i ] = m_d[ i ] + diff[ i ];
-  }
-  else if ( i == nd )
-  {
-    part_size[ i ] = m_d[ i ] + tot_diff - diff_cumul[ i ];
-  }
-  else
-  {
-    part_size[ i ] = m_d[ i ];
+  if (i < nd) {
+    part_size[i] = m_d[i] + diff[i];
+  } else if (i == nd) {
+    part_size[i] = m_d[i] + tot_diff - diff_cumul[i];
+  } else {
+    part_size[i] = m_d[i];
   }
 #ifdef PRINT_VRB
-  printf( "kernel i: %d\tm_d: %ld\tpart_size: %ld\n", i, m_d[ i ], part_size[ i ] );
+  printf("kernel i: %d\tm_d: %ld\tpart_size: %ld\n", i, m_d[i], part_size[i]);
 #endif
 }
 
-__global__ void
-case2_inc_partitions_kernel( position_t* part_size, int* sorted_extra_elem_idx, position_t tot_diff )
-{
+__global__ void case2_inc_partitions_kernel(position_t *part_size,
+                                            int *sorted_extra_elem_idx,
+                                            position_t tot_diff) {
   int i_elem = threadIdx.x;
-  if ( i_elem >= tot_diff )
-  {
+  if (i_elem >= tot_diff) {
     return;
   }
-  int i = sorted_extra_elem_idx[ i_elem ];
-  part_size[ i ]++;
+  int i = sorted_extra_elem_idx[i_elem];
+  part_size[i]++;
 }
 
-void
-GPUMemCpyOverlap( char* t_addr, char* s_addr, position_t size )
-{
-  position_t diff = ( position_t ) ( t_addr - s_addr );
-  if ( diff == 0 )
-  {
+void GPUMemCpyOverlap(char *t_addr, char *s_addr, position_t size) {
+  position_t diff = (position_t)(t_addr - s_addr);
+  if (diff == 0) {
     return;
   }
-  if ( diff < 0 )
-  {
-    printf( "GPUMemCpyOvelap error: translation cannot be <0\n" );
-    exit( 0 );
+  if (diff < 0) {
+    printf("GPUMemCpyOvelap error: translation cannot be <0\n");
+    exit(0);
   }
-  if ( diff >= size )
-  {
-    gpuErrchk( cudaMemcpyAsync( t_addr, s_addr, size, cudaMemcpyDeviceToDevice ) );
+  if (diff >= size) {
+    gpuErrchk(cudaMemcpyAsync(t_addr, s_addr, size, cudaMemcpyDeviceToDevice));
   }
-  int nb = ( int ) ( ( size + diff - 1 ) / diff );
-  for ( int ib = nb - 1; ib >= 0; ib-- )
-  {
-    position_t b_size = ib < nb - 1 ? diff : size - diff * ( nb - 1 );
-    char* s_b_addr = s_addr + diff * ib;
-    char* t_b_addr = s_b_addr + diff;
-    gpuErrchk( cudaMemcpyAsync( t_b_addr, s_b_addr, b_size, cudaMemcpyDeviceToDevice ) );
+  int nb = (int)((size + diff - 1) / diff);
+  for (int ib = nb - 1; ib >= 0; ib--) {
+    position_t b_size = ib < nb - 1 ? diff : size - diff * (nb - 1);
+    char *s_b_addr = s_addr + diff * ib;
+    char *t_b_addr = s_b_addr + diff;
+    gpuErrchk(
+        cudaMemcpyAsync(t_b_addr, s_b_addr, b_size, cudaMemcpyDeviceToDevice));
   }
 }
 
-void
-GPUMemCpyBuffered( char* t_addr, char* s_addr, position_t size, char* d_buffer, position_t buffer_size )
-{
-  position_t diff = ( position_t ) ( t_addr - s_addr );
-  if ( diff == 0 )
-  {
+void GPUMemCpyBuffered(char *t_addr, char *s_addr, position_t size,
+                       char *d_buffer, position_t buffer_size) {
+  position_t diff = (position_t)(t_addr - s_addr);
+  if (diff == 0) {
     return;
   }
-  if ( diff < 0 )
-  {
-    printf( "GPUMemCpyBuffer error: translation cannot be <0\n" );
-    exit( 0 );
+  if (diff < 0) {
+    printf("GPUMemCpyBuffer error: translation cannot be <0\n");
+    exit(0);
   }
-  if ( diff >= size )
-  {
-    gpuErrchk( cudaMemcpyAsync( t_addr, s_addr, size, cudaMemcpyDeviceToDevice ) );
+  if (diff >= size) {
+    gpuErrchk(cudaMemcpyAsync(t_addr, s_addr, size, cudaMemcpyDeviceToDevice));
     return;
   }
-  if ( diff > buffer_size / 2 )
-  {
-    GPUMemCpyOverlap( t_addr, s_addr, size );
+  if (diff > buffer_size / 2) {
+    GPUMemCpyOverlap(t_addr, s_addr, size);
     return;
   }
-  int nb = ( int ) ( ( size + buffer_size - 1 ) / buffer_size );
-  for ( int ib = nb - 1; ib >= 0; ib-- )
-  {
-    position_t b_size = ib < nb - 1 ? buffer_size : size - buffer_size * ( nb - 1 );
-    char* s_b_addr = s_addr + buffer_size * ib;
-    char* t_b_addr = s_b_addr + diff;
-    gpuErrchk( cudaMemcpyAsync( d_buffer, s_b_addr, b_size, cudaMemcpyDeviceToDevice ) );
-    gpuErrchk( cudaMemcpyAsync( t_b_addr, d_buffer, b_size, cudaMemcpyDeviceToDevice ) );
+  int nb = (int)((size + buffer_size - 1) / buffer_size);
+  for (int ib = nb - 1; ib >= 0; ib--) {
+    position_t b_size =
+        ib < nb - 1 ? buffer_size : size - buffer_size * (nb - 1);
+    char *s_b_addr = s_addr + buffer_size * ib;
+    char *t_b_addr = s_b_addr + diff;
+    gpuErrchk(
+        cudaMemcpyAsync(d_buffer, s_b_addr, b_size, cudaMemcpyDeviceToDevice));
+    gpuErrchk(
+        cudaMemcpyAsync(t_b_addr, d_buffer, b_size, cudaMemcpyDeviceToDevice));
   }
 }

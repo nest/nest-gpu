@@ -29,13 +29,13 @@
 #include <cub/cub.cuh>
 //<END-CLANG-TIDY-SKIP>//
 
+#include <algorithm>
 #include <curand.h>
 #include <curand_kernel.h>
 #include <sys/time.h>
 #include <time.h>
-#include <vector>
 #include <unordered_set>
-#include <algorithm>
+#include <vector>
 
 #include "connect_spec.h"
 #include "copass_kernels.h"
@@ -47,35 +47,34 @@
 #include "utilities.h"
 
 #define INPUT_SPIKE_BUFFER_FLAG
-enum
-{
-  OUTPUT_SPIKE_BUFFER_ALGO = 0,
-  INPUT_SPIKE_BUFFER_ALGO
-};
+enum { OUTPUT_SPIKE_BUFFER_ALGO = 0, INPUT_SPIKE_BUFFER_ALGO };
 
 typedef uint inode_t;
 typedef uint iconngroup_t;
 
-namespace input_spike_buffer_ns
-{
-// Initialize array of first outgoing connection index of each node to default value of -1 (no outgoing connections)
-__global__ void initFirstOutConnectionKernel
-( inode_t n_local_nodes, int64_t* first_out_connection );
+namespace input_spike_buffer_ns {
+// Initialize array of first outgoing connection index of each node to default
+// value of -1 (no outgoing connections)
+__global__ void initFirstOutConnectionKernel(inode_t n_local_nodes,
+                                             int64_t *first_out_connection);
 
-// Evaluates the index of the first outgoing connection of each source node (version for connection blocks)
-template < class ConnKeyT >
-__global__ void getFirstOutConnectionKernel
-( inode_t i_node_0, int64_t i_conn_0, int64_t n_conn, int64_t* first_out_connection, uint n_nodes, int this_host );
-}
+// Evaluates the index of the first outgoing connection of each source node
+// (version for connection blocks)
+template <class ConnKeyT>
+__global__ void getFirstOutConnectionKernel(inode_t i_node_0, int64_t i_conn_0,
+                                            int64_t n_conn,
+                                            int64_t *first_out_connection,
+                                            uint n_nodes, int this_host);
+} // namespace input_spike_buffer_ns
 
 // Connection is the class used to represent connection data and methods.
 // It is defined as an abstract class, with pure virtual methods
 // that offer an interface for using this class in the same way
 // no matter what specific structure is used to represent individual connections
 // This abstract class will then be used as a base for derived classes
-// using templates, with the connection structure specified by template parameters
-class Connection
-{
+// using templates, with the connection structure specified by template
+// parameters
+class Connection {
 public:
   double InsertHostGroupSourceNode_time_;
   double ConnectRemoteConnectSource_time_;
@@ -102,7 +101,7 @@ public:
   // the following is activated only for special testings on node maps
   bool check_node_maps_;
 
-  //time resolution in ms
+  // time resolution in ms
   float time_resolution_;
 
   // minimum allowed delay in time step units
@@ -115,21 +114,23 @@ public:
   // methods used to specify the number of bits reserved to represent
   // different connection parameters
 
-  // bits reserved for representing node indexes (same value for source and target nodes)
-  virtual int setMaxNodeNBits( int max_node_nbits ) = 0;
+  // bits reserved for representing node indexes (same value for source and
+  // target nodes)
+  virtual int setMaxNodeNBits(int max_node_nbits) = 0;
 
-  // bits reserved to represent delays as integer (integer delays) in time-resolution units
-  virtual int setMaxDelayNBits( int max_node_nbits ) = 0;
+  // bits reserved to represent delays as integer (integer delays) in
+  // time-resolution units
+  virtual int setMaxDelayNBits(int max_node_nbits) = 0;
 
   // bits reserved to represent synapse group
-  virtual int setMaxSynNBits( int max_syn_nbits ) = 0;
+  virtual int setMaxSynNBits(int max_syn_nbits) = 0;
 
   // set minimum allowed delay
   int setMinAllowedDelay(float min_allowed_delay_float);
-  
+
   // get minimum allowed delay
   float getMinAllowedDelay();
-  
+
   // get number of bits reserved to represent node indexes
   virtual int getMaxNodeNBits() = 0;
 
@@ -142,7 +143,8 @@ public:
   // get number of bits reserved to represent synapse groups
   virtual int getMaxSynNBits() = 0;
 
-  // get number of images of remote spiking nodes having connections to local target nodes
+  // get number of images of remote spiking nodes having connections to local
+  // target nodes
   virtual int getNImageNodes() = 0;
 
   // get flag that indicates if reverse connections are used (e.g. for STDP)
@@ -151,371 +153,361 @@ public:
   // get number of reverse connections
   virtual int getNRevConn() = 0;
 
-  virtual int* getDevSpikeNumPt() = 0;
+  virtual int *getDevSpikeNumPt() = 0;
 
-  virtual uint* getDevRevSpikeNumPt() = 0;
+  virtual uint *getDevRevSpikeNumPt() = 0;
 
   // get pt to array of number of reverse connections incoming to each node
-  virtual int* getDevRevSpikeNConnPt() = 0;
+  virtual int *getDevRevSpikeNConnPt() = 0;
 
   // get array of number of remote target hosts per local source node
-  virtual uint* getDevNTargetHosts() = 0;
+  virtual uint *getDevNTargetHosts() = 0;
 
   // get array with remote target hosts of all nodes
-  virtual uint** getDevNodeTargetHosts() = 0;
+  virtual uint **getDevNodeTargetHosts() = 0;
 
   // get array with remote target hosts map index
-  virtual uint** getDevNodeTargetHostIMap() = 0;
+  virtual uint **getDevNodeTargetHostIMap() = 0;
 
   // get remote target host groups of all nodes
-  virtual const std::vector< std::vector < int > > &getNodeTargetHostGroup() const = 0;
-  
-  //virtual int copyNodeTargetHostGroup(inode_t i_node, uint *copy_array) = 0;
-  
+  virtual const std::vector<std::vector<int>> &
+  getNodeTargetHostGroup() const = 0;
+
+  // virtual int copyNodeTargetHostGroup(inode_t i_node, uint *copy_array) = 0;
+
   // get map of local source nodes positions in host group node map
-  virtual std::vector< std::vector< uint > > &getHostGroupLocalSourceNodeMap() = 0;
+  virtual std::vector<std::vector<uint>> &getHostGroupLocalSourceNodeMap() = 0;
 
   // get local host groups
-  virtual std::vector< std::vector< int > > &getHostGroup() = 0;
+  virtual std::vector<std::vector<int>> &getHostGroup() = 0;
 
   // get array of local indexes  of all host groups
-  virtual std::vector< int > &getHostGroupLocalId() = 0;
+  virtual std::vector<int> &getHostGroupLocalId() = 0;
 
   // get number of bits used in spike representation for bit packing in MPI
-  virtual std::vector< std::vector< int > > &getBitPackNbits() = 0;
-  virtual std::vector< int > &getBitPackNbitsThisHost() = 0;
+  virtual std::vector<std::vector<int>> &getBitPackNbits() = 0;
+  virtual std::vector<int> &getBitPackNbitsThisHost() = 0;
 
 #ifdef HAVE_MPI
   // get local MPI communication groups
   virtual std::vector<MPI_Comm> &getMPIComm() = 0;
 #endif
-  
+
   // return map of host group source nodes to local image nodes
-  virtual std::vector<std::vector< std::vector< int64_t > > > &getHostGroupLocalNodeIndex() = 0;
+  virtual std::vector<std::vector<std::vector<int64_t>>> &
+  getHostGroupLocalNodeIndex() = 0;
 
   // get point-to-point MPI communication activation matrix
-  virtual std::vector< std::vector < bool > > &getP2PHostConnMatrix() = 0;
+  virtual std::vector<std::vector<bool>> &getP2PHostConnMatrix() = 0;
 
-  // method to organize connections after creation and before using them in simulation
-  virtual int organizeConnections( inode_t n_node ) = 0;
+  // method to organize connections after creation and before using them in
+  // simulation
+  virtual int organizeConnections(inode_t n_node) = 0;
 
   // connection methods. 4 combinations where source and target can be either
   // of inode_t type (in case of a sequence) or pointers to inode_t
   // (in case of arbitrary arrays if node indexes)
-  virtual int connect( inode_t source,
-    inode_t n_source,
-    inode_t target,
-    inode_t n_target,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec ) = 0;
+  virtual int connect(inode_t source, inode_t n_source, inode_t target,
+                      inode_t n_target, ConnSpec &conn_spec,
+                      SynSpec &syn_spec) = 0;
 
-  virtual int connect( inode_t source,
-    inode_t n_source,
-    inode_t* target,
-    inode_t n_target,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec ) = 0;
+  virtual int connect(inode_t source, inode_t n_source, inode_t *target,
+                      inode_t n_target, ConnSpec &conn_spec,
+                      SynSpec &syn_spec) = 0;
 
-  virtual int connect( inode_t* source,
-    inode_t n_source,
-    inode_t target,
-    inode_t n_target,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec ) = 0;
+  virtual int connect(inode_t *source, inode_t n_source, inode_t target,
+                      inode_t n_target, ConnSpec &conn_spec,
+                      SynSpec &syn_spec) = 0;
 
-  virtual int connect( inode_t* source,
-    inode_t n_source,
-    inode_t* target,
-    inode_t n_target,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec ) = 0;
+  virtual int connect(inode_t *source, inode_t n_source, inode_t *target,
+                      inode_t n_target, ConnSpec &conn_spec,
+                      SynSpec &syn_spec) = 0;
 
-  // methods to check if a connection parameter, specified by the param_name string
-  // is an integer or float parameter
-  int isConnectionIntParam( std::string param_name );
+  // methods to check if a connection parameter, specified by the param_name
+  // string is an integer or float parameter
+  int isConnectionIntParam(std::string param_name);
 
-  int isConnectionFloatParam( std::string param_name );
+  int isConnectionFloatParam(std::string param_name);
 
-  // methods to get the index of the (integer or float) connection parameter specified by
-  // the param_name string
-  int getConnectionIntParamIndex( std::string param_name );
+  // methods to get the index of the (integer or float) connection parameter
+  // specified by the param_name string
+  int getConnectionIntParamIndex(std::string param_name);
 
-  int getConnectionFloatParamIndex( std::string param_name );
+  int getConnectionFloatParamIndex(std::string param_name);
 
-  // methods to get the values of the (integer or float) connection parameter param_name
-  // for the connections specified in the array conn_ids in device memory
-  virtual int
-  getConnectionFloatParam( int64_t* conn_ids, int64_t n_conn, float* h_param_arr, std::string param_name ) = 0;
+  // methods to get the values of the (integer or float) connection parameter
+  // param_name for the connections specified in the array conn_ids in device
+  // memory
+  virtual int getConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+                                      float *h_param_arr,
+                                      std::string param_name) = 0;
 
-  virtual int getConnectionIntParam( int64_t* conn_ids, int64_t n_conn, int* h_param_arr, std::string param_name ) = 0;
+  virtual int getConnectionIntParam(int64_t *conn_ids, int64_t n_conn,
+                                    int *h_param_arr,
+                                    std::string param_name) = 0;
 
-  // methods to set the values of the (integer or float) connection parameter param_name
-  // for the connections specified in the array conn_ids in device memory
-  // The entries can be specified by a single value (val), by a distribution
-  // (which must be configured before this command) or by an array of values
-  virtual int setConnectionFloatParam( int64_t* conn_ids, int64_t n_conn, float val, std::string param_name ) = 0;
+  // methods to set the values of the (integer or float) connection parameter
+  // param_name for the connections specified in the array conn_ids in device
+  // memory The entries can be specified by a single value (val), by a
+  // distribution (which must be configured before this command) or by an array
+  // of values
+  virtual int setConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+                                      float val, std::string param_name) = 0;
 
-  virtual int setConnectionFloatParamDistr( int64_t* conn_ids, int64_t n_conn, std::string param_name ) = 0;
+  virtual int setConnectionFloatParamDistr(int64_t *conn_ids, int64_t n_conn,
+                                           std::string param_name) = 0;
 
-  virtual int
-  setConnectionIntParamArr( int64_t* conn_ids, int64_t n_conn, int* h_param_arr, std::string param_name ) = 0;
+  virtual int setConnectionIntParamArr(int64_t *conn_ids, int64_t n_conn,
+                                       int *h_param_arr,
+                                       std::string param_name) = 0;
 
-  virtual int setConnectionIntParam( int64_t* conn_ids, int64_t n_conn, int val, std::string param_name ) = 0;
+  virtual int setConnectionIntParam(int64_t *conn_ids, int64_t n_conn, int val,
+                                    std::string param_name) = 0;
 
-  // method to get the indexes of all the connection specified by an array of source-node indexes
-  // and/or an array of target-node indexes and eventually the synaptic group
-  virtual int64_t* getConnections( inode_t* i_source_pt,
-    inode_t n_source,
-    inode_t* i_target_pt,
-    inode_t n_target,
-    int syn_group,
-    int64_t* n_conn ) = 0;
+  // method to get the indexes of all the connection specified by an array of
+  // source-node indexes and/or an array of target-node indexes and eventually
+  // the synaptic group
+  virtual int64_t *getConnections(inode_t *i_source_pt, inode_t n_source,
+                                  inode_t *i_target_pt, inode_t n_target,
+                                  int syn_group, int64_t *n_conn) = 0;
 
-  // method to get all parameters of the connections specified by the array conn_ids in device memory
-  virtual int getConnectionStatus( int64_t* conn_ids,
-    int64_t n_conn,
-    inode_t* source,
-    inode_t* target,
-    int* port,
-    int* syn_group,
-    float* delay,
-    float* weight ) = 0;
+  // method to get all parameters of the connections specified by the array
+  // conn_ids in device memory
+  virtual int getConnectionStatus(int64_t *conn_ids, int64_t n_conn,
+                                  inode_t *source, inode_t *target, int *port,
+                                  int *syn_group, float *delay,
+                                  float *weight) = 0;
 
   // method to build direct connections, used by Poisson generators
-  virtual int buildDirectConnections( inode_t i_node_0,
-    inode_t n_node,
-    int64_t& i_conn0,
-    int64_t& n_dir_conn,
-    int& max_delay,
-    float*& d_mu_arr,
-    void*& d_poiss_key_array ) = 0;
+  virtual int buildDirectConnections(inode_t i_node_0, inode_t n_node,
+                                     int64_t &i_conn0, int64_t &n_dir_conn,
+                                     int &max_delay, float *&d_mu_arr,
+                                     void *&d_poiss_key_array) = 0;
 
-  // method to send spikes through direct connections, used by Poisson generators
-  virtual int sendDirectSpikes( long long time_idx,
-    int64_t i_conn0,
-    int64_t n_dir_conn,
-    inode_t n_node,
-    int max_delay,
-    float* d_mu_arr,
-    void* d_poiss_key_array,
-    curandState* d_curand_state ) = 0;
+  // method to send spikes through direct connections, used by Poisson
+  // generators
+  virtual int sendDirectSpikes(long long time_idx, int64_t i_conn0,
+                               int64_t n_dir_conn, inode_t n_node,
+                               int max_delay, float *d_mu_arr,
+                               void *d_poiss_key_array,
+                               curandState *d_curand_state) = 0;
 
-  // method to organize direct connections, after they are created and before using them in the simulation
-  virtual int organizeDirectConnections( void*& d_poiss_key_array_data_pt,
-    void*& d_poiss_subarray,
-    int64_t*& d_poiss_num,
-    int64_t*& d_poiss_sum,
-    void*& d_poiss_thresh ) = 0;
+  // method to organize direct connections, after they are created and before
+  // using them in the simulation
+  virtual int organizeDirectConnections(void *&d_poiss_key_array_data_pt,
+                                        void *&d_poiss_subarray,
+                                        int64_t *&d_poiss_num,
+                                        int64_t *&d_poiss_sum,
+                                        void *&d_poiss_thresh) = 0;
 
   // add a proper offset to externa nodes ids
-  virtual int addOffsetToExternalNodeIds( uint n_local_nodes ) = 0;
+  virtual int addOffsetToExternalNodeIds(uint n_local_nodes) = 0;
 
-  // deallocate memory used to represent the key part of the connection structure for all connections
+  // deallocate memory used to represent the key part of the connection
+  // structure for all connections
   virtual int freeConnectionKey() = 0;
 
   // initialize reverse spikes, used e.g. by STDP
-  virtual int revSpikeInit( uint n_spike_buffers ) = 0;
+  virtual int revSpikeInit(uint n_spike_buffers) = 0;
 
-  // spike time stored in STDP connections is limited to a time window, to reduce memory usage
-  // the left and right limits of this time interval must be periodically updated
+  // spike time stored in STDP connections is limited to a time window, to
+  // reduce memory usage the left and right limits of this time interval must be
+  // periodically updated
   virtual int resetConnectionSpikeTimeUp() = 0;
 
   virtual int resetConnectionSpikeTimeDown() = 0;
 
   // set the seeds for random number generation
-  virtual int setRandomSeed( unsigned long long seed ) = 0;
+  virtual int setRandomSeed(unsigned long long seed) = 0;
 
-  // set the time resolution. Must be consistent with the value stored in the nestgpu class
-  virtual int setTimeResolution( float time_resolution ) = 0;
+  // set the time resolution. Must be consistent with the value stored in the
+  // nestgpu class
+  virtual int setTimeResolution(float time_resolution) = 0;
 
-  virtual int setStartRealTime( double start_real_time ) = 0;
+  virtual int setStartRealTime(double start_real_time) = 0;
 
   // set number of hosts
-  virtual int setNHosts( int n_hosts ) = 0;
+  virtual int setNHosts(int n_hosts) = 0;
 
   // set index of this host
-  virtual int setThisHost( int this_host ) = 0;
+  virtual int setThisHost(int this_host) = 0;
 
   // initialize the maps used to send spikes among remote hosts
   virtual int remoteConnectionMapInit() = 0;
 
   // calibrate the maps used to send spikes among remote hosts
-  virtual int remoteConnectionMapCalibrate( inode_t n_nodes ) = 0;
+  virtual int remoteConnectionMapCalibrate(inode_t n_nodes) = 0;
 
-  // get vector of number of elements in the maps of remote source nodes to local image nodes
-  virtual std::vector< uint* >  &getDevNRemoteSourceNodeMap() = 0;
+  // get vector of number of elements in the maps of remote source nodes to
+  // local image nodes
+  virtual std::vector<uint *> &getDevNRemoteSourceNodeMap() = 0;
 
   // only for debugging, save remote connection P2P maps
   virtual int remoteConnectionMapSave() = 0;
-  
-  // remote connection methods. 4 combinations where source and target can be either
-  // of inode_t type (in case of a sequence) or pointers to inode_t
-  // (in case of arbitrary arrays if node indexes)
 
-  virtual int remoteConnect( int source_host,
-    inode_t source,
-    inode_t n_source,
-    int target_host,
-    inode_t target,
-    inode_t n_target,
-    int i_host_group,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec ) = 0;
+  // remote connection methods. 4 combinations where source and target can be
+  // either of inode_t type (in case of a sequence) or pointers to inode_t (in
+  // case of arbitrary arrays if node indexes)
 
-  virtual int remoteConnect( int source_host,
-    inode_t* source,
-    inode_t n_source,
-    int target_host,
-    inode_t target,
-    inode_t n_target,
-    int i_host_group,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec ) = 0;
+  virtual int remoteConnect(int source_host, inode_t source, inode_t n_source,
+                            int target_host, inode_t target, inode_t n_target,
+                            int i_host_group, ConnSpec &conn_spec,
+                            SynSpec &syn_spec) = 0;
 
-  virtual int remoteConnect( int source_host,
-    inode_t source,
-    inode_t n_source,
-    int target_host,
-    inode_t* target,
-    inode_t n_target,
-    int i_host_group,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec ) = 0;
+  virtual int remoteConnect(int source_host, inode_t *source, inode_t n_source,
+                            int target_host, inode_t target, inode_t n_target,
+                            int i_host_group, ConnSpec &conn_spec,
+                            SynSpec &syn_spec) = 0;
 
-  virtual int remoteConnect( int source_host,
-    inode_t* source,
-    inode_t n_source,
-    int target_host,
-    inode_t* target,
-    inode_t n_target,
-    int i_host_group,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec ) = 0;
+  virtual int remoteConnect(int source_host, inode_t source, inode_t n_source,
+                            int target_host, inode_t *target, inode_t n_target,
+                            int i_host_group, ConnSpec &conn_spec,
+                            SynSpec &syn_spec) = 0;
+
+  virtual int remoteConnect(int source_host, inode_t *source, inode_t n_source,
+                            int target_host, inode_t *target, inode_t n_target,
+                            int i_host_group, ConnSpec &conn_spec,
+                            SynSpec &syn_spec) = 0;
 
   // add an offset to the remote source node indexes in the image node maps
-  virtual int addOffsetToImageNodeMap( inode_t n_nodes ) = 0;
+  virtual int addOffsetToImageNodeMap(inode_t n_nodes) = 0;
 
-  virtual int initInputSpikeBuffer( inode_t n_local_nodes, inode_t n_nodes, int max_remote_spike_num ) = 0;
+  virtual int initInputSpikeBuffer(inode_t n_local_nodes, inode_t n_nodes,
+                                   int max_remote_spike_num) = 0;
 
   virtual int deliverSpikes() = 0;
 
   // set algorithm for spike buffering and delivery
-  virtual int setSpikeBufferAlgo( int spike_buffer_algo ) = 0;
+  virtual int setSpikeBufferAlgo(int spike_buffer_algo) = 0;
 
   // get algorithm for spike buffering and delivery
   virtual int getSpikeBufferAlgo() = 0;
 
-  // Method that creates a group of hosts for remote spike communication (i.e. a group of MPI processes)
-  // host_arr: array of host inexes, n_hosts: nomber of hosts in the group
+  // Method that creates a group of hosts for remote spike communication (i.e. a
+  // group of MPI processes) host_arr: array of host inexes, n_hosts: nomber of
+  // hosts in the group
   virtual int CreateHostGroup(int *host_arr, int n_hosts, bool mpi_flag) = 0;
 
-  // return boolean flag activated if first connection of each image node is stored in GPU memory 
+  // return boolean flag activated if first connection of each image node is
+  // stored in GPU memory
   virtual bool getFirstOutConnInDevice() = 0;
 
-  // set boolean flag activated if first connection of each image node is stored in GPU memory 
+  // set boolean flag activated if first connection of each image node is stored
+  // in GPU memory
   virtual void setFirstOutConnInDevice(bool first_out_conn_in_device) = 0;
 
   virtual void setHaveNOutConn(bool have_n_out_conn) = 0;
-  
+
   virtual void setDeleteRemoteNodeMap(bool delete_remote_node_map) = 0;
-  
+
   virtual void setDeleteImageNodeMap(bool delete_image_node_map) = 0;
 
   virtual void setUseAllSourceNodeFact(float use_all_source_node_fact) = 0;
-  
-  // return reference to vector of first connections outgoing from each image node [n_image_node]
-  virtual const std::vector<int64_t> &getFirstOutConnection() const  = 0;
-  
-  // return reference to vector of number of connections outgoing from each image node [n_image_node]
+
+  // return reference to vector of first connections outgoing from each image
+  // node [n_image_node]
+  virtual const std::vector<int64_t> &getFirstOutConnection() const = 0;
+
+  // return reference to vector of number of connections outgoing from each
+  // image node [n_image_node]
   virtual const std::vector<int64_t> &getNOutConnections() const = 0;
 
-  // return reference to vector of the first connection to send each spike from a remote node 
+  // return reference to vector of the first connection to send each spike from
+  // a remote node
   virtual std::vector<int64_t> &getSpikeFirstConnection() = 0;
-  
-  // return reference to vector of the multiplicity of each spike from a remote node
+
+  // return reference to vector of the multiplicity of each spike from a remote
+  // node
   virtual std::vector<float> &getSpikeMul() = 0;
-  
-  // return reference to vector of the number of connections to send each spike from a remote node
+
+  // return reference to vector of the number of connections to send each spike
+  // from a remote node
   virtual std::vector<int> &getSpikeNConnections() = 0;
 
   // return host copy of remote_source_node_map [group_local_id][i_host][i]
-  virtual const std::vector< std::vector< std::vector< uint > > > &getHCRemoteSourceNodeMap() const = 0;
+  virtual const std::vector<std::vector<std::vector<uint>>> &
+  getHCRemoteSourceNodeMap() const = 0;
 
   // return host copy of image_node_map [group_local_id][i_host][i]
-  virtual const std::vector< std::vector< std::vector< uint > > > &getHCImageNodeMap() const = 0;
-  
+  virtual const std::vector<std::vector<std::vector<uint>>> &
+  getHCImageNodeMap() const = 0;
+
   virtual void setNSpikeFromHost(int n_spike_from_host) = 0;
-  
+
   ///////////////////////////////////////////////////////////////////////////////////////////////////////
-  // Build connections with fixed indegree rule for source neurons and target neurons distributed across
-  // MPI processes (hosts)
+  // Build connections with fixed indegree rule for source neurons and target
+  // neurons distributed across MPI processes (hosts)
   ///////////////////////////////////////////////////////////////////////////////////////////////////////
-  virtual int connectDistributedFixedIndegree
-  (int *source_host_arr, int n_source_host, inode_t *h_source_arr, inode_t *n_source_arr,
-   int *target_host_arr, int n_target_host, inode_t *h_target_arr, inode_t *n_target_arr,
-   int indegree, int i_host_group, SynSpec &syn_spec) = 0;
+  virtual int connectDistributedFixedIndegree(
+      int *source_host_arr, int n_source_host, inode_t *h_source_arr,
+      inode_t *n_source_arr, int *target_host_arr, int n_target_host,
+      inode_t *h_target_arr, inode_t *n_target_arr, int indegree,
+      int i_host_group, SynSpec &syn_spec) = 0;
 
-  virtual int connectDistributedFixedIndegree
-  (int *source_host_arr, int n_source_host, inode_t **h_source_arr, inode_t *n_source_arr,
-   int *target_host_arr, int n_target_host, inode_t *h_target_arr, inode_t *n_target_arr,
-   int indegree, int i_host_group, SynSpec &syn_spec) = 0;
+  virtual int connectDistributedFixedIndegree(
+      int *source_host_arr, int n_source_host, inode_t **h_source_arr,
+      inode_t *n_source_arr, int *target_host_arr, int n_target_host,
+      inode_t *h_target_arr, inode_t *n_target_arr, int indegree,
+      int i_host_group, SynSpec &syn_spec) = 0;
 
-  virtual int connectDistributedFixedIndegree
-  (int *source_host_arr, int n_source_host, inode_t *h_source_arr, inode_t *n_source_arr,
-   int *target_host_arr, int n_target_host, inode_t **h_target_arr, inode_t *n_target_arr,
-   int indegree, int i_host_group, SynSpec &syn_spec) = 0;
+  virtual int connectDistributedFixedIndegree(
+      int *source_host_arr, int n_source_host, inode_t *h_source_arr,
+      inode_t *n_source_arr, int *target_host_arr, int n_target_host,
+      inode_t **h_target_arr, inode_t *n_target_arr, int indegree,
+      int i_host_group, SynSpec &syn_spec) = 0;
 
-  virtual int connectDistributedFixedIndegree
-  (int *source_host_arr, int n_source_host, inode_t **h_source_arr, inode_t *n_source_arr,
-   int *target_host_arr, int n_target_host, inode_t **h_target_arr, inode_t *n_target_arr,
-   int indegree, int i_host_group, SynSpec &syn_spec) = 0;
+  virtual int connectDistributedFixedIndegree(
+      int *source_host_arr, int n_source_host, inode_t **h_source_arr,
+      inode_t *n_source_arr, int *target_host_arr, int n_target_host,
+      inode_t **h_target_arr, inode_t *n_target_arr, int indegree,
+      int i_host_group, SynSpec &syn_spec) = 0;
 
   int InitTimers() {
-      InsertHostGroupSourceNode_time_ = 0;
-      ConnectRemoteConnectSource_time_ = 0;
-      ConnectRemoteConnectTarget_time_ = 0;
-      SetUsedSourceNodes_time_ = 0;
-      CountUsedSourceNodes_time_ = 0;
-      AllocUsedSourceNodes_time_ = 0;
-      GetUsedSourceNodeIndex_time_ = 0;
-      SortUsedSourceNodeIndex_time_ = 0;
-      AllocNodeToMap_time_ = 0;
-      SearchNodeIndexNotInMap_time_ = 0;
-      AllocRemoteSourceNodeMapBlocks_time_ = 0;
-      AllocLocalSourceNodeMapBlocks_time_ = 0;
-      InsertNodesInMap_time_ = 0;
-      SortSourceImageNodeMap_time_ = 0;
-      SetLocalNodeIndex_time_ = 0;
-      FixConnectionSourceNodeIndexes_time_ = 0;
-      SearchSourceNodesRangeInMap_time_ = 0;
-      TranslateSourceNodeMap_time_ = 0;
-      MapSourceNodeSequence_time_ = 0;
-      RemoteConnectTarget_time_ = 0;
-      RemoteConnectSource_time_ = 0;
+    InsertHostGroupSourceNode_time_ = 0;
+    ConnectRemoteConnectSource_time_ = 0;
+    ConnectRemoteConnectTarget_time_ = 0;
+    SetUsedSourceNodes_time_ = 0;
+    CountUsedSourceNodes_time_ = 0;
+    AllocUsedSourceNodes_time_ = 0;
+    GetUsedSourceNodeIndex_time_ = 0;
+    SortUsedSourceNodeIndex_time_ = 0;
+    AllocNodeToMap_time_ = 0;
+    SearchNodeIndexNotInMap_time_ = 0;
+    AllocRemoteSourceNodeMapBlocks_time_ = 0;
+    AllocLocalSourceNodeMapBlocks_time_ = 0;
+    InsertNodesInMap_time_ = 0;
+    SortSourceImageNodeMap_time_ = 0;
+    SetLocalNodeIndex_time_ = 0;
+    FixConnectionSourceNodeIndexes_time_ = 0;
+    SearchSourceNodesRangeInMap_time_ = 0;
+    TranslateSourceNodeMap_time_ = 0;
+    MapSourceNodeSequence_time_ = 0;
+    RemoteConnectTarget_time_ = 0;
+    RemoteConnectSource_time_ = 0;
 
-      return 0;
+    return 0;
   }
 };
-
 
 //////////////////////////////////////////////////////////////////////
 // Template class used to represent connection of different types
 // as derived classes of the base (abstract) class connection
-// sharing with that class its method, which offer a common interface that can be used
-// in the same way for all derived classes, and adding further internal methods.
-// The connection must be represented by a pair key-value
+// sharing with that class its method, which offer a common interface that can
+// be used in the same way for all derived classes, and adding further internal
+// methods. The connection must be represented by a pair key-value
 //  * The key is a type or a class
-//    that MUST contain the source-node index and the integer delay, which are used as keys
-//    for sorting the connections (source-node index as primary key, integer delay as second key).
-//    It can (but not necessarily should) contain other connection parameters.
-// *  The value is a structure that must contain all the remaining connection parameters
-// Typically, for efficient sorting, the source node index will be stored in the most significant bits
-// of the key, followed by bits used to represent the delay, end eventually by the bits used to represent
-// other parameters not relevant for the sort.
+//    that MUST contain the source-node index and the integer delay, which are
+//    used as keys for sorting the connections (source-node index as primary
+//    key, integer delay as second key). It can (but not necessarily should)
+//    contain other connection parameters.
+// *  The value is a structure that must contain all the remaining connection
+// parameters Typically, for efficient sorting, the source node index will be
+// stored in the most significant bits of the key, followed by bits used to
+// represent the delay, end eventually by the bits used to represent other
+// parameters not relevant for the sort.
 
-template < class ConnKeyT, class ConnStructT >
-class ConnectionTemplate : public Connection
-{
+template <class ConnKeyT, class ConnStructT>
+class ConnectionTemplate : public Connection {
   //////////////////////////////////////////////////
   // Member variables
   //////////////////////////////////////////////////
@@ -527,20 +519,20 @@ class ConnectionTemplate : public Connection
 
   bool first_connection_flag_;
 
-  std::vector< ConnKeyT* > conn_key_vect_;
+  std::vector<ConnKeyT *> conn_key_vect_;
 
-  std::vector< ConnStructT* > conn_struct_vect_;
+  std::vector<ConnStructT *> conn_struct_vect_;
 
   double start_real_time_;
 
-  std::vector< std::vector< curandGenerator_t > > conn_random_generator_;
+  std::vector<std::vector<curandGenerator_t>> conn_random_generator_;
 
   curandGenerator_t local_rnd_gen_;
 
-  Distribution* distribution_;
+  Distribution *distribution_;
 
   // pointer to temporary storage in device memory
-  void* d_conn_storage_;
+  void *d_conn_storage_;
 
   // maximum number of bits used to represent node index
   int max_node_nbits_;
@@ -576,19 +568,19 @@ class ConnectionTemplate : public Connection
   // bit mask used to extract port and synapse group index
   uint port_syn_mask_;
 
-  iconngroup_t* d_conn_group_idx0_;
+  iconngroup_t *d_conn_group_idx0_;
 
-  int64_t* d_conn_group_iconn0_;
+  int64_t *d_conn_group_iconn0_;
 
-  int* d_conn_group_delay_;
+  int *d_conn_group_delay_;
 
   iconngroup_t tot_conn_group_num_;
 
-  ConnKeyT** d_conn_key_array_;
+  ConnKeyT **d_conn_key_array_;
 
-  ConnStructT** d_conn_struct_array_;
+  ConnStructT **d_conn_struct_array_;
 
-  inode_t* d_conn_source_ids_;
+  inode_t *d_conn_source_ids_;
 
   int64_t conn_source_ids_size_;
 
@@ -605,87 +597,90 @@ class ConnectionTemplate : public Connection
   // are organized in blocks having block size:
   uint node_map_block_size_; // = 100000;
 
-  // number of elements in the map for each host group and for each source host in the group
-  // n_remote_source_node_map[group_local_id][i_host]
-  // with i_host = 0, ...,  host_group_[group_local_id].size()-1 excluding this host itself
-  std::vector< std::vector< uint > > h_n_remote_source_node_map_;
-  
-  // vector of number of elements in the maps of remote source nodes to local image nodes
-  std::vector< uint* > d_n_remote_source_node_map_;
-  
+  // number of elements in the map for each host group and for each source host
+  // in the group n_remote_source_node_map[group_local_id][i_host] with i_host =
+  // 0, ...,  host_group_[group_local_id].size()-1 excluding this host itself
+  std::vector<std::vector<uint>> h_n_remote_source_node_map_;
+
+  // vector of number of elements in the maps of remote source nodes to local
+  // image nodes
+  std::vector<uint *> d_n_remote_source_node_map_;
+
   // remote_source_node_map_[group_local_id][i_host][i_block][i]
-  std::vector< std::vector< std::vector< uint* > > > h_remote_source_node_map_;
+  std::vector<std::vector<std::vector<uint *>>> h_remote_source_node_map_;
 
   // image_node_map[group_local_id][i_host][i_block][i]
-  std::vector< std::vector< std::vector< uint* > > > h_image_node_map_;
-  uint**** d_image_node_map_;
+  std::vector<std::vector<std::vector<uint *>>> h_image_node_map_;
+  uint ****d_image_node_map_;
 
   // host copy of remote_source_node_map [group_local_id][i_host][i]
-  std::vector< std::vector< std::vector< uint > > > hc_remote_source_node_map_;
+  std::vector<std::vector<std::vector<uint>>> hc_remote_source_node_map_;
 
   // host copy of image_node_map [group_local_id][i_host][i]
-  std::vector< std::vector< std::vector< uint > > > hc_image_node_map_;
-  
-  // hd_image_node_map_[group_local_id][i_host] vector of vectors of pointers-to-pointers to gpu memory
-  std::vector< std::vector< uint** > > hd_image_node_map_;
+  std::vector<std::vector<std::vector<uint>>> hc_image_node_map_;
 
-  // hdd_image_node_map_[group_local_id] vector of pointers of pointers-to-pointers to gpu memory
-  std::vector< uint*** > hdd_image_node_map_;
+  // hd_image_node_map_[group_local_id][i_host] vector of vectors of
+  // pointers-to-pointers to gpu memory
+  std::vector<std::vector<uint **>> hd_image_node_map_;
+
+  // hdd_image_node_map_[group_local_id] vector of pointers of
+  // pointers-to-pointers to gpu memory
+  std::vector<uint ***> hdd_image_node_map_;
 
   // map positions of local source nodes in host group node map
-  std::vector< std::vector< uint > > host_group_local_source_node_map_;
-  
+  std::vector<std::vector<uint>> host_group_local_source_node_map_;
+
   // Arrays that map local source nodes to remote image nodes
   // number of elements in the map for each target host
   // n_local_source_node_map[i_target_host]
   // with i_target_host = 0, ..., n_hosts-1 excluding this host itself
-  uint* d_n_local_source_node_map_;
-  std::vector< uint > h_n_local_source_node_map_;
+  uint *d_n_local_source_node_map_;
+  std::vector<uint> h_n_local_source_node_map_;
 
   // local_source_node_map[i_target_host][i_block][i]
-  std::vector< std::vector< uint* > > h_local_source_node_map_;
-  uint*** d_local_source_node_map_;
+  std::vector<std::vector<uint *>> h_local_source_node_map_;
+  uint ***d_local_source_node_map_;
 
   // hd_local_source_node_map_[i_target_host] vector of pointers to gpu memory
-  std::vector< uint** > hd_local_source_node_map_;
+  std::vector<uint **> hd_local_source_node_map_;
 
   // number of remote target hosts on which each local node
   // has outgoing connections
-  uint* d_n_target_hosts_; // [n_nodes]
+  uint *d_n_target_hosts_; // [n_nodes]
   // cumulative sum of d_n_target_hosts
-  uint* d_n_target_hosts_cumul_; // [n_nodes+1]
+  uint *d_n_target_hosts_cumul_; // [n_nodes+1]
 
   // Global array with remote target hosts indexes of all nodes
   // target_host_array[total_num] where total_num is the sum
   // of n_target_hosts[i_node] on all nodes
-  uint* d_target_host_array_;
+  uint *d_target_host_array_;
   // pointer to the starting position in target_host_array
   // of the target hosts for the node i_node
-  uint** d_node_target_hosts_; // [i_node]
+  uint **d_node_target_hosts_; // [i_node]
 
   // Global array with remote target hosts map indexes of all nodes
   // target_host_i_map[total_num] where total_num is the sum
   // of n_target_hosts[i_node] on all nodes
-  uint* d_target_host_i_map_;
+  uint *d_target_host_i_map_;
   // pointer to the starting position in target_host_i_map array
   // of the target host map indexes for the node i_node
-  uint** d_node_target_host_i_map_; // [i_node]
+  uint **d_node_target_host_i_map_; // [i_node]
 
   // node map index
-  uint** d_node_map_index_; // [i_node]
+  uint **d_node_map_index_; // [i_node]
 
   // Boolean array with one boolean value for each connection rule
   // - true if the rule always creates at least one outgoing connection
   // from each source node (one_to_one, all_to_all, fixed_outdegree)
   // - false otherwise (fixed_indegree, fixed_total_number, pairwise_bernoulli)
-  bool* use_all_source_nodes_; // [n_connection_rules]:
+  bool *use_all_source_nodes_; // [n_connection_rules]:
 #ifdef HAVE_MPI
   std::vector<MPI_Group> mpi_group_vect_;
   std::vector<MPI_Comm> mpi_comm_vect_;
 #endif
 
   // point-to-point MPI communication activation matrix
-  std::vector< std::vector < bool > > p2p_host_conn_matrix_;
+  std::vector<std::vector<bool>> p2p_host_conn_matrix_;
 
   //////////////////////////////////////////////////
   // reverse-connection-related member variables
@@ -694,81 +689,83 @@ class ConnectionTemplate : public Connection
 
   bool spike_time_flag_;
 
-  unsigned short* d_conn_spike_time_; // [n_conn_];
+  unsigned short *d_conn_spike_time_; // [n_conn_];
 
   int64_t n_rev_conn_;
 
-  uint* d_rev_spike_num_;
+  uint *d_rev_spike_num_;
 
-  uint* d_rev_spike_target_;
+  uint *d_rev_spike_target_;
 
-  int* d_rev_spike_n_conn_;
+  int *d_rev_spike_n_conn_;
 
-  int64_t* d_rev_conn_; //[i] i=0,..., n_rev_conn_ - 1;
+  int64_t *d_rev_conn_; //[i] i=0,..., n_rev_conn_ - 1;
 
-  int* d_target_rev_conn_size_; //[i] i=0,..., n_neuron-1;
+  int *d_target_rev_conn_size_; //[i] i=0,..., n_neuron-1;
 
-  int64_t** d_target_rev_conn_; //[i][j] j=0,...,rev_conn_size_[i]-1
+  int64_t **d_target_rev_conn_; //[i][j] j=0,...,rev_conn_size_[i]-1
 
   //////////////////////////////////////////////////
   // input-spike-buffer-related member variables
   //////////////////////////////////////////////////
   // number of input ports of each (local) node
-  int* d_n_input_ports_; // [n_local_nodes]
+  int *d_n_input_ports_; // [n_local_nodes]
 
   // cumulative sum of number of input ports of each (local) node
-  int64_t* d_n_input_ports_cumul_; // [n_local_nodes + 1]
+  int64_t *d_n_input_ports_cumul_; // [n_local_nodes + 1]
 
   // Total number of input ports over all local nodes
   int64_t n_input_ports_tot_;
 
-  // one-dimensional array of maximum delay among the incoming connections of each input port
-  // of each (local) target node
-  int* d_max_input_delay_1d_; // [n_input_ports_tot_]
+  // one-dimensional array of maximum delay among the incoming connections of
+  // each input port of each (local) target node
+  int *d_max_input_delay_1d_; // [n_input_ports_tot_]
 
-  // two-dimensional array of maximum delay among the incoming connections of each input port
-  // of each (local) target node
-  int** d_max_input_delay_; // [n_local_nodes][n_input_ports[i_node]]
+  // two-dimensional array of maximum delay among the incoming connections of
+  // each input port of each (local) target node
+  int **d_max_input_delay_; // [n_local_nodes][n_input_ports[i_node]]
 
-  // Cumulative sum of of maximum delay among the incoming connections of each input port
-  // of each (local) target node
-  int64_t* d_max_input_delay_cumul_; // [n_input_ports_tot_ + 1]
+  // Cumulative sum of of maximum delay among the incoming connections of each
+  // input port of each (local) target node
+  int64_t *d_max_input_delay_cumul_; // [n_input_ports_tot_ + 1]
 
   // Total number of slots in the input spike buffers
   int64_t n_input_spike_buffer_tot_;
 
   // input spike buffer representation flattened on one dimension
-  double* d_input_spike_buffer_1d_; // [n_input_spike_buffer_tot_]
+  double *d_input_spike_buffer_1d_; // [n_input_spike_buffer_tot_]
 
   // two-dimensional representation of input spike buffer
-  // (it is an auxiliary representation used for building the final three-dimensional representation)
-  double** d_input_spike_buffer_2d_; // [n_input_ports_tot_][n_slots[i_port_abs]]
+  // (it is an auxiliary representation used for building the final
+  // three-dimensional representation)
+  double *
+      *d_input_spike_buffer_2d_; // [n_input_ports_tot_][n_slots[i_port_abs]]
 
   // final (three-dimensional) representation of input spike buffer
-  double*** d_input_spike_buffer_; // [n_local_nodes][n_input_ports[i_node]][n_slots[i_target][i_port]]
+  double ***
+      d_input_spike_buffer_; // [n_local_nodes][n_input_ports[i_node]][n_slots[i_target][i_port]]
 
-
-  // index of the first connection outgoing from each node (-1 for no connections)
-  // [n_nodes]
-  int64_t* d_first_out_connection_;
+  // index of the first connection outgoing from each node (-1 for no
+  // connections) [n_nodes]
+  int64_t *d_first_out_connection_;
   // number of connections outgoing from each node
   // [n_nodes]
-  int* d_n_out_connections_;
+  int *d_n_out_connections_;
 
   // array of the first connection of each spike emitted at current time step
   // [n_all_nodes*time_resolution*avg_max_firing_rate]
-  int64_t* d_spike_first_connection_;
+  int64_t *d_spike_first_connection_;
 
   // array of the number of connections through which each spike emitted
   // at current time step should be delivered
   // [n_all_nodes*time_resolution*avg_max_firing_rate]
-  int* d_spike_n_connections_;
+  int *d_spike_n_connections_;
 
   // array of spike multiplicity
-  float* d_spike_mul_;
+  float *d_spike_mul_;
 
   // number of spikes emitted at current time step
-  int* d_n_spikes_;
+  int *d_n_spikes_;
 
   // algorithm for spike buffering and delivery
   int spike_buffer_algo_;
@@ -776,110 +773,120 @@ class ConnectionTemplate : public Connection
   //////////////////////////////////////////////////
   // host-group-related member variables
   //////////////////////////////////////////////////
-  // Maybe the world group can be initialized by a specialized command in the Init that calls
-  // the CreateHostGroup method giving the array of all hosts' indexes (0,1,2,3, ...) as parameter
+  // Maybe the world group can be initialized by a specialized command in the
+  // Init that calls the CreateHostGroup method giving the array of all hosts'
+  // indexes (0,1,2,3, ...) as parameter
 
   // array of local indexes  of all host groups.
   // Index: global host group index
-  // Each element is the local index of the group, -1 if this host is not in the group
-  // n_host_groups_  = host_group_local_id_.size()
-  // the first element corresponds to the world group and must be equal to zero
+  // Each element is the local index of the group, -1 if this host is not in the
+  // group n_host_groups_  = host_group_local_id_.size() the first element
+  // corresponds to the world group and must be equal to zero
   std::vector<int> host_group_local_id_;
   // local group of hosts (i.e. group of MPI processes)
   // two-dimensional array, indexes: [group_local_id][i_host]
-  // The first element corresponds to the world group and should contain all hosts
-  // however maybe in this case it is not necessary to explicitly store their indexes
-  // n_hosts[group_local_id] = host_group_[group_local_id].size();
-  std::vector<std::vector< int >> host_group_;
+  // The first element corresponds to the world group and should contain all
+  // hosts however maybe in this case it is not necessary to explicitly store
+  // their indexes n_hosts[group_local_id] = host_group_[group_local_id].size();
+  std::vector<std::vector<int>> host_group_;
 
-  // Indexes of source nodes of each host that communicate spikes to a specific host group
-  // three-dimensional array, indexes: [group_local_id][i_host][i_node]
-  // besides the index group_local_id, the content should be the same across all hosts of the group
-  std::vector<std::vector< std::unordered_set< inode_t > > > host_group_source_node_;
+  // Indexes of source nodes of each host that communicate spikes to a specific
+  // host group three-dimensional array, indexes:
+  // [group_local_id][i_host][i_node] besides the index group_local_id, the
+  // content should be the same across all hosts of the group
+  std::vector<std::vector<std::unordered_set<inode_t>>> host_group_source_node_;
   // same as above, but ordered
-  std::vector<std::vector< std::vector< inode_t > > > host_group_source_node_vect_;
-  // Alternative approach when the indexes of the host group source nodes are a sequence (range)
+  std::vector<std::vector<std::vector<inode_t>>> host_group_source_node_vect_;
+  // Alternative approach when the indexes of the host group source nodes are a
+  // sequence (range)
   bool host_group_source_node_sequence_flag_;
-  std::vector < std::vector < inode_t > > host_group_source_node_min_;
-  std::vector < std::vector < inode_t > > host_group_source_node_max_;
-  
+  std::vector<std::vector<inode_t>> host_group_source_node_min_;
+  std::vector<std::vector<inode_t>> host_group_source_node_max_;
+
   // map of host group source nodes to local image nodes
-  std::vector<std::vector< std::vector< int64_t > > > host_group_local_node_index_;
+  std::vector<std::vector<std::vector<int64_t>>> host_group_local_node_index_;
   // number of used bits in local image node indexes in host groups
-  std::vector< std::vector< int > > bit_pack_nbits_;
-  std::vector< int > bit_pack_nbits_this_host_;
-  
-   
+  std::vector<std::vector<int>> bit_pack_nbits_;
+  std::vector<int> bit_pack_nbits_this_host_;
 
   // local ids of the host groups to which each node should send spikes
-  std::vector< std::vector< int > > node_target_host_group_; // [n_local_nodes ][num. of target host groups ]
-
+  std::vector<std::vector<int>>
+      node_target_host_group_; // [n_local_nodes ][num. of target host groups ]
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // Pointers to memory allocated dynamically in GPU memory, must be eventually freed at the end
-  
+  // Pointers to memory allocated dynamically in GPU memory, must be eventually
+  // freed at the end
+
   // flags to mark if nodes are actually used in a connection
-  // used only if use_all_remote_source_nodes_ is false, otherwise it remains equal to nullptr
-  uint* d_source_node_flag_; // [n_source]
+  // used only if use_all_remote_source_nodes_ is false, otherwise it remains
+  // equal to nullptr
+  uint *d_source_node_flag_; // [n_source]
 
   // number of nodes actually used in new connections
-  uint* d_n_used_source_nodes_;
+  uint *d_n_used_source_nodes_;
 
   // Define unsorted and sorted arrays of source node indexes
-  uint* d_unsorted_source_node_index_; // [n_used_source_nodes];
-  uint* d_sorted_source_node_index_;   // [n_used_source_nodes];
-  
-  // i_source_arr are the positions in the arrays source_node_flag and local_node_index
-  uint* d_i_unsorted_source_arr_; // [n_used_source_nodes];
-  uint* d_i_sorted_source_arr_;   // [n_used_source_nodes];
+  uint *d_unsorted_source_node_index_; // [n_used_source_nodes];
+  uint *d_sorted_source_node_index_;   // [n_used_source_nodes];
+
+  // i_source_arr are the positions in the arrays source_node_flag and
+  // local_node_index
+  uint *d_i_unsorted_source_arr_; // [n_used_source_nodes];
+  uint *d_i_sorted_source_arr_;   // [n_used_source_nodes];
 
   //////////////////////////////
-  // Array of remote source node map blocks and local node image blocks 
-  uint** d_node_map_;
-  uint** d_image_node_map_tmp_;
+  // Array of remote source node map blocks and local node image blocks
+  uint **d_node_map_;
+  uint **d_image_node_map_tmp_;
 
-  // Boolean array for flagging remote source nodes not yet mapped across nodes used in some connection
-  bool* d_node_to_map_;
-  
-  // Boolean array for flagging remote source nodes already mapped across all source nodes
-  bool* d_node_mapped_;
+  // Boolean array for flagging remote source nodes not yet mapped across nodes
+  // used in some connection
+  bool *d_node_to_map_;
+
+  // Boolean array for flagging remote source nodes already mapped across all
+  // source nodes
+  bool *d_node_mapped_;
 
   // Number of nodes to be mapped
-  uint* d_n_node_to_map_;
+  uint *d_n_node_to_map_;
 
   // Array of indexes of already mapped nodes local image indexes
   uint *d_mapped_local_node_index_;
 
   // Index of the nodes to be mapped
-  uint* d_i_node_to_map_;
+  uint *d_i_node_to_map_;
 
   // temporary array of integers having size equal to the number of source nodes
-  uint* d_local_node_index_; // [n_source]; // only on target host
+  uint *d_local_node_index_; // [n_source]; // only on target host
 
   // store position result from a search or similar things
   int64_t *d_position_;
-  
+
   // auxiliary memory block
-  //uint *d_aux_array_;
+  // uint *d_aux_array_;
 
   //////////////////////////////////////////////////////////////////////
-  // Variables related to the possibility to store the index of the first connection
-  // outgoing from each image node in CPU memory rather than in CPU
+  // Variables related to the possibility to store the index of the first
+  // connection outgoing from each image node in CPU memory rather than in CPU
   // size of the blocks copied one-by-one from GPU to CPU memory
   uint first_out_conn_block_size_;
-  // boolean variable true if first connection indexes for image nodes are stored only in GPU memory
-  // false if they are stored only in CPU memory (the two possibilities are exclusive)
+  // boolean variable true if first connection indexes for image nodes are
+  // stored only in GPU memory false if they are stored only in CPU memory (the
+  // two possibilities are exclusive)
   bool first_out_conn_in_device_;
   bool check_first_out_connection_;
   // index of the first connection outgoing from each image node [n_image_node]
   std::vector<int64_t> h_first_out_connection_;
   // number of connections outgoing from each image node [n_image_node]
   std::vector<int64_t> h_n_out_connections_;
-  // vector of the first connection of each spike from a remote node at current time step 
+  // vector of the first connection of each spike from a remote node at current
+  // time step
   std::vector<int64_t> h_spike_first_connection_;
-  // vector of the multiplicity of each spike from a remote node at current time step 
+  // vector of the multiplicity of each spike from a remote node at current time
+  // step
   std::vector<float> h_spike_mul_;
-  // vector of the number of connections to send each spike from a remote node at current time step 
+  // vector of the number of connections to send each spike from a remote node
+  // at current time step
   std::vector<int> h_spike_n_connections_;
   int n_spike_from_host_;
 
@@ -890,8 +897,9 @@ class ConnectionTemplate : public Connection
   bool delete_image_node_map_;
 
   float use_all_source_node_fact_;
-  
-  // method to get the the index of the first connection outgoing from each image node in CPU memory
+
+  // method to get the the index of the first connection outgoing from each
+  // image node in CPU memory
   int getFirstOutConnectionInHost(inode_t n_local_nodes, inode_t n_total_nodes);
 
   //////////////////////////////////////////////////
@@ -908,333 +916,214 @@ public:
 
   int freeConnRandomGenerator();
 
-  int setRandomSeed( unsigned long long seed );
+  int setRandomSeed(unsigned long long seed);
 
-  int setTimeResolution( float time_resolution );
+  int setTimeResolution(float time_resolution);
 
-  int setStartRealTime( double start_real_time );
-  
-  int _setMaxNodeNBits( int max_node_nbits );
+  int setStartRealTime(double start_real_time);
 
-  int _setMaxDelayNBits( int max_delay_nbits );
+  int _setMaxNodeNBits(int max_node_nbits);
 
-  int _setMaxSynNBits( int max_syn_nbits );
+  int _setMaxDelayNBits(int max_delay_nbits);
 
-  int
-  setMaxNodeNBits( int max_node_nbits )
-  {
-    return _setMaxNodeNBits( max_node_nbits );
+  int _setMaxSynNBits(int max_syn_nbits);
+
+  int setMaxNodeNBits(int max_node_nbits) {
+    return _setMaxNodeNBits(max_node_nbits);
   }
 
-  int
-  setMaxDelayNBits( int max_delay_nbits )
-  {
-    return _setMaxDelayNBits( max_delay_nbits );
+  int setMaxDelayNBits(int max_delay_nbits) {
+    return _setMaxDelayNBits(max_delay_nbits);
   }
 
-  int
-  setMaxSynNBits( int max_syn_nbits )
-  {
-    return _setMaxSynNBits( max_syn_nbits );
+  int setMaxSynNBits(int max_syn_nbits) {
+    return _setMaxSynNBits(max_syn_nbits);
   }
 
-  int
-  getMaxNodeNBits()
-  {
-    return max_node_nbits_;
-  }
+  int getMaxNodeNBits() { return max_node_nbits_; }
 
-  int
-  getMaxDelayNBits()
-  {
-    return max_delay_nbits_;
-  }
+  int getMaxDelayNBits() { return max_delay_nbits_; }
 
-  int
-  getMaxPortNBits()
-  {
-    return max_port_nbits_;
-  }
+  int getMaxPortNBits() { return max_port_nbits_; }
 
-  int
-  getMaxSynNBits()
-  {
-    return max_syn_nbits_;
-  }
+  int getMaxSynNBits() { return max_syn_nbits_; }
 
-  int
-  getNImageNodes()
-  {
-    return n_image_nodes_;
-  }
+  int getNImageNodes() { return n_image_nodes_; }
 
-  bool
-  getRevConnFlag()
-  {
-    return rev_conn_flag_;
-  }
+  bool getRevConnFlag() { return rev_conn_flag_; }
 
-  int
-  getNRevConn()
-  {
-    return n_rev_conn_;
-  }
+  int getNRevConn() { return n_rev_conn_; }
 
-  int*
-  getDevSpikeNumPt()
-  {
-    return d_n_spikes_;
-  }
-  
-  uint*
-  getDevRevSpikeNumPt()
-  {
-    return d_rev_spike_num_;
-  }
+  int *getDevSpikeNumPt() { return d_n_spikes_; }
 
-  int*
-  getDevRevSpikeNConnPt()
-  {
-    return d_rev_spike_n_conn_;
-  }
+  uint *getDevRevSpikeNumPt() { return d_rev_spike_num_; }
 
-  uint*
-  getDevNTargetHosts()
-  {
-    return d_n_target_hosts_;
-  }
+  int *getDevRevSpikeNConnPt() { return d_rev_spike_n_conn_; }
 
-  uint**
-  getDevNodeTargetHosts()
-  {
-    return d_node_target_hosts_;
-  }
+  uint *getDevNTargetHosts() { return d_n_target_hosts_; }
 
-  uint**
-  getDevNodeTargetHostIMap()
-  {
-    return d_node_target_host_i_map_;
-  }
+  uint **getDevNodeTargetHosts() { return d_node_target_hosts_; }
 
-  const std::vector< std::vector < int > > &getNodeTargetHostGroup() const
-  {
+  uint **getDevNodeTargetHostIMap() { return d_node_target_host_i_map_; }
+
+  const std::vector<std::vector<int>> &getNodeTargetHostGroup() const {
     return node_target_host_group_;
   }
-  
-  std::vector< std::vector< uint > > &getHostGroupLocalSourceNodeMap()
-  {
+
+  std::vector<std::vector<uint>> &getHostGroupLocalSourceNodeMap() {
     return host_group_local_source_node_map_;
   }
 
-  std::vector< std::vector< int > > &getHostGroup()
-  {
-    return host_group_;
-  }
+  std::vector<std::vector<int>> &getHostGroup() { return host_group_; }
 
   // get array of local indexes  of all host groups
-  std::vector< int > &getHostGroupLocalId()
-  {
-    return host_group_local_id_;
-  }
+  std::vector<int> &getHostGroupLocalId() { return host_group_local_id_; }
 
   // get number of bits used in spike representation for bit packing in MPI
-  std::vector< std::vector< int > > &getBitPackNbits()
-  {
-    return bit_pack_nbits_;
-  }
-  
+  std::vector<std::vector<int>> &getBitPackNbits() { return bit_pack_nbits_; }
+
   // get number of bits used in spike representation for bit packing in MPI
-  std::vector< int > &getBitPackNbitsThisHost()
-  {
+  std::vector<int> &getBitPackNbitsThisHost() {
     return bit_pack_nbits_this_host_;
   }
 
   // get MPI communicator of local host groups
-  std::vector<MPI_Comm> &getMPIComm()
-  {
-    return mpi_comm_vect_;
-  }
+  std::vector<MPI_Comm> &getMPIComm() { return mpi_comm_vect_; }
 
   // get point-to-point MPI communication activation matrix
-  std::vector< std::vector < bool > > &getP2PHostConnMatrix() {
+  std::vector<std::vector<bool>> &getP2PHostConnMatrix() {
     return p2p_host_conn_matrix_;
   }
-  
+
   // return map of host group source nodes to local image nodes
-  std::vector<std::vector< std::vector< int64_t > > > &getHostGroupLocalNodeIndex()
-  {
+  std::vector<std::vector<std::vector<int64_t>>> &getHostGroupLocalNodeIndex() {
     return host_group_local_node_index_;
   }
-  
-  int allocateNewBlocks( int new_n_block );
+
+  int allocateNewBlocks(int new_n_block);
 
   int freeConnectionKey();
 
-  int setConnectionWeights( curandGenerator_t& gen,
-    void* d_storage,
-    ConnStructT* conn_struct_subarray,
-    int64_t n_conn,
-    SynSpec& syn_spec );
+  int setConnectionWeights(curandGenerator_t &gen, void *d_storage,
+                           ConnStructT *conn_struct_subarray, int64_t n_conn,
+                           SynSpec &syn_spec);
 
-  int setConnectionDelays( curandGenerator_t& gen,
-    void* d_storage,
-    ConnKeyT* conn_key_subarray,
-    int64_t n_conn,
-    SynSpec& syn_spec );
+  int setConnectionDelays(curandGenerator_t &gen, void *d_storage,
+                          ConnKeyT *conn_key_subarray, int64_t n_conn,
+                          SynSpec &syn_spec);
 
-  void setConnSource( ConnKeyT& conn_key, inode_t source );
+  void setConnSource(ConnKeyT &conn_key, inode_t source);
 
-  int getConnDelay( const ConnKeyT& conn_key );
+  int getConnDelay(const ConnKeyT &conn_key);
 
-  int
-  connect( inode_t source, inode_t n_source, inode_t target, inode_t n_target, ConnSpec& conn_spec, SynSpec& syn_spec )
-  {
-    return _Connect( source, n_source, target, n_target, conn_spec, syn_spec );
+  int connect(inode_t source, inode_t n_source, inode_t target,
+              inode_t n_target, ConnSpec &conn_spec, SynSpec &syn_spec) {
+    return _Connect(source, n_source, target, n_target, conn_spec, syn_spec);
   }
 
-  int
-  connect( inode_t* source, inode_t n_source, inode_t target, inode_t n_target, ConnSpec& conn_spec, SynSpec& syn_spec )
-  {
-    return _Connect( source, n_source, target, n_target, conn_spec, syn_spec );
+  int connect(inode_t *source, inode_t n_source, inode_t target,
+              inode_t n_target, ConnSpec &conn_spec, SynSpec &syn_spec) {
+    return _Connect(source, n_source, target, n_target, conn_spec, syn_spec);
   }
 
-  int
-  connect( inode_t source, inode_t n_source, inode_t* target, inode_t n_target, ConnSpec& conn_spec, SynSpec& syn_spec )
-  {
-    return _Connect( source, n_source, target, n_target, conn_spec, syn_spec );
+  int connect(inode_t source, inode_t n_source, inode_t *target,
+              inode_t n_target, ConnSpec &conn_spec, SynSpec &syn_spec) {
+    return _Connect(source, n_source, target, n_target, conn_spec, syn_spec);
   }
 
-  int
-  connect( inode_t* source,
-    inode_t n_source,
-    inode_t* target,
-    inode_t n_target,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec )
-  {
-    return _Connect( source, n_source, target, n_target, conn_spec, syn_spec );
+  int connect(inode_t *source, inode_t n_source, inode_t *target,
+              inode_t n_target, ConnSpec &conn_spec, SynSpec &syn_spec) {
+    return _Connect(source, n_source, target, n_target, conn_spec, syn_spec);
   }
 
-  template < class T1, class T2 >
-  int _Connect( T1 source, inode_t n_source, T2 target, inode_t n_target, ConnSpec& conn_spec, SynSpec& syn_spec );
+  template <class T1, class T2>
+  int _Connect(T1 source, inode_t n_source, T2 target, inode_t n_target,
+               ConnSpec &conn_spec, SynSpec &syn_spec);
 
-  template < class T1, class T2 >
-  int _Connect( curandGenerator_t& gen,
-    T1 source,
-    inode_t n_source,
-    T2 target,
-    inode_t n_target,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec,
-    bool remote_source_flag );
+  template <class T1, class T2>
+  int _Connect(curandGenerator_t &gen, T1 source, inode_t n_source, T2 target,
+               inode_t n_target, ConnSpec &conn_spec, SynSpec &syn_spec,
+               bool remote_source_flag);
 
-  template < class T1, class T2 >
-  int connectOneToOne( curandGenerator_t& gen,
-    T1 source,
-    T2 target,
-    inode_t n_node,
-    SynSpec& syn_spec,
-    bool remote_source_flag );
+  template <class T1, class T2>
+  int connectOneToOne(curandGenerator_t &gen, T1 source, T2 target,
+                      inode_t n_node, SynSpec &syn_spec,
+                      bool remote_source_flag);
 
-  template < class T1, class T2 >
-  int connectAllToAll( curandGenerator_t& gen,
-    T1 source,
-    inode_t n_source,
-    T2 target,
-    inode_t n_target,
-    SynSpec& syn_spec,
-    bool remote_source_flag );
+  template <class T1, class T2>
+  int connectAllToAll(curandGenerator_t &gen, T1 source, inode_t n_source,
+                      T2 target, inode_t n_target, SynSpec &syn_spec,
+                      bool remote_source_flag);
 
-  template < class T1, class T2 >
-  int connectFixedTotalNumber( curandGenerator_t& gen,
-    T1 source,
-    inode_t n_source,
-    T2 target,
-    inode_t n_target,
-    int64_t total_num,
-    SynSpec& syn_spec,
-    bool remote_source_flag );
+  template <class T1, class T2>
+  int connectFixedTotalNumber(curandGenerator_t &gen, T1 source,
+                              inode_t n_source, T2 target, inode_t n_target,
+                              int64_t total_num, SynSpec &syn_spec,
+                              bool remote_source_flag);
 
-  template < class T1, class T2 >
-  int connectAssignedNodes( curandGenerator_t& gen,
-    T1 source,
-    inode_t n_source,
-    T2 target,
-    inode_t n_target,
-    int64_t total_num,
-    SynSpec& syn_spec,
-    bool remote_source_flag );
+  template <class T1, class T2>
+  int connectAssignedNodes(curandGenerator_t &gen, T1 source, inode_t n_source,
+                           T2 target, inode_t n_target, int64_t total_num,
+                           SynSpec &syn_spec, bool remote_source_flag);
 
-  template < class T1, class T2 >
-  int connectFixedIndegree( curandGenerator_t& gen,
-    T1 source,
-    inode_t n_source,
-    T2 target,
-    inode_t n_target,
-    int indegree,
-    SynSpec& syn_spec,
-    bool remote_source_flag );
+  template <class T1, class T2>
+  int connectFixedIndegree(curandGenerator_t &gen, T1 source, inode_t n_source,
+                           T2 target, inode_t n_target, int indegree,
+                           SynSpec &syn_spec, bool remote_source_flag);
 
-  template < class T1, class T2 >
-  int connectFixedOutdegree( curandGenerator_t& gen,
-    T1 source,
-    inode_t n_source,
-    T2 target,
-    inode_t n_target,
-    int outdegree,
-    SynSpec& syn_spec,
-    bool remote_source_flag );
+  template <class T1, class T2>
+  int connectFixedOutdegree(curandGenerator_t &gen, T1 source, inode_t n_source,
+                            T2 target, inode_t n_target, int outdegree,
+                            SynSpec &syn_spec, bool remote_source_flag);
 
 public:
-  int organizeConnections( inode_t n_node );
+  int organizeConnections(inode_t n_node);
 
-  int getConnectionFloatParam( int64_t* conn_ids, int64_t n_conn, float* h_param_arr, std::string param_name );
+  int getConnectionFloatParam(int64_t *conn_ids, int64_t n_conn,
+                              float *h_param_arr, std::string param_name);
 
-  int getConnectionIntParam( int64_t* conn_ids, int64_t n_conn, int* h_param_arr, std::string param_name );
+  int getConnectionIntParam(int64_t *conn_ids, int64_t n_conn, int *h_param_arr,
+                            std::string param_name);
 
-  int setConnectionFloatParam( int64_t* conn_ids, int64_t n_conn, float val, std::string param_name );
+  int setConnectionFloatParam(int64_t *conn_ids, int64_t n_conn, float val,
+                              std::string param_name);
 
-  int setConnectionFloatParamDistr( int64_t* conn_ids, int64_t n_conn, std::string param_name );
+  int setConnectionFloatParamDistr(int64_t *conn_ids, int64_t n_conn,
+                                   std::string param_name);
 
-  int setConnectionIntParamArr( int64_t* conn_ids, int64_t n_conn, int* h_param_arr, std::string param_name );
+  int setConnectionIntParamArr(int64_t *conn_ids, int64_t n_conn,
+                               int *h_param_arr, std::string param_name);
 
-  int setConnectionIntParam( int64_t* conn_ids, int64_t n_conn, int val, std::string param_name );
+  int setConnectionIntParam(int64_t *conn_ids, int64_t n_conn, int val,
+                            std::string param_name);
 
-  int64_t* getConnections( inode_t* i_source_pt,
-    inode_t n_source,
-    inode_t* i_target_pt,
-    inode_t n_target,
-    int syn_group,
-    int64_t* n_conn );
+  int64_t *getConnections(inode_t *i_source_pt, inode_t n_source,
+                          inode_t *i_target_pt, inode_t n_target, int syn_group,
+                          int64_t *n_conn);
 
-  int getConnectionStatus( int64_t* conn_ids,
-    int64_t n_conn,
-    inode_t* source,
-    inode_t* target,
-    int* port,
-    int* syn_group,
-    float* delay,
-    float* weight );
+  int getConnectionStatus(int64_t *conn_ids, int64_t n_conn, inode_t *source,
+                          inode_t *target, int *port, int *syn_group,
+                          float *delay, float *weight);
 
   //////////////////////////////////////////////////
   // class ConnectionTemplate remote-connection-related methods
   //////////////////////////////////////////////////
 
   // set number of hosts
-  int setNHosts( int n_hosts );
+  int setNHosts(int n_hosts);
 
   // set index of this host
-  int setThisHost( int this_host );
+  int setThisHost(int this_host);
 
   // Initialize the maps
   int remoteConnectionMapInit();
 
   // Calibrate the maps
-  int remoteConnectionMapCalibrate( inode_t n_nodes );
+  int remoteConnectionMapCalibrate(inode_t n_nodes);
 
-  // get vector of number of elements in the maps of remote source nodes to local image nodes
-  std::vector< uint* >  &getDevNRemoteSourceNodeMap()
-  {
+  // get vector of number of elements in the maps of remote source nodes to
+  // local image nodes
+  std::vector<uint *> &getDevNRemoteSourceNodeMap() {
     return d_n_remote_source_node_map_;
   }
 
@@ -1242,188 +1131,154 @@ public:
   int remoteConnectionMapSave();
 
   // Allocate GPU memory for new remote-source-node-map blocks
-  int allocRemoteSourceNodeMapBlocks( std::vector< uint* >& i_remote_src_node_map,
-    std::vector< uint* >& i_local_spike_buf_map,
-    uint new_n_block );
+  int allocRemoteSourceNodeMapBlocks(std::vector<uint *> &i_remote_src_node_map,
+                                     std::vector<uint *> &i_local_spike_buf_map,
+                                     uint new_n_block);
 
   // Allocate GPU memory for new local-source-node-map blocks
-  int allocLocalSourceNodeMapBlocks( std::vector< uint* >& i_local_src_node_map, uint new_n_block );
+  int allocLocalSourceNodeMapBlocks(std::vector<uint *> &i_local_src_node_map,
+                                    uint new_n_block);
 
   // allocate/reallocate device memory to store source node indexes of a
   // remote connection command
-  int reallocConnSourceIds( int64_t n_conn );
+  int reallocConnSourceIds(int64_t n_conn);
 
   // Loop on all new connections and set source_node_flag[i_source]=true
-  int setUsedSourceNodes( int64_t old_n_conn, uint* d_source_node_flag );
+  int setUsedSourceNodes(int64_t old_n_conn, uint *d_source_node_flag);
 
-  int setUsedSourceNodesOnSourceHost( int64_t old_n_conn, uint* d_source_node_flag );
+  int setUsedSourceNodesOnSourceHost(int64_t old_n_conn,
+                                     uint *d_source_node_flag);
 
   // Loops on all new connections and replaces the source node index
   // source_node[i_conn] with the value of the element pointed by the
   // index itself in the array local_node_index
-  int fixConnectionSourceNodeIndexes( int64_t old_n_conn, uint* d_local_node_index );
+  int fixConnectionSourceNodeIndexes(int64_t old_n_conn,
+                                     uint *d_local_node_index);
 
   // remote connect functions
-  int
-  remoteConnect( int source_host,
-    inode_t source,
-    inode_t n_source,
-    int target_host,
-    inode_t target,
-    inode_t n_target,
-    int i_host_group,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec )
-  {
-    return _RemoteConnect< inode_t, inode_t >(
-      source_host, source, n_source, target_host, target, n_target, i_host_group, conn_spec, syn_spec );
+  int remoteConnect(int source_host, inode_t source, inode_t n_source,
+                    int target_host, inode_t target, inode_t n_target,
+                    int i_host_group, ConnSpec &conn_spec, SynSpec &syn_spec) {
+    return _RemoteConnect<inode_t, inode_t>(source_host, source, n_source,
+                                            target_host, target, n_target,
+                                            i_host_group, conn_spec, syn_spec);
   }
 
-  int
-  remoteConnect( int source_host,
-    inode_t* source,
-    inode_t n_source,
-    int target_host,
-    inode_t target,
-    inode_t n_target,
-    int i_host_group,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec )
-  {
-    return _RemoteConnect< inode_t*, inode_t >(
-      source_host, source, n_source, target_host, target, n_target, i_host_group, conn_spec, syn_spec );
+  int remoteConnect(int source_host, inode_t *source, inode_t n_source,
+                    int target_host, inode_t target, inode_t n_target,
+                    int i_host_group, ConnSpec &conn_spec, SynSpec &syn_spec) {
+    return _RemoteConnect<inode_t *, inode_t>(
+        source_host, source, n_source, target_host, target, n_target,
+        i_host_group, conn_spec, syn_spec);
   }
 
-  int
-  remoteConnect( int source_host,
-    inode_t source,
-    inode_t n_source,
-    int target_host,
-    inode_t* target,
-    inode_t n_target,
-    int i_host_group,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec )
-  {
-    return _RemoteConnect< inode_t, inode_t* >(
-      source_host, source, n_source, target_host, target, n_target, i_host_group, conn_spec, syn_spec );
+  int remoteConnect(int source_host, inode_t source, inode_t n_source,
+                    int target_host, inode_t *target, inode_t n_target,
+                    int i_host_group, ConnSpec &conn_spec, SynSpec &syn_spec) {
+    return _RemoteConnect<inode_t, inode_t *>(
+        source_host, source, n_source, target_host, target, n_target,
+        i_host_group, conn_spec, syn_spec);
   }
 
-  int
-  remoteConnect( int source_host,
-    inode_t* source,
-    inode_t n_source,
-    int target_host,
-    inode_t* target,
-    inode_t n_target,
-    int i_host_group,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec )
-  {      
-    return _RemoteConnect< inode_t*, inode_t* >(
-      source_host, source, n_source, target_host, target, n_target, i_host_group, conn_spec, syn_spec );
-
+  int remoteConnect(int source_host, inode_t *source, inode_t n_source,
+                    int target_host, inode_t *target, inode_t n_target,
+                    int i_host_group, ConnSpec &conn_spec, SynSpec &syn_spec) {
+    return _RemoteConnect<inode_t *, inode_t *>(
+        source_host, source, n_source, target_host, target, n_target,
+        i_host_group, conn_spec, syn_spec);
   }
 
-  template < class T1, class T2 >
-  int _RemoteConnect( int source_host,
-    T1 source,
-    inode_t n_source,
-    int target_host,
-    T2 target,
-    inode_t n_target,
-    int i_host_group,  
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec );
-
+  template <class T1, class T2>
+  int _RemoteConnect(int source_host, T1 source, inode_t n_source,
+                     int target_host, T2 target, inode_t n_target,
+                     int i_host_group, ConnSpec &conn_spec, SynSpec &syn_spec);
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////
-  // Build connections with fixed indegree rule for source neurons and target neurons distributed across
-  // MPI processes (hosts)
+  // Build connections with fixed indegree rule for source neurons and target
+  // neurons distributed across MPI processes (hosts)
   ///////////////////////////////////////////////////////////////////////////////////////////////////////
-  int connectDistributedFixedIndegree
-  (int *source_host_arr, int n_source_host, inode_t *h_source_arr, inode_t *n_source_arr,
-   int *target_host_arr, int n_target_host, inode_t *h_target_arr, inode_t *n_target_arr,
-   int indegree, int i_host_group, SynSpec &syn_spec)
-  {
-    return _ConnectDistributedFixedIndegree< inode_t, inode_t >
-      (source_host_arr, n_source_host, h_source_arr, n_source_arr,
-       target_host_arr, n_target_host, h_target_arr, n_target_arr,
-       indegree, i_host_group, syn_spec);
+  int connectDistributedFixedIndegree(int *source_host_arr, int n_source_host,
+                                      inode_t *h_source_arr,
+                                      inode_t *n_source_arr,
+                                      int *target_host_arr, int n_target_host,
+                                      inode_t *h_target_arr,
+                                      inode_t *n_target_arr, int indegree,
+                                      int i_host_group, SynSpec &syn_spec) {
+    return _ConnectDistributedFixedIndegree<inode_t, inode_t>(
+        source_host_arr, n_source_host, h_source_arr, n_source_arr,
+        target_host_arr, n_target_host, h_target_arr, n_target_arr, indegree,
+        i_host_group, syn_spec);
   }
 
-  int connectDistributedFixedIndegree
-  (int *source_host_arr, int n_source_host, inode_t **h_source_arr, inode_t *n_source_arr,
-   int *target_host_arr, int n_target_host, inode_t *h_target_arr, inode_t *n_target_arr,
-   int indegree, int i_host_group, SynSpec &syn_spec)
-  {
-    return _ConnectDistributedFixedIndegree< inode_t*, inode_t >
-      (source_host_arr, n_source_host, h_source_arr, n_source_arr,
-       target_host_arr, n_target_host, h_target_arr, n_target_arr,
-       indegree, i_host_group, syn_spec);
+  int connectDistributedFixedIndegree(int *source_host_arr, int n_source_host,
+                                      inode_t **h_source_arr,
+                                      inode_t *n_source_arr,
+                                      int *target_host_arr, int n_target_host,
+                                      inode_t *h_target_arr,
+                                      inode_t *n_target_arr, int indegree,
+                                      int i_host_group, SynSpec &syn_spec) {
+    return _ConnectDistributedFixedIndegree<inode_t *, inode_t>(
+        source_host_arr, n_source_host, h_source_arr, n_source_arr,
+        target_host_arr, n_target_host, h_target_arr, n_target_arr, indegree,
+        i_host_group, syn_spec);
   }
 
-  int connectDistributedFixedIndegree
-  (int *source_host_arr, int n_source_host, inode_t *h_source_arr, inode_t *n_source_arr,
-   int *target_host_arr, int n_target_host, inode_t **h_target_arr, inode_t *n_target_arr,
-   int indegree, int i_host_group, SynSpec &syn_spec)
-  {
-    return _ConnectDistributedFixedIndegree< inode_t, inode_t* >
-      (source_host_arr, n_source_host, h_source_arr, n_source_arr,
-       target_host_arr, n_target_host, h_target_arr, n_target_arr,
-       indegree, i_host_group, syn_spec);
+  int connectDistributedFixedIndegree(int *source_host_arr, int n_source_host,
+                                      inode_t *h_source_arr,
+                                      inode_t *n_source_arr,
+                                      int *target_host_arr, int n_target_host,
+                                      inode_t **h_target_arr,
+                                      inode_t *n_target_arr, int indegree,
+                                      int i_host_group, SynSpec &syn_spec) {
+    return _ConnectDistributedFixedIndegree<inode_t, inode_t *>(
+        source_host_arr, n_source_host, h_source_arr, n_source_arr,
+        target_host_arr, n_target_host, h_target_arr, n_target_arr, indegree,
+        i_host_group, syn_spec);
   }
 
-  int connectDistributedFixedIndegree
-  (int *source_host_arr, int n_source_host, inode_t **h_source_arr, inode_t *n_source_arr,
-   int *target_host_arr, int n_target_host, inode_t **h_target_arr, inode_t *n_target_arr,
-   int indegree, int i_host_group, SynSpec &syn_spec)
-  {
-    return _ConnectDistributedFixedIndegree< inode_t*, inode_t* >
-      (source_host_arr, n_source_host, h_source_arr, n_source_arr,
-       target_host_arr, n_target_host, h_target_arr, n_target_arr,
-       indegree, i_host_group, syn_spec);
+  int connectDistributedFixedIndegree(int *source_host_arr, int n_source_host,
+                                      inode_t **h_source_arr,
+                                      inode_t *n_source_arr,
+                                      int *target_host_arr, int n_target_host,
+                                      inode_t **h_target_arr,
+                                      inode_t *n_target_arr, int indegree,
+                                      int i_host_group, SynSpec &syn_spec) {
+    return _ConnectDistributedFixedIndegree<inode_t *, inode_t *>(
+        source_host_arr, n_source_host, h_source_arr, n_source_arr,
+        target_host_arr, n_target_host, h_target_arr, n_target_arr, indegree,
+        i_host_group, syn_spec);
   }
 
-  
-  template < class T1, class T2 >
-  int _ConnectDistributedFixedIndegree
-  (int *source_host_arr, int n_source_host, T1* h_source_arr, inode_t *n_source_arr,
-   int *target_host_arr, int n_target_host, T2 *h_target_arr, inode_t *n_target_arr,
-   int indegree, int i_host_group, SynSpec &syn_spec);
+  template <class T1, class T2>
+  int _ConnectDistributedFixedIndegree(int *source_host_arr, int n_source_host,
+                                       T1 *h_source_arr, inode_t *n_source_arr,
+                                       int *target_host_arr, int n_target_host,
+                                       T2 *h_target_arr, inode_t *n_target_arr,
+                                       int indegree, int i_host_group,
+                                       SynSpec &syn_spec);
 
-  
-  int addOffsetToExternalNodeIds( uint n_local_nodes );
+  int addOffsetToExternalNodeIds(uint n_local_nodes);
 
   // REMOTE CONNECT FUNCTION for target_host matching this_host
-  template < class T1, class T2 >
-  int remoteConnectSource( int source_host,
-    T1 source,
-    inode_t n_source,
-    T2 target,
-    inode_t n_target,
-    int group_local_id,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec );
+  template <class T1, class T2>
+  int remoteConnectSource(int source_host, T1 source, inode_t n_source,
+                          T2 target, inode_t n_target, int group_local_id,
+                          ConnSpec &conn_spec, SynSpec &syn_spec);
 
   // REMOTE CONNECT FUNCTION for source_host matching this_host
-  template < class T1, class T2 >
-  int remoteConnectTarget( int target_host,
-    T1 source,
-    inode_t n_source,
-    T2 target,
-    inode_t n_target,
-    ConnSpec& conn_spec,
-    SynSpec& syn_spec );
+  template <class T1, class T2>
+  int remoteConnectTarget(int target_host, T1 source, inode_t n_source,
+                          T2 target, inode_t n_target, ConnSpec &conn_spec,
+                          SynSpec &syn_spec);
 
-  int addOffsetToImageNodeMap( inode_t n_nodes );
+  int addOffsetToImageNodeMap(inode_t n_nodes);
 
   //////////////////////////////////////////////////
   // class ConnectionTemplate reverse-connection-related methods
   //////////////////////////////////////////////////
   int revSpikeFree();
 
-  int revSpikeInit( uint n_spike_buffers );
+  int revSpikeInit(uint n_spike_buffers);
 
   int resetConnectionSpikeTimeUp();
 
@@ -1432,45 +1287,33 @@ public:
   //////////////////////////////////////////////////
   // class ConnectionTemplate direct-connection-related methods
   //////////////////////////////////////////////////
-  int buildDirectConnections( inode_t i_node_0,
-    inode_t n_node,
-    int64_t& i_conn0,
-    int64_t& n_dir_conn,
-    int& max_delay,
-    float*& d_mu_arr,
-    void*& d_poiss_key_array );
+  int buildDirectConnections(inode_t i_node_0, inode_t n_node, int64_t &i_conn0,
+                             int64_t &n_dir_conn, int &max_delay,
+                             float *&d_mu_arr, void *&d_poiss_key_array);
 
-  int organizeDirectConnections( void*& d_poiss_key_array_data_pt,
-    void*& d_poiss_subarray,
-    int64_t*& d_poiss_num,
-    int64_t*& d_poiss_sum,
-    void*& d_poiss_thresh );
+  int organizeDirectConnections(void *&d_poiss_key_array_data_pt,
+                                void *&d_poiss_subarray, int64_t *&d_poiss_num,
+                                int64_t *&d_poiss_sum, void *&d_poiss_thresh);
 
-  int sendDirectSpikes( long long time_idx,
-    int64_t i_conn0,
-    int64_t n_dir_conn,
-    inode_t n_node,
-    int max_delay,
-    float* d_mu_arr,
-    void* d_poiss_key_array,
-    curandState* d_curand_state );
+  int sendDirectSpikes(long long time_idx, int64_t i_conn0, int64_t n_dir_conn,
+                       inode_t n_node, int max_delay, float *d_mu_arr,
+                       void *d_poiss_key_array, curandState *d_curand_state);
 
   //////////////////////////////////////////////////
   // class ConnectionTemplate input-spike-buffer-related methods
   //////////////////////////////////////////////////
-  int initInputSpikeBuffer( inode_t n_local_nodes, inode_t n_nodes, int max_remote_spike_num );
+  int initInputSpikeBuffer(inode_t n_local_nodes, inode_t n_nodes,
+                           int max_remote_spike_num);
 
   int deliverSpikes();
 
   // set algorithm for spike buffering and delivery
-  int
-  setSpikeBufferAlgo( int spike_buffer_algo )
-  {
-    return _setSpikeBufferAlgo( spike_buffer_algo );
+  int setSpikeBufferAlgo(int spike_buffer_algo) {
+    return _setSpikeBufferAlgo(spike_buffer_algo);
   }
   // private call non-overriding virtual method of base class
   // needed for constructor
-  int _setSpikeBufferAlgo( int spike_buffer_algo );
+  int _setSpikeBufferAlgo(int spike_buffer_algo);
 
   // get algorithm for spike buffering and delivery
   int getSpikeBufferAlgo();
@@ -1478,111 +1321,95 @@ public:
   //////////////////////////////////////////////////
   // class ConnectionTemplate host-group-related methods
   //////////////////////////////////////////////////
-  // Method that creates a group of hosts for remote spike communication (i.e. a group of MPI processes)
-  // host_arr: array of host inexes, n_hosts: nomber of hosts in the group
+  // Method that creates a group of hosts for remote spike communication (i.e. a
+  // group of MPI processes) host_arr: array of host inexes, n_hosts: nomber of
+  // hosts in the group
   int CreateHostGroup(int *host_arr, int n_hosts, bool mpi_flag);
 
+  // return boolean flag activated if first connection of each image node is
+  // stored in GPU memory
+  bool getFirstOutConnInDevice() { return first_out_conn_in_device_; }
 
-  // return boolean flag activated if first connection of each image node is stored in GPU memory 
-  bool getFirstOutConnInDevice()
-  {
-    return first_out_conn_in_device_;
-  }
-
-  // set boolean flag activated if first connection of each image node is stored in GPU memory 
-  void setFirstOutConnInDevice(bool first_out_conn_in_device)
-  {
+  // set boolean flag activated if first connection of each image node is stored
+  // in GPU memory
+  void setFirstOutConnInDevice(bool first_out_conn_in_device) {
     first_out_conn_in_device_ = first_out_conn_in_device;
   }
 
-  void setHaveNOutConn(bool have_n_out_conn)
-  {
+  void setHaveNOutConn(bool have_n_out_conn) {
     have_n_out_conn_ = have_n_out_conn;
   }
-  
-  void setDeleteRemoteNodeMap(bool delete_remote_node_map)
-  {
+
+  void setDeleteRemoteNodeMap(bool delete_remote_node_map) {
     delete_remote_node_map_ = delete_remote_node_map;
   }
-  
-  void setDeleteImageNodeMap(bool delete_image_node_map)
-  {
+
+  void setDeleteImageNodeMap(bool delete_image_node_map) {
     delete_image_node_map_ = delete_image_node_map;
   }
 
-  void setUseAllSourceNodeFact(float use_all_source_node_fact)
-  {
+  void setUseAllSourceNodeFact(float use_all_source_node_fact) {
     use_all_source_node_fact_ = use_all_source_node_fact;
   }
-  
-  // return reference to vector of first connections outgoing from each image node [n_image_node]
-  const std::vector<int64_t> &getFirstOutConnection() const
-  {
+
+  // return reference to vector of first connections outgoing from each image
+  // node [n_image_node]
+  const std::vector<int64_t> &getFirstOutConnection() const {
     return h_first_out_connection_;
   }
-  
-  // return reference to vector of number of connections outgoing from each image node [n_image_node]
-  const std::vector<int64_t> &getNOutConnections() const
-  {
+
+  // return reference to vector of number of connections outgoing from each
+  // image node [n_image_node]
+  const std::vector<int64_t> &getNOutConnections() const {
     return h_n_out_connections_;
   }
 
-  // return reference to vector of the first connection to send each spike from a remote node 
-  std::vector<int64_t> &getSpikeFirstConnection()
-  {
+  // return reference to vector of the first connection to send each spike from
+  // a remote node
+  std::vector<int64_t> &getSpikeFirstConnection() {
     return h_spike_first_connection_;
   }
-  
-  // return reference to vector of the multiplicity of each spike from a remote node
-  std::vector<float> &getSpikeMul()
-  {
-    return h_spike_mul_;
-  }
-  
-  // return reference to vector of the number of connections to send each spike from a remote node
-  std::vector<int> &getSpikeNConnections()
-  {
-    return h_spike_n_connections_;
-  }
+
+  // return reference to vector of the multiplicity of each spike from a remote
+  // node
+  std::vector<float> &getSpikeMul() { return h_spike_mul_; }
+
+  // return reference to vector of the number of connections to send each spike
+  // from a remote node
+  std::vector<int> &getSpikeNConnections() { return h_spike_n_connections_; }
 
   // return host copy of remote_source_node_map [group_local_id][i_host][i]
-  const std::vector< std::vector< std::vector< uint > > > &getHCRemoteSourceNodeMap() const
-  {
+  const std::vector<std::vector<std::vector<uint>>> &
+  getHCRemoteSourceNodeMap() const {
     return hc_remote_source_node_map_;
   }
 
   // return host copy of image_node_map [group_local_id][i_host][i]
-  const std::vector< std::vector< std::vector< uint > > > &getHCImageNodeMap() const
-  {
+  const std::vector<std::vector<std::vector<uint>>> &getHCImageNodeMap() const {
     return hc_image_node_map_;
   }
 
-  
-  void setNSpikeFromHost(int n_spike_from_host)
-  {
+  void setNSpikeFromHost(int n_spike_from_host) {
     n_spike_from_host_ = n_spike_from_host;
   }
 };
 
-namespace poiss_conn
-{
-extern void* d_poiss_key_array_data_pt;
-extern void* d_poiss_subarray;
-extern int64_t* d_poiss_num;
-extern int64_t* d_poiss_sum;
-extern void* d_poiss_thresh;
-int organizeDirectConnections( Connection* conn );
+namespace poiss_conn {
+extern void *d_poiss_key_array_data_pt;
+extern void *d_poiss_subarray;
+extern int64_t *d_poiss_num;
+extern int64_t *d_poiss_sum;
+extern void *d_poiss_thresh;
+int organizeDirectConnections(Connection *conn);
 }; // namespace poiss_conn
 
-enum ConnectionFloatParamIndexes
-{
+enum ConnectionFloatParamIndexes {
   i_weight_param = 0,
   i_delay_param,
   N_CONN_FLOAT_PARAM
 };
 
-enum ConnectionIntParamIndexes
-{
+enum ConnectionIntParamIndexes {
   i_source_param = 0,
   i_target_param,
   i_port_param,
@@ -1592,7 +1419,7 @@ enum ConnectionIntParamIndexes
 
 extern __constant__ float NESTGPUTimeResolution;
 
-extern __device__ int16_t* NodeGroupMap;
+extern __device__ int16_t *NodeGroupMap;
 
 extern __constant__ NodeGroupStruct NodeGroupArray[];
 
@@ -1633,94 +1460,98 @@ extern __device__ uint PortSynMask;
 // minimum allowed delay in time step units
 extern __constant__ uint MinAllowedDelay;
 
-extern __device__ iconngroup_t* ConnGroupIdx0;
+extern __device__ iconngroup_t *ConnGroupIdx0;
 
-extern __device__ int64_t* ConnGroupIConn0;
+extern __device__ int64_t *ConnGroupIConn0;
 
-extern __device__ int* ConnGroupDelay;
+extern __device__ int *ConnGroupDelay;
 
 extern __device__ int64_t ConnBlockSize;
 
 // it seems that there is no relevant advantage in using a constant array
 // however better to keep this option ready and commented
 // extern __constant__ uint* ConnKeyArray[];
-extern __device__ void* ConnKeyArray;
+extern __device__ void *ConnKeyArray;
 
 // extern __constant__ connection_struct* ConnStructArray[];
-extern __device__ void* ConnStructArray;
+extern __device__ void *ConnStructArray;
 
-extern __device__ unsigned short* ConnectionSpikeTime;
+extern __device__ unsigned short *ConnectionSpikeTime;
 
-template < class ConnKeyT >
-__device__ __forceinline__ void setConnDelay( ConnKeyT& conn_key, int delay );
+template <class ConnKeyT>
+__device__ __forceinline__ void setConnDelay(ConnKeyT &conn_key, int delay);
 
-template < class ConnKeyT >
-__device__ __forceinline__ void setConnSource( ConnKeyT& conn_key, inode_t source );
+template <class ConnKeyT>
+__device__ __forceinline__ void setConnSource(ConnKeyT &conn_key,
+                                              inode_t source);
 
-template < class ConnStructT >
-__device__ __forceinline__ void setConnTarget( ConnStructT& conn_struct, inode_t target );
+template <class ConnStructT>
+__device__ __forceinline__ void setConnTarget(ConnStructT &conn_struct,
+                                              inode_t target);
 
-template < class ConnKeyT, class ConnStructT >
-__device__ __forceinline__ void setConnPort( ConnKeyT& conn_key, ConnStructT& conn_struct, int port );
+template <class ConnKeyT, class ConnStructT>
+__device__ __forceinline__ void setConnPort(ConnKeyT &conn_key,
+                                            ConnStructT &conn_struct, int port);
 
-template < class ConnKeyT, class ConnStructT >
-__device__ __forceinline__ void setConnSyn( ConnKeyT& conn_key, ConnStructT& conn_struct, int syn );
+template <class ConnKeyT, class ConnStructT>
+__device__ __forceinline__ void setConnSyn(ConnKeyT &conn_key,
+                                           ConnStructT &conn_struct, int syn);
 
-template < class ConnKeyT >
-__device__ __forceinline__ int getConnDelay( const ConnKeyT& conn_key );
+template <class ConnKeyT>
+__device__ __forceinline__ int getConnDelay(const ConnKeyT &conn_key);
 
-template < class ConnKeyT >
-__device__ __forceinline__ inode_t getConnSource( ConnKeyT& conn_key );
+template <class ConnKeyT>
+__device__ __forceinline__ inode_t getConnSource(ConnKeyT &conn_key);
 
-template < class ConnStructT >
-__device__ __forceinline__ inode_t getConnTarget( ConnStructT& conn_struct );
+template <class ConnStructT>
+__device__ __forceinline__ inode_t getConnTarget(ConnStructT &conn_struct);
 
-template < class ConnKeyT, class ConnStructT >
-__device__ __forceinline__ int getConnPort( ConnKeyT& conn_key, ConnStructT& conn_struct );
+template <class ConnKeyT, class ConnStructT>
+__device__ __forceinline__ int getConnPort(ConnKeyT &conn_key,
+                                           ConnStructT &conn_struct);
 
-template < class ConnKeyT, class ConnStructT >
-__device__ __forceinline__ int getConnSyn( ConnKeyT& conn_key, ConnStructT& conn_struct );
+template <class ConnKeyT, class ConnStructT>
+__device__ __forceinline__ int getConnSyn(ConnKeyT &conn_key,
+                                          ConnStructT &conn_struct);
 
-template < class ConnKeyT, class ConnStructT >
-__device__ __forceinline__ bool getConnRemoteFlag( ConnKeyT& conn_key, ConnStructT& conn_struct );
+template <class ConnKeyT, class ConnStructT>
+__device__ __forceinline__ bool getConnRemoteFlag(ConnKeyT &conn_key,
+                                                  ConnStructT &conn_struct);
 
-template < class ConnKeyT, class ConnStructT >
-__device__ __forceinline__ void clearConnRemoteFlag( ConnKeyT& conn_key, ConnStructT& conn_struct );
+template <class ConnKeyT, class ConnStructT>
+__device__ __forceinline__ void clearConnRemoteFlag(ConnKeyT &conn_key,
+                                                    ConnStructT &conn_struct);
 
-template < class ConnStructT >
-__global__ void
-setWeights( ConnStructT* conn_struct_subarray, float weight, int64_t n_conn )
-{
+template <class ConnStructT>
+__global__ void setWeights(ConnStructT *conn_struct_subarray, float weight,
+                           int64_t n_conn) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  conn_struct_subarray[ i_conn ].weight = weight;
+  conn_struct_subarray[i_conn].weight = weight;
 }
 
-template < class ConnStructT >
-__global__ void
-setWeights( ConnStructT* conn_struct_subarray, float* arr_val, int64_t n_conn )
-{
+template <class ConnStructT>
+__global__ void setWeights(ConnStructT *conn_struct_subarray, float *arr_val,
+                           int64_t n_conn) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  conn_struct_subarray[ i_conn ].weight = arr_val[ i_conn ];
+  conn_struct_subarray[i_conn].weight = arr_val[i_conn];
 }
 
-template < class ConnKeyT >
-__global__ void
-setDelays( ConnKeyT* conn_key_subarray, float* arr_val, int64_t n_conn, float time_resolution, int min_allowed_delay, int max_allowed_delay, int *delayError )
-{
+template <class ConnKeyT>
+__global__ void setDelays(ConnKeyT *conn_key_subarray, float *arr_val,
+                          int64_t n_conn, float time_resolution,
+                          int min_allowed_delay, int max_allowed_delay,
+                          int *delayError) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  int delay = ( int ) round( arr_val[ i_conn ] / time_resolution );
+  int delay = (int)round(arr_val[i_conn] / time_resolution);
   if (delay < min_allowed_delay) {
     delayError[0] = 1;
     return;
@@ -1729,560 +1560,452 @@ setDelays( ConnKeyT* conn_key_subarray, float* arr_val, int64_t n_conn, float ti
     delayError[1] = 1;
     return;
   }
-  setConnDelay< ConnKeyT >( conn_key_subarray[ i_conn ], delay );
+  setConnDelay<ConnKeyT>(conn_key_subarray[i_conn], delay);
 }
 
-template < class ConnKeyT >
-__global__ void
-setDelays( ConnKeyT* conn_key_subarray, float fdelay, int64_t n_conn, float time_resolution )
-{
+template <class ConnKeyT>
+__global__ void setDelays(ConnKeyT *conn_key_subarray, float fdelay,
+                          int64_t n_conn, float time_resolution) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  int delay = ( int ) round( fdelay / time_resolution );
-  delay = max( delay, 1 );
-  setConnDelay< ConnKeyT >( conn_key_subarray[ i_conn ], delay );
+  int delay = (int)round(fdelay / time_resolution);
+  delay = max(delay, 1);
+  setConnDelay<ConnKeyT>(conn_key_subarray[i_conn], delay);
 }
 
-template < class ConnKeyT, class ConnStructT >
-__global__ void
-setPort( ConnKeyT* conn_key_subarray, ConnStructT* conn_struct_subarray, int port, int64_t n_conn )
-{
+template <class ConnKeyT, class ConnStructT>
+__global__ void setPort(ConnKeyT *conn_key_subarray,
+                        ConnStructT *conn_struct_subarray, int port,
+                        int64_t n_conn) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  setConnPort< ConnKeyT, ConnStructT >( conn_key_subarray[ i_conn ], conn_struct_subarray[ i_conn ], port );
+  setConnPort<ConnKeyT, ConnStructT>(conn_key_subarray[i_conn],
+                                     conn_struct_subarray[i_conn], port);
 }
 
-template < class ConnKeyT, class ConnStructT >
-__global__ void
-setSynGroup( ConnKeyT* conn_key_subarray, ConnStructT* conn_struct_subarray, int syn_group, int64_t n_conn )
-{
+template <class ConnKeyT, class ConnStructT>
+__global__ void setSynGroup(ConnKeyT *conn_key_subarray,
+                            ConnStructT *conn_struct_subarray, int syn_group,
+                            int64_t n_conn) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  setConnSyn< ConnKeyT, ConnStructT >( conn_key_subarray[ i_conn ], conn_struct_subarray[ i_conn ], syn_group );
+  setConnSyn<ConnKeyT, ConnStructT>(conn_key_subarray[i_conn],
+                                    conn_struct_subarray[i_conn], syn_group);
 }
 
-template < class ConnKeyT, class ConnStructT >
-__global__ void
-setPortSynGroup( ConnKeyT* conn_key_subarray,
-  ConnStructT* conn_struct_subarray,
-  int port,
-  int syn_group,
-  int64_t n_conn )
-{
+template <class ConnKeyT, class ConnStructT>
+__global__ void setPortSynGroup(ConnKeyT *conn_key_subarray,
+                                ConnStructT *conn_struct_subarray, int port,
+                                int syn_group, int64_t n_conn) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  setConnPort< ConnKeyT, ConnStructT >( conn_key_subarray[ i_conn ], conn_struct_subarray[ i_conn ], port );
-  setConnSyn< ConnKeyT, ConnStructT >( conn_key_subarray[ i_conn ], conn_struct_subarray[ i_conn ], syn_group );
+  setConnPort<ConnKeyT, ConnStructT>(conn_key_subarray[i_conn],
+                                     conn_struct_subarray[i_conn], port);
+  setConnSyn<ConnKeyT, ConnStructT>(conn_key_subarray[i_conn],
+                                    conn_struct_subarray[i_conn], syn_group);
 }
 
-__global__ void setSourceTargetIndexKernel( uint64_t n_src_tgt,
-  inode_t n_source,
-  inode_t n_target,
-  uint64_t* d_src_tgt_arr,
-  inode_t* d_src_arr,
-  inode_t* d_tgt_arr );
+__global__ void setSourceTargetIndexKernel(uint64_t n_src_tgt, inode_t n_source,
+                                           inode_t n_target,
+                                           uint64_t *d_src_tgt_arr,
+                                           inode_t *d_src_arr,
+                                           inode_t *d_tgt_arr);
 
-__global__ void setConnGroupNum( inode_t n_compact,
-  iconngroup_t* conn_group_num,
-  iconngroup_t* conn_group_idx0_compact,
-  inode_t* conn_group_source_compact );
+__global__ void setConnGroupNum(inode_t n_compact, iconngroup_t *conn_group_num,
+                                iconngroup_t *conn_group_idx0_compact,
+                                inode_t *conn_group_source_compact);
 
-__global__ void setConnGroupIConn0( int64_t n_block_conn,
-  int* conn_group_iconn0_mask,
-  iconngroup_t* conn_group_iconn0_mask_cumul,
-  int64_t* conn_group_iconn0,
-  int64_t i_conn0,
-  iconngroup_t* offset );
+__global__ void setConnGroupIConn0(int64_t n_block_conn,
+                                   int *conn_group_iconn0_mask,
+                                   iconngroup_t *conn_group_iconn0_mask_cumul,
+                                   int64_t *conn_group_iconn0, int64_t i_conn0,
+                                   iconngroup_t *offset);
 
-template < class T >
-__global__ void
-setConnGroupNewOffset( T* offset, T* add_offset )
-{
+template <class T>
+__global__ void setConnGroupNewOffset(T *offset, T *add_offset) {
   *offset = *offset + *add_offset;
 }
 
-template < class ConnKeyT >
-__global__ void
-buildConnGroupIConn0Mask( ConnKeyT* conn_key_subarray,
-  ConnKeyT* conn_key_subarray_prev,
-  int64_t n_block_conn,
-  int* conn_group_iconn0_mask )
-{
+template <class ConnKeyT>
+__global__ void buildConnGroupIConn0Mask(ConnKeyT *conn_key_subarray,
+                                         ConnKeyT *conn_key_subarray_prev,
+                                         int64_t n_block_conn,
+                                         int *conn_group_iconn0_mask) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_block_conn )
-  {
+  if (i_conn >= n_block_conn) {
     return;
   }
-  ConnKeyT val = conn_key_subarray[ i_conn ];
+  ConnKeyT val = conn_key_subarray[i_conn];
   ConnKeyT prev_val;
   inode_t prev_source;
   int prev_delay;
-  if ( i_conn == 0 )
-  {
-    if ( conn_key_subarray_prev != NULL )
-    {
+  if (i_conn == 0) {
+    if (conn_key_subarray_prev != NULL) {
       prev_val = *conn_key_subarray_prev;
-      prev_source = getConnSource< ConnKeyT >( prev_val );
-      prev_delay = getConnDelay< ConnKeyT >( prev_val );
-    }
-    else
-    {
+      prev_source = getConnSource<ConnKeyT>(prev_val);
+      prev_delay = getConnDelay<ConnKeyT>(prev_val);
+    } else {
       prev_source = 0;
       prev_delay = -1; // just to ensure it is different
     }
+  } else {
+    prev_val = conn_key_subarray[i_conn - 1];
+    prev_source = getConnSource<ConnKeyT>(prev_val);
+    prev_delay = getConnDelay<ConnKeyT>(prev_val);
   }
-  else
-  {
-    prev_val = conn_key_subarray[ i_conn - 1 ];
-    prev_source = getConnSource< ConnKeyT >( prev_val );
-    prev_delay = getConnDelay< ConnKeyT >( prev_val );
-  }
-  inode_t source = getConnSource< ConnKeyT >( val );
-  int delay = getConnDelay< ConnKeyT >( val );
-  if ( source != prev_source || delay != prev_delay )
-  {
-    conn_group_iconn0_mask[ i_conn ] = 1;
+  inode_t source = getConnSource<ConnKeyT>(val);
+  int delay = getConnDelay<ConnKeyT>(val);
+  if (source != prev_source || delay != prev_delay) {
+    conn_group_iconn0_mask[i_conn] = 1;
   }
 }
 
-template < class ConnKeyT >
-__global__ void
-setConnGroupIdx0Compact( ConnKeyT* conn_key_subarray,
-  int64_t n_block_conn,
-  int* conn_group_idx0_mask,
-  iconngroup_t* conn_group_iconn0_mask_cumul,
-  inode_t* conn_group_idx0_mask_cumul,
-  iconngroup_t* conn_group_idx0_compact,
-  inode_t* conn_group_source_compact,
-  iconngroup_t* iconn0_offset,
-  inode_t* idx0_offset )
-{
+template <class ConnKeyT>
+__global__ void setConnGroupIdx0Compact(
+    ConnKeyT *conn_key_subarray, int64_t n_block_conn,
+    int *conn_group_idx0_mask, iconngroup_t *conn_group_iconn0_mask_cumul,
+    inode_t *conn_group_idx0_mask_cumul, iconngroup_t *conn_group_idx0_compact,
+    inode_t *conn_group_source_compact, iconngroup_t *iconn0_offset,
+    inode_t *idx0_offset) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn > n_block_conn )
-  {
+  if (i_conn > n_block_conn) {
     return;
   }
-  if ( i_conn < n_block_conn && conn_group_idx0_mask[ i_conn ] == 0 )
-  {
+  if (i_conn < n_block_conn && conn_group_idx0_mask[i_conn] == 0) {
     return;
   }
-  iconngroup_t i_group = conn_group_iconn0_mask_cumul[ i_conn ] + *iconn0_offset;
-  inode_t i_source_compact = conn_group_idx0_mask_cumul[ i_conn ] + *idx0_offset;
-  conn_group_idx0_compact[ i_source_compact ] = i_group;
-  if ( i_conn < n_block_conn )
-  {
+  iconngroup_t i_group = conn_group_iconn0_mask_cumul[i_conn] + *iconn0_offset;
+  inode_t i_source_compact = conn_group_idx0_mask_cumul[i_conn] + *idx0_offset;
+  conn_group_idx0_compact[i_source_compact] = i_group;
+  if (i_conn < n_block_conn) {
     // int source = conn_key_subarray[i_conn] >> MaxPortSynNBits;
-    inode_t source = getConnSource< ConnKeyT >( conn_key_subarray[ i_conn ] );
-    conn_group_source_compact[ i_source_compact ] = source;
+    inode_t source = getConnSource<ConnKeyT>(conn_key_subarray[i_conn]);
+    conn_group_source_compact[i_source_compact] = source;
   }
 }
 
-template < class ConnKeyT >
-__global__ void
-getConnGroupDelay( int64_t block_size,
-  ConnKeyT** conn_key_array,
-  int64_t* conn_group_iconn0,
-  int* conn_group_delay,
-  iconngroup_t conn_group_num )
-{
+template <class ConnKeyT>
+__global__ void getConnGroupDelay(int64_t block_size, ConnKeyT **conn_key_array,
+                                  int64_t *conn_group_iconn0,
+                                  int *conn_group_delay,
+                                  iconngroup_t conn_group_num) {
   iconngroup_t conn_group_idx = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( conn_group_idx >= conn_group_num )
-  {
+  if (conn_group_idx >= conn_group_num) {
     return;
   }
-  int64_t i_conn = conn_group_iconn0[ conn_group_idx ];
-  int i_block = ( int ) ( i_conn / block_size );
+  int64_t i_conn = conn_group_iconn0[conn_group_idx];
+  int i_block = (int)(i_conn / block_size);
   int64_t i_block_conn = i_conn % block_size;
-  ConnKeyT& conn_key = conn_key_array[ i_block ][ i_block_conn ];
-  conn_group_delay[ conn_group_idx ] = getConnDelay( conn_key );
+  ConnKeyT &conn_key = conn_key_array[i_block][i_block_conn];
+  conn_group_delay[conn_group_idx] = getConnDelay(conn_key);
 }
 
-template < class ConnKeyT >
+template <class ConnKeyT>
 __global__ void
-buildConnGroupMask( ConnKeyT* conn_key_subarray,
-  ConnKeyT* conn_key_subarray_prev,
-  int64_t n_block_conn,
-  int* conn_group_iconn0_mask,
-  int* conn_group_idx0_mask )
-{
+buildConnGroupMask(ConnKeyT *conn_key_subarray,
+                   ConnKeyT *conn_key_subarray_prev, int64_t n_block_conn,
+                   int *conn_group_iconn0_mask, int *conn_group_idx0_mask) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_block_conn )
-  {
+  if (i_conn >= n_block_conn) {
     return;
   }
-  ConnKeyT val = conn_key_subarray[ i_conn ];
+  ConnKeyT val = conn_key_subarray[i_conn];
   ConnKeyT prev_val;
   inode_t prev_source;
   int prev_delay;
-  if ( i_conn == 0 )
-  {
-    if ( conn_key_subarray_prev != NULL )
-    {
+  if (i_conn == 0) {
+    if (conn_key_subarray_prev != NULL) {
       prev_val = *conn_key_subarray_prev;
       // prev_source = prev_val >> MaxPortSynNBits;
-      prev_source = getConnSource< ConnKeyT >( prev_val );
-      prev_delay = getConnDelay< ConnKeyT >( prev_val );
-    }
-    else
-    {
+      prev_source = getConnSource<ConnKeyT>(prev_val);
+      prev_delay = getConnDelay<ConnKeyT>(prev_val);
+    } else {
       prev_source = 0;
       prev_delay = -1; // just to ensure it is different
     }
-  }
-  else
-  {
-    prev_val = conn_key_subarray[ i_conn - 1 ];
+  } else {
+    prev_val = conn_key_subarray[i_conn - 1];
     // prev_source = prev_val >> MaxPortSynNBits;
-    prev_source = getConnSource< ConnKeyT >( prev_val );
-    prev_delay = getConnDelay< ConnKeyT >( prev_val );
+    prev_source = getConnSource<ConnKeyT>(prev_val);
+    prev_delay = getConnDelay<ConnKeyT>(prev_val);
   }
   // int source = val >> MaxPortSynNBits;
-  inode_t source = getConnSource< ConnKeyT >( val );
-  if ( source != prev_source || prev_delay < 0 )
-  {
-    conn_group_iconn0_mask[ i_conn ] = 1;
-    conn_group_idx0_mask[ i_conn ] = 1;
-  }
-  else
-  {
-    int delay = getConnDelay< ConnKeyT >( val );
-    if ( delay != prev_delay )
-    {
-      conn_group_iconn0_mask[ i_conn ] = 1;
+  inode_t source = getConnSource<ConnKeyT>(val);
+  if (source != prev_source || prev_delay < 0) {
+    conn_group_iconn0_mask[i_conn] = 1;
+    conn_group_idx0_mask[i_conn] = 1;
+  } else {
+    int delay = getConnDelay<ConnKeyT>(val);
+    if (delay != prev_delay) {
+      conn_group_iconn0_mask[i_conn] = 1;
     }
   }
 }
 
-__device__ __forceinline__ inode_t
-getNodeIndex( inode_t i_node_0, inode_t i_node_rel )
-{
+__device__ __forceinline__ inode_t getNodeIndex(inode_t i_node_0,
+                                                inode_t i_node_rel) {
   return i_node_0 + i_node_rel;
 }
 
-__device__ __forceinline__ inode_t
-getNodeIndex( inode_t* i_node_0, inode_t i_node_rel )
-{
-  return *( i_node_0 + i_node_rel );
+__device__ __forceinline__ inode_t getNodeIndex(inode_t *i_node_0,
+                                                inode_t i_node_rel) {
+  return *(i_node_0 + i_node_rel);
 }
 
-inline inode_t hGetNodeIndex( inode_t i_node_0, inode_t i_node_rel )
-{
+inline inode_t hGetNodeIndex(inode_t i_node_0, inode_t i_node_rel) {
   return i_node_0 + i_node_rel;
 }
 
-inline inode_t
-hGetNodeIndex( inode_t* i_node_0, inode_t i_node_rel )
-{
-  return *( i_node_0 + i_node_rel );
+inline inode_t hGetNodeIndex(inode_t *i_node_0, inode_t i_node_rel) {
+  return *(i_node_0 + i_node_rel);
 }
 
-inline void getNodeIndexRange( inode_t i_node_0, inode_t n_node, inode_t &inode_min, inode_t &inode_max )
-{
+inline void getNodeIndexRange(inode_t i_node_0, inode_t n_node,
+                              inode_t &inode_min, inode_t &inode_max) {
   inode_min = i_node_0;
   inode_max = i_node_0 + n_node - 1;
 }
 
-inline void getNodeIndexRange( inode_t* i_node_0, inode_t n_node, inode_t &inode_min, inode_t &inode_max )
-{
-  inode_t *min = std::min_element( i_node_0, i_node_0 + n_node );
-  inode_t *max = std::max_element( i_node_0, i_node_0 + n_node );
+inline void getNodeIndexRange(inode_t *i_node_0, inode_t n_node,
+                              inode_t &inode_min, inode_t &inode_max) {
+  inode_t *min = std::min_element(i_node_0, i_node_0 + n_node);
+  inode_t *max = std::max_element(i_node_0, i_node_0 + n_node);
   inode_min = *min;
   inode_max = *max;
 }
 
-
-inline inode_t
-copyNodeArrayToDevice( inode_t i_node, inode_t n_node )
-{
+inline inode_t copyNodeArrayToDevice(inode_t i_node, inode_t n_node) {
   return i_node;
 }
 
-inline int
-freeNodeArrayFromDevice( inode_t i_node )
-{
-  return 0;
-}
+inline int freeNodeArrayFromDevice(inode_t i_node) { return 0; }
 
-inline inode_t*
-copyNodeArrayToDevice( inode_t* h_node, inode_t n_node )
-{
-  inode_t* d_node;
-  CUDAMALLOCCTRL( "&d_node", &d_node, n_node * sizeof( inode_t ) );
-  gpuErrchk( cudaMemcpy( d_node, h_node, n_node * sizeof( inode_t ), cudaMemcpyHostToDevice ) );
+inline inode_t *copyNodeArrayToDevice(inode_t *h_node, inode_t n_node) {
+  inode_t *d_node;
+  CUDAMALLOCCTRL("&d_node", &d_node, n_node * sizeof(inode_t));
+  gpuErrchk(cudaMemcpy(d_node, h_node, n_node * sizeof(inode_t),
+                       cudaMemcpyHostToDevice));
 
   return d_node;
 }
 
-inline int
-freeNodeArrayFromDevice( inode_t* d_node )
-{
-  CUDAFREECTRL( "d_node", d_node );
+inline int freeNodeArrayFromDevice(inode_t *d_node) {
+  CUDAFREECTRL("d_node", d_node);
   return 0;
 }
 
-
-template < class T, class ConnKeyT >
-__global__ void
-setSource( ConnKeyT* conn_key_subarray, uint* rand_val, int64_t n_conn, T source, inode_t n_source )
-{
+template <class T, class ConnKeyT>
+__global__ void setSource(ConnKeyT *conn_key_subarray, uint *rand_val,
+                          int64_t n_conn, T source, inode_t n_source) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  inode_t i_source = getNodeIndex( source, rand_val[ i_conn ] % n_source );
-  setConnSource< ConnKeyT >( conn_key_subarray[ i_conn ], i_source );
+  inode_t i_source = getNodeIndex(source, rand_val[i_conn] % n_source);
+  setConnSource<ConnKeyT>(conn_key_subarray[i_conn], i_source);
 }
 
-template < class T, class ConnKeyT >
-__global__ void
-setSource( ConnKeyT* conn_key_subarray, inode_t* source, int64_t n_conn)
-{
+template <class T, class ConnKeyT>
+__global__ void setSource(ConnKeyT *conn_key_subarray, inode_t *source,
+                          int64_t n_conn) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  inode_t i_source = source[ i_conn ];
-  setConnSource< ConnKeyT >( conn_key_subarray[ i_conn ], i_source );
+  inode_t i_source = source[i_conn];
+  setConnSource<ConnKeyT>(conn_key_subarray[i_conn], i_source);
 }
 
-template < class T >
-__global__ void
-setSource( inode_t* conn_source_ids, uint* rand_val, int64_t n_conn, T source, inode_t n_source )
-{
+template <class T>
+__global__ void setSource(inode_t *conn_source_ids, uint *rand_val,
+                          int64_t n_conn, T source, inode_t n_source) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  inode_t i_source = getNodeIndex( source, rand_val[ i_conn ] % n_source );
-  conn_source_ids[ i_conn ] = i_source;
+  inode_t i_source = getNodeIndex(source, rand_val[i_conn] % n_source);
+  conn_source_ids[i_conn] = i_source;
 }
 
-template < class T, class ConnStructT >
-__global__ void
-setTarget( ConnStructT* conn_struct_subarray, uint* rand_val, int64_t n_conn, T target, inode_t n_target )
-{
+template <class T, class ConnStructT>
+__global__ void setTarget(ConnStructT *conn_struct_subarray, uint *rand_val,
+                          int64_t n_conn, T target, inode_t n_target) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  inode_t i_target = getNodeIndex( target, rand_val[ i_conn ] % n_target );
-  setConnTarget< ConnStructT >( conn_struct_subarray[ i_conn ], i_target );
+  inode_t i_target = getNodeIndex(target, rand_val[i_conn] % n_target);
+  setConnTarget<ConnStructT>(conn_struct_subarray[i_conn], i_target);
 }
 
-template < class T1, class T2, class ConnKeyT, class ConnStructT >
+template <class T1, class T2, class ConnKeyT, class ConnStructT>
 __global__ void
-setOneToOneSourceTarget( ConnKeyT* conn_key_subarray,
-  ConnStructT* conn_struct_subarray,
-  int64_t n_block_conn,
-  int64_t n_prev_conn,
-  T1 source,
-  T2 target )
-{
+setOneToOneSourceTarget(ConnKeyT *conn_key_subarray,
+                        ConnStructT *conn_struct_subarray, int64_t n_block_conn,
+                        int64_t n_prev_conn, T1 source, T2 target) {
   int64_t i_block_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_block_conn >= n_block_conn )
-  {
+  if (i_block_conn >= n_block_conn) {
     return;
   }
   int64_t i_conn = n_prev_conn + i_block_conn;
-  inode_t i_source = getNodeIndex( source, ( int ) ( i_conn ) );
-  inode_t i_target = getNodeIndex( target, ( int ) ( i_conn ) );
-  setConnSource< ConnKeyT >( conn_key_subarray[ i_block_conn ], i_source );
-  setConnTarget< ConnStructT >( conn_struct_subarray[ i_block_conn ], i_target );
+  inode_t i_source = getNodeIndex(source, (int)(i_conn));
+  inode_t i_target = getNodeIndex(target, (int)(i_conn));
+  setConnSource<ConnKeyT>(conn_key_subarray[i_block_conn], i_source);
+  setConnTarget<ConnStructT>(conn_struct_subarray[i_block_conn], i_target);
 }
 
-template < class T >
-__global__ void
-setOneToOneSource( inode_t* conn_source_ids, int64_t n_conn, T source )
-{
+template <class T>
+__global__ void setOneToOneSource(inode_t *conn_source_ids, int64_t n_conn,
+                                  T source) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  inode_t i_source = getNodeIndex( source, ( int ) ( i_conn ) );
-  conn_source_ids[ i_conn ] = i_source;
+  inode_t i_source = getNodeIndex(source, (int)(i_conn));
+  conn_source_ids[i_conn] = i_source;
 }
 
-template < class T1, class T2, class ConnKeyT, class ConnStructT >
+template <class T1, class T2, class ConnKeyT, class ConnStructT>
 __global__ void
-setAllToAllSourceTarget( ConnKeyT* conn_key_subarray,
-  ConnStructT* conn_struct_subarray,
-  int64_t n_block_conn,
-  int64_t n_prev_conn,
-  T1 source,
-  inode_t n_source,
-  T2 target,
-  inode_t n_target )
-{
+setAllToAllSourceTarget(ConnKeyT *conn_key_subarray,
+                        ConnStructT *conn_struct_subarray, int64_t n_block_conn,
+                        int64_t n_prev_conn, T1 source, inode_t n_source,
+                        T2 target, inode_t n_target) {
   int64_t i_block_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_block_conn >= n_block_conn )
-  {
+  if (i_block_conn >= n_block_conn) {
     return;
   }
   int64_t i_conn = n_prev_conn + i_block_conn;
-  inode_t i_source = getNodeIndex( source, ( int ) ( i_conn / n_target ) );
-  inode_t i_target = getNodeIndex( target, ( int ) ( i_conn % n_target ) );
-  setConnSource< ConnKeyT >( conn_key_subarray[ i_block_conn ], i_source );
-  setConnTarget< ConnStructT >( conn_struct_subarray[ i_block_conn ], i_target );
+  inode_t i_source = getNodeIndex(source, (int)(i_conn / n_target));
+  inode_t i_target = getNodeIndex(target, (int)(i_conn % n_target));
+  setConnSource<ConnKeyT>(conn_key_subarray[i_block_conn], i_source);
+  setConnTarget<ConnStructT>(conn_struct_subarray[i_block_conn], i_target);
 }
 
-template < class T1 >
-__global__ void
-setAllToAllSource( inode_t* conn_source_ids,
-  int64_t n_conn,
-  T1 source,
-  inode_t n_source,
-  inode_t n_target )
-{
+template <class T1>
+__global__ void setAllToAllSource(inode_t *conn_source_ids, int64_t n_conn,
+                                  T1 source, inode_t n_source,
+                                  inode_t n_target) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  inode_t i_source = getNodeIndex( source, ( int ) ( i_conn / n_target ) );
-  conn_source_ids[ i_conn ] = i_source;
+  inode_t i_source = getNodeIndex(source, (int)(i_conn / n_target));
+  conn_source_ids[i_conn] = i_source;
 }
 
-template < class T, class ConnStructT >
-__global__ void
-setIndegreeTarget( ConnStructT* conn_struct_subarray,
-  int64_t n_block_conn,
-  int64_t n_prev_conn,
-  T target,
-  int indegree )
-{
+template <class T, class ConnStructT>
+__global__ void setIndegreeTarget(ConnStructT *conn_struct_subarray,
+                                  int64_t n_block_conn, int64_t n_prev_conn,
+                                  T target, int indegree) {
   int64_t i_block_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_block_conn >= n_block_conn )
-  {
+  if (i_block_conn >= n_block_conn) {
     return;
   }
   int64_t i_conn = n_prev_conn + i_block_conn;
-  inode_t i_target = getNodeIndex( target, ( int ) ( i_conn / indegree ) );
-  setConnTarget< ConnStructT >( conn_struct_subarray[ i_block_conn ], i_target );
+  inode_t i_target = getNodeIndex(target, (int)(i_conn / indegree));
+  setConnTarget<ConnStructT>(conn_struct_subarray[i_block_conn], i_target);
 }
 
-template < class T, class ConnKeyT >
-__global__ void
-setOutdegreeSource( ConnKeyT* conn_key_subarray, int64_t n_block_conn, int64_t n_prev_conn, T source, int outdegree )
-{
+template <class T, class ConnKeyT>
+__global__ void setOutdegreeSource(ConnKeyT *conn_key_subarray,
+                                   int64_t n_block_conn, int64_t n_prev_conn,
+                                   T source, int outdegree) {
   int64_t i_block_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_block_conn >= n_block_conn )
-  {
+  if (i_block_conn >= n_block_conn) {
     return;
   }
   int64_t i_conn = n_prev_conn + i_block_conn;
-  inode_t i_source = getNodeIndex( source, ( int ) ( i_conn / outdegree ) );
-  setConnSource< ConnKeyT >( conn_key_subarray[ i_block_conn ], i_source );
+  inode_t i_source = getNodeIndex(source, (int)(i_conn / outdegree));
+  setConnSource<ConnKeyT>(conn_key_subarray[i_block_conn], i_source);
 }
 
-template < class T >
-__global__ void
-setOutdegreeSource( inode_t* conn_source_ids, int64_t n_conn, T source, int outdegree )
-{
+template <class T>
+__global__ void setOutdegreeSource(inode_t *conn_source_ids, int64_t n_conn,
+                                   T source, int outdegree) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn )
-  {
+  if (i_conn >= n_conn) {
     return;
   }
-  inode_t i_source = getNodeIndex( source, ( int ) ( i_conn / outdegree ) );
-  conn_source_ids[ i_conn ] = i_source;
+  inode_t i_source = getNodeIndex(source, (int)(i_conn / outdegree));
+  conn_source_ids[i_conn] = i_source;
 }
 
 // Count number of connections per source-target couple
-template < class ConnKeyT, class ConnStructT >
-__global__ void
-countConnectionsKernel( int64_t n_conn,
-  inode_t n_source,
-  inode_t n_target,
-  uint64_t* src_tgt_arr,
-  uint64_t* src_tgt_conn_num,
-  int syn_group )
-{
-  int64_t i_conn = ( int64_t ) blockIdx.x * blockDim.x + threadIdx.x;
-  if ( i_conn >= n_conn )
-  {
+template <class ConnKeyT, class ConnStructT>
+__global__ void countConnectionsKernel(int64_t n_conn, inode_t n_source,
+                                       inode_t n_target, uint64_t *src_tgt_arr,
+                                       uint64_t *src_tgt_conn_num,
+                                       int syn_group) {
+  int64_t i_conn = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (i_conn >= n_conn) {
     return;
   }
 
-  int i_block = ( int ) ( i_conn / ConnBlockSize );
+  int i_block = (int)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
-  ConnStructT& conn_struct = ( ( ConnStructT** ) ConnStructArray )[ i_block ][ i_block_conn ];
-  ConnKeyT& conn_key = ( ( ConnKeyT** ) ConnKeyArray )[ i_block ][ i_block_conn ];
+  ConnStructT &conn_struct =
+      ((ConnStructT **)ConnStructArray)[i_block][i_block_conn];
+  ConnKeyT &conn_key = ((ConnKeyT **)ConnKeyArray)[i_block][i_block_conn];
   // if (syn_group==-1 || conn.syn_group == syn_group) {
-  int syn_group1 = getConnSyn< ConnKeyT, ConnStructT >( conn_key, conn_struct );
-  if ( syn_group == -1 || ( syn_group1 == syn_group ) )
-  {
+  int syn_group1 = getConnSyn<ConnKeyT, ConnStructT>(conn_key, conn_struct);
+  if (syn_group == -1 || (syn_group1 == syn_group)) {
     // First get source and target node index
-    inode_t i_target = getConnTarget< ConnStructT >( conn_struct );
-    inode_t i_source = getConnSource< ConnKeyT >( conn_key );
-    uint64_t i_src_tgt = ( ( int64_t ) i_source << 32 ) | i_target;
-    uint64_t i_arr = locate( i_src_tgt, src_tgt_arr, n_source * n_target );
-    if ( src_tgt_arr[ i_arr ] == i_src_tgt )
-    {
+    inode_t i_target = getConnTarget<ConnStructT>(conn_struct);
+    inode_t i_source = getConnSource<ConnKeyT>(conn_key);
+    uint64_t i_src_tgt = ((int64_t)i_source << 32) | i_target;
+    uint64_t i_arr = locate(i_src_tgt, src_tgt_arr, n_source * n_target);
+    if (src_tgt_arr[i_arr] == i_src_tgt) {
       // printf("i_conn %lld i_source %d i_target %d i_src_tgt %lld "
       //      "i_arr %lld\n", i_conn, i_source, i_target, i_src_tgt, i_arr);
       //  (atomic)increase the number of connections for source-target couple
-      atomicAdd( ( unsigned long long* ) &src_tgt_conn_num[ i_arr ], 1 );
+      atomicAdd((unsigned long long *)&src_tgt_conn_num[i_arr], 1);
     }
   }
 }
 
 // Fill array of connection indexes
-template < class ConnKeyT, class ConnStructT >
+template <class ConnKeyT, class ConnStructT>
 __global__ void
-setConnectionsIndexKernel( int64_t n_conn,
-  inode_t n_source,
-  inode_t n_target,
-  uint64_t* src_tgt_arr,
-  uint64_t* src_tgt_conn_num,
-  uint64_t* src_tgt_conn_cumul,
-  int syn_group,
-  int64_t* conn_ids )
-{
-  int64_t i_conn = ( int64_t ) blockIdx.x * blockDim.x + threadIdx.x;
-  if ( i_conn >= n_conn )
-  {
+setConnectionsIndexKernel(int64_t n_conn, inode_t n_source, inode_t n_target,
+                          uint64_t *src_tgt_arr, uint64_t *src_tgt_conn_num,
+                          uint64_t *src_tgt_conn_cumul, int syn_group,
+                          int64_t *conn_ids) {
+  int64_t i_conn = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (i_conn >= n_conn) {
     return;
   }
 
-  int i_block = ( int ) ( i_conn / ConnBlockSize );
+  int i_block = (int)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
-  ConnStructT& conn_struct = ( ( ConnStructT** ) ConnStructArray )[ i_block ][ i_block_conn ];
-  ConnKeyT& conn_key = ( ( ConnKeyT** ) ConnKeyArray )[ i_block ][ i_block_conn ];
+  ConnStructT &conn_struct =
+      ((ConnStructT **)ConnStructArray)[i_block][i_block_conn];
+  ConnKeyT &conn_key = ((ConnKeyT **)ConnKeyArray)[i_block][i_block_conn];
   // if (syn_group==-1 || conn.syn_group == syn_group) {
-  int syn_group1 = getConnSyn< ConnKeyT, ConnStructT >( conn_key, conn_struct );
-  if ( syn_group == -1 || ( syn_group1 == syn_group ) )
-  {
+  int syn_group1 = getConnSyn<ConnKeyT, ConnStructT>(conn_key, conn_struct);
+  if (syn_group == -1 || (syn_group1 == syn_group)) {
     // First get source and target node index
-    inode_t i_target = getConnTarget< ConnStructT >( conn_struct );
-    inode_t i_source = getConnSource< ConnKeyT >( conn_key );
-    uint64_t i_src_tgt = ( ( int64_t ) i_source << 32 ) | i_target;
-    uint64_t i_arr = locate( i_src_tgt, src_tgt_arr, n_source * n_target );
-    if ( src_tgt_arr[ i_arr ] == i_src_tgt )
-    {
+    inode_t i_target = getConnTarget<ConnStructT>(conn_struct);
+    inode_t i_source = getConnSource<ConnKeyT>(conn_key);
+    uint64_t i_src_tgt = ((int64_t)i_source << 32) | i_target;
+    uint64_t i_arr = locate(i_src_tgt, src_tgt_arr, n_source * n_target);
+    if (src_tgt_arr[i_arr] == i_src_tgt) {
       // printf("i_conn %lld i_source %d i_target %d i_src_tgt %lld "
       //      "i_arr %lld\n", i_conn, i_source, i_target, i_src_tgt, i_arr);
       //  (atomic)increase the number of connections for source-target couple
-      uint64_t pos = atomicAdd( ( unsigned long long* ) &src_tgt_conn_num[ i_arr ], 1 );
+      uint64_t pos =
+          atomicAdd((unsigned long long *)&src_tgt_conn_num[i_arr], 1);
       // printf("pos %lld src_tgt_conn_cumul[i_arr] %lld\n",
       //      pos, src_tgt_conn_cumul[i_arr]);
-      conn_ids[ src_tgt_conn_cumul[ i_arr ] + pos ] = i_conn;
+      conn_ids[src_tgt_conn_cumul[i_arr] + pos] = i_conn;
     }
   }
 }
@@ -2292,43 +2015,37 @@ setConnectionsIndexKernel( int64_t n_conn,
 // identified by the indexes conn_ids[i], and puts them in the arrays
 // i_source, i_target, port, syn_group, delay, weight
 //////////////////////////////////////////////////////////////////////
-template < class ConnKeyT, class ConnStructT >
-__global__ void
-getConnectionStatusKernel( int64_t* conn_ids,
-  int64_t n_conn,
-  inode_t* source,
-  inode_t* target,
-  int* port,
-  int* syn_group,
-  float* delay,
-  float* weight )
-{
-  int64_t i_arr = ( int64_t ) blockIdx.x * blockDim.x + threadIdx.x;
-  if ( i_arr >= n_conn )
-  {
+template <class ConnKeyT, class ConnStructT>
+__global__ void getConnectionStatusKernel(int64_t *conn_ids, int64_t n_conn,
+                                          inode_t *source, inode_t *target,
+                                          int *port, int *syn_group,
+                                          float *delay, float *weight) {
+  int64_t i_arr = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (i_arr >= n_conn) {
     return;
   }
 
   // get connection index, connection block index and index within block
-  int64_t i_conn = conn_ids[ i_arr ];
-  int i_block = ( int ) ( i_conn / ConnBlockSize );
+  int64_t i_conn = conn_ids[i_arr];
+  int i_block = (int)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
   // get connection structure
-  ConnStructT& conn_struct = ( ( ConnStructT** ) ConnStructArray )[ i_block ][ i_block_conn ];
-  ConnKeyT& conn_key = ( ( ConnKeyT** ) ConnKeyArray )[ i_block ][ i_block_conn ];
+  ConnStructT &conn_struct =
+      ((ConnStructT **)ConnStructArray)[i_block][i_block_conn];
+  ConnKeyT &conn_key = ((ConnKeyT **)ConnKeyArray)[i_block][i_block_conn];
   // Get source, target, port, synaptic group and delay
-  inode_t i_source = getConnSource< ConnKeyT >( conn_key );
-  inode_t i_target = getConnTarget< ConnStructT >( conn_struct );
-  int i_port = getConnPort< ConnKeyT, ConnStructT >( conn_key, conn_struct );
-  int i_syn_group = getConnSyn< ConnKeyT, ConnStructT >( conn_key, conn_struct );
-  int i_delay = getConnDelay< ConnKeyT >( conn_key );
-  source[ i_arr ] = i_source;
-  target[ i_arr ] = i_target;
-  port[ i_arr ] = i_port;
+  inode_t i_source = getConnSource<ConnKeyT>(conn_key);
+  inode_t i_target = getConnTarget<ConnStructT>(conn_struct);
+  int i_port = getConnPort<ConnKeyT, ConnStructT>(conn_key, conn_struct);
+  int i_syn_group = getConnSyn<ConnKeyT, ConnStructT>(conn_key, conn_struct);
+  int i_delay = getConnDelay<ConnKeyT>(conn_key);
+  source[i_arr] = i_source;
+  target[i_arr] = i_target;
+  port[i_arr] = i_port;
   // Get weight and synapse group
-  weight[ i_arr ] = conn_struct.weight;
-  syn_group[ i_arr ] = i_syn_group;
-  delay[ i_arr ] = NESTGPUTimeResolution * i_delay;
+  weight[i_arr] = conn_struct.weight;
+  syn_group[i_arr] = i_syn_group;
+  delay[i_arr] = NESTGPUTimeResolution * i_delay;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -2336,190 +2053,169 @@ getConnectionStatusKernel( int64_t* conn_ids,
 // identified by the indexes conn_ids[i], and puts it in the array
 // param_arr
 //////////////////////////////////////////////////////////////////////
-template < class ConnKeyT, class ConnStructT >
-__global__ void
-getConnectionFloatParamKernel( int64_t* conn_ids, int64_t n_conn, float* param_arr, int i_param )
-{
-  int64_t i_arr = ( int64_t ) blockIdx.x * blockDim.x + threadIdx.x;
-  if ( i_arr >= n_conn )
-  {
+template <class ConnKeyT, class ConnStructT>
+__global__ void getConnectionFloatParamKernel(int64_t *conn_ids, int64_t n_conn,
+                                              float *param_arr, int i_param) {
+  int64_t i_arr = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (i_arr >= n_conn) {
     return;
   }
 
   // get connection index, connection block index and index within block
-  int64_t i_conn = conn_ids[ i_arr ];
-  int i_block = ( int ) ( i_conn / ConnBlockSize );
+  int64_t i_conn = conn_ids[i_arr];
+  int i_block = (int)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
   // get connection structure
-  ConnStructT& conn_struct = ( ( ConnStructT** ) ConnStructArray )[ i_block ][ i_block_conn ];
-  ConnKeyT& conn_key = ( ( ConnKeyT** ) ConnKeyArray )[ i_block ][ i_block_conn ];
-  switch ( i_param )
-  {
-  case i_weight_param:
-  {
-    param_arr[ i_arr ] = conn_struct.weight;
+  ConnStructT &conn_struct =
+      ((ConnStructT **)ConnStructArray)[i_block][i_block_conn];
+  ConnKeyT &conn_key = ((ConnKeyT **)ConnKeyArray)[i_block][i_block_conn];
+  switch (i_param) {
+  case i_weight_param: {
+    param_arr[i_arr] = conn_struct.weight;
     break;
   }
-  case i_delay_param:
-  {
+  case i_delay_param: {
     // Get joined source-delay parameter, then delay
-    int i_delay = getConnDelay< ConnKeyT >( conn_key );
-    param_arr[ i_arr ] = NESTGPUTimeResolution * i_delay;
+    int i_delay = getConnDelay<ConnKeyT>(conn_key);
+    param_arr[i_arr] = NESTGPUTimeResolution * i_delay;
     break;
   }
   }
 }
 
-template < class ConnKeyT, class ConnStructT >
+template <class ConnKeyT, class ConnStructT>
 //////////////////////////////////////////////////////////////////////
 // CUDA Kernel that gets an integer parameter of an array of n_conn connections,
 // identified by the indexes conn_ids[i], and puts it in the array
 // param_arr
 //////////////////////////////////////////////////////////////////////
-__global__ void
-getConnectionIntParamKernel( int64_t* conn_ids, int64_t n_conn, int* param_arr, int i_param )
-{
-  int64_t i_arr = ( int64_t ) blockIdx.x * blockDim.x + threadIdx.x;
-  if ( i_arr >= n_conn )
-  {
+__global__ void getConnectionIntParamKernel(int64_t *conn_ids, int64_t n_conn,
+                                            int *param_arr, int i_param) {
+  int64_t i_arr = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (i_arr >= n_conn) {
     return;
   }
 
   // get connection index, connection block index and index within block
-  int64_t i_conn = conn_ids[ i_arr ];
-  int i_block = ( int ) ( i_conn / ConnBlockSize );
+  int64_t i_conn = conn_ids[i_arr];
+  int i_block = (int)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
   // get connection structure
-  ConnStructT& conn_struct = ( ( ConnStructT** ) ConnStructArray )[ i_block ][ i_block_conn ];
-  ConnKeyT& conn_key = ( ( ConnKeyT** ) ConnKeyArray )[ i_block ][ i_block_conn ];
-  switch ( i_param )
-  {
-  case i_source_param:
-  {
-    inode_t i_source = getConnSource< ConnKeyT >( conn_key );
-    param_arr[ i_arr ] = i_source;
+  ConnStructT &conn_struct =
+      ((ConnStructT **)ConnStructArray)[i_block][i_block_conn];
+  ConnKeyT &conn_key = ((ConnKeyT **)ConnKeyArray)[i_block][i_block_conn];
+  switch (i_param) {
+  case i_source_param: {
+    inode_t i_source = getConnSource<ConnKeyT>(conn_key);
+    param_arr[i_arr] = i_source;
     break;
   }
-  case i_target_param:
-  {
-    inode_t i_target = getConnTarget< ConnStructT >( conn_struct );
-    param_arr[ i_arr ] = i_target;
+  case i_target_param: {
+    inode_t i_target = getConnTarget<ConnStructT>(conn_struct);
+    param_arr[i_arr] = i_target;
     break;
   }
-  case i_port_param:
-  {
-    int i_port = getConnPort< ConnKeyT, ConnStructT >( conn_key, conn_struct );
-    param_arr[ i_arr ] = i_port;
+  case i_port_param: {
+    int i_port = getConnPort<ConnKeyT, ConnStructT>(conn_key, conn_struct);
+    param_arr[i_arr] = i_port;
     break;
   }
-  case i_syn_group_param:
-  {
+  case i_syn_group_param: {
     // Get synapse group
-    int i_syn_group = getConnSyn< ConnKeyT, ConnStructT >( conn_key, conn_struct );
-    param_arr[ i_arr ] = i_syn_group;
+    int i_syn_group = getConnSyn<ConnKeyT, ConnStructT>(conn_key, conn_struct);
+    param_arr[i_arr] = i_syn_group;
     break;
   }
   }
 }
 
-template < class ConnStructT >
+template <class ConnStructT>
 //////////////////////////////////////////////////////////////////////
 // CUDA Kernel that sets a float parameter of an array of n_conn connections,
 // identified by the indexes conn_ids[i], using values from the array
 // param_arr
 //////////////////////////////////////////////////////////////////////
-__global__ void
-setConnectionFloatParamKernel( int64_t* conn_ids, int64_t n_conn, float* param_arr, int i_param )
-{
-  int64_t i_arr = ( int64_t ) blockIdx.x * blockDim.x + threadIdx.x;
-  if ( i_arr >= n_conn )
-  {
+__global__ void setConnectionFloatParamKernel(int64_t *conn_ids, int64_t n_conn,
+                                              float *param_arr, int i_param) {
+  int64_t i_arr = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (i_arr >= n_conn) {
     return;
   }
 
   // get connection index, connection block index and index within block
-  int64_t i_conn = conn_ids[ i_arr ];
-  int i_block = ( int ) ( i_conn / ConnBlockSize );
+  int64_t i_conn = conn_ids[i_arr];
+  int i_block = (int)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
   // get connection structure
-  ConnStructT& conn_struct = ( ( ConnStructT** ) ConnStructArray )[ i_block ][ i_block_conn ];
-  switch ( i_param )
-  {
-  case i_weight_param:
-  {
-    conn_struct.weight = param_arr[ i_arr ];
+  ConnStructT &conn_struct =
+      ((ConnStructT **)ConnStructArray)[i_block][i_block_conn];
+  switch (i_param) {
+  case i_weight_param: {
+    conn_struct.weight = param_arr[i_arr];
     break;
   }
   }
 }
 
-template < class ConnStructT >
+template <class ConnStructT>
 //////////////////////////////////////////////////////////////////////
 // CUDA Kernel that sets a float parameter of an array of n_conn connections,
 // identified by the indexes conn_ids[i], to the value val
 //////////////////////////////////////////////////////////////////////
-__global__ void
-setConnectionFloatParamKernel( int64_t* conn_ids, int64_t n_conn, float val, int i_param )
-{
-  int64_t i_arr = ( int64_t ) blockIdx.x * blockDim.x + threadIdx.x;
-  if ( i_arr >= n_conn )
-  {
+__global__ void setConnectionFloatParamKernel(int64_t *conn_ids, int64_t n_conn,
+                                              float val, int i_param) {
+  int64_t i_arr = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (i_arr >= n_conn) {
     return;
   }
 
   // get connection index, connection block index and index within block
-  int64_t i_conn = conn_ids[ i_arr ];
-  int i_block = ( int ) ( i_conn / ConnBlockSize );
+  int64_t i_conn = conn_ids[i_arr];
+  int i_block = (int)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
   // get connection structure
-  ConnStructT& conn_struct = ( ( ConnStructT** ) ConnStructArray )[ i_block ][ i_block_conn ];
-  switch ( i_param )
-  {
-  case i_weight_param:
-  {
+  ConnStructT &conn_struct =
+      ((ConnStructT **)ConnStructArray)[i_block][i_block_conn];
+  switch (i_param) {
+  case i_weight_param: {
     conn_struct.weight = val;
     break;
   }
   }
 }
 
-template < class ConnKeyT, class ConnStructT >
+template <class ConnKeyT, class ConnStructT>
 //////////////////////////////////////////////////////////////////////
 // CUDA Kernel that sets an integer parameter of an array of n_conn connections,
 // identified by the indexes conn_ids[i], using values from the array
 // param_arr
 //////////////////////////////////////////////////////////////////////
-__global__ void
-setConnectionIntParamKernel( int64_t* conn_ids, int64_t n_conn, int* param_arr, int i_param )
-{
-  int64_t i_arr = ( int64_t ) blockIdx.x * blockDim.x + threadIdx.x;
-  if ( i_arr >= n_conn )
-  {
+__global__ void setConnectionIntParamKernel(int64_t *conn_ids, int64_t n_conn,
+                                            int *param_arr, int i_param) {
+  int64_t i_arr = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (i_arr >= n_conn) {
     return;
   }
 
   // get connection index, connection block index and index within block
-  int64_t i_conn = conn_ids[ i_arr ];
-  int i_block = ( int ) ( i_conn / ConnBlockSize );
+  int64_t i_conn = conn_ids[i_arr];
+  int i_block = (int)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
   // get connection structure
-  ConnStructT& conn_struct = ( ( ConnStructT** ) ConnStructArray )[ i_block ][ i_block_conn ];
-  ConnKeyT& conn_key = ( ( ConnKeyT** ) ConnKeyArray )[ i_block ][ i_block_conn ];
-  switch ( i_param )
-  {
-  case i_target_param:
-  {
-    setConnTarget< ConnStructT >( conn_struct, param_arr[ i_arr ] );
+  ConnStructT &conn_struct =
+      ((ConnStructT **)ConnStructArray)[i_block][i_block_conn];
+  ConnKeyT &conn_key = ((ConnKeyT **)ConnKeyArray)[i_block][i_block_conn];
+  switch (i_param) {
+  case i_target_param: {
+    setConnTarget<ConnStructT>(conn_struct, param_arr[i_arr]);
     break;
   }
-  case i_port_param:
-  {
-    setConnPort< ConnKeyT, ConnStructT >( conn_key, conn_struct, param_arr[ i_arr ] );
+  case i_port_param: {
+    setConnPort<ConnKeyT, ConnStructT>(conn_key, conn_struct, param_arr[i_arr]);
     break;
   }
-  case i_syn_group_param:
-  {
-    setConnSyn< ConnKeyT, ConnStructT >( conn_key, conn_struct, param_arr[ i_arr ] );
+  case i_syn_group_param: {
+    setConnSyn<ConnKeyT, ConnStructT>(conn_key, conn_struct, param_arr[i_arr]);
     break;
   }
   }
@@ -2529,38 +2225,33 @@ setConnectionIntParamKernel( int64_t* conn_ids, int64_t n_conn, int* param_arr, 
 // CUDA Kernel that sets an integer parameter of an array of n_conn connections,
 // identified by the indexes conn_ids[i], to the value val
 //////////////////////////////////////////////////////////////////////
-template < class ConnKeyT, class ConnStructT >
-__global__ void
-setConnectionIntParamKernel( int64_t* conn_ids, int64_t n_conn, int val, int i_param )
-{
-  int64_t i_arr = ( int64_t ) blockIdx.x * blockDim.x + threadIdx.x;
-  if ( i_arr >= n_conn )
-  {
+template <class ConnKeyT, class ConnStructT>
+__global__ void setConnectionIntParamKernel(int64_t *conn_ids, int64_t n_conn,
+                                            int val, int i_param) {
+  int64_t i_arr = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (i_arr >= n_conn) {
     return;
   }
 
   // get connection index, connection block index and index within block
-  int64_t i_conn = conn_ids[ i_arr ];
-  int i_block = ( int ) ( i_conn / ConnBlockSize );
+  int64_t i_conn = conn_ids[i_arr];
+  int i_block = (int)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
   // get connection structure
-  ConnStructT& conn_struct = ( ( ConnStructT** ) ConnStructArray )[ i_block ][ i_block_conn ];
-  ConnKeyT& conn_key = ( ( ConnKeyT** ) ConnKeyArray )[ i_block ][ i_block_conn ];
-  switch ( i_param )
-  {
-  case i_target_param:
-  {
-    setConnTarget< ConnStructT >( conn_struct, val );
+  ConnStructT &conn_struct =
+      ((ConnStructT **)ConnStructArray)[i_block][i_block_conn];
+  ConnKeyT &conn_key = ((ConnKeyT **)ConnKeyArray)[i_block][i_block_conn];
+  switch (i_param) {
+  case i_target_param: {
+    setConnTarget<ConnStructT>(conn_struct, val);
     break;
   }
-  case i_port_param:
-  {
-    setConnPort< ConnKeyT, ConnStructT >( conn_key, conn_struct, val );
+  case i_port_param: {
+    setConnPort<ConnKeyT, ConnStructT>(conn_key, conn_struct, val);
     break;
   }
-  case i_syn_group_param:
-  {
-    setConnSyn< ConnKeyT, ConnStructT >( conn_key, conn_struct, val );
+  case i_syn_group_param: {
+    setConnSyn<ConnKeyT, ConnStructT>(conn_key, conn_struct, val);
     break;
   }
   }
@@ -2584,129 +2275,126 @@ struct MaxDelay
 */
 
 // max delay functor
-template < class ConnKeyT >
-struct MaxDelay
-{
+template <class ConnKeyT> struct MaxDelay {
   __device__ __forceinline__
-    // uint operator()(const uint &source_delay_a, const uint &source_delay_b)
-    // const {
-    ConnKeyT
-    operator()( const ConnKeyT& conn_key_a, const ConnKeyT& conn_key_b ) const
-  {
-    int i_delay_a = getConnDelay< ConnKeyT >( conn_key_a );
-    int i_delay_b = getConnDelay< ConnKeyT >( conn_key_b );
+      // uint operator()(const uint &source_delay_a, const uint &source_delay_b)
+      // const {
+      ConnKeyT operator()(const ConnKeyT &conn_key_a,
+                          const ConnKeyT &conn_key_b) const {
+    int i_delay_a = getConnDelay<ConnKeyT>(conn_key_a);
+    int i_delay_b = getConnDelay<ConnKeyT>(conn_key_b);
     // printf("conn_key_a: %lu\tconn_key_b: %lu\ti_delay_a: %d\ti_delay_b:
     // %d\n",
     //   conn_key_a, conn_key_b, i_delay_a, i_delay_b);
     // return (i_delay_b > i_delay_a) ? i_delay_b : i_delay_a;
-    
-    return ( i_delay_b > i_delay_a ) ? conn_key_b : conn_key_a;
+
+    return (i_delay_b > i_delay_a) ? conn_key_b : conn_key_a;
   }
 };
 
-template < class ConnKeyT >
-__global__ void
-poissGenSubstractFirstNodeIndexKernel( int64_t n_conn, ConnKeyT* poiss_key_array, int i_node_0 )
-{
-  int64_t blockId = ( int64_t ) blockIdx.y * gridDim.x + blockIdx.x;
+template <class ConnKeyT>
+__global__ void poissGenSubstractFirstNodeIndexKernel(int64_t n_conn,
+                                                      ConnKeyT *poiss_key_array,
+                                                      int i_node_0) {
+  int64_t blockId = (int64_t)blockIdx.y * gridDim.x + blockIdx.x;
   int64_t i_conn_rel = blockId * blockDim.x + threadIdx.x;
-  if ( i_conn_rel >= n_conn )
-  {
+  if (i_conn_rel >= n_conn) {
     return;
   }
-  ConnKeyT& conn_key = poiss_key_array[ i_conn_rel ];
-  int i_source_rel = getConnSource< ConnKeyT >( conn_key ) - i_node_0;
-  setConnSource< ConnKeyT >( conn_key, i_source_rel );
+  ConnKeyT &conn_key = poiss_key_array[i_conn_rel];
+  int i_source_rel = getConnSource<ConnKeyT>(conn_key) - i_node_0;
+  setConnSource<ConnKeyT>(conn_key, i_source_rel);
 }
 
 // Count number of reverse connections per target node
-template < class ConnKeyT, class ConnStructT >
+template <class ConnKeyT, class ConnStructT>
 __global__ void
-countRevConnectionsKernel( int64_t n_conn, int64_t* target_rev_connection_size_64 )
-{
-  int64_t i_conn = ( int64_t ) blockIdx.x * blockDim.x + threadIdx.x;
-  if ( i_conn >= n_conn )
-  {
+countRevConnectionsKernel(int64_t n_conn,
+                          int64_t *target_rev_connection_size_64) {
+  int64_t i_conn = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (i_conn >= n_conn) {
     return;
   }
 
-  uint i_block = ( uint ) ( i_conn / ConnBlockSize );
+  uint i_block = (uint)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
-  ConnKeyT& conn_key = ( ( ConnKeyT** ) ConnKeyArray )[ i_block ][ i_block_conn ];
-  ConnStructT& conn_struct = ( ( ConnStructT** ) ConnStructArray )[ i_block ][ i_block_conn ];
+  ConnKeyT &conn_key = ((ConnKeyT **)ConnKeyArray)[i_block][i_block_conn];
+  ConnStructT &conn_struct =
+      ((ConnStructT **)ConnStructArray)[i_block][i_block_conn];
 
   // TO BE IMPROVED BY CHECKING IF THE SYNAPSE TYPE OF THE GROUP
   // REQUIRES REVERSE CONNECTION
   // - Check syn_group of all connections.
   // - If syn_group>0 must create a reverse connection:
-  uint syn_group = getConnSyn< ConnKeyT, ConnStructT >( conn_key, conn_struct );
-  if ( syn_group > 0 )
-  {
+  uint syn_group = getConnSyn<ConnKeyT, ConnStructT>(conn_key, conn_struct);
+  if (syn_group > 0) {
     // First get target node index
-    uint i_target = getConnTarget< ConnStructT >( conn_struct );
+    uint i_target = getConnTarget<ConnStructT>(conn_struct);
     // (atomic)increase the number of reverse connections for target
-    atomicAdd( ( unsigned long long* ) &target_rev_connection_size_64[ i_target ], 1 );
+    atomicAdd((unsigned long long *)&target_rev_connection_size_64[i_target],
+              1);
   }
 }
 
 // Fill array of reverse connection indexes
-template < class ConnKeyT, class ConnStructT >
-__global__ void
-setRevConnectionsIndexKernel( int64_t n_conn, int* target_rev_connection_size, int64_t** target_rev_connection )
-{
-  int64_t i_conn = ( int64_t ) blockIdx.x * blockDim.x + threadIdx.x;
-  if ( i_conn >= n_conn )
-  {
+template <class ConnKeyT, class ConnStructT>
+__global__ void setRevConnectionsIndexKernel(int64_t n_conn,
+                                             int *target_rev_connection_size,
+                                             int64_t **target_rev_connection) {
+  int64_t i_conn = (int64_t)blockIdx.x * blockDim.x + threadIdx.x;
+  if (i_conn >= n_conn) {
     return;
   }
 
-  uint i_block = ( uint ) ( i_conn / ConnBlockSize );
+  uint i_block = (uint)(i_conn / ConnBlockSize);
   int64_t i_block_conn = i_conn % ConnBlockSize;
-  ConnKeyT& conn_key = ( ( ConnKeyT** ) ConnKeyArray )[ i_block ][ i_block_conn ];
-  ConnStructT& conn_struct = ( ( ConnStructT** ) ConnStructArray )[ i_block ][ i_block_conn ];
+  ConnKeyT &conn_key = ((ConnKeyT **)ConnKeyArray)[i_block][i_block_conn];
+  ConnStructT &conn_struct =
+      ((ConnStructT **)ConnStructArray)[i_block][i_block_conn];
 
   // TO BE IMPROVED BY CHECKING IF THE SYNAPSE TYPE OF THE GROUP
   // REQUIRES REVERSE CONNECTION
   // - Check syn_group of all connections.
   // - If syn_group>0 must create a reverse connection:
-  uint syn_group = getConnSyn< ConnKeyT, ConnStructT >( conn_key, conn_struct );
-  if ( syn_group > 0 )
-  {
+  uint syn_group = getConnSyn<ConnKeyT, ConnStructT>(conn_key, conn_struct);
+  if (syn_group > 0) {
     // First get target node index
-    uint i_target = getConnTarget< ConnStructT >( conn_struct );
+    uint i_target = getConnTarget<ConnStructT>(conn_struct);
     // (atomic)increase the number of reverse connections for target
-    int pos = atomicAdd( &target_rev_connection_size[ i_target ], 1 );
+    int pos = atomicAdd(&target_rev_connection_size[i_target], 1);
     // Evaluate the pointer to the rev connection position in the
     // array of reverse connection indexes
-    int64_t* rev_conn_pt = target_rev_connection[ i_target ] + pos;
+    int64_t *rev_conn_pt = target_rev_connection[i_target] + pos;
     // Fill it with the connection index
     *rev_conn_pt = i_conn;
   }
 }
 
-__global__ void revConnectionInitKernel( int64_t* rev_conn, int* target_rev_conn_size, int64_t** target_rev_conn );
+__global__ void revConnectionInitKernel(int64_t *rev_conn,
+                                        int *target_rev_conn_size,
+                                        int64_t **target_rev_conn);
 
-__global__ void setConnectionSpikeTime( unsigned int n_conn, unsigned short time_idx );
+__global__ void setConnectionSpikeTime(unsigned int n_conn,
+                                       unsigned short time_idx);
 
-__global__ void
-deviceRevSpikeInit( unsigned int* rev_spike_num, unsigned int* rev_spike_target, int* rev_spike_n_conn );
+__global__ void deviceRevSpikeInit(unsigned int *rev_spike_num,
+                                   unsigned int *rev_spike_target,
+                                   int *rev_spike_n_conn);
 
-__global__ void setTargetRevConnectionsPtKernel( int n_spike_buffer,
-  int64_t* target_rev_connection_cumul,
-  int64_t** target_rev_connection,
-  int64_t* rev_connections );
+__global__ void setTargetRevConnectionsPtKernel(
+    int n_spike_buffer, int64_t *target_rev_connection_cumul,
+    int64_t **target_rev_connection, int64_t *rev_connections);
 
-__global__ void resetConnectionSpikeTimeUpKernel( unsigned int n_conn );
+__global__ void resetConnectionSpikeTimeUpKernel(unsigned int n_conn);
 
-__global__ void resetConnectionSpikeTimeDownKernel( unsigned int n_conn );
+__global__ void resetConnectionSpikeTimeDownKernel(unsigned int n_conn);
 
-__global__ void connectCalibrateKernel( iconngroup_t* conn_group_idx0,
-  int64_t* conn_group_iconn0,
-  int* conn_group_delay,
-  int64_t block_size,
-  void* conn_key_array,
-  void* conn_struct_array,
-  unsigned short* conn_spike_time );
+__global__ void connectCalibrateKernel(iconngroup_t *conn_group_idx0,
+                                       int64_t *conn_group_iconn0,
+                                       int *conn_group_delay,
+                                       int64_t block_size, void *conn_key_array,
+                                       void *conn_struct_array,
+                                       unsigned short *conn_spike_time);
 
 // template <class ConnKeyT, class ConnStructT>
 // ConnectionTemplate<ConnKeyT, ConnStructT>::ConnectionTemplate()
@@ -2714,21 +2402,18 @@ __global__ void connectCalibrateKernel( iconngroup_t* conn_group_idx0,
 //   init();
 // }
 
-
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::init()
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::init() {
   /////////////////////////////////////////////////
   // member variables initialization
   distribution_ = NULL;
 
-  conn_block_size_ = 16*1024*1024; // 10000000;
+  conn_block_size_ = 16 * 1024 * 1024; // 10000000;
 
   n_conn_ = 0;
 
   first_connection_flag_ = true;
-  
+
   d_conn_storage_ = NULL;
 
   time_resolution_ = 0.1;
@@ -2760,12 +2445,12 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::init()
 
   // The arrays that map remote source nodes to local spike buffers
   // are organized in blocks having block size:
-  node_map_block_size_ = 128*1024; // 100000;
+  node_map_block_size_ = 128 * 1024; // 100000;
 
   // number of elements in the map for each source host
   // n_remote_source_node_map[i_source_host]
   // with i_source_host = 0, ..., n_hosts-1 excluding this host itself
-  //d_n_remote_source_node_map_ = nullptr;
+  // d_n_remote_source_node_map_ = nullptr;
 
   d_image_node_map_ = nullptr;
 
@@ -2792,7 +2477,8 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::init()
   // - false otherwise (fixed_indegree, fixed_total_number, pairwise_bernoulli)
   use_all_source_nodes_ = nullptr; // [n_connection_rules]:
 
-  // Flag set true when the indexes of the host group source nodes are always assumed to be a sequence (range)
+  // Flag set true when the indexes of the host group source nodes are always
+  // assumed to be a sequence (range)
   host_group_source_node_sequence_flag_ = true;
 
   //////////////////////////////////////////////////
@@ -2810,12 +2496,13 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::init()
   d_target_rev_conn_size_ = nullptr; //[i] i=0,..., n_neuron-1;
   d_target_rev_conn_ = nullptr;      //[i][j] j=0,...,rev_conn_size_[i]-1
 
-
   //////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // Pointers to memory allocated dynamically in GPU memory, must be eventually freed at the end
-  
+  // Pointers to memory allocated dynamically in GPU memory, must be eventually
+  // freed at the end
+
   // flags to mark if nodes are actually used in a connection
-  // used only if use_all_remote_source_nodes_ is false, otherwise it remains equal to nullptr
+  // used only if use_all_remote_source_nodes_ is false, otherwise it remains
+  // equal to nullptr
   d_source_node_flag_ = nullptr; // [n_source]
 
   // number of nodes actually used in new connections
@@ -2824,20 +2511,23 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::init()
   // Define unsorted and sorted arrays of source node indexes
   d_unsorted_source_node_index_ = nullptr; // [n_used_source_nodes];
   d_sorted_source_node_index_ = nullptr;   // [n_used_source_nodes];
-  
-  // i_source_arr are the positions in the arrays source_node_flag and local_node_index
+
+  // i_source_arr are the positions in the arrays source_node_flag and
+  // local_node_index
   d_i_unsorted_source_arr_ = nullptr; // [n_used_source_nodes];
   d_i_sorted_source_arr_ = nullptr;   // [n_used_source_nodes];
 
   //////////////////////////////
-  // Array of remote source node map blocks and local node image blocks 
+  // Array of remote source node map blocks and local node image blocks
   d_node_map_ = nullptr;
   d_image_node_map_tmp_ = nullptr;
 
-  // Boolean array for flagging remote source nodes not yet mapped across nodes used in some connection
+  // Boolean array for flagging remote source nodes not yet mapped across nodes
+  // used in some connection
   d_node_to_map_ = nullptr;
-  
-  // Boolean array for flagging remote source nodes already mapped across all source nodes
+
+  // Boolean array for flagging remote source nodes already mapped across all
+  // source nodes
   d_node_mapped_ = nullptr;
 
   // Number of nodes to be mapped
@@ -2854,271 +2544,220 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::init()
 
   // store position result from a search or similar things
   d_position_ = nullptr;
-  
-  // auxiliary memory block
-  //uint *d_aux_array_ = nullptr;
 
-  first_out_conn_block_size_ = 16*1024*1024;
+  // auxiliary memory block
+  // uint *d_aux_array_ = nullptr;
+
+  first_out_conn_block_size_ = 16 * 1024 * 1024;
   first_out_conn_in_device_ = false;
   check_first_out_connection_ = false;
   n_spike_from_host_ = 0;
-  
+
   initConnRandomGenerator();
 
-  _setSpikeBufferAlgo( INPUT_SPIKE_BUFFER_ALGO );
+  _setSpikeBufferAlgo(INPUT_SPIKE_BUFFER_ALGO);
   //_setSpikeBufferAlgo(OUTPUT_SPIKE_BUFFER_ALGO);
   setMinAllowedDelay(time_resolution_);
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::calibrate()
-{
-  if ( conn_source_ids_size_ > 0 && d_conn_source_ids_ != nullptr )
-  {
-    CUDAFREECTRL( "d_conn_source_ids_", d_conn_source_ids_ );
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::calibrate() {
+  if (conn_source_ids_size_ > 0 && d_conn_source_ids_ != nullptr) {
+    CUDAFREECTRL("d_conn_source_ids_", d_conn_source_ids_);
   }
 
-  if ( spike_time_flag_ )
-  {
-    CUDAMALLOCCTRL( "&d_conn_spike_time_", &d_conn_spike_time_, n_conn_ * sizeof( unsigned short ) );
+  if (spike_time_flag_) {
+    CUDAMALLOCCTRL("&d_conn_spike_time_", &d_conn_spike_time_,
+                   n_conn_ * sizeof(unsigned short));
   }
 
-  connectCalibrateKernel<<< 1, 1 >>>( d_conn_group_idx0_,
-    d_conn_group_iconn0_,
-    d_conn_group_delay_,
-    conn_block_size_,
-    d_conn_key_array_,
-    d_conn_struct_array_,
-    d_conn_spike_time_ );
+  connectCalibrateKernel<<<1, 1>>>(d_conn_group_idx0_, d_conn_group_iconn0_,
+                                   d_conn_group_delay_, conn_block_size_,
+                                   d_conn_key_array_, d_conn_struct_array_,
+                                   d_conn_spike_time_);
   DBGCUDASYNC;
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::allocateNewBlocks( int new_n_block )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::allocateNewBlocks(
+    int new_n_block) {
   // Allocating GPU memory for new connection blocks
   // allocate new blocks if needed
-  for ( int ib = conn_key_vect_.size(); ib < new_n_block; ib++ )
-  {
-    ConnKeyT* d_key_pt;
-    ConnStructT* d_connection_pt;
+  for (int ib = conn_key_vect_.size(); ib < new_n_block; ib++) {
+    ConnKeyT *d_key_pt;
+    ConnStructT *d_connection_pt;
     // allocate GPU memory for new blocks
-    CUDAMALLOCCTRL( "&d_key_pt", &d_key_pt, conn_block_size_ * sizeof( ConnKeyT ) );
-    CUDAMALLOCCTRL( "&d_connection_pt", &d_connection_pt, conn_block_size_ * sizeof( ConnStructT ) );
-    conn_key_vect_.push_back( d_key_pt );
-    conn_struct_vect_.push_back( d_connection_pt );
+    CUDAMALLOCCTRL("&d_key_pt", &d_key_pt, conn_block_size_ * sizeof(ConnKeyT));
+    CUDAMALLOCCTRL("&d_connection_pt", &d_connection_pt,
+                   conn_block_size_ * sizeof(ConnStructT));
+    conn_key_vect_.push_back(d_key_pt);
+    conn_struct_vect_.push_back(d_connection_pt);
   }
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::freeConnectionKey()
-{
-  for ( uint ib = 0; ib < conn_key_vect_.size(); ib++ )
-  {
-    ConnKeyT* d_key_pt = conn_key_vect_[ ib ];
-    if ( d_key_pt != nullptr )
-    {
-      CUDAFREECTRL( "d_key_pt", d_key_pt );
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::freeConnectionKey() {
+  for (uint ib = 0; ib < conn_key_vect_.size(); ib++) {
+    ConnKeyT *d_key_pt = conn_key_vect_[ib];
+    if (d_key_pt != nullptr) {
+      CUDAFREECTRL("d_key_pt", d_key_pt);
     }
   }
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionWeights( curandGenerator_t& gen,
-  void* d_storage,
-  ConnStructT* conn_struct_subarray,
-  int64_t n_conn,
-  SynSpec& syn_spec )
-{
-  if ( syn_spec.weight_distr_ >= DISTR_TYPE_ARRAY // probability distribution
-    && syn_spec.weight_distr_ < N_DISTR_TYPE )
-  { // or array
-    if ( syn_spec.weight_distr_ == DISTR_TYPE_ARRAY )
-    {
-      gpuErrchk(
-        cudaMemcpy( d_storage, syn_spec.weight_h_array_pt_, n_conn * sizeof( float ), cudaMemcpyHostToDevice ) );
-    }
-    else if ( syn_spec.weight_distr_ == DISTR_TYPE_NORMAL_CLIPPED )
-    {
-      CURAND_CALL( curandGenerateUniform( gen, ( float* ) d_storage, n_conn ) );
-      randomNormalClipped( ( float* ) d_storage,
-        n_conn,
-        syn_spec.weight_mu_,
-        syn_spec.weight_sigma_,
-        syn_spec.weight_low_,
-        syn_spec.weight_high_,
-        false );
-    }
-    else if ( syn_spec.weight_distr_ == DISTR_TYPE_NORMAL )
-    {
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::setConnectionWeights(
+    curandGenerator_t &gen, void *d_storage, ConnStructT *conn_struct_subarray,
+    int64_t n_conn, SynSpec &syn_spec) {
+  if (syn_spec.weight_distr_ >= DISTR_TYPE_ARRAY  // probability distribution
+      && syn_spec.weight_distr_ < N_DISTR_TYPE) { // or array
+    if (syn_spec.weight_distr_ == DISTR_TYPE_ARRAY) {
+      gpuErrchk(cudaMemcpy(d_storage, syn_spec.weight_h_array_pt_,
+                           n_conn * sizeof(float), cudaMemcpyHostToDevice));
+    } else if (syn_spec.weight_distr_ == DISTR_TYPE_NORMAL_CLIPPED) {
+      CURAND_CALL(curandGenerateUniform(gen, (float *)d_storage, n_conn));
+      randomNormalClipped((float *)d_storage, n_conn, syn_spec.weight_mu_,
+                          syn_spec.weight_sigma_, syn_spec.weight_low_,
+                          syn_spec.weight_high_, false);
+    } else if (syn_spec.weight_distr_ == DISTR_TYPE_NORMAL) {
       float low = syn_spec.weight_mu_ - 5.0 * syn_spec.weight_sigma_;
       float high = syn_spec.weight_mu_ + 5.0 * syn_spec.weight_sigma_;
-      CURAND_CALL( curandGenerateUniform( gen, ( float* ) d_storage, n_conn ) );
-      randomNormalClipped( ( float* ) d_storage, n_conn, syn_spec.weight_mu_, syn_spec.weight_sigma_, low, high, false );
+      CURAND_CALL(curandGenerateUniform(gen, (float *)d_storage, n_conn));
+      randomNormalClipped((float *)d_storage, n_conn, syn_spec.weight_mu_,
+                          syn_spec.weight_sigma_, low, high, false);
+    } else if (syn_spec.weight_distr_ == DISTR_TYPE_LOGNORMAL_CLIPPED) {
+      CURAND_CALL(curandGenerateUniform(gen, (float *)d_storage, n_conn));
+      randomNormalClipped((float *)d_storage, n_conn, syn_spec.weight_mu_,
+                          syn_spec.weight_sigma_, syn_spec.weight_low_,
+                          syn_spec.weight_high_, true);
+    } else {
+      throw ngpu_exception("Invalid connection weight distribution type");
     }
-    else if ( syn_spec.weight_distr_ == DISTR_TYPE_LOGNORMAL_CLIPPED )
-    {
-      CURAND_CALL( curandGenerateUniform( gen, ( float* ) d_storage, n_conn ) );
-      randomNormalClipped( ( float* ) d_storage, n_conn, syn_spec.weight_mu_, syn_spec.weight_sigma_, syn_spec.weight_low_, syn_spec.weight_high_, true );
-    }
-    else
-    {
-      throw ngpu_exception( "Invalid connection weight distribution type" );
-    }
-    setWeights< ConnStructT > <<< ( n_conn + 1023 ) / 1024, 1024 >>>(
-      conn_struct_subarray, ( float* ) d_storage, n_conn );
+    setWeights<ConnStructT><<<(n_conn + 1023) / 1024, 1024>>>(
+        conn_struct_subarray, (float *)d_storage, n_conn);
     DBGCUDASYNC;
-  }
-  else
-  {
-    setWeights< ConnStructT > <<< ( n_conn + 1023 ) / 1024, 1024 >>>( conn_struct_subarray, syn_spec.weight_, n_conn );
+  } else {
+    setWeights<ConnStructT><<<(n_conn + 1023) / 1024, 1024>>>(
+        conn_struct_subarray, syn_spec.weight_, n_conn);
     DBGCUDASYNC;
   }
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionDelays( curandGenerator_t& gen,
-  void* d_storage,
-  ConnKeyT* conn_key_subarray,
-  int64_t n_conn,
-  SynSpec& syn_spec )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::setConnectionDelays(
+    curandGenerator_t &gen, void *d_storage, ConnKeyT *conn_key_subarray,
+    int64_t n_conn, SynSpec &syn_spec) {
   int max_allowed_delay = (1 << max_delay_nbits_) - 1 + min_allowed_delay_;
-  
-  if ( syn_spec.delay_distr_ >= DISTR_TYPE_ARRAY // probability distribution
-    && syn_spec.delay_distr_ < N_DISTR_TYPE )
-  { // or array
-    if ( syn_spec.delay_distr_ == DISTR_TYPE_ARRAY )
-    {
-      gpuErrchk(
-        cudaMemcpy( d_storage, syn_spec.delay_h_array_pt_, n_conn * sizeof( float ), cudaMemcpyHostToDevice ) );
-    }
-    else if ( syn_spec.delay_distr_ == DISTR_TYPE_NORMAL_CLIPPED )
-    {
-      CURAND_CALL( curandGenerateUniform( gen, ( float* ) d_storage, n_conn ) );
-      randomNormalClipped( ( float* ) d_storage,
-        n_conn,
-        syn_spec.delay_mu_,
-        syn_spec.delay_sigma_,
-        syn_spec.delay_low_,
-        syn_spec.delay_high_,
-        false );
-    }
-    else if ( syn_spec.delay_distr_ == DISTR_TYPE_NORMAL )
-    {
+
+  if (syn_spec.delay_distr_ >= DISTR_TYPE_ARRAY  // probability distribution
+      && syn_spec.delay_distr_ < N_DISTR_TYPE) { // or array
+    if (syn_spec.delay_distr_ == DISTR_TYPE_ARRAY) {
+      gpuErrchk(cudaMemcpy(d_storage, syn_spec.delay_h_array_pt_,
+                           n_conn * sizeof(float), cudaMemcpyHostToDevice));
+    } else if (syn_spec.delay_distr_ == DISTR_TYPE_NORMAL_CLIPPED) {
+      CURAND_CALL(curandGenerateUniform(gen, (float *)d_storage, n_conn));
+      randomNormalClipped((float *)d_storage, n_conn, syn_spec.delay_mu_,
+                          syn_spec.delay_sigma_, syn_spec.delay_low_,
+                          syn_spec.delay_high_, false);
+    } else if (syn_spec.delay_distr_ == DISTR_TYPE_NORMAL) {
       float low = syn_spec.delay_mu_ - 5.0 * syn_spec.delay_sigma_;
       float high = syn_spec.delay_mu_ + 5.0 * syn_spec.delay_sigma_;
-      CURAND_CALL( curandGenerateUniform( gen, ( float* ) d_storage, n_conn ) );
-      randomNormalClipped( ( float* ) d_storage,
-        n_conn,
-        syn_spec.delay_mu_,
-        syn_spec.delay_sigma_,
-        syn_spec.delay_low_,
-        syn_spec.delay_high_,
-        false );
-    }
-    else if ( syn_spec.delay_distr_ == DISTR_TYPE_LOGNORMAL_CLIPPED )
-    {
-      CURAND_CALL( curandGenerateUniform( gen, ( float* ) d_storage, n_conn ) );
-      randomNormalClipped( ( float* ) d_storage,
-        n_conn,
-        syn_spec.delay_mu_,
-        syn_spec.delay_sigma_,
-        syn_spec.delay_low_,
-        syn_spec.delay_high_,
-        true );
-    }
-    else
-    {
-      throw ngpu_exception( "Invalid connection delay distribution type" );
+      CURAND_CALL(curandGenerateUniform(gen, (float *)d_storage, n_conn));
+      randomNormalClipped((float *)d_storage, n_conn, syn_spec.delay_mu_,
+                          syn_spec.delay_sigma_, syn_spec.delay_low_,
+                          syn_spec.delay_high_, false);
+    } else if (syn_spec.delay_distr_ == DISTR_TYPE_LOGNORMAL_CLIPPED) {
+      CURAND_CALL(curandGenerateUniform(gen, (float *)d_storage, n_conn));
+      randomNormalClipped((float *)d_storage, n_conn, syn_spec.delay_mu_,
+                          syn_spec.delay_sigma_, syn_spec.delay_low_,
+                          syn_spec.delay_high_, true);
+    } else {
+      throw ngpu_exception("Invalid connection delay distribution type");
     }
 
     int *d_delayError;
-    CUDAMALLOCCTRL( "&d_delayError", &d_delayError, 2*sizeof( int ) );
-    gpuErrchk( cudaMemset( d_delayError, 0, 2*sizeof( int ) ) );
-    setDelays< ConnKeyT > <<< ( n_conn + 1023 ) / 1024, 1024 >>>
-      ( conn_key_subarray, ( float* ) d_storage, n_conn, time_resolution_, min_allowed_delay_, max_allowed_delay, d_delayError );
+    CUDAMALLOCCTRL("&d_delayError", &d_delayError, 2 * sizeof(int));
+    gpuErrchk(cudaMemset(d_delayError, 0, 2 * sizeof(int)));
+    setDelays<ConnKeyT><<<(n_conn + 1023) / 1024, 1024>>>(
+        conn_key_subarray, (float *)d_storage, n_conn, time_resolution_,
+        min_allowed_delay_, max_allowed_delay, d_delayError);
     CUDASYNC;
     int h_delayError[2];
-    gpuErrchk( cudaMemcpy( h_delayError, d_delayError, 2*sizeof(int), cudaMemcpyDeviceToHost ) );
-    CUDAFREECTRL( "d_delayError", d_delayError );
-    if ( h_delayError[0] ) {
-      throw ngpu_exception( "Delay generated by distribution smaller than allowed minimum "
-			    + std::to_string(min_allowed_delay_ * time_resolution_) + " ms");
+    gpuErrchk(cudaMemcpy(h_delayError, d_delayError, 2 * sizeof(int),
+                         cudaMemcpyDeviceToHost));
+    CUDAFREECTRL("d_delayError", d_delayError);
+    if (h_delayError[0]) {
+      throw ngpu_exception(
+          "Delay generated by distribution smaller than allowed minimum " +
+          std::to_string(min_allowed_delay_ * time_resolution_) + " ms");
     }
-    if ( h_delayError[1] ) {
-      throw ngpu_exception( "Delay generated by distribution larger than maximum allowed by bits reserved for it"
-			    + std::to_string(max_allowed_delay * time_resolution_) + " ms");
+    if (h_delayError[1]) {
+      throw ngpu_exception(
+          "Delay generated by distribution larger than maximum allowed by bits "
+          "reserved for it" +
+          std::to_string(max_allowed_delay * time_resolution_) + " ms");
     }
-  }
-  else
-  {
-    int i_delay = ( int ) round( syn_spec.delay_ / time_resolution_);
-    if (i_delay < (int)min_allowed_delay_ ) {
-      throw ngpu_exception( "Delay smaller than allowed minimum "
-			    + std::to_string(min_allowed_delay_ * time_resolution_) + " ms");
+  } else {
+    int i_delay = (int)round(syn_spec.delay_ / time_resolution_);
+    if (i_delay < (int)min_allowed_delay_) {
+      throw ngpu_exception(
+          "Delay smaller than allowed minimum " +
+          std::to_string(min_allowed_delay_ * time_resolution_) + " ms");
     }
-    if (i_delay > max_allowed_delay ) {
-      throw ngpu_exception( "Delay larger than maximum allowed by bits reserved for it"
-			    + std::to_string(max_allowed_delay * time_resolution_) + " ms");
+    if (i_delay > max_allowed_delay) {
+      throw ngpu_exception(
+          "Delay larger than maximum allowed by bits reserved for it" +
+          std::to_string(max_allowed_delay * time_resolution_) + " ms");
     }
-    setDelays< ConnKeyT > <<< ( n_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_subarray, syn_spec.delay_, n_conn, time_resolution_ );
+    setDelays<ConnKeyT><<<(n_conn + 1023) / 1024, 1024>>>(
+        conn_key_subarray, syn_spec.delay_, n_conn, time_resolution_);
     DBGCUDASYNC;
   }
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::organizeConnections( inode_t n_node )
-{
-  //timeval startTV;
-  //timeval endTV;
-  //CUDASYNC;
-  //gettimeofday( &startTV, NULL );
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::organizeConnections(
+    inode_t n_node) {
+  // timeval startTV;
+  // timeval endTV;
+  // CUDASYNC;
+  // gettimeofday( &startTV, NULL );
 
-  if ( d_conn_storage_ != nullptr )
-  {
-    CUDAFREECTRL( "d_conn_storage_", d_conn_storage_ );
+  if (d_conn_storage_ != nullptr) {
+    CUDAFREECTRL("d_conn_storage_", d_conn_storage_);
   }
 
-  if ( n_conn_ > 0 )
-  {
+  if (n_conn_ > 0) {
     // printf( "Allocating auxiliary GPU memory...\n" );
     int64_t sort_storage_bytes = 0;
-    void* d_sort_storage = nullptr;
-    copass_sort::sort< ConnKeyT, ConnStructT >
-      (conn_key_vect_.data(), conn_struct_vect_.data(), n_conn_,
-       conn_block_size_, d_sort_storage, sort_storage_bytes, 0 );
+    void *d_sort_storage = nullptr;
+    copass_sort::sort<ConnKeyT, ConnStructT>(
+        conn_key_vect_.data(), conn_struct_vect_.data(), n_conn_,
+        conn_block_size_, d_sort_storage, sort_storage_bytes, 0);
     // printf( "storage bytes: %ld\n", sort_storage_bytes );
-    CUDAMALLOCCTRL( "&d_sort_storage", &d_sort_storage, sort_storage_bytes );
+    CUDAMALLOCCTRL("&d_sort_storage", &d_sort_storage, sort_storage_bytes);
 
     // printf( "Sorting...\n" );
-    copass_sort::sort< ConnKeyT, ConnStructT >
-      (conn_key_vect_.data(), conn_struct_vect_.data(), n_conn_,
-       conn_block_size_, d_sort_storage, sort_storage_bytes, 0 );
-    CUDAFREECTRL( "d_sort_storage", d_sort_storage );
+    copass_sort::sort<ConnKeyT, ConnStructT>(
+        conn_key_vect_.data(), conn_struct_vect_.data(), n_conn_,
+        conn_block_size_, d_sort_storage, sort_storage_bytes, 0);
+    CUDAFREECTRL("d_sort_storage", d_sort_storage);
 
     // It is important to separate number of allocated blocks
     // (determined by conn_key_vect_.size()) from number of blocks
     // on which there are connections, which is determined by n_conn_
     // number of used connection blocks
-    int k = ( n_conn_ - 1 ) / conn_block_size_ + 1;
+    int k = (n_conn_ - 1) / conn_block_size_ + 1;
 
     // it seems that there is no relevant advantage in using a constant array
     // however better to keep this option ready and commented
@@ -3129,343 +2768,353 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::organizeConnections( inode_t n_node
     //				 k*sizeof(ConnStructT*)));
     //, cudaMemcpyHostToDevice));
 
-    CUDAMALLOCCTRL( "&d_conn_key_array_", &d_conn_key_array_, k * sizeof( ConnKeyT* ) );
-    gpuErrchk(
-      cudaMemcpy( d_conn_key_array_, conn_key_vect_.data(), k * sizeof( ConnKeyT* ), cudaMemcpyHostToDevice ) );
+    CUDAMALLOCCTRL("&d_conn_key_array_", &d_conn_key_array_,
+                   k * sizeof(ConnKeyT *));
+    gpuErrchk(cudaMemcpy(d_conn_key_array_, conn_key_vect_.data(),
+                         k * sizeof(ConnKeyT *), cudaMemcpyHostToDevice));
 
-    CUDAMALLOCCTRL( "&d_conn_struct_array_", &d_conn_struct_array_, k * sizeof( ConnStructT* ) );
-    gpuErrchk( cudaMemcpy(
-      d_conn_struct_array_, conn_struct_vect_.data(), k * sizeof( ConnStructT* ), cudaMemcpyHostToDevice ) );
+    CUDAMALLOCCTRL("&d_conn_struct_array_", &d_conn_struct_array_,
+                   k * sizeof(ConnStructT *));
+    gpuErrchk(cudaMemcpy(d_conn_struct_array_, conn_struct_vect_.data(),
+                         k * sizeof(ConnStructT *), cudaMemcpyHostToDevice));
 
     //////////////////////////////////////////////////////////////////////
-    if ( getSpikeBufferAlgo() == OUTPUT_SPIKE_BUFFER_ALGO )
-    {
+    if (getSpikeBufferAlgo() == OUTPUT_SPIKE_BUFFER_ALGO) {
       size_t storage_bytes = 0;
       size_t storage_bytes1 = 0;
-      void* d_storage = nullptr;
+      void *d_storage = nullptr;
       // printf( "Indexing connection groups...\n" );
 
-      int* d_conn_group_iconn0_mask;
-      CUDAMALLOCCTRL( "&d_conn_group_iconn0_mask", &d_conn_group_iconn0_mask, ( conn_block_size_ + 1 ) * sizeof( int ) );
+      int *d_conn_group_iconn0_mask;
+      CUDAMALLOCCTRL("&d_conn_group_iconn0_mask", &d_conn_group_iconn0_mask,
+                     (conn_block_size_ + 1) * sizeof(int));
 
-      iconngroup_t* d_conn_group_iconn0_mask_cumul;
-      CUDAMALLOCCTRL( "&d_conn_group_iconn0_mask_cumul",
-        &d_conn_group_iconn0_mask_cumul,
-        ( conn_block_size_ + 1 ) * sizeof( iconngroup_t ) );
+      iconngroup_t *d_conn_group_iconn0_mask_cumul;
+      CUDAMALLOCCTRL("&d_conn_group_iconn0_mask_cumul",
+                     &d_conn_group_iconn0_mask_cumul,
+                     (conn_block_size_ + 1) * sizeof(iconngroup_t));
 
-      int* d_conn_group_idx0_mask;
-      CUDAMALLOCCTRL( "&d_conn_group_idx0_mask", &d_conn_group_idx0_mask, ( conn_block_size_ + 1 ) * sizeof( int ) );
+      int *d_conn_group_idx0_mask;
+      CUDAMALLOCCTRL("&d_conn_group_idx0_mask", &d_conn_group_idx0_mask,
+                     (conn_block_size_ + 1) * sizeof(int));
 
-      inode_t* d_conn_group_idx0_mask_cumul;
-      CUDAMALLOCCTRL(
-        "&d_conn_group_idx0_mask_cumul", &d_conn_group_idx0_mask_cumul, ( conn_block_size_ + 1 ) * sizeof( inode_t ) );
+      inode_t *d_conn_group_idx0_mask_cumul;
+      CUDAMALLOCCTRL("&d_conn_group_idx0_mask_cumul",
+                     &d_conn_group_idx0_mask_cumul,
+                     (conn_block_size_ + 1) * sizeof(inode_t));
 
-      iconngroup_t* d_conn_group_idx0_compact;
-      int64_t reserve_size = n_node < conn_block_size_ ? n_node : conn_block_size_;
-      CUDAMALLOCCTRL(
-        "&d_conn_group_idx0_compact", &d_conn_group_idx0_compact, ( reserve_size + 1 ) * sizeof( iconngroup_t ) );
+      iconngroup_t *d_conn_group_idx0_compact;
+      int64_t reserve_size =
+          n_node < conn_block_size_ ? n_node : conn_block_size_;
+      CUDAMALLOCCTRL("&d_conn_group_idx0_compact", &d_conn_group_idx0_compact,
+                     (reserve_size + 1) * sizeof(iconngroup_t));
 
-      inode_t* d_conn_group_source_compact;
-      CUDAMALLOCCTRL( "&d_conn_group_source_compact", &d_conn_group_source_compact, reserve_size * sizeof( inode_t ) );
+      inode_t *d_conn_group_source_compact;
+      CUDAMALLOCCTRL("&d_conn_group_source_compact",
+                     &d_conn_group_source_compact,
+                     reserve_size * sizeof(inode_t));
 
-      iconngroup_t* d_iconn0_offset;
-      CUDAMALLOCCTRL( "&d_iconn0_offset", &d_iconn0_offset, sizeof( iconngroup_t ) );
-      gpuErrchk( cudaMemset( d_iconn0_offset, 0, sizeof( iconngroup_t ) ) );
-      inode_t* d_idx0_offset;
-      CUDAMALLOCCTRL( "&d_idx0_offset", &d_idx0_offset, sizeof( inode_t ) );
-      gpuErrchk( cudaMemset( d_idx0_offset, 0, sizeof( inode_t ) ) );
+      iconngroup_t *d_iconn0_offset;
+      CUDAMALLOCCTRL("&d_iconn0_offset", &d_iconn0_offset,
+                     sizeof(iconngroup_t));
+      gpuErrchk(cudaMemset(d_iconn0_offset, 0, sizeof(iconngroup_t)));
+      inode_t *d_idx0_offset;
+      CUDAMALLOCCTRL("&d_idx0_offset", &d_idx0_offset, sizeof(inode_t));
+      gpuErrchk(cudaMemset(d_idx0_offset, 0, sizeof(inode_t)));
 
-      ConnKeyT* conn_key_subarray_prev = nullptr;
-      for ( int ib = 0; ib < k; ib++ )
-      {
-        int64_t n_block_conn = ib < ( k - 1 ) ? conn_block_size_ : n_conn_ - conn_block_size_ * ( k - 1 );
-        gpuErrchk( cudaMemset( d_conn_group_iconn0_mask, 0, n_block_conn * sizeof( int ) ) );
-        buildConnGroupIConn0Mask< ConnKeyT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-          conn_key_vect_[ ib ], conn_key_subarray_prev, n_block_conn, d_conn_group_iconn0_mask );
+      ConnKeyT *conn_key_subarray_prev = nullptr;
+      for (int ib = 0; ib < k; ib++) {
+        int64_t n_block_conn = ib < (k - 1)
+                                   ? conn_block_size_
+                                   : n_conn_ - conn_block_size_ * (k - 1);
+        gpuErrchk(cudaMemset(d_conn_group_iconn0_mask, 0,
+                             n_block_conn * sizeof(int)));
+        buildConnGroupIConn0Mask<ConnKeyT>
+            <<<(n_block_conn + 1023) / 1024, 1024>>>(
+                conn_key_vect_[ib], conn_key_subarray_prev, n_block_conn,
+                d_conn_group_iconn0_mask);
         CUDASYNC;
 
-        conn_key_subarray_prev = conn_key_vect_[ ib ] + conn_block_size_ - 1;
+        conn_key_subarray_prev = conn_key_vect_[ib] + conn_block_size_ - 1;
 
-        if ( ib == 0 )
-        {
+        if (ib == 0) {
           // Determine temporary device storage requirements for prefix sum
           //<BEGIN-CLANG-TIDY-SKIP>//
           cub::DeviceScan::ExclusiveSum(
-            NULL, storage_bytes, d_conn_group_iconn0_mask, d_conn_group_iconn0_mask_cumul, n_block_conn + 1 );
+              NULL, storage_bytes, d_conn_group_iconn0_mask,
+              d_conn_group_iconn0_mask_cumul, n_block_conn + 1);
           //<END-CLANG-TIDY-SKIP>//
           //  Allocate temporary storage for prefix sum
-          CUDAMALLOCCTRL( "&d_storage", &d_storage, storage_bytes );
+          CUDAMALLOCCTRL("&d_storage", &d_storage, storage_bytes);
         }
         // Run exclusive prefix sum
         //<BEGIN-CLANG-TIDY-SKIP>//
         cub::DeviceScan::ExclusiveSum(
-          d_storage, storage_bytes, d_conn_group_iconn0_mask, d_conn_group_iconn0_mask_cumul, n_block_conn + 1 );
+            d_storage, storage_bytes, d_conn_group_iconn0_mask,
+            d_conn_group_iconn0_mask_cumul, n_block_conn + 1);
         //<END-CLANG-TIDY-SKIP>//
-        setConnGroupNewOffset<<< 1, 1 >>>( d_iconn0_offset, d_conn_group_iconn0_mask_cumul + n_block_conn );
+        setConnGroupNewOffset<<<1, 1>>>(
+            d_iconn0_offset, d_conn_group_iconn0_mask_cumul + n_block_conn);
 
         CUDASYNC;
       }
-      gpuErrchk( cudaMemcpy( &tot_conn_group_num_, d_iconn0_offset, sizeof( iconngroup_t ), cudaMemcpyDeviceToHost ) );
-      // printf( "Total number of connection groups: %d\n", tot_conn_group_num_ );
+      gpuErrchk(cudaMemcpy(&tot_conn_group_num_, d_iconn0_offset,
+                           sizeof(iconngroup_t), cudaMemcpyDeviceToHost));
+      // printf( "Total number of connection groups: %d\n", tot_conn_group_num_
+      // );
 
-      if ( tot_conn_group_num_ > 0 )
-      {
-        iconngroup_t* d_conn_group_num;
-        CUDAMALLOCCTRL( "&d_conn_group_num", &d_conn_group_num, ( n_node + 1 ) * sizeof( iconngroup_t ) );
-        gpuErrchk( cudaMemset( d_conn_group_num, 0, sizeof( iconngroup_t ) ) );
+      if (tot_conn_group_num_ > 0) {
+        iconngroup_t *d_conn_group_num;
+        CUDAMALLOCCTRL("&d_conn_group_num", &d_conn_group_num,
+                       (n_node + 1) * sizeof(iconngroup_t));
+        gpuErrchk(cudaMemset(d_conn_group_num, 0, sizeof(iconngroup_t)));
 
-        ConnKeyT* conn_key_subarray_prev = nullptr;
-        gpuErrchk( cudaMemset( d_iconn0_offset, 0, sizeof( iconngroup_t ) ) );
+        ConnKeyT *conn_key_subarray_prev = nullptr;
+        gpuErrchk(cudaMemset(d_iconn0_offset, 0, sizeof(iconngroup_t)));
 
-        CUDAMALLOCCTRL(
-          "&d_conn_group_iconn0_", &d_conn_group_iconn0_, ( tot_conn_group_num_ + 1 ) * sizeof( int64_t ) );
+        CUDAMALLOCCTRL("&d_conn_group_iconn0_", &d_conn_group_iconn0_,
+                       (tot_conn_group_num_ + 1) * sizeof(int64_t));
 
         inode_t n_compact = 0;
-        for ( int ib = 0; ib < k; ib++ )
-        {
-          int64_t n_block_conn = ib < ( k - 1 ) ? conn_block_size_ : n_conn_ - conn_block_size_ * ( k - 1 );
-          gpuErrchk( cudaMemset( d_conn_group_iconn0_mask, 0, n_block_conn * sizeof( int ) ) );
-          gpuErrchk( cudaMemset( d_conn_group_idx0_mask, 0, n_block_conn * sizeof( int ) ) );
-          buildConnGroupMask< ConnKeyT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>( conn_key_vect_[ ib ],
-            conn_key_subarray_prev,
-            n_block_conn,
-            d_conn_group_iconn0_mask,
-            d_conn_group_idx0_mask );
+        for (int ib = 0; ib < k; ib++) {
+          int64_t n_block_conn = ib < (k - 1)
+                                     ? conn_block_size_
+                                     : n_conn_ - conn_block_size_ * (k - 1);
+          gpuErrchk(cudaMemset(d_conn_group_iconn0_mask, 0,
+                               n_block_conn * sizeof(int)));
+          gpuErrchk(cudaMemset(d_conn_group_idx0_mask, 0,
+                               n_block_conn * sizeof(int)));
+          buildConnGroupMask<ConnKeyT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+              conn_key_vect_[ib], conn_key_subarray_prev, n_block_conn,
+              d_conn_group_iconn0_mask, d_conn_group_idx0_mask);
           CUDASYNC;
 
-          conn_key_subarray_prev = conn_key_vect_[ ib ] + conn_block_size_ - 1;
+          conn_key_subarray_prev = conn_key_vect_[ib] + conn_block_size_ - 1;
 
           // Run exclusive prefix sum
           //<BEGIN-CLANG-TIDY-SKIP>//
           cub::DeviceScan::ExclusiveSum(
-            d_storage, storage_bytes, d_conn_group_iconn0_mask, d_conn_group_iconn0_mask_cumul, n_block_conn + 1 );
+              d_storage, storage_bytes, d_conn_group_iconn0_mask,
+              d_conn_group_iconn0_mask_cumul, n_block_conn + 1);
           DBGCUDASYNC;
           cub::DeviceScan::ExclusiveSum(
-            d_storage, storage_bytes, d_conn_group_idx0_mask, d_conn_group_idx0_mask_cumul, n_block_conn + 1 );
+              d_storage, storage_bytes, d_conn_group_idx0_mask,
+              d_conn_group_idx0_mask_cumul, n_block_conn + 1);
           //<END-CLANG-TIDY-SKIP>//
 
           DBGCUDASYNC;
           int64_t i_conn0 = conn_block_size_ * ib;
-          setConnGroupIConn0<<< ( n_block_conn + 1023 ) / 1024, 1024 >>>( n_block_conn,
-            d_conn_group_iconn0_mask,
-            d_conn_group_iconn0_mask_cumul,
-            d_conn_group_iconn0_,
-            i_conn0,
-            d_iconn0_offset );
+          setConnGroupIConn0<<<(n_block_conn + 1023) / 1024, 1024>>>(
+              n_block_conn, d_conn_group_iconn0_mask,
+              d_conn_group_iconn0_mask_cumul, d_conn_group_iconn0_, i_conn0,
+              d_iconn0_offset);
           CUDASYNC;
 
-          setConnGroupIdx0Compact< ConnKeyT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>( conn_key_vect_[ ib ],
-            n_block_conn,
-            d_conn_group_idx0_mask,
-            d_conn_group_iconn0_mask_cumul,
-            d_conn_group_idx0_mask_cumul,
-            d_conn_group_idx0_compact,
-            d_conn_group_source_compact,
-            d_iconn0_offset,
-            d_idx0_offset );
+          setConnGroupIdx0Compact<ConnKeyT>
+              <<<(n_block_conn + 1023) / 1024, 1024>>>(
+                  conn_key_vect_[ib], n_block_conn, d_conn_group_idx0_mask,
+                  d_conn_group_iconn0_mask_cumul, d_conn_group_idx0_mask_cumul,
+                  d_conn_group_idx0_compact, d_conn_group_source_compact,
+                  d_iconn0_offset, d_idx0_offset);
           CUDASYNC;
 
           inode_t n_block_compact;
-          gpuErrchk( cudaMemcpy( &n_block_compact,
-            d_conn_group_idx0_mask_cumul + n_block_conn,
-            sizeof( inode_t ),
-            cudaMemcpyDeviceToHost ) );
+          gpuErrchk(cudaMemcpy(&n_block_compact,
+                               d_conn_group_idx0_mask_cumul + n_block_conn,
+                               sizeof(inode_t), cudaMemcpyDeviceToHost));
           // std::cout << "number of nodes with outgoing connections "
           //"in block " << ib << ": " << n_block_compact << "\n";
           n_compact += n_block_compact;
 
-          setConnGroupNewOffset<<< 1, 1 >>>( d_iconn0_offset, d_conn_group_iconn0_mask_cumul + n_block_conn );
-          setConnGroupNewOffset<<< 1, 1 >>>( d_idx0_offset, d_conn_group_idx0_mask_cumul + n_block_conn );
+          setConnGroupNewOffset<<<1, 1>>>(
+              d_iconn0_offset, d_conn_group_iconn0_mask_cumul + n_block_conn);
+          setConnGroupNewOffset<<<1, 1>>>(
+              d_idx0_offset, d_conn_group_idx0_mask_cumul + n_block_conn);
           CUDASYNC;
         }
-        gpuErrchk( cudaMemcpy(
-          d_conn_group_iconn0_ + tot_conn_group_num_, &n_conn_, sizeof( int64_t ), cudaMemcpyHostToDevice ) );
+        gpuErrchk(cudaMemcpy(d_conn_group_iconn0_ + tot_conn_group_num_,
+                             &n_conn_, sizeof(int64_t),
+                             cudaMemcpyHostToDevice));
 
-        setConnGroupNum<<< ( n_compact + 1023 ) / 1024, 1024 >>>(
-          n_compact, d_conn_group_num, d_conn_group_idx0_compact, d_conn_group_source_compact );
+        setConnGroupNum<<<(n_compact + 1023) / 1024, 1024>>>(
+            n_compact, d_conn_group_num, d_conn_group_idx0_compact,
+            d_conn_group_source_compact);
         CUDASYNC;
 
-        CUDAMALLOCCTRL( "&d_conn_group_idx0_", &d_conn_group_idx0_, ( n_node + 1 ) * sizeof( iconngroup_t ) );
+        CUDAMALLOCCTRL("&d_conn_group_idx0_", &d_conn_group_idx0_,
+                       (n_node + 1) * sizeof(iconngroup_t));
         storage_bytes1 = 0;
 
         // Determine temporary device storage requirements for prefix sum
         //<BEGIN-CLANG-TIDY-SKIP>//
-        cub::DeviceScan::ExclusiveSum( NULL, storage_bytes1, d_conn_group_num, d_conn_group_idx0_, n_node + 1 );
+        cub::DeviceScan::ExclusiveSum(NULL, storage_bytes1, d_conn_group_num,
+                                      d_conn_group_idx0_, n_node + 1);
         //<END-CLANG-TIDY-SKIP>//
 
-        if ( storage_bytes1 > storage_bytes )
-        {
+        if (storage_bytes1 > storage_bytes) {
           storage_bytes = storage_bytes1;
-          CUDAFREECTRL( "d_storage", d_storage );
+          CUDAFREECTRL("d_storage", d_storage);
           // Allocate temporary storage for prefix sum
-          CUDAMALLOCCTRL( "&d_storage", &d_storage, storage_bytes );
+          CUDAMALLOCCTRL("&d_storage", &d_storage, storage_bytes);
         }
         // Run exclusive prefix sum
         //<BEGIN-CLANG-TIDY-SKIP>//
-        cub::DeviceScan::ExclusiveSum( d_storage, storage_bytes, d_conn_group_num, d_conn_group_idx0_, n_node + 1 );
+        cub::DeviceScan::ExclusiveSum(d_storage, storage_bytes,
+                                      d_conn_group_num, d_conn_group_idx0_,
+                                      n_node + 1);
         //<END-CLANG-TIDY-SKIP>//
 
         ///////////////////////////////////////////////////////////////////
-        CUDAFREECTRL( "d_storage", d_storage ); // free temporary allocated storage
-        CUDAFREECTRL( "d_conn_group_iconn0_mask", d_conn_group_iconn0_mask );
-        CUDAFREECTRL( "d_conn_group_iconn0_mask_cumul", d_conn_group_iconn0_mask_cumul );
-        CUDAFREECTRL( "d_iconn0_offset", d_iconn0_offset );
-        CUDAFREECTRL( "d_conn_group_idx0_mask", d_conn_group_idx0_mask );
-        CUDAFREECTRL( "d_conn_group_idx0_mask_cumul", d_conn_group_idx0_mask_cumul );
-        CUDAFREECTRL( "d_idx0_offset", d_idx0_offset );
-        CUDAFREECTRL( "d_conn_group_idx0_compact", d_conn_group_idx0_compact );
-        CUDAFREECTRL( "d_conn_group_num", d_conn_group_num );
+        CUDAFREECTRL("d_storage",
+                     d_storage); // free temporary allocated storage
+        CUDAFREECTRL("d_conn_group_iconn0_mask", d_conn_group_iconn0_mask);
+        CUDAFREECTRL("d_conn_group_iconn0_mask_cumul",
+                     d_conn_group_iconn0_mask_cumul);
+        CUDAFREECTRL("d_iconn0_offset", d_iconn0_offset);
+        CUDAFREECTRL("d_conn_group_idx0_mask", d_conn_group_idx0_mask);
+        CUDAFREECTRL("d_conn_group_idx0_mask_cumul",
+                     d_conn_group_idx0_mask_cumul);
+        CUDAFREECTRL("d_idx0_offset", d_idx0_offset);
+        CUDAFREECTRL("d_conn_group_idx0_compact", d_conn_group_idx0_compact);
+        CUDAFREECTRL("d_conn_group_num", d_conn_group_num);
 
 #ifndef OPTIMIZE_FOR_MEMORY
-        CUDAMALLOCCTRL( "&d_conn_group_delay_", &d_conn_group_delay_, tot_conn_group_num_ * sizeof( int ) );
+        CUDAMALLOCCTRL("&d_conn_group_delay_", &d_conn_group_delay_,
+                       tot_conn_group_num_ * sizeof(int));
 
-        getConnGroupDelay< ConnKeyT > <<< ( tot_conn_group_num_ + 1023 ) / 1024, 1024 >>>(
-          conn_block_size_, d_conn_key_array_, d_conn_group_iconn0_, d_conn_group_delay_, tot_conn_group_num_ );
+        getConnGroupDelay<ConnKeyT>
+            <<<(tot_conn_group_num_ + 1023) / 1024, 1024>>>(
+                conn_block_size_, d_conn_key_array_, d_conn_group_iconn0_,
+                d_conn_group_delay_, tot_conn_group_num_);
         DBGCUDASYNC;
 #endif
-      }
-      else
-      {
-        throw ngpu_exception(
-          "Number of connections groups must be positive "
-          "for number of connections > 0" );
+      } else {
+        throw ngpu_exception("Number of connections groups must be positive "
+                             "for number of connections > 0");
       }
     }
-  }
-  else if ( getSpikeBufferAlgo() == OUTPUT_SPIKE_BUFFER_ALGO )
-  {
-    CUDAMALLOCCTRL( "&d_conn_group_idx0_", &d_conn_group_idx0_, ( n_node + 1 ) * sizeof( iconngroup_t ) );
-    gpuErrchk( cudaMemset( d_conn_group_idx0_, 0, ( n_node + 1 ) * sizeof( iconngroup_t ) ) );
+  } else if (getSpikeBufferAlgo() == OUTPUT_SPIKE_BUFFER_ALGO) {
+    CUDAMALLOCCTRL("&d_conn_group_idx0_", &d_conn_group_idx0_,
+                   (n_node + 1) * sizeof(iconngroup_t));
+    gpuErrchk(
+        cudaMemset(d_conn_group_idx0_, 0, (n_node + 1) * sizeof(iconngroup_t)));
   }
 
-  //gettimeofday( &endTV, NULL );
-  //long time =
-  //  ( long ) ( ( endTV.tv_sec * 1000000.0 + endTV.tv_usec ) - ( startTV.tv_sec * 1000000.0 + startTV.tv_usec ) );
-  //printf( "%-40s%.2f ms\n", "Time: ", ( double ) time / 1000. );
-  //printf( "Done\n" );
-  
+  // gettimeofday( &endTV, NULL );
+  // long time =
+  //   ( long ) ( ( endTV.tv_sec * 1000000.0 + endTV.tv_usec ) - (
+  //   startTV.tv_sec * 1000000.0 + startTV.tv_usec ) );
+  // printf( "%-40s%.2f ms\n", "Time: ", ( double ) time / 1000. );
+  // printf( "Done\n" );
+
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-template < class T1, class T2 >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::_Connect( T1 source,
-  inode_t n_source,
-  T2 target,
-  inode_t n_target,
-  ConnSpec& conn_spec,
-  SynSpec& syn_spec )
-{
-  return _Connect( conn_random_generator_[ this_host_ ][ this_host_ ],
-    source,
-    n_source,
-    target,
-    n_target,
-    conn_spec,
-    syn_spec,
-    false );
+template <class ConnKeyT, class ConnStructT>
+template <class T1, class T2>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::_Connect(
+    T1 source, inode_t n_source, T2 target, inode_t n_target,
+    ConnSpec &conn_spec, SynSpec &syn_spec) {
+  return _Connect(conn_random_generator_[this_host_][this_host_], source,
+                  n_source, target, n_target, conn_spec, syn_spec, false);
 }
 
-template < class ConnKeyT, class ConnStructT >
-template < class T1, class T2 >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::_Connect( curandGenerator_t& gen,
-  T1 source,
-  inode_t n_source,
-  T2 target,
-  inode_t n_target,
-  ConnSpec& conn_spec,
-  SynSpec& syn_spec,
-  bool remote_source_flag )
-{
-  int max_n_ports = ( int ) ( IntPow( 2, max_port_nbits_ ) );
-  if ( syn_spec.port_ >= max_n_ports ) {
-    throw ngpu_exception( "Port larger than maximum allowed by bits reserved for it"
-			  + std::to_string(max_n_ports));
-  }  
-  if (first_connection_flag_ == true && n_hosts_>1) {
+template <class ConnKeyT, class ConnStructT>
+template <class T1, class T2>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::_Connect(
+    curandGenerator_t &gen, T1 source, inode_t n_source, T2 target,
+    inode_t n_target, ConnSpec &conn_spec, SynSpec &syn_spec,
+    bool remote_source_flag) {
+  int max_n_ports = (int)(IntPow(2, max_port_nbits_));
+  if (syn_spec.port_ >= max_n_ports) {
+    throw ngpu_exception(
+        "Port larger than maximum allowed by bits reserved for it" +
+        std::to_string(max_n_ports));
+  }
+  if (first_connection_flag_ == true && n_hosts_ > 1) {
     remoteConnectionMapInit();
   }
 
   first_connection_flag_ = false;
-  if ( d_conn_storage_ == nullptr )
-  {
-    CUDAMALLOCCTRL( "&d_conn_storage_", &d_conn_storage_, conn_block_size_ * sizeof( uint ) );
+  if (d_conn_storage_ == nullptr) {
+    CUDAMALLOCCTRL("&d_conn_storage_", &d_conn_storage_,
+                   conn_block_size_ * sizeof(uint));
   }
 
   ////////////////////////
   // TEMPORARY, TO BE IMPROVED
-  if ( (syn_spec.syn_group_ & syn_mask_) >= 1 )
-  {
-    //printf("Error, syn_spec.syn_group_: %d\n", syn_spec.syn_group_);
-    //printf("max_syn_nbits: %d syn_mask: %x\n", max_syn_nbits_,  syn_mask_);
-    //printf("syn_mask & syn_spec.syn_group: %d\n",
-    //	   syn_mask_ & syn_spec.syn_group_);    
-    //exit(-1);
+  if ((syn_spec.syn_group_ & syn_mask_) >= 1) {
+    // printf("Error, syn_spec.syn_group_: %d\n", syn_spec.syn_group_);
+    // printf("max_syn_nbits: %d syn_mask: %x\n", max_syn_nbits_,  syn_mask_);
+    // printf("syn_mask & syn_spec.syn_group: %d\n",
+    //	   syn_mask_ & syn_spec.syn_group_);
+    // exit(-1);
     spike_time_flag_ = true;
     rev_conn_flag_ = true;
   }
 
-  switch ( conn_spec.rule_ )
-  {
+  switch (conn_spec.rule_) {
   case ONE_TO_ONE:
-    if ( n_source != n_target )
-    {
-      throw ngpu_exception(
-        "Number of source and target nodes must be equal "
-        "for the one-to-one connection rule" );
+    if (n_source != n_target) {
+      throw ngpu_exception("Number of source and target nodes must be equal "
+                           "for the one-to-one connection rule");
     }
     conn_spec.use_all_remote_source_nodes_ = true;
-    return connectOneToOne< T1, T2 >( gen, source, target, n_source, syn_spec, remote_source_flag );
+    return connectOneToOne<T1, T2>(gen, source, target, n_source, syn_spec,
+                                   remote_source_flag);
     break;
 
   case ALL_TO_ALL:
     conn_spec.use_all_remote_source_nodes_ = true;
-    return connectAllToAll< T1, T2 >( gen, source, n_source, target, n_target, syn_spec, remote_source_flag );
+    return connectAllToAll<T1, T2>(gen, source, n_source, target, n_target,
+                                   syn_spec, remote_source_flag);
     break;
   case FIXED_TOTAL_NUMBER:
-    if ((double)conn_spec.total_num_ >= (use_all_source_node_fact_*n_source)) {
+    if ((double)conn_spec.total_num_ >=
+        (use_all_source_node_fact_ * n_source)) {
       conn_spec.use_all_remote_source_nodes_ = true;
     }
-    return connectFixedTotalNumber< T1, T2 >(
-      gen, source, n_source, target, n_target, conn_spec.total_num_, syn_spec, remote_source_flag );
+    return connectFixedTotalNumber<T1, T2>(gen, source, n_source, target,
+                                           n_target, conn_spec.total_num_,
+                                           syn_spec, remote_source_flag);
     break;
   case FIXED_INDEGREE:
-    if ((double)(conn_spec.indegree_ * n_target) >= (use_all_source_node_fact_*n_source)) {
+    if ((double)(conn_spec.indegree_ * n_target) >=
+        (use_all_source_node_fact_ * n_source)) {
       conn_spec.use_all_remote_source_nodes_ = true;
     }
-    return connectFixedIndegree< T1, T2 >(
-      gen, source, n_source, target, n_target, conn_spec.indegree_, syn_spec, remote_source_flag );
+    return connectFixedIndegree<T1, T2>(gen, source, n_source, target, n_target,
+                                        conn_spec.indegree_, syn_spec,
+                                        remote_source_flag);
     break;
   case FIXED_OUTDEGREE:
     conn_spec.use_all_remote_source_nodes_ = true;
-    return connectFixedOutdegree< T1, T2 >(
-      gen, source, n_source, target, n_target, conn_spec.outdegree_, syn_spec, remote_source_flag );
+    return connectFixedOutdegree<T1, T2>(gen, source, n_source, target,
+                                         n_target, conn_spec.outdegree_,
+                                         syn_spec, remote_source_flag);
     break;
   case ASSIGNED_NODES:
-    return connectAssignedNodes< T1, T2 >(
-      gen, source, n_source, target, n_target, conn_spec.total_num_, syn_spec, remote_source_flag );
+    return connectAssignedNodes<T1, T2>(gen, source, n_source, target, n_target,
+                                        conn_spec.total_num_, syn_spec,
+                                        remote_source_flag);
     break;
   default:
-    throw ngpu_exception( "Unknown connection rule" );
+    throw ngpu_exception("Unknown connection rule");
   }
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::reallocConnSourceIds( int64_t n_conn )
-{
-  if ( n_conn < conn_source_ids_size_ )
-  {
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::reallocConnSourceIds(
+    int64_t n_conn) {
+  if (n_conn < conn_source_ids_size_) {
     return 0;
   }
-  if ( conn_source_ids_size_ > 0 && d_conn_source_ids_ != nullptr )
-  {
-    CUDAFREECTRL( "d_conn_source_ids_", d_conn_source_ids_ );
+  if (conn_source_ids_size_ > 0 && d_conn_source_ids_ != nullptr) {
+    CUDAFREECTRL("d_conn_source_ids_", d_conn_source_ids_);
   }
-  CUDAMALLOCCTRL( "&d_conn_source_ids_", &d_conn_source_ids_, n_conn * sizeof( inode_t ) );
+  CUDAMALLOCCTRL("&d_conn_source_ids_", &d_conn_source_ids_,
+                 n_conn * sizeof(inode_t));
   conn_source_ids_size_ = n_conn;
 
   return 0;
@@ -3473,109 +3122,103 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::reallocConnSourceIds( int64_t n_con
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Print connections in a block
-template < class ConnKeyT, class ConnStructT >
-__global__ void
-printConnections
-( ConnKeyT* conn_key_subarray, ConnStructT* conn_struct_subarray, int64_t n_conn)
-{
+template <class ConnKeyT, class ConnStructT>
+__global__ void printConnections(ConnKeyT *conn_key_subarray,
+                                 ConnStructT *conn_struct_subarray,
+                                 int64_t n_conn) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn ) {
+  if (i_conn >= n_conn) {
     return;
   }
-  inode_t source = getConnSource< ConnKeyT >( conn_key_subarray[ i_conn ] );
-  inode_t target = getConnTarget< ConnStructT >( conn_struct_subarray[ i_conn ] );
+  inode_t source = getConnSource<ConnKeyT>(conn_key_subarray[i_conn]);
+  inode_t target = getConnTarget<ConnStructT>(conn_struct_subarray[i_conn]);
 
-  printf("printConnections i_conn: %lld, i_source: %d, i_target: %d\n", i_conn, source, target);
+  printf("printConnections i_conn: %lld, i_source: %d, i_target: %d\n", i_conn,
+         source, target);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Print connections in a block all info
-template < class ConnKeyT, class ConnStructT >
-__global__ void
-printConnectionsFull
-( ConnKeyT* conn_key_subarray, ConnStructT* conn_struct_subarray, int64_t n_conn)
-{
+template <class ConnKeyT, class ConnStructT>
+__global__ void printConnectionsFull(ConnKeyT *conn_key_subarray,
+                                     ConnStructT *conn_struct_subarray,
+                                     int64_t n_conn) {
   int64_t i_conn = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( i_conn >= n_conn ) {
+  if (i_conn >= n_conn) {
     return;
   }
-  inode_t source = getConnSource< ConnKeyT >( conn_key_subarray[ i_conn ] );
-  inode_t target = getConnTarget< ConnStructT >( conn_struct_subarray[ i_conn ] );
-  uint i_delay = getConnDelay< ConnKeyT >( conn_key_subarray[ i_conn ] );
-  int i_port = getConnPort< ConnKeyT, ConnStructT >( conn_key_subarray[ i_conn ], conn_struct_subarray[ i_conn ] );
-  int i_syn = getConnSyn< ConnKeyT, ConnStructT >( conn_key_subarray[ i_conn ], conn_struct_subarray[ i_conn ] );
-  float weight = conn_struct_subarray[ i_conn ].weight;
+  inode_t source = getConnSource<ConnKeyT>(conn_key_subarray[i_conn]);
+  inode_t target = getConnTarget<ConnStructT>(conn_struct_subarray[i_conn]);
+  uint i_delay = getConnDelay<ConnKeyT>(conn_key_subarray[i_conn]);
+  int i_port = getConnPort<ConnKeyT, ConnStructT>(conn_key_subarray[i_conn],
+                                                  conn_struct_subarray[i_conn]);
+  int i_syn = getConnSyn<ConnKeyT, ConnStructT>(conn_key_subarray[i_conn],
+                                                conn_struct_subarray[i_conn]);
+  float weight = conn_struct_subarray[i_conn].weight;
 
-  printf("printConnections i_conn: %lld, i_source: %d, i_target: %d, i_port: %d, i_delay: %d, i_syn: %d, w: %f\n",
-	 i_conn, source, target, i_port, i_delay, i_syn, weight);
+  printf("printConnections i_conn: %lld, i_source: %d, i_target: %d, i_port: "
+         "%d, i_delay: %d, i_syn: %d, w: %f\n",
+         i_conn, source, target, i_port, i_delay, i_syn, weight);
 }
 
-
-template < class ConnKeyT, class ConnStructT >
-template < class T1, class T2 >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::connectOneToOne( curandGenerator_t& src_gen,
-  T1 source,
-  T2 target,
-  inode_t n_node,
-  SynSpec& syn_spec,
-  bool remote_source_flag )
-{
+template <class ConnKeyT, class ConnStructT>
+template <class T1, class T2>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::connectOneToOne(
+    curandGenerator_t &src_gen, T1 source, T2 target, inode_t n_node,
+    SynSpec &syn_spec, bool remote_source_flag) {
   int64_t old_n_conn = n_conn_;
   int64_t n_new_conn = n_node;
   n_conn_ += n_new_conn; // new number of connections
-  int new_n_block = ( int ) ( ( n_conn_ + conn_block_size_ - 1 ) / conn_block_size_ );
+  int new_n_block = (int)((n_conn_ + conn_block_size_ - 1) / conn_block_size_);
 
-  if ( remote_source_flag ) {
-    reallocConnSourceIds( n_new_conn );
-    setOneToOneSource< T1 > <<< ( n_new_conn + 1023 ) / 1024, 1024 >>>
-      (d_conn_source_ids_, n_new_conn, source );
+  if (remote_source_flag) {
+    reallocConnSourceIds(n_new_conn);
+    setOneToOneSource<T1><<<(n_new_conn + 1023) / 1024, 1024>>>(
+        d_conn_source_ids_, n_new_conn, source);
     DBGCUDASYNC;
-    
+
     return 0;
   }
-  
-  allocateNewBlocks( new_n_block );
-  
+
+  allocateNewBlocks(new_n_block);
+
   // printf("Generating connections with one-to-one rule...\n");
   int64_t n_prev_conn = 0;
-  int ib0 = ( int ) ( old_n_conn / conn_block_size_ );
-  for ( int ib = ib0; ib < new_n_block; ib++ )
-  {
-    int64_t n_block_conn; // number of connections in a block
-    int64_t i_conn0;      // index of first connection in a block
-    if ( new_n_block == ib0 + 1 )
-    { // all connections are in the same block
+  int ib0 = (int)(old_n_conn / conn_block_size_);
+  for (int ib = ib0; ib < new_n_block; ib++) {
+    int64_t n_block_conn;         // number of connections in a block
+    int64_t i_conn0;              // index of first connection in a block
+    if (new_n_block == ib0 + 1) { // all connections are in the same block
       i_conn0 = old_n_conn % conn_block_size_;
       n_block_conn = n_new_conn;
-    }
-    else if ( ib == ib0 )
-    { // first block
+    } else if (ib == ib0) { // first block
       i_conn0 = old_n_conn % conn_block_size_;
       n_block_conn = conn_block_size_ - i_conn0;
-    }
-    else if ( ib == new_n_block - 1 )
-    { // last block
+    } else if (ib == new_n_block - 1) { // last block
       i_conn0 = 0;
-      n_block_conn = ( n_conn_ - 1 ) % conn_block_size_ + 1;
-    }
-    else
-    {
+      n_block_conn = (n_conn_ - 1) % conn_block_size_ + 1;
+    } else {
       i_conn0 = 0;
       n_block_conn = conn_block_size_;
     }
-    
-    setOneToOneSourceTarget< T1, T2, ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, n_block_conn, n_prev_conn, source, target );
+
+    setOneToOneSourceTarget<T1, T2, ConnKeyT, ConnStructT>
+        <<<(n_block_conn + 1023) / 1024, 1024>>>(
+            conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+            n_block_conn, n_prev_conn, source, target);
     DBGCUDASYNC;
-    setConnectionWeights(
-      local_rnd_gen_, d_conn_storage_, conn_struct_vect_[ ib ] + i_conn0, n_block_conn, syn_spec );
-    setConnectionDelays( local_rnd_gen_, d_conn_storage_, conn_key_vect_[ ib ] + i_conn0, n_block_conn, syn_spec );
-    setPort< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, syn_spec.port_, n_block_conn );
+    setConnectionWeights(local_rnd_gen_, d_conn_storage_,
+                         conn_struct_vect_[ib] + i_conn0, n_block_conn,
+                         syn_spec);
+    setConnectionDelays(local_rnd_gen_, d_conn_storage_,
+                        conn_key_vect_[ib] + i_conn0, n_block_conn, syn_spec);
+    setPort<ConnKeyT, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+        syn_spec.port_, n_block_conn);
     DBGCUDASYNC;
-    setSynGroup< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, syn_spec.syn_group_, n_block_conn );
+    setSynGroup<ConnKeyT, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+        syn_spec.syn_group_, n_block_conn);
     DBGCUDASYNC;
     // CUDASYNC;
 
@@ -3585,433 +3228,381 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::connectOneToOne( curandGenerator_t&
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-template < class T1, class T2 >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::connectAllToAll( curandGenerator_t& src_gen,
-  T1 source,
-  inode_t n_source,
-  T2 target,
-  inode_t n_target,
-  SynSpec& syn_spec,
-  bool remote_source_flag )
-{
+template <class ConnKeyT, class ConnStructT>
+template <class T1, class T2>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::connectAllToAll(
+    curandGenerator_t &src_gen, T1 source, inode_t n_source, T2 target,
+    inode_t n_target, SynSpec &syn_spec, bool remote_source_flag) {
   int64_t old_n_conn = n_conn_;
   int64_t n_new_conn = n_source * n_target;
   n_conn_ += n_new_conn; // new number of connections
-  int new_n_block = ( int ) ( ( n_conn_ + conn_block_size_ - 1 ) / conn_block_size_ );
+  int new_n_block = (int)((n_conn_ + conn_block_size_ - 1) / conn_block_size_);
 
-  if ( remote_source_flag )
-  {
-    reallocConnSourceIds( n_new_conn );
-    setAllToAllSource< T1 > <<< ( n_new_conn + 1023 ) / 1024, 1024 >>>(
-        d_conn_source_ids_, n_new_conn, source, n_source, n_target );
+  if (remote_source_flag) {
+    reallocConnSourceIds(n_new_conn);
+    setAllToAllSource<T1><<<(n_new_conn + 1023) / 1024, 1024>>>(
+        d_conn_source_ids_, n_new_conn, source, n_source, n_target);
     DBGCUDASYNC;
 
-    return 0;  
+    return 0;
   }
-  
-  allocateNewBlocks( new_n_block );
+
+  allocateNewBlocks(new_n_block);
 
   // printf("Generating connections with all-to-all rule...\n");
   int64_t n_prev_conn = 0;
-  int ib0 = ( int ) ( old_n_conn / conn_block_size_ );
-  for ( int ib = ib0; ib < new_n_block; ib++ )
-  {
-    int64_t n_block_conn; // number of connections in a block
-    int64_t i_conn0;      // index of first connection in a block
-    if ( new_n_block == ib0 + 1 )
-    { // all connections are in the same block
+  int ib0 = (int)(old_n_conn / conn_block_size_);
+  for (int ib = ib0; ib < new_n_block; ib++) {
+    int64_t n_block_conn;         // number of connections in a block
+    int64_t i_conn0;              // index of first connection in a block
+    if (new_n_block == ib0 + 1) { // all connections are in the same block
       i_conn0 = old_n_conn % conn_block_size_;
       n_block_conn = n_new_conn;
-    }
-    else if ( ib == ib0 )
-    { // first block
+    } else if (ib == ib0) { // first block
       i_conn0 = old_n_conn % conn_block_size_;
       n_block_conn = conn_block_size_ - i_conn0;
-    }
-    else if ( ib == new_n_block - 1 )
-    { // last block
+    } else if (ib == new_n_block - 1) { // last block
       i_conn0 = 0;
-      n_block_conn = ( n_conn_ - 1 ) % conn_block_size_ + 1;
-    }
-    else
-    {
+      n_block_conn = (n_conn_ - 1) % conn_block_size_ + 1;
+    } else {
       i_conn0 = 0;
       n_block_conn = conn_block_size_;
     }
-    
-    setAllToAllSourceTarget< T1, T2, ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0,
-      conn_struct_vect_[ ib ] + i_conn0,
-      n_block_conn,
-      n_prev_conn,
-      source,
-      n_source,
-      target,
-      n_target );
-    DBGCUDASYNC;
-    setConnectionWeights(
-      local_rnd_gen_, d_conn_storage_, conn_struct_vect_[ ib ] + i_conn0, n_block_conn, syn_spec );
 
-    setConnectionDelays( local_rnd_gen_, d_conn_storage_, conn_key_vect_[ ib ] + i_conn0, n_block_conn, syn_spec );
+    setAllToAllSourceTarget<T1, T2, ConnKeyT, ConnStructT>
+        <<<(n_block_conn + 1023) / 1024, 1024>>>(
+            conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+            n_block_conn, n_prev_conn, source, n_source, target, n_target);
+    DBGCUDASYNC;
+    setConnectionWeights(local_rnd_gen_, d_conn_storage_,
+                         conn_struct_vect_[ib] + i_conn0, n_block_conn,
+                         syn_spec);
 
-    setPort< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, syn_spec.port_, n_block_conn );
+    setConnectionDelays(local_rnd_gen_, d_conn_storage_,
+                        conn_key_vect_[ib] + i_conn0, n_block_conn, syn_spec);
+
+    setPort<ConnKeyT, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+        syn_spec.port_, n_block_conn);
     DBGCUDASYNC;
-    setSynGroup< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, syn_spec.syn_group_, n_block_conn );
+    setSynGroup<ConnKeyT, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+        syn_spec.syn_group_, n_block_conn);
     DBGCUDASYNC;
-    
+
     n_prev_conn += n_block_conn;
   }
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-template < class T1, class T2 >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::connectFixedTotalNumber( curandGenerator_t& src_gen,
-  T1 source,
-  inode_t n_source,
-  T2 target,
-  inode_t n_target,
-  int64_t total_num,
-  SynSpec& syn_spec,
-  bool remote_source_flag )
-{
-  if ( total_num == 0 )
-  {
+template <class ConnKeyT, class ConnStructT>
+template <class T1, class T2>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::connectFixedTotalNumber(
+    curandGenerator_t &src_gen, T1 source, inode_t n_source, T2 target,
+    inode_t n_target, int64_t total_num, SynSpec &syn_spec,
+    bool remote_source_flag) {
+  if (total_num == 0) {
     return 0;
   }
   int64_t old_n_conn = n_conn_;
   int64_t n_new_conn = total_num;
   n_conn_ += n_new_conn; // new number of connections
-  int new_n_block = ( int ) ( ( n_conn_ + conn_block_size_ - 1 ) / conn_block_size_ );
+  int new_n_block = (int)((n_conn_ + conn_block_size_ - 1) / conn_block_size_);
 
-  reallocConnSourceIds( n_new_conn );
+  reallocConnSourceIds(n_new_conn);
   // generate random source index in range 0 - n_neuron
-  CURAND_CALL( curandGenerate( src_gen, ( uint* ) d_conn_source_ids_, n_new_conn ) );
-  setSource< T1 > <<< ( n_new_conn + 1023 ) / 1024, 1024 >>>
-    (d_conn_source_ids_, d_conn_source_ids_, n_new_conn, source, n_source );
+  CURAND_CALL(curandGenerate(src_gen, (uint *)d_conn_source_ids_, n_new_conn));
+  setSource<T1><<<(n_new_conn + 1023) / 1024, 1024>>>(
+      d_conn_source_ids_, d_conn_source_ids_, n_new_conn, source, n_source);
   DBGCUDASYNC;
 
-  if ( remote_source_flag ) {
+  if (remote_source_flag) {
     return 0;
   }
-  
-  allocateNewBlocks( new_n_block );
-  
+
+  allocateNewBlocks(new_n_block);
+
   // printf("Generating connections with fixed_total_number rule...\n");
   int64_t conn_source_ids_offset = 0;
-  int ib0 = ( int ) ( old_n_conn / conn_block_size_ );
-  for ( int ib = ib0; ib < new_n_block; ib++ )
-  {
-    int64_t n_block_conn; // number of connections in a block
-    int64_t i_conn0;      // index of first connection in a block
-    if ( new_n_block == ib0 + 1 )
-    { // all connections are in the same block
+  int ib0 = (int)(old_n_conn / conn_block_size_);
+  for (int ib = ib0; ib < new_n_block; ib++) {
+    int64_t n_block_conn;         // number of connections in a block
+    int64_t i_conn0;              // index of first connection in a block
+    if (new_n_block == ib0 + 1) { // all connections are in the same block
       i_conn0 = old_n_conn % conn_block_size_;
       n_block_conn = n_new_conn;
-    }
-    else if ( ib == ib0 )
-    { // first block
+    } else if (ib == ib0) { // first block
       i_conn0 = old_n_conn % conn_block_size_;
       n_block_conn = conn_block_size_ - i_conn0;
-    }
-    else if ( ib == new_n_block - 1 )
-    { // last block
+    } else if (ib == new_n_block - 1) { // last block
       i_conn0 = 0;
-      n_block_conn = ( n_conn_ - 1 ) % conn_block_size_ + 1;
-    }
-    else
-    {
+      n_block_conn = (n_conn_ - 1) % conn_block_size_ + 1;
+    } else {
       i_conn0 = 0;
       n_block_conn = conn_block_size_;
     }
-    
-    setSource< T1, ConnKeyT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>
-      (conn_key_vect_[ ib ] + i_conn0, d_conn_source_ids_ + conn_source_ids_offset, n_block_conn);
+
+    setSource<T1, ConnKeyT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0,
+        d_conn_source_ids_ + conn_source_ids_offset, n_block_conn);
     DBGCUDASYNC;
     conn_source_ids_offset += n_block_conn;
 
     // generate random target index in range 0 - n_neuron
-    CURAND_CALL( curandGenerate( local_rnd_gen_, ( uint* ) d_conn_storage_, n_block_conn ) );
-    setTarget< T2, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_struct_vect_[ ib ] + i_conn0, ( uint* ) d_conn_storage_, n_block_conn, target, n_target );
+    CURAND_CALL(
+        curandGenerate(local_rnd_gen_, (uint *)d_conn_storage_, n_block_conn));
+    setTarget<T2, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_struct_vect_[ib] + i_conn0, (uint *)d_conn_storage_, n_block_conn,
+        target, n_target);
     DBGCUDASYNC;
 
-    setConnectionWeights(
-      local_rnd_gen_, d_conn_storage_, conn_struct_vect_[ ib ] + i_conn0, n_block_conn, syn_spec );
+    setConnectionWeights(local_rnd_gen_, d_conn_storage_,
+                         conn_struct_vect_[ib] + i_conn0, n_block_conn,
+                         syn_spec);
 
-    setConnectionDelays( local_rnd_gen_, d_conn_storage_, conn_key_vect_[ ib ] + i_conn0, n_block_conn, syn_spec );
+    setConnectionDelays(local_rnd_gen_, d_conn_storage_,
+                        conn_key_vect_[ib] + i_conn0, n_block_conn, syn_spec);
 
-    setPort< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, syn_spec.port_, n_block_conn );
+    setPort<ConnKeyT, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+        syn_spec.port_, n_block_conn);
     DBGCUDASYNC;
-    setSynGroup< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, syn_spec.syn_group_, n_block_conn );
+    setSynGroup<ConnKeyT, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+        syn_spec.syn_group_, n_block_conn);
     DBGCUDASYNC;
   }
 
   return 0;
 }
 
-
-template < class ConnKeyT, class ConnStructT >
-template < class T1, class T2 >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::connectAssignedNodes( curandGenerator_t& src_gen,
-  T1 source,
-  inode_t n_source,
-  T2 target,
-  inode_t n_target,
-  int64_t total_num,
-  SynSpec& syn_spec,
-  bool remote_source_flag )
-{
-  if ( total_num == 0 )
-  {
+template <class ConnKeyT, class ConnStructT>
+template <class T1, class T2>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::connectAssignedNodes(
+    curandGenerator_t &src_gen, T1 source, inode_t n_source, T2 target,
+    inode_t n_target, int64_t total_num, SynSpec &syn_spec,
+    bool remote_source_flag) {
+  if (total_num == 0) {
     return 0;
   }
   int64_t old_n_conn = n_conn_;
   int64_t n_new_conn = total_num;
   n_conn_ += n_new_conn; // new number of connections
-  int new_n_block = ( int ) ( ( n_conn_ + conn_block_size_ - 1 ) / conn_block_size_ );
+  int new_n_block = (int)((n_conn_ + conn_block_size_ - 1) / conn_block_size_);
 
-  if ( remote_source_flag ) {
+  if (remote_source_flag) {
     return 0;
   }
-  
-  // allocateNewBlocks( new_n_block ); should be already allocated for this connection rule
-  
-  //printf("Generating connections with assigned-nodes rule...\n");
-  //printf("old_n_conn: %ld, n_new_conn: %ld, n_conn_: %ld\n", old_n_conn, n_new_conn, n_conn_);
-  
-  int ib0 = ( int ) ( old_n_conn / conn_block_size_ );
-  for ( int ib = ib0; ib < new_n_block; ib++ )
-  {
-    int64_t n_block_conn; // number of connections in a block
-    int64_t i_conn0;      // index of first connection in a block
-    if ( new_n_block == ib0 + 1 )
-    { // all connections are in the same block
+
+  // allocateNewBlocks( new_n_block ); should be already allocated for this
+  // connection rule
+
+  // printf("Generating connections with assigned-nodes rule...\n");
+  // printf("old_n_conn: %ld, n_new_conn: %ld, n_conn_: %ld\n", old_n_conn,
+  // n_new_conn, n_conn_);
+
+  int ib0 = (int)(old_n_conn / conn_block_size_);
+  for (int ib = ib0; ib < new_n_block; ib++) {
+    int64_t n_block_conn;         // number of connections in a block
+    int64_t i_conn0;              // index of first connection in a block
+    if (new_n_block == ib0 + 1) { // all connections are in the same block
       i_conn0 = old_n_conn % conn_block_size_;
       n_block_conn = n_new_conn;
-    }
-    else if ( ib == ib0 )
-    { // first block
+    } else if (ib == ib0) { // first block
       i_conn0 = old_n_conn % conn_block_size_;
       n_block_conn = conn_block_size_ - i_conn0;
-    }
-    else if ( ib == new_n_block - 1 )
-    { // last block
+    } else if (ib == new_n_block - 1) { // last block
       i_conn0 = 0;
-      n_block_conn = ( n_conn_ - 1 ) % conn_block_size_ + 1;
-    }
-    else
-    {
+      n_block_conn = (n_conn_ - 1) % conn_block_size_ + 1;
+    } else {
       i_conn0 = 0;
       n_block_conn = conn_block_size_;
     }
 
-    setConnectionWeights(
-      local_rnd_gen_, d_conn_storage_, conn_struct_vect_[ ib ] + i_conn0, n_block_conn, syn_spec );
+    setConnectionWeights(local_rnd_gen_, d_conn_storage_,
+                         conn_struct_vect_[ib] + i_conn0, n_block_conn,
+                         syn_spec);
 
-    setConnectionDelays( local_rnd_gen_, d_conn_storage_, conn_key_vect_[ ib ] + i_conn0, n_block_conn, syn_spec );
+    setConnectionDelays(local_rnd_gen_, d_conn_storage_,
+                        conn_key_vect_[ib] + i_conn0, n_block_conn, syn_spec);
 
-    setPort< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, syn_spec.port_, n_block_conn );
+    setPort<ConnKeyT, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+        syn_spec.port_, n_block_conn);
     DBGCUDASYNC;
 
-    setSynGroup< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, syn_spec.syn_group_, n_block_conn );
+    setSynGroup<ConnKeyT, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+        syn_spec.syn_group_, n_block_conn);
     DBGCUDASYNC;
-    
-    //CUDASYNC;
-    //printConnectionsFull< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>
-    //  (conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, n_block_conn);
-    //CUDASYNC;
-    
+
+    // CUDASYNC;
+    // printConnectionsFull< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 )
+    // / 1024, 1024 >>>
+    //   (conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0,
+    //   n_block_conn);
+    // CUDASYNC;
   }
 
   return 0;
 }
 
-
-template < class ConnKeyT, class ConnStructT >
-template < class T1, class T2 >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::connectFixedIndegree( curandGenerator_t& src_gen,
-  T1 source,
-  inode_t n_source,
-  T2 target,
-  inode_t n_target,
-  int indegree,
-  SynSpec& syn_spec,
-  bool remote_source_flag )
-{
-  if ( indegree <= 0 )
-  {
+template <class ConnKeyT, class ConnStructT>
+template <class T1, class T2>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::connectFixedIndegree(
+    curandGenerator_t &src_gen, T1 source, inode_t n_source, T2 target,
+    inode_t n_target, int indegree, SynSpec &syn_spec,
+    bool remote_source_flag) {
+  if (indegree <= 0) {
     return 0;
   }
   int64_t old_n_conn = n_conn_;
   int64_t n_new_conn = n_target * indegree;
   n_conn_ += n_new_conn; // new number of connections
-  int new_n_block = ( int ) ( ( n_conn_ + conn_block_size_ - 1 ) / conn_block_size_ );
+  int new_n_block = (int)((n_conn_ + conn_block_size_ - 1) / conn_block_size_);
 
-  reallocConnSourceIds( n_new_conn );  
+  reallocConnSourceIds(n_new_conn);
   // generate random source index in range 0 - n_neuron
-  CURAND_CALL( curandGenerate( src_gen, ( uint* ) d_conn_source_ids_, n_new_conn ) );
-  setSource< T1 > <<< ( n_new_conn + 1023 ) / 1024, 1024 >>>
-    (d_conn_source_ids_, d_conn_source_ids_, n_new_conn, source, n_source );
+  CURAND_CALL(curandGenerate(src_gen, (uint *)d_conn_source_ids_, n_new_conn));
+  setSource<T1><<<(n_new_conn + 1023) / 1024, 1024>>>(
+      d_conn_source_ids_, d_conn_source_ids_, n_new_conn, source, n_source);
   DBGCUDASYNC;
 
-  if ( remote_source_flag ) {
+  if (remote_source_flag) {
     return 0;
   }
-  
-  allocateNewBlocks( new_n_block );
-  
+
+  allocateNewBlocks(new_n_block);
+
   // printf("Generating connections with fixed_indegree rule...\n");
   int64_t conn_source_ids_offset = 0;
   int64_t n_prev_conn = 0;
-  int ib0 = ( int ) ( old_n_conn / conn_block_size_ );
-  for ( int ib = ib0; ib < new_n_block; ib++ )
-  {
-    int64_t n_block_conn; // number of connections in a block
-    int64_t i_conn0;      // index of first connection in a block
-    if ( new_n_block == ib0 + 1 )
-    { // all connections are in the same block
+  int ib0 = (int)(old_n_conn / conn_block_size_);
+  for (int ib = ib0; ib < new_n_block; ib++) {
+    int64_t n_block_conn;         // number of connections in a block
+    int64_t i_conn0;              // index of first connection in a block
+    if (new_n_block == ib0 + 1) { // all connections are in the same block
       i_conn0 = old_n_conn % conn_block_size_;
       n_block_conn = n_new_conn;
-    }
-    else if ( ib == ib0 )
-    { // first block
+    } else if (ib == ib0) { // first block
       i_conn0 = old_n_conn % conn_block_size_;
       n_block_conn = conn_block_size_ - i_conn0;
-    }
-    else if ( ib == new_n_block - 1 )
-    { // last block
+    } else if (ib == new_n_block - 1) { // last block
       i_conn0 = 0;
-      n_block_conn = ( n_conn_ - 1 ) % conn_block_size_ + 1;
-    }
-    else
-    {
+      n_block_conn = (n_conn_ - 1) % conn_block_size_ + 1;
+    } else {
       i_conn0 = 0;
       n_block_conn = conn_block_size_;
     }
 
-    setSource< T1, ConnKeyT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>
-      (conn_key_vect_[ ib ] + i_conn0, d_conn_source_ids_ + conn_source_ids_offset, n_block_conn);
+    setSource<T1, ConnKeyT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0,
+        d_conn_source_ids_ + conn_source_ids_offset, n_block_conn);
     DBGCUDASYNC;
     conn_source_ids_offset += n_block_conn;
 
-    setIndegreeTarget< T2, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_struct_vect_[ ib ] + i_conn0, n_block_conn, n_prev_conn, target, indegree );
+    setIndegreeTarget<T2, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_struct_vect_[ib] + i_conn0, n_block_conn, n_prev_conn, target,
+        indegree);
     DBGCUDASYNC;
 
-    setConnectionWeights(
-      local_rnd_gen_, d_conn_storage_, conn_struct_vect_[ ib ] + i_conn0, n_block_conn, syn_spec );
+    setConnectionWeights(local_rnd_gen_, d_conn_storage_,
+                         conn_struct_vect_[ib] + i_conn0, n_block_conn,
+                         syn_spec);
 
-    setConnectionDelays( local_rnd_gen_, d_conn_storage_, conn_key_vect_[ ib ] + i_conn0, n_block_conn, syn_spec );
+    setConnectionDelays(local_rnd_gen_, d_conn_storage_,
+                        conn_key_vect_[ib] + i_conn0, n_block_conn, syn_spec);
 
-    setPort< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, syn_spec.port_, n_block_conn );
+    setPort<ConnKeyT, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+        syn_spec.port_, n_block_conn);
     DBGCUDASYNC;
-    setSynGroup< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, syn_spec.syn_group_, n_block_conn );
+    setSynGroup<ConnKeyT, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+        syn_spec.syn_group_, n_block_conn);
     DBGCUDASYNC;
-    
+
     n_prev_conn += n_block_conn;
   }
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-template < class T1, class T2 >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::connectFixedOutdegree( curandGenerator_t& src_gen,
-  T1 source,
-  inode_t n_source,
-  T2 target,
-  inode_t n_target,
-  int outdegree,
-  SynSpec& syn_spec,
-  bool remote_source_flag )
-{
-  if ( outdegree <= 0 )
-  {
+template <class ConnKeyT, class ConnStructT>
+template <class T1, class T2>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::connectFixedOutdegree(
+    curandGenerator_t &src_gen, T1 source, inode_t n_source, T2 target,
+    inode_t n_target, int outdegree, SynSpec &syn_spec,
+    bool remote_source_flag) {
+  if (outdegree <= 0) {
     return 0;
   }
   int64_t old_n_conn = n_conn_;
   int64_t n_new_conn = n_source * outdegree;
   n_conn_ += n_new_conn; // new number of connections
-  int new_n_block = ( int ) ( ( n_conn_ + conn_block_size_ - 1 ) / conn_block_size_ );
+  int new_n_block = (int)((n_conn_ + conn_block_size_ - 1) / conn_block_size_);
 
-  if ( remote_source_flag )
-  {
-    reallocConnSourceIds( n_new_conn );
-    setOutdegreeSource< T1 > <<< ( n_new_conn + 1023 ) / 1024, 1024 >>>(
-        d_conn_source_ids_, n_new_conn, source, outdegree );
+  if (remote_source_flag) {
+    reallocConnSourceIds(n_new_conn);
+    setOutdegreeSource<T1><<<(n_new_conn + 1023) / 1024, 1024>>>(
+        d_conn_source_ids_, n_new_conn, source, outdegree);
     DBGCUDASYNC;
 
-    return 0;  
+    return 0;
   }
-  
-  allocateNewBlocks( new_n_block );
+
+  allocateNewBlocks(new_n_block);
 
   // printf("Generating connections with fixed_outdegree rule...\n");
   int64_t n_prev_conn = 0;
-  int ib0 = ( int ) ( old_n_conn / conn_block_size_ );
-  for ( int ib = ib0; ib < new_n_block; ib++ )
-  {
-    int64_t n_block_conn; // number of connections in a block
-    int64_t i_conn0;      // index of first connection in a block
-    if ( new_n_block == ib0 + 1 )
-    { // all connections are in the same block
+  int ib0 = (int)(old_n_conn / conn_block_size_);
+  for (int ib = ib0; ib < new_n_block; ib++) {
+    int64_t n_block_conn;         // number of connections in a block
+    int64_t i_conn0;              // index of first connection in a block
+    if (new_n_block == ib0 + 1) { // all connections are in the same block
       i_conn0 = old_n_conn % conn_block_size_;
       n_block_conn = n_new_conn;
-    }
-    else if ( ib == ib0 )
-    { // first block
+    } else if (ib == ib0) { // first block
       i_conn0 = old_n_conn % conn_block_size_;
       n_block_conn = conn_block_size_ - i_conn0;
-    }
-    else if ( ib == new_n_block - 1 )
-    { // last block
+    } else if (ib == new_n_block - 1) { // last block
       i_conn0 = 0;
-      n_block_conn = ( n_conn_ - 1 ) % conn_block_size_ + 1;
-    }
-    else
-    {
+      n_block_conn = (n_conn_ - 1) % conn_block_size_ + 1;
+    } else {
       i_conn0 = 0;
       n_block_conn = conn_block_size_;
     }
-    
-    setOutdegreeSource< T1, ConnKeyT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, n_block_conn, n_prev_conn, source, outdegree );
+
+    setOutdegreeSource<T1, ConnKeyT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0, n_block_conn, n_prev_conn, source,
+        outdegree);
     DBGCUDASYNC;
 
     // generate random target index in range 0 - n_neuron
-    CURAND_CALL( curandGenerate( local_rnd_gen_, ( uint* ) d_conn_storage_, n_block_conn ) );
-    setTarget< T2, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_struct_vect_[ ib ] + i_conn0, ( uint* ) d_conn_storage_, n_block_conn, target, n_target );
+    CURAND_CALL(
+        curandGenerate(local_rnd_gen_, (uint *)d_conn_storage_, n_block_conn));
+    setTarget<T2, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_struct_vect_[ib] + i_conn0, (uint *)d_conn_storage_, n_block_conn,
+        target, n_target);
     DBGCUDASYNC;
 
-    setConnectionWeights(
-      local_rnd_gen_, d_conn_storage_, conn_struct_vect_[ ib ] + i_conn0, n_block_conn, syn_spec );
+    setConnectionWeights(local_rnd_gen_, d_conn_storage_,
+                         conn_struct_vect_[ib] + i_conn0, n_block_conn,
+                         syn_spec);
 
-    setConnectionDelays( local_rnd_gen_, d_conn_storage_, conn_key_vect_[ ib ] + i_conn0, n_block_conn, syn_spec );
+    setConnectionDelays(local_rnd_gen_, d_conn_storage_,
+                        conn_key_vect_[ib] + i_conn0, n_block_conn, syn_spec);
 
-    setPort< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, syn_spec.port_, n_block_conn );
+    setPort<ConnKeyT, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+        syn_spec.port_, n_block_conn);
     DBGCUDASYNC;
-    setSynGroup< ConnKeyT, ConnStructT > <<< ( n_block_conn + 1023 ) / 1024, 1024 >>>(
-      conn_key_vect_[ ib ] + i_conn0, conn_struct_vect_[ ib ] + i_conn0, syn_spec.syn_group_, n_block_conn );
+    setSynGroup<ConnKeyT, ConnStructT><<<(n_block_conn + 1023) / 1024, 1024>>>(
+        conn_key_vect_[ib] + i_conn0, conn_struct_vect_[ib] + i_conn0,
+        syn_spec.syn_group_, n_block_conn);
     DBGCUDASYNC;
-    
+
     n_prev_conn += n_block_conn;
   }
 
@@ -4024,41 +3615,39 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::connectFixedOutdegree( curandGenera
 // h_param_arr
 // NOTE: host array should be pre-allocated to store n_conn elements
 //////////////////////////////////////////////////////////////////////
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::getConnectionFloatParam( int64_t* conn_ids,
-  int64_t n_conn,
-  float* h_param_arr,
-  std::string param_name )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::getConnectionFloatParam(
+    int64_t *conn_ids, int64_t n_conn, float *h_param_arr,
+    std::string param_name) {
   // Check if param_name is a connection float parameter
-  int i_param = getConnectionFloatParamIndex( param_name );
-  if ( i_param < 0 )
-  {
-    throw ngpu_exception( std::string( "Unrecognized connection float parameter " ) + param_name );
+  int i_param = getConnectionFloatParamIndex(param_name);
+  if (i_param < 0) {
+    throw ngpu_exception(
+        std::string("Unrecognized connection float parameter ") + param_name);
   }
-  if ( n_conn > 0 )
-  {
+  if (n_conn > 0) {
     // declare pointers to arrays in device memory
-    int64_t* d_conn_ids;
-    float* d_arr;
+    int64_t *d_conn_ids;
+    float *d_arr;
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    CUDAMALLOCCTRL( "&d_conn_ids", &d_conn_ids, n_conn * sizeof( int64_t ) );
-    gpuErrchk( cudaMemcpy( d_conn_ids, conn_ids, n_conn * sizeof( int64_t ), cudaMemcpyHostToDevice ) );
+    CUDAMALLOCCTRL("&d_conn_ids", &d_conn_ids, n_conn * sizeof(int64_t));
+    gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn * sizeof(int64_t),
+                         cudaMemcpyHostToDevice));
 
     // allocate connection parameter array in device memory
-    CUDAMALLOCCTRL( "&d_arr", &d_arr, n_conn * sizeof( float ) );
+    CUDAMALLOCCTRL("&d_arr", &d_arr, n_conn * sizeof(float));
 
     // launch kernel to get connection parameters
-    getConnectionFloatParamKernel< ConnKeyT, ConnStructT > <<< ( n_conn + 1023 ) / 1024, 1024 >>>(
-      d_conn_ids, n_conn, d_arr, i_param );
+    getConnectionFloatParamKernel<ConnKeyT, ConnStructT>
+        <<<(n_conn + 1023) / 1024, 1024>>>(d_conn_ids, n_conn, d_arr, i_param);
 
     // copy connection parameter array from device to host memory
-    gpuErrchk( cudaMemcpy( h_param_arr, d_arr, n_conn * sizeof( float ), cudaMemcpyDeviceToHost ) );
+    gpuErrchk(cudaMemcpy(h_param_arr, d_arr, n_conn * sizeof(float),
+                         cudaMemcpyDeviceToHost));
     // free allocated device memory
-    CUDAFREECTRL( "d_conn_ids", d_conn_ids );
-    CUDAFREECTRL( "d_arr", d_arr );
+    CUDAFREECTRL("d_conn_ids", d_conn_ids);
+    CUDAFREECTRL("d_arr", d_arr);
   }
 
   return 0;
@@ -4070,43 +3659,40 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::getConnectionFloatParam( int64_t* c
 // h_param_arr
 // NOTE: host array should be pre-allocated to store n_conn elements
 //////////////////////////////////////////////////////////////////////
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::getConnectionIntParam( int64_t* conn_ids,
-  int64_t n_conn,
-  int* h_param_arr,
-  std::string param_name )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::getConnectionIntParam(
+    int64_t *conn_ids, int64_t n_conn, int *h_param_arr,
+    std::string param_name) {
   // Check if param_name is a connection integer parameter
-  int i_param = getConnectionIntParamIndex( param_name );
-  if ( i_param < 0 )
-  {
-    throw ngpu_exception( std::string( "Unrecognized connection "
-                                       "integer parameter " )
-      + param_name );
+  int i_param = getConnectionIntParamIndex(param_name);
+  if (i_param < 0) {
+    throw ngpu_exception(std::string("Unrecognized connection "
+                                     "integer parameter ") +
+                         param_name);
   }
-  if ( n_conn > 0 )
-  {
+  if (n_conn > 0) {
     // declare pointers to arrays in device memory
-    int64_t* d_conn_ids;
-    int* d_arr;
+    int64_t *d_conn_ids;
+    int *d_arr;
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    CUDAMALLOCCTRL( "&d_conn_ids", &d_conn_ids, n_conn * sizeof( int64_t ) );
-    gpuErrchk( cudaMemcpy( d_conn_ids, conn_ids, n_conn * sizeof( int64_t ), cudaMemcpyHostToDevice ) );
+    CUDAMALLOCCTRL("&d_conn_ids", &d_conn_ids, n_conn * sizeof(int64_t));
+    gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn * sizeof(int64_t),
+                         cudaMemcpyHostToDevice));
 
     // allocate connection parameter array in device memory
-    CUDAMALLOCCTRL( "&d_arr", &d_arr, n_conn * sizeof( int ) );
+    CUDAMALLOCCTRL("&d_arr", &d_arr, n_conn * sizeof(int));
 
     // launch kernel to get connection parameters
-    getConnectionIntParamKernel< ConnKeyT, ConnStructT > <<< ( n_conn + 1023 ) / 1024, 1024 >>>(
-      d_conn_ids, n_conn, d_arr, i_param );
+    getConnectionIntParamKernel<ConnKeyT, ConnStructT>
+        <<<(n_conn + 1023) / 1024, 1024>>>(d_conn_ids, n_conn, d_arr, i_param);
 
     // copy connection parameter array from device to host memory
-    gpuErrchk( cudaMemcpy( h_param_arr, d_arr, n_conn * sizeof( int ), cudaMemcpyDeviceToHost ) );
+    gpuErrchk(cudaMemcpy(h_param_arr, d_arr, n_conn * sizeof(int),
+                         cudaMemcpyDeviceToHost));
     // free allocated device memory
-    CUDAFREECTRL( "d_conn_ids", d_conn_ids );
-    CUDAFREECTRL( "d_arr", d_arr );
+    CUDAFREECTRL("d_conn_ids", d_conn_ids);
+    CUDAFREECTRL("d_arr", d_arr);
   }
 
   return 0;
@@ -4116,38 +3702,33 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::getConnectionIntParam( int64_t* con
 // Set the float parameter param_name of an array of n_conn connections,
 // identified by the indexes conn_ids[i], to the value val
 //////////////////////////////////////////////////////////////////////
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionFloatParam( int64_t* conn_ids,
-  int64_t n_conn,
-  float val,
-  std::string param_name )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::setConnectionFloatParam(
+    int64_t *conn_ids, int64_t n_conn, float val, std::string param_name) {
   // Check if param_name is a connection float parameter
-  int i_param = getConnectionFloatParamIndex( param_name );
-  if ( i_param < 0 )
-  {
-    throw ngpu_exception( std::string( "Unrecognized connection float parameter " ) + param_name );
+  int i_param = getConnectionFloatParamIndex(param_name);
+  if (i_param < 0) {
+    throw ngpu_exception(
+        std::string("Unrecognized connection float parameter ") + param_name);
   }
-  if ( i_param == i_delay_param )
-  {
-    throw ngpu_exception( "Connection delay cannot be modified" );
+  if (i_param == i_delay_param) {
+    throw ngpu_exception("Connection delay cannot be modified");
   }
 
-  if ( n_conn > 0 )
-  {
+  if (n_conn > 0) {
     // declare pointers to arrays in device memory
-    int64_t* d_conn_ids;
+    int64_t *d_conn_ids;
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    CUDAMALLOCCTRL( "&d_conn_ids", &d_conn_ids, n_conn * sizeof( int64_t ) );
-    gpuErrchk( cudaMemcpy( d_conn_ids, conn_ids, n_conn * sizeof( int64_t ), cudaMemcpyHostToDevice ) );
+    CUDAMALLOCCTRL("&d_conn_ids", &d_conn_ids, n_conn * sizeof(int64_t));
+    gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn * sizeof(int64_t),
+                         cudaMemcpyHostToDevice));
 
     // launch kernel to set connection parameters
-    setConnectionFloatParamKernel< ConnStructT > <<< ( n_conn + 1023 ) / 1024, 1024 >>>(
-      d_conn_ids, n_conn, val, i_param );
+    setConnectionFloatParamKernel<ConnStructT>
+        <<<(n_conn + 1023) / 1024, 1024>>>(d_conn_ids, n_conn, val, i_param);
     // free allocated device memory
-    CUDAFREECTRL( "d_conn_ids", d_conn_ids );
+    CUDAFREECTRL("d_conn_ids", d_conn_ids);
   }
 
   return 0;
@@ -4158,40 +3739,37 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionFloatParam( int64_t* c
 // identified by the indexes conn_ids[i], using values from a distribution
 // or from an array
 //////////////////////////////////////////////////////////////////////
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionFloatParamDistr( int64_t* conn_ids,
-  int64_t n_conn,
-  std::string param_name )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::setConnectionFloatParamDistr(
+    int64_t *conn_ids, int64_t n_conn, std::string param_name) {
   // Check if param_name is a connection float parameter
-  int i_param = getConnectionFloatParamIndex( param_name );
-  if ( i_param < 0 )
-  {
-    throw ngpu_exception( std::string( "Unrecognized connection float parameter " ) + param_name );
+  int i_param = getConnectionFloatParamIndex(param_name);
+  if (i_param < 0) {
+    throw ngpu_exception(
+        std::string("Unrecognized connection float parameter ") + param_name);
   }
-  if ( i_param == i_delay_param )
-  {
-    throw ngpu_exception( "Connection delay cannot be modified" );
+  if (i_param == i_delay_param) {
+    throw ngpu_exception("Connection delay cannot be modified");
   }
 
-  if ( n_conn > 0 )
-  {
+  if (n_conn > 0) {
     // declare pointers to arrays in device memory
-    int64_t* d_conn_ids;
+    int64_t *d_conn_ids;
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    CUDAMALLOCCTRL( "&d_conn_ids", &d_conn_ids, n_conn * sizeof( int64_t ) );
-    gpuErrchk( cudaMemcpy( d_conn_ids, conn_ids, n_conn * sizeof( int64_t ), cudaMemcpyHostToDevice ) );
+    CUDAMALLOCCTRL("&d_conn_ids", &d_conn_ids, n_conn * sizeof(int64_t));
+    gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn * sizeof(int64_t),
+                         cudaMemcpyHostToDevice));
 
     // get values from array or distribution
-    float* d_arr = distribution_->getArray( conn_random_generator_[ this_host_ ][ this_host_ ], n_conn );
+    float *d_arr = distribution_->getArray(
+        conn_random_generator_[this_host_][this_host_], n_conn);
     // launch kernel to set connection parameters
-    setConnectionFloatParamKernel< ConnStructT > <<< ( n_conn + 1023 ) / 1024, 1024 >>>(
-      d_conn_ids, n_conn, d_arr, i_param );
+    setConnectionFloatParamKernel<ConnStructT>
+        <<<(n_conn + 1023) / 1024, 1024>>>(d_conn_ids, n_conn, d_arr, i_param);
     // free allocated device memory
-    CUDAFREECTRL( "d_conn_ids", d_conn_ids );
-    CUDAFREECTRL( "d_arr", d_arr );
+    CUDAFREECTRL("d_conn_ids", d_conn_ids);
+    CUDAFREECTRL("d_arr", d_arr);
   }
 
   return 0;
@@ -4202,46 +3780,43 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionFloatParamDistr( int64
 // identified by the indexes conn_ids[i], using the values from the array
 // h_param_arr
 //////////////////////////////////////////////////////////////////////
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionIntParamArr( int64_t* conn_ids,
-  int64_t n_conn,
-  int* h_param_arr,
-  std::string param_name )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::setConnectionIntParamArr(
+    int64_t *conn_ids, int64_t n_conn, int *h_param_arr,
+    std::string param_name) {
   // Check if param_name is a connection int parameter
-  int i_param = getConnectionIntParamIndex( param_name );
-  if ( i_param < 0 )
-  {
-    throw ngpu_exception( std::string( "Unrecognized connection int parameter " ) + param_name );
+  int i_param = getConnectionIntParamIndex(param_name);
+  if (i_param < 0) {
+    throw ngpu_exception(std::string("Unrecognized connection int parameter ") +
+                         param_name);
   }
-  if ( i_param == i_source_param )
-  {
-    throw ngpu_exception( "Connection source node cannot be modified" );
+  if (i_param == i_source_param) {
+    throw ngpu_exception("Connection source node cannot be modified");
   }
 
-  if ( n_conn > 0 )
-  {
+  if (n_conn > 0) {
     // declare pointers to arrays in device memory
-    int64_t* d_conn_ids;
-    int* d_arr;
+    int64_t *d_conn_ids;
+    int *d_arr;
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    CUDAMALLOCCTRL( "&d_conn_ids", &d_conn_ids, n_conn * sizeof( int64_t ) );
-    gpuErrchk( cudaMemcpy( d_conn_ids, conn_ids, n_conn * sizeof( int64_t ), cudaMemcpyHostToDevice ) );
+    CUDAMALLOCCTRL("&d_conn_ids", &d_conn_ids, n_conn * sizeof(int64_t));
+    gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn * sizeof(int64_t),
+                         cudaMemcpyHostToDevice));
 
     // allocate connection parameter array in device memory
-    CUDAMALLOCCTRL( "&d_arr", &d_arr, n_conn * sizeof( int ) );
+    CUDAMALLOCCTRL("&d_arr", &d_arr, n_conn * sizeof(int));
 
     // copy connection parameter array from host to device memory
-    gpuErrchk( cudaMemcpy( d_arr, h_param_arr, n_conn * sizeof( int ), cudaMemcpyHostToDevice ) );
+    gpuErrchk(cudaMemcpy(d_arr, h_param_arr, n_conn * sizeof(int),
+                         cudaMemcpyHostToDevice));
 
     // launch kernel to set connection parameters
-    setConnectionIntParamKernel< ConnKeyT, ConnStructT > <<< ( n_conn + 1023 ) / 1024, 1024 >>>(
-      d_conn_ids, n_conn, d_arr, i_param );
+    setConnectionIntParamKernel<ConnKeyT, ConnStructT>
+        <<<(n_conn + 1023) / 1024, 1024>>>(d_conn_ids, n_conn, d_arr, i_param);
     // free allocated device memory
-    CUDAFREECTRL( "d_conn_ids", d_conn_ids );
-    CUDAFREECTRL( "d_arr", d_arr );
+    CUDAFREECTRL("d_conn_ids", d_conn_ids);
+    CUDAFREECTRL("d_arr", d_arr);
   }
 
   return 0;
@@ -4251,121 +3826,122 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionIntParamArr( int64_t* 
 // Set the int parameter param_name of an array of n_conn connections,
 // identified by the indexes conn_ids[i], to the value val
 //////////////////////////////////////////////////////////////////////
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::setConnectionIntParam( int64_t* conn_ids,
-  int64_t n_conn,
-  int val,
-  std::string param_name )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::setConnectionIntParam(
+    int64_t *conn_ids, int64_t n_conn, int val, std::string param_name) {
   // Check if param_name is a connection float parameter
-  int i_param = getConnectionIntParamIndex( param_name );
-  if ( i_param < 0 )
-  {
-    throw ngpu_exception( std::string( "Unrecognized connection int parameter " ) + param_name );
+  int i_param = getConnectionIntParamIndex(param_name);
+  if (i_param < 0) {
+    throw ngpu_exception(std::string("Unrecognized connection int parameter ") +
+                         param_name);
   }
-  if ( i_param == i_source_param )
-  {
-    throw ngpu_exception( "Connection source node cannot be modified" );
+  if (i_param == i_source_param) {
+    throw ngpu_exception("Connection source node cannot be modified");
   }
 
-  if ( n_conn > 0 )
-  {
+  if (n_conn > 0) {
     // declare pointers to arrays in device memory
-    int64_t* d_conn_ids;
+    int64_t *d_conn_ids;
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    CUDAMALLOCCTRL( "&d_conn_ids", &d_conn_ids, n_conn * sizeof( int64_t ) );
-    gpuErrchk( cudaMemcpy( d_conn_ids, conn_ids, n_conn * sizeof( int64_t ), cudaMemcpyHostToDevice ) );
+    CUDAMALLOCCTRL("&d_conn_ids", &d_conn_ids, n_conn * sizeof(int64_t));
+    gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn * sizeof(int64_t),
+                         cudaMemcpyHostToDevice));
 
     // launch kernel to set connection parameters
-    setConnectionIntParamKernel< ConnKeyT, ConnStructT > <<< ( n_conn + 1023 ) / 1024, 1024 >>>(
-      d_conn_ids, n_conn, val, i_param );
+    setConnectionIntParamKernel<ConnKeyT, ConnStructT>
+        <<<(n_conn + 1023) / 1024, 1024>>>(d_conn_ids, n_conn, val, i_param);
     // free allocated device memory
-    CUDAFREECTRL( "d_conn_ids", d_conn_ids );
+    CUDAFREECTRL("d_conn_ids", d_conn_ids);
   }
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int64_t*
-ConnectionTemplate< ConnKeyT, ConnStructT >::getConnections( inode_t* i_source_pt,
-  inode_t n_source,
-  inode_t* i_target_pt,
-  inode_t n_target,
-  int syn_group,
-  int64_t* n_conn )
-{
-  int64_t* h_conn_ids = nullptr;
-  int64_t* d_conn_ids = nullptr;
-  uint64_t n_src_tgt = ( uint64_t ) n_source * n_target;
+template <class ConnKeyT, class ConnStructT>
+int64_t *ConnectionTemplate<ConnKeyT, ConnStructT>::getConnections(
+    inode_t *i_source_pt, inode_t n_source, inode_t *i_target_pt,
+    inode_t n_target, int syn_group, int64_t *n_conn) {
+  int64_t *h_conn_ids = nullptr;
+  int64_t *d_conn_ids = nullptr;
+  uint64_t n_src_tgt = (uint64_t)n_source * n_target;
   int64_t n_conn_ids = 0;
 
-  if ( n_src_tgt > 0 )
-  {
+  if (n_src_tgt > 0) {
     // std::cout << "n_src_tgt " << n_src_tgt << "n_source " << n_source
     //	      << "n_target " << n_target << "\n";
     //  sort source node index array in GPU memory
-    inode_t* d_src_arr = sortArray( i_source_pt, n_source );
+    inode_t *d_src_arr = sortArray(i_source_pt, n_source);
     // sort target node index array in GPU memory
-    inode_t* d_tgt_arr = sortArray( i_target_pt, n_target );
+    inode_t *d_tgt_arr = sortArray(i_target_pt, n_target);
     // Allocate array of combined source-target indexes (src_arr x tgt_arr)
-    uint64_t* d_src_tgt_arr;
-    CUDAMALLOCCTRL( "&d_src_tgt_arr", &d_src_tgt_arr, n_src_tgt * sizeof( uint64_t ) );
+    uint64_t *d_src_tgt_arr;
+    CUDAMALLOCCTRL("&d_src_tgt_arr", &d_src_tgt_arr,
+                   n_src_tgt * sizeof(uint64_t));
     // Fill it with combined source-target indexes
-    setSourceTargetIndexKernel<<< ( n_src_tgt + 1023 ) / 1024, 1024 >>>(
-      n_src_tgt, n_source, n_target, d_src_tgt_arr, d_src_arr, d_tgt_arr );
+    setSourceTargetIndexKernel<<<(n_src_tgt + 1023) / 1024, 1024>>>(
+        n_src_tgt, n_source, n_target, d_src_tgt_arr, d_src_arr, d_tgt_arr);
     // Allocate array of number of connections per source-target couple
     // and initialize it to 0
-    uint64_t* d_src_tgt_conn_num;
-    CUDAMALLOCCTRL( "&d_src_tgt_conn_num", &d_src_tgt_conn_num, ( n_src_tgt + 1 ) * sizeof( uint64_t ) );
-    gpuErrchk( cudaMemset( d_src_tgt_conn_num, 0, ( n_src_tgt + 1 ) * sizeof( uint64_t ) ) );
+    uint64_t *d_src_tgt_conn_num;
+    CUDAMALLOCCTRL("&d_src_tgt_conn_num", &d_src_tgt_conn_num,
+                   (n_src_tgt + 1) * sizeof(uint64_t));
+    gpuErrchk(
+        cudaMemset(d_src_tgt_conn_num, 0, (n_src_tgt + 1) * sizeof(uint64_t)));
 
     // Count number of connections per source-target couple
-    countConnectionsKernel< ConnKeyT, ConnStructT > <<< ( n_conn_ + 1023 ) / 1024, 1024 >>>(
-      n_conn_, n_source, n_target, d_src_tgt_arr, d_src_tgt_conn_num, syn_group );
+    countConnectionsKernel<ConnKeyT, ConnStructT>
+        <<<(n_conn_ + 1023) / 1024, 1024>>>(n_conn_, n_source, n_target,
+                                            d_src_tgt_arr, d_src_tgt_conn_num,
+                                            syn_group);
     // Evaluate exclusive sum of connections per source-target couple
     // Allocate array for cumulative sum
-    uint64_t* d_src_tgt_conn_cumul;
-    CUDAMALLOCCTRL( "&d_src_tgt_conn_cumul", &d_src_tgt_conn_cumul, ( n_src_tgt + 1 ) * sizeof( uint64_t ) );
+    uint64_t *d_src_tgt_conn_cumul;
+    CUDAMALLOCCTRL("&d_src_tgt_conn_cumul", &d_src_tgt_conn_cumul,
+                   (n_src_tgt + 1) * sizeof(uint64_t));
     // Determine temporary device storage requirements
-    void* d_storage = nullptr;
+    void *d_storage = nullptr;
     size_t storage_bytes = 0;
     //<BEGIN-CLANG-TIDY-SKIP>//
-    cub::DeviceScan::ExclusiveSum( d_storage, storage_bytes, d_src_tgt_conn_num, d_src_tgt_conn_cumul, n_src_tgt + 1 );
+    cub::DeviceScan::ExclusiveSum(d_storage, storage_bytes, d_src_tgt_conn_num,
+                                  d_src_tgt_conn_cumul, n_src_tgt + 1);
     //<END-CLANG-TIDY-SKIP>//
 
     // Allocate temporary storage
-    CUDAMALLOCCTRL( "&d_storage", &d_storage, storage_bytes );
+    CUDAMALLOCCTRL("&d_storage", &d_storage, storage_bytes);
     // Run exclusive prefix sum
     //<BEGIN-CLANG-TIDY-SKIP>//
-    cub::DeviceScan::ExclusiveSum( d_storage, storage_bytes, d_src_tgt_conn_num, d_src_tgt_conn_cumul, n_src_tgt + 1 );
+    cub::DeviceScan::ExclusiveSum(d_storage, storage_bytes, d_src_tgt_conn_num,
+                                  d_src_tgt_conn_cumul, n_src_tgt + 1);
     //<END-CLANG-TIDY-SKIP>//
 
-    CUDAFREECTRL( "d_storage", d_storage );
+    CUDAFREECTRL("d_storage", d_storage);
 
     // The last element is the total number of required connection Ids
-    cudaMemcpy( &n_conn_ids, &d_src_tgt_conn_cumul[ n_src_tgt ], sizeof( int64_t ), cudaMemcpyDeviceToHost );
+    cudaMemcpy(&n_conn_ids, &d_src_tgt_conn_cumul[n_src_tgt], sizeof(int64_t),
+               cudaMemcpyDeviceToHost);
 
-    if ( n_conn_ids > 0 )
-    {
+    if (n_conn_ids > 0) {
       // Allocate array of connection indexes
-      CUDAMALLOCCTRL( "&d_conn_ids", &d_conn_ids, n_conn_ids * sizeof( int64_t ) );
+      CUDAMALLOCCTRL("&d_conn_ids", &d_conn_ids, n_conn_ids * sizeof(int64_t));
       // Set number of connections per source-target couple to 0 again
-      gpuErrchk( cudaMemset( d_src_tgt_conn_num, 0, ( n_src_tgt + 1 ) * sizeof( uint64_t ) ) );
+      gpuErrchk(cudaMemset(d_src_tgt_conn_num, 0,
+                           (n_src_tgt + 1) * sizeof(uint64_t)));
       // Fill array of connection indexes
-      setConnectionsIndexKernel< ConnKeyT, ConnStructT > <<< ( n_conn_ + 1023 ) / 1024, 1024 >>>(
-        n_conn_, n_source, n_target, d_src_tgt_arr, d_src_tgt_conn_num, d_src_tgt_conn_cumul, syn_group, d_conn_ids );
+      setConnectionsIndexKernel<ConnKeyT, ConnStructT>
+          <<<(n_conn_ + 1023) / 1024, 1024>>>(
+              n_conn_, n_source, n_target, d_src_tgt_arr, d_src_tgt_conn_num,
+              d_src_tgt_conn_cumul, syn_group, d_conn_ids);
 
       /// check if allocating with new is more appropriate
-      h_conn_ids = ( int64_t* ) malloc( n_conn_ids * sizeof( int64_t ) );
-      gpuErrchk( cudaMemcpy( h_conn_ids, d_conn_ids, n_conn_ids * sizeof( int64_t ), cudaMemcpyDeviceToHost ) );
+      h_conn_ids = (int64_t *)malloc(n_conn_ids * sizeof(int64_t));
+      gpuErrchk(cudaMemcpy(h_conn_ids, d_conn_ids, n_conn_ids * sizeof(int64_t),
+                           cudaMemcpyDeviceToHost));
 
-      CUDAFREECTRL( "d_src_tgt_arr", d_src_tgt_arr );
-      CUDAFREECTRL( "d_src_tgt_conn_num", d_src_tgt_conn_num );
-      CUDAFREECTRL( "d_src_tgt_conn_cumul", d_src_tgt_conn_cumul );
-      CUDAFREECTRL( "d_conn_ids", d_conn_ids );
+      CUDAFREECTRL("d_src_tgt_arr", d_src_tgt_arr);
+      CUDAFREECTRL("d_src_tgt_conn_num", d_src_tgt_conn_num);
+      CUDAFREECTRL("d_src_tgt_conn_cumul", d_src_tgt_conn_cumul);
+      CUDAFREECTRL("d_conn_ids", d_conn_ids);
     }
   }
   *n_conn = n_conn_ids;
@@ -4379,73 +3955,70 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::getConnections( inode_t* i_source_p
 // i_source, i_target, port, syn_group, delay, weight
 // NOTE: host arrays should be pre-allocated to store n_conn elements
 //////////////////////////////////////////////////////////////////////
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::getConnectionStatus( int64_t* conn_ids,
-  int64_t n_conn,
-  inode_t* source,
-  inode_t* target,
-  int* port,
-  int* syn_group,
-  float* delay,
-  float* weight )
-{
-  if ( n_conn > 0 )
-  {
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::getConnectionStatus(
+    int64_t *conn_ids, int64_t n_conn, inode_t *source, inode_t *target,
+    int *port, int *syn_group, float *delay, float *weight) {
+  if (n_conn > 0) {
     // declare pointers to arrays in device memory
-    int64_t* d_conn_ids;
-    inode_t* d_source;
-    inode_t* d_target;
-    int* d_port;
-    int* d_syn_group;
-    float* d_delay;
-    float* d_weight;
+    int64_t *d_conn_ids;
+    inode_t *d_source;
+    inode_t *d_target;
+    int *d_port;
+    int *d_syn_group;
+    float *d_delay;
+    float *d_weight;
 
     // allocate array of connection ids in device memory
     // and copy the ids from host to device array
-    CUDAMALLOCCTRL( "&d_conn_ids", &d_conn_ids, n_conn * sizeof( int64_t ) );
-    gpuErrchk( cudaMemcpy( d_conn_ids, conn_ids, n_conn * sizeof( int64_t ), cudaMemcpyHostToDevice ) );
+    CUDAMALLOCCTRL("&d_conn_ids", &d_conn_ids, n_conn * sizeof(int64_t));
+    gpuErrchk(cudaMemcpy(d_conn_ids, conn_ids, n_conn * sizeof(int64_t),
+                         cudaMemcpyHostToDevice));
 
     // allocate arrays of connection parameters in device memory
-    CUDAMALLOCCTRL( "&d_source", &d_source, n_conn * sizeof( inode_t ) );
-    CUDAMALLOCCTRL( "&d_target", &d_target, n_conn * sizeof( inode_t ) );
-    CUDAMALLOCCTRL( "&d_port", &d_port, n_conn * sizeof( int ) );
-    CUDAMALLOCCTRL( "&d_syn_group", &d_syn_group, n_conn * sizeof( int ) );
-    CUDAMALLOCCTRL( "&d_delay", &d_delay, n_conn * sizeof( float ) );
-    CUDAMALLOCCTRL( "&d_weight", &d_weight, n_conn * sizeof( float ) );
+    CUDAMALLOCCTRL("&d_source", &d_source, n_conn * sizeof(inode_t));
+    CUDAMALLOCCTRL("&d_target", &d_target, n_conn * sizeof(inode_t));
+    CUDAMALLOCCTRL("&d_port", &d_port, n_conn * sizeof(int));
+    CUDAMALLOCCTRL("&d_syn_group", &d_syn_group, n_conn * sizeof(int));
+    CUDAMALLOCCTRL("&d_delay", &d_delay, n_conn * sizeof(float));
+    CUDAMALLOCCTRL("&d_weight", &d_weight, n_conn * sizeof(float));
     // host arrays
 
     // launch kernel to get connection parameters
-    getConnectionStatusKernel< ConnKeyT, ConnStructT > <<< ( n_conn + 1023 ) / 1024, 1024 >>>(
-      d_conn_ids, n_conn, d_source, d_target, d_port, d_syn_group, d_delay, d_weight );
+    getConnectionStatusKernel<ConnKeyT, ConnStructT>
+        <<<(n_conn + 1023) / 1024, 1024>>>(d_conn_ids, n_conn, d_source,
+                                           d_target, d_port, d_syn_group,
+                                           d_delay, d_weight);
 
     // copy connection parameters from device to host memory
-    gpuErrchk( cudaMemcpy( source, d_source, n_conn * sizeof( inode_t ), cudaMemcpyDeviceToHost ) );
+    gpuErrchk(cudaMemcpy(source, d_source, n_conn * sizeof(inode_t),
+                         cudaMemcpyDeviceToHost));
 
-    gpuErrchk( cudaMemcpy( target, d_target, n_conn * sizeof( inode_t ), cudaMemcpyDeviceToHost ) );
-    gpuErrchk( cudaMemcpy( port, d_port, n_conn * sizeof( int ), cudaMemcpyDeviceToHost ) );
-    gpuErrchk( cudaMemcpy( syn_group, d_syn_group, n_conn * sizeof( int ), cudaMemcpyDeviceToHost ) );
-    gpuErrchk( cudaMemcpy( delay, d_delay, n_conn * sizeof( float ), cudaMemcpyDeviceToHost ) );
-    gpuErrchk( cudaMemcpy( weight, d_weight, n_conn * sizeof( float ), cudaMemcpyDeviceToHost ) );
+    gpuErrchk(cudaMemcpy(target, d_target, n_conn * sizeof(inode_t),
+                         cudaMemcpyDeviceToHost));
+    gpuErrchk(
+        cudaMemcpy(port, d_port, n_conn * sizeof(int), cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(syn_group, d_syn_group, n_conn * sizeof(int),
+                         cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(delay, d_delay, n_conn * sizeof(float),
+                         cudaMemcpyDeviceToHost));
+    gpuErrchk(cudaMemcpy(weight, d_weight, n_conn * sizeof(float),
+                         cudaMemcpyDeviceToHost));
   }
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::freeConnRandomGenerator()
-{
-  if ( conn_random_generator_.size() > 0 )
-  {
-    for ( int i_host = 0; i_host < n_hosts_; i_host++ )
-    {
-      for ( int j_host = 0; j_host < n_hosts_; j_host++ )
-      {
-	if (conn_random_generator_[ i_host ][ j_host ] != nullptr) { 
-	  CURAND_CALL( curandDestroyGenerator( conn_random_generator_[ i_host ][ j_host ] ) );
-    conn_random_generator_[ i_host ][ j_host ] = nullptr;
-	}
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::freeConnRandomGenerator() {
+  if (conn_random_generator_.size() > 0) {
+    for (int i_host = 0; i_host < n_hosts_; i_host++) {
+      for (int j_host = 0; j_host < n_hosts_; j_host++) {
+        if (conn_random_generator_[i_host][j_host] != nullptr) {
+          CURAND_CALL(
+              curandDestroyGenerator(conn_random_generator_[i_host][j_host]));
+          conn_random_generator_[i_host][j_host] = nullptr;
+        }
       }
     }
   }
@@ -4453,31 +4026,28 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::freeConnRandomGenerator()
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::initConnRandomGenerator()
-{
-  conn_random_generator_.resize( n_hosts_ );
-  for ( int i_host = 0; i_host < n_hosts_; i_host++ )
-  {
-    conn_random_generator_[ i_host ].resize( n_hosts_, nullptr );
-    for ( int j_host = 0; j_host < n_hosts_; j_host++ )
-    {
-      if (i_host==this_host_ || j_host==this_host_) { 
-	CURAND_CALL( curandCreateGenerator( &conn_random_generator_[ i_host ][ j_host ], CURAND_RNG_PSEUDO_DEFAULT ) );
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::initConnRandomGenerator() {
+  conn_random_generator_.resize(n_hosts_);
+  for (int i_host = 0; i_host < n_hosts_; i_host++) {
+    conn_random_generator_[i_host].resize(n_hosts_, nullptr);
+    for (int j_host = 0; j_host < n_hosts_; j_host++) {
+      if (i_host == this_host_ || j_host == this_host_) {
+        CURAND_CALL(
+            curandCreateGenerator(&conn_random_generator_[i_host][j_host],
+                                  CURAND_RNG_PSEUDO_DEFAULT));
       }
     }
   }
 
-  local_rnd_gen_ = conn_random_generator_[ this_host_ ][ this_host_ ];
+  local_rnd_gen_ = conn_random_generator_[this_host_][this_host_];
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::setTimeResolution( float time_resolution )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::setTimeResolution(
+    float time_resolution) {
   float min_allowed_delay_float = getMinAllowedDelay();
   time_resolution_ = time_resolution;
   setMinAllowedDelay(min_allowed_delay_float);
@@ -4485,27 +4055,23 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setTimeResolution( float time_resol
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::setStartRealTime( double start_real_time )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::setStartRealTime(
+    double start_real_time) {
   start_real_time_ = start_real_time;
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::setRandomSeed( unsigned long long seed )
-{
-  for ( int i_host = 0; i_host < n_hosts_; i_host++ )
-  {
-    for ( int j_host = 0; j_host < n_hosts_; j_host++ )
-    {
-      if (i_host==this_host_ || j_host==this_host_) { 
-	CURAND_CALL( curandSetPseudoRandomGeneratorSeed
-		     (conn_random_generator_[ i_host ][ j_host ],
-		      seed + conn_seed_offset_ + i_host * n_hosts_ + j_host ) );
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::setRandomSeed(
+    unsigned long long seed) {
+  for (int i_host = 0; i_host < n_hosts_; i_host++) {
+    for (int j_host = 0; j_host < n_hosts_; j_host++) {
+      if (i_host == this_host_ || j_host == this_host_) {
+        CURAND_CALL(curandSetPseudoRandomGeneratorSeed(
+            conn_random_generator_[i_host][j_host],
+            seed + conn_seed_offset_ + i_host * n_hosts_ + j_host));
       }
     }
   }
@@ -4513,30 +4079,28 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setRandomSeed( unsigned long long s
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::setNHosts( int n_hosts )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::setNHosts(int n_hosts) {
   // free previous instances before creating new
   freeConnRandomGenerator();
   n_hosts_ = n_hosts;
   initConnRandomGenerator();
-  
+
   if (n_hosts > 1) {
     p2p_host_conn_matrix_.resize(n_hosts);
-    for (int i_host=0; i_host < n_hosts; i_host++) {
+    for (int i_host = 0; i_host < n_hosts; i_host++) {
       p2p_host_conn_matrix_[i_host].resize(n_hosts, false);
     }
     // sequence of all hosts indexes
-    std::vector< int > seq;
-    for (int i=0; i < n_hosts; i++) {
+    std::vector<int> seq;
+    for (int i = 0; i < n_hosts; i++) {
       seq.push_back(i);
     }
-    // The first two host groups correspond to poit-to-point communication and world group
-    // Both include all hosts
+    // The first two host groups correspond to poit-to-point communication and
+    // world group Both include all hosts
     //////// SET SIZE TO 1 UNTIL DESIGN DECISION
     ///////// spostere tutti i resize in init
-    if ( host_group_.size() < 1 ) {
+    if (host_group_.size() < 1) {
       host_group_.resize(1, seq);
       host_group_local_source_node_map_.resize(1);
       host_group_source_node_.resize(1);
@@ -4544,138 +4108,126 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::setNHosts( int n_hosts )
       host_group_local_node_index_.resize(1);
       host_group_source_node_min_.resize(1);
       host_group_source_node_max_.resize(1);
-    }
-    else {
+    } else {
       host_group_[0] = seq; // point-to-point communication
-      //host_group_[1] = seq; // world group commented until design decision
+      // host_group_[1] = seq; // world group commented until design decision
     }
-    //if ( host_group_local_id_.size() < 1 ) {
-    //  host_group_local_id_.resize(1);
-    //}
-    //host_group_local_id_[0] = 0; // point-to-point communication
+    // if ( host_group_local_id_.size() < 1 ) {
+    //   host_group_local_id_.resize(1);
+    // }
+    // host_group_local_id_[0] = 0; // point-to-point communication
   }
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::setThisHost( int this_host )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::setThisHost(int this_host) {
   freeConnRandomGenerator();
   this_host_ = this_host;
   initConnRandomGenerator();
-  
+
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::organizeDirectConnections( void*& d_poiss_key_array_data_pt,
-  void*& d_poiss_subarray,
-  int64_t*& d_poiss_num,
-  int64_t*& d_poiss_sum,
-  void*& d_poiss_thresh )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::organizeDirectConnections(
+    void *&d_poiss_key_array_data_pt, void *&d_poiss_subarray,
+    int64_t *&d_poiss_num, int64_t *&d_poiss_sum, void *&d_poiss_thresh) {
   int k = conn_key_vect_.size();
   if (k > 0) {
-    ConnKeyT** conn_key_array = conn_key_vect_.data();
-    CUDAMALLOCCTRL( "&d_poiss_key_array_data_pt", &d_poiss_key_array_data_pt, k * sizeof( ConnKeyT* ) );
-    gpuErrchk( cudaMemcpy( d_poiss_key_array_data_pt, conn_key_array, k * sizeof( ConnKeyT* ), cudaMemcpyHostToDevice ) );
-  
-    regular_block_array< ConnKeyT > h_poiss_subarray[ k ];
-    for ( int i = 0; i < k; i++ )
-      {
-	h_poiss_subarray[ i ].h_data_pt = conn_key_array;
-	h_poiss_subarray[ i ].data_pt = ( ConnKeyT** ) d_poiss_key_array_data_pt;
-	h_poiss_subarray[ i ].block_size = conn_block_size_;
-	h_poiss_subarray[ i ].offset = i * conn_block_size_;
-	h_poiss_subarray[ i ].size = i < k - 1 ? conn_block_size_ : n_conn_ - ( k - 1 ) * conn_block_size_;
-      }
+    ConnKeyT **conn_key_array = conn_key_vect_.data();
+    CUDAMALLOCCTRL("&d_poiss_key_array_data_pt", &d_poiss_key_array_data_pt,
+                   k * sizeof(ConnKeyT *));
+    gpuErrchk(cudaMemcpy(d_poiss_key_array_data_pt, conn_key_array,
+                         k * sizeof(ConnKeyT *), cudaMemcpyHostToDevice));
 
-    CUDAMALLOCCTRL( "&d_poiss_subarray", &d_poiss_subarray, k * sizeof( regular_block_array< ConnKeyT > ) );
-    gpuErrchk( cudaMemcpyAsync(
-			       d_poiss_subarray, h_poiss_subarray, k * sizeof( regular_block_array< ConnKeyT > ), cudaMemcpyHostToDevice ) );
+    regular_block_array<ConnKeyT> h_poiss_subarray[k];
+    for (int i = 0; i < k; i++) {
+      h_poiss_subarray[i].h_data_pt = conn_key_array;
+      h_poiss_subarray[i].data_pt = (ConnKeyT **)d_poiss_key_array_data_pt;
+      h_poiss_subarray[i].block_size = conn_block_size_;
+      h_poiss_subarray[i].offset = i * conn_block_size_;
+      h_poiss_subarray[i].size =
+          i < k - 1 ? conn_block_size_ : n_conn_ - (k - 1) * conn_block_size_;
+    }
 
-    CUDAMALLOCCTRL( "&d_poiss_num", &d_poiss_num, 2 * k * sizeof( int64_t ) );
-    CUDAMALLOCCTRL( "&d_poiss_sum", &d_poiss_sum, 2 * sizeof( int64_t ) );
-    CUDAMALLOCCTRL( "&d_poiss_thresh", &d_poiss_thresh, 2 * sizeof( ConnKeyT ) );
-  }
-  else {
+    CUDAMALLOCCTRL("&d_poiss_subarray", &d_poiss_subarray,
+                   k * sizeof(regular_block_array<ConnKeyT>));
+    gpuErrchk(cudaMemcpyAsync(d_poiss_subarray, h_poiss_subarray,
+                              k * sizeof(regular_block_array<ConnKeyT>),
+                              cudaMemcpyHostToDevice));
+
+    CUDAMALLOCCTRL("&d_poiss_num", &d_poiss_num, 2 * k * sizeof(int64_t));
+    CUDAMALLOCCTRL("&d_poiss_sum", &d_poiss_sum, 2 * sizeof(int64_t));
+    CUDAMALLOCCTRL("&d_poiss_thresh", &d_poiss_thresh, 2 * sizeof(ConnKeyT));
+  } else {
     d_poiss_key_array_data_pt = nullptr;
     d_poiss_subarray = nullptr;
     d_poiss_num = nullptr;
     d_poiss_sum = nullptr;
     d_poiss_thresh = nullptr;
   }
-  
+
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::buildDirectConnections( inode_t i_node_0,
-  inode_t n_node,
-  int64_t& i_conn0,
-  int64_t& n_dir_conn,
-  int& max_delay,
-  float*& d_mu_arr,
-  void*& d_poiss_key_array )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::buildDirectConnections(
+    inode_t i_node_0, inode_t n_node, int64_t &i_conn0, int64_t &n_dir_conn,
+    int &max_delay, float *&d_mu_arr, void *&d_poiss_key_array) {
   int k = conn_key_vect_.size();
-  if (k==0) {
+  if (k == 0) {
     return 0;
   }
 
-  ConnKeyT** conn_key_array = ( ConnKeyT** ) conn_key_vect_.data();
-  ConnKeyT h_poiss_thresh[ 2 ];
-  h_poiss_thresh[ 0 ] = 0;
-  setConnSource( h_poiss_thresh[ 0 ], i_node_0 );
+  ConnKeyT **conn_key_array = (ConnKeyT **)conn_key_vect_.data();
+  ConnKeyT h_poiss_thresh[2];
+  h_poiss_thresh[0] = 0;
+  setConnSource(h_poiss_thresh[0], i_node_0);
 
-  h_poiss_thresh[ 1 ] = 0;
-  setConnSource( h_poiss_thresh[ 1 ], i_node_0 + n_node );
+  h_poiss_thresh[1] = 0;
+  setConnSource(h_poiss_thresh[1], i_node_0 + n_node);
 
-  gpuErrchk( cudaMemcpy( poiss_conn::d_poiss_thresh, h_poiss_thresh, 2 * sizeof( ConnKeyT ), cudaMemcpyHostToDevice ) );
+  gpuErrchk(cudaMemcpy(poiss_conn::d_poiss_thresh, h_poiss_thresh,
+                       2 * sizeof(ConnKeyT), cudaMemcpyHostToDevice));
 
-  int64_t h_poiss_num[ 2 * k ];
-  int64_t* d_num0 = &poiss_conn::d_poiss_num[ 0 ];
-  int64_t* d_num1 = &poiss_conn::d_poiss_num[ k ];
-  int64_t* h_num0 = &h_poiss_num[ 0 ];
-  int64_t* h_num1 = &h_poiss_num[ k ];
+  int64_t h_poiss_num[2 * k];
+  int64_t *d_num0 = &poiss_conn::d_poiss_num[0];
+  int64_t *d_num1 = &poiss_conn::d_poiss_num[k];
+  int64_t *h_num0 = &h_poiss_num[0];
+  int64_t *h_num1 = &h_poiss_num[k];
 
-  search_multi_down< ConnKeyT, regular_block_array< ConnKeyT >, 1024 >
-    (( regular_block_array< ConnKeyT >* ) poiss_conn::d_poiss_subarray,
-    k, &( ( ( ConnKeyT* ) poiss_conn::d_poiss_thresh )[ 0 ] ),
-    d_num0, &poiss_conn::d_poiss_sum[ 0 ]);
+  search_multi_down<ConnKeyT, regular_block_array<ConnKeyT>, 1024>(
+      (regular_block_array<ConnKeyT> *)poiss_conn::d_poiss_subarray, k,
+      &(((ConnKeyT *)poiss_conn::d_poiss_thresh)[0]), d_num0,
+      &poiss_conn::d_poiss_sum[0]);
   CUDASYNC;
 
-  search_multi_down< ConnKeyT, regular_block_array< ConnKeyT >, 1024 >
-    (( regular_block_array< ConnKeyT >* ) poiss_conn::d_poiss_subarray,
-    k, &( ( ( ConnKeyT* ) poiss_conn::d_poiss_thresh )[ 1 ] ),
-    d_num1, &poiss_conn::d_poiss_sum[ 1 ]);
+  search_multi_down<ConnKeyT, regular_block_array<ConnKeyT>, 1024>(
+      (regular_block_array<ConnKeyT> *)poiss_conn::d_poiss_subarray, k,
+      &(((ConnKeyT *)poiss_conn::d_poiss_thresh)[1]), d_num1,
+      &poiss_conn::d_poiss_sum[1]);
   CUDASYNC;
 
-  gpuErrchk( cudaMemcpy( h_poiss_num, poiss_conn::d_poiss_num, 2 * k * sizeof( int64_t ), cudaMemcpyDeviceToHost ) );
+  gpuErrchk(cudaMemcpy(h_poiss_num, poiss_conn::d_poiss_num,
+                       2 * k * sizeof(int64_t), cudaMemcpyDeviceToHost));
 
   i_conn0 = 0;
   int64_t i_conn1 = 0;
   int ib0 = 0;
   int ib1 = 0;
-  for ( int i = 0; i < k; i++ )
-  {
-    if ( h_num0[ i ] < conn_block_size_ )
-    {
-      i_conn0 = conn_block_size_ * i + h_num0[ i ];
+  for (int i = 0; i < k; i++) {
+    if (h_num0[i] < conn_block_size_) {
+      i_conn0 = conn_block_size_ * i + h_num0[i];
       ib0 = i;
       break;
     }
   }
 
-  for ( int i = 0; i < k; i++ )
-  {
-    if ( h_num1[ i ] < conn_block_size_ )
-    {
-      i_conn1 = conn_block_size_ * i + h_num1[ i ];
+  for (int i = 0; i < k; i++) {
+    if (h_num1[i] < conn_block_size_) {
+      i_conn1 = conn_block_size_ * i + h_num1[i];
       ib1 = i;
       break;
     }
@@ -4683,67 +4235,53 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::buildDirectConnections( inode_t i_n
 
   n_dir_conn = i_conn1 - i_conn0;
 
-  if ( n_dir_conn > 0 )
-  {
-    CUDAMALLOCCTRL( "&d_poiss_key_array", &d_poiss_key_array, n_dir_conn * sizeof( ConnKeyT ) );
+  if (n_dir_conn > 0) {
+    CUDAMALLOCCTRL("&d_poiss_key_array", &d_poiss_key_array,
+                   n_dir_conn * sizeof(ConnKeyT));
 
     int64_t offset = 0;
-    for ( int ib = ib0; ib <= ib1; ib++ )
-    {
-      if ( ib == ib0 && ib == ib1 )
-      {
-        gpuErrchk( cudaMemcpy( d_poiss_key_array,
-          conn_key_array[ ib ] + h_num0[ ib ],
-          n_dir_conn * sizeof( ConnKeyT ),
-          cudaMemcpyDeviceToDevice ) );
+    for (int ib = ib0; ib <= ib1; ib++) {
+      if (ib == ib0 && ib == ib1) {
+        gpuErrchk(cudaMemcpy(d_poiss_key_array, conn_key_array[ib] + h_num0[ib],
+                             n_dir_conn * sizeof(ConnKeyT),
+                             cudaMemcpyDeviceToDevice));
         break;
-      }
-      else if ( ib == ib0 )
-      {
-        offset = conn_block_size_ - h_num0[ ib ];
-        gpuErrchk( cudaMemcpy( d_poiss_key_array,
-          conn_key_array[ ib ] + h_num0[ ib ],
-          offset * sizeof( ConnKeyT ),
-          cudaMemcpyDeviceToDevice ) );
-      }
-      else if ( ib == ib1 )
-      {
-        gpuErrchk( cudaMemcpy( ( ConnKeyT* ) d_poiss_key_array + offset,
-          conn_key_array[ ib ],
-          h_num1[ ib ] * sizeof( ConnKeyT ),
-          cudaMemcpyDeviceToDevice ) );
+      } else if (ib == ib0) {
+        offset = conn_block_size_ - h_num0[ib];
+        gpuErrchk(cudaMemcpy(d_poiss_key_array, conn_key_array[ib] + h_num0[ib],
+                             offset * sizeof(ConnKeyT),
+                             cudaMemcpyDeviceToDevice));
+      } else if (ib == ib1) {
+        gpuErrchk(cudaMemcpy((ConnKeyT *)d_poiss_key_array + offset,
+                             conn_key_array[ib], h_num1[ib] * sizeof(ConnKeyT),
+                             cudaMemcpyDeviceToDevice));
         break;
-      }
-      else
-      {
-        gpuErrchk( cudaMemcpy( ( ConnKeyT* ) d_poiss_key_array + offset,
-          conn_key_array[ ib ],
-          conn_block_size_ * sizeof( ConnKeyT ),
-          cudaMemcpyDeviceToDevice ) );
+      } else {
+        gpuErrchk(cudaMemcpy(
+            (ConnKeyT *)d_poiss_key_array + offset, conn_key_array[ib],
+            conn_block_size_ * sizeof(ConnKeyT), cudaMemcpyDeviceToDevice));
         offset += conn_block_size_;
       }
     }
 
     unsigned int grid_dim_x, grid_dim_y;
 
-    if ( n_dir_conn < 65536 * 1024 )
-    { // max grid dim * max block dim
-      grid_dim_x = ( n_dir_conn + 1023 ) / 1024;
+    if (n_dir_conn < 65536 * 1024) { // max grid dim * max block dim
+      grid_dim_x = (n_dir_conn + 1023) / 1024;
       grid_dim_y = 1;
-    }
-    else
-    {
+    } else {
       grid_dim_x = 64; // I think it's not necessary to increase it
-      if ( n_dir_conn > grid_dim_x * 1024 * 65535 )
-      {
-        throw ngpu_exception( std::string( "Number of direct connections " ) + std::to_string( n_dir_conn )
-          + " larger than threshold " + std::to_string( grid_dim_x * 1024 * 65535 ) );
+      if (n_dir_conn > grid_dim_x * 1024 * 65535) {
+        throw ngpu_exception(std::string("Number of direct connections ") +
+                             std::to_string(n_dir_conn) +
+                             " larger than threshold " +
+                             std::to_string(grid_dim_x * 1024 * 65535));
       }
-      grid_dim_y = ( n_dir_conn + grid_dim_x * 1024 - 1 ) / ( grid_dim_x * 1024 );
+      grid_dim_y = (n_dir_conn + grid_dim_x * 1024 - 1) / (grid_dim_x * 1024);
     }
-    dim3 numBlocks( grid_dim_x, grid_dim_y );
-    poissGenSubstractFirstNodeIndexKernel< ConnKeyT > <<< numBlocks, 1024 >>>(
-      n_dir_conn, ( ConnKeyT* ) d_poiss_key_array, i_node_0 );
+    dim3 numBlocks(grid_dim_x, grid_dim_y);
+    poissGenSubstractFirstNodeIndexKernel<ConnKeyT><<<numBlocks, 1024>>>(
+        n_dir_conn, (ConnKeyT *)d_poiss_key_array, i_node_0);
     DBGCUDASYNC
   }
 
@@ -4751,49 +4289,43 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::buildDirectConnections( inode_t i_n
   // int *d_max_delay; // maximum delay pointer in device memory
   // CUDAMALLOCCTRL("&d_max_delay",&d_max_delay, sizeof(int));
   // pointer to connection key with maximum delay in device memory
-  ConnKeyT* d_max_delay_key;
+  ConnKeyT *d_max_delay_key;
   ConnKeyT h_max_delay_key;
-  CUDAMALLOCCTRL( "&d_max_delay_key", &d_max_delay_key, sizeof( ConnKeyT ) );
+  CUDAMALLOCCTRL("&d_max_delay_key", &d_max_delay_key, sizeof(ConnKeyT));
 
-  MaxDelay< ConnKeyT > max_op; // comparison operator used by Reduce function
+  MaxDelay<ConnKeyT> max_op; // comparison operator used by Reduce function
   // Determine temporary device storage requirements
-  void* d_temp_storage = nullptr;
+  void *d_temp_storage = nullptr;
   size_t temp_storage_bytes = 0;
   ConnKeyT init_delay_key = 0;
-  
+
   //<BEGIN-CLANG-TIDY-SKIP>//
-  cub::DeviceReduce::Reduce( d_temp_storage,
-    temp_storage_bytes,
-    ( ConnKeyT* ) d_poiss_key_array,
-    d_max_delay_key,
-    n_dir_conn,
-    max_op,
-    init_delay_key );
+  cub::DeviceReduce::Reduce(d_temp_storage, temp_storage_bytes,
+                            (ConnKeyT *)d_poiss_key_array, d_max_delay_key,
+                            n_dir_conn, max_op, init_delay_key);
   //<END-CLANG-TIDY-SKIP>//
 
   // Allocate temporary storage
-  CUDAMALLOCCTRL( "&d_temp_storage", &d_temp_storage, temp_storage_bytes );
+  CUDAMALLOCCTRL("&d_temp_storage", &d_temp_storage, temp_storage_bytes);
   // Run reduction
   //<BEGIN-CLANG-TIDY-SKIP>//
-  cub::DeviceReduce::Reduce( d_temp_storage,
-    temp_storage_bytes,
-    ( ConnKeyT* ) d_poiss_key_array,
-    d_max_delay_key,
-    n_dir_conn,
-    max_op,
-    init_delay_key );
+  cub::DeviceReduce::Reduce(d_temp_storage, temp_storage_bytes,
+                            (ConnKeyT *)d_poiss_key_array, d_max_delay_key,
+                            n_dir_conn, max_op, init_delay_key);
   //<END-CLANG-TIDY-SKIP>//
 
   // gpuErrchk(cudaMemcpy(&max_delay, d_max_delay, sizeof(int),
   //		       cudaMemcpyDeviceToHost));
-  gpuErrchk( cudaMemcpy( &h_max_delay_key, d_max_delay_key, sizeof( ConnKeyT ), cudaMemcpyDeviceToHost ) );
+  gpuErrchk(cudaMemcpy(&h_max_delay_key, d_max_delay_key, sizeof(ConnKeyT),
+                       cudaMemcpyDeviceToHost));
   // std::cout << "Conn key of direct connections having max delay: "
   //	    << h_max_delay_key << "\n";
 
-  max_delay = getConnDelay( h_max_delay_key );
-  // printf( "Max delay of direct (poisson generator) connections: %d\n", max_delay );
-  CUDAMALLOCCTRL( "&d_mu_arr", &d_mu_arr, n_node * max_delay * sizeof( float ) );
-  gpuErrchk( cudaMemset( d_mu_arr, 0, n_node * max_delay * sizeof( float ) ) );
+  max_delay = getConnDelay(h_max_delay_key);
+  // printf( "Max delay of direct (poisson generator) connections: %d\n",
+  // max_delay );
+  CUDAMALLOCCTRL("&d_mu_arr", &d_mu_arr, n_node * max_delay * sizeof(float));
+  gpuErrchk(cudaMemset(d_mu_arr, 0, n_node * max_delay * sizeof(float)));
 
   /*
   CUDAFREECTRL("d_key_array_data_pt",d_key_array_data_pt);
@@ -4806,11 +4338,9 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::buildDirectConnections( inode_t i_n
   return 0;
 }
 
-
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::revSpikeInit( uint n_spike_buffers )
-{
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::revSpikeInit(
+    uint n_spike_buffers) {
   // printf("n_spike_buffers: %d\n", n_spike_buffers);
 
   //////////////////////////////////////////////////////////////////////
@@ -4819,194 +4349,213 @@ ConnectionTemplate< ConnKeyT, ConnStructT >::revSpikeInit( uint n_spike_buffers 
   //////////////////////////////////////////////////////////////////////
   // Alloc 64 bit array of number of reverse connections per target node
   // and initialize it to 0
-  int64_t* d_target_rev_conn_size_64;
-  int64_t* d_target_rev_conn_cumul;
-  CUDAMALLOCCTRL(
-    "&d_target_rev_conn_size_64", &d_target_rev_conn_size_64, ( n_spike_buffers + 1 ) * sizeof( int64_t ) );
-  gpuErrchk( cudaMemset( d_target_rev_conn_size_64, 0, ( n_spike_buffers + 1 ) * sizeof( int64_t ) ) );
+  int64_t *d_target_rev_conn_size_64;
+  int64_t *d_target_rev_conn_cumul;
+  CUDAMALLOCCTRL("&d_target_rev_conn_size_64", &d_target_rev_conn_size_64,
+                 (n_spike_buffers + 1) * sizeof(int64_t));
+  gpuErrchk(cudaMemset(d_target_rev_conn_size_64, 0,
+                       (n_spike_buffers + 1) * sizeof(int64_t)));
   // Count number of reverse connections per target node
-  countRevConnectionsKernel< ConnKeyT, ConnStructT > <<< ( n_conn_ + 1023 ) / 1024, 1024 >>>(
-    n_conn_, d_target_rev_conn_size_64 );
+  countRevConnectionsKernel<ConnKeyT, ConnStructT>
+      <<<(n_conn_ + 1023) / 1024, 1024>>>(n_conn_, d_target_rev_conn_size_64);
   // Evaluate exclusive sum of reverse connections per target node
   // Allocate array for cumulative sum
-  CUDAMALLOCCTRL( "&d_target_rev_conn_cumul", &d_target_rev_conn_cumul, ( n_spike_buffers + 1 ) * sizeof( int64_t ) );
+  CUDAMALLOCCTRL("&d_target_rev_conn_cumul", &d_target_rev_conn_cumul,
+                 (n_spike_buffers + 1) * sizeof(int64_t));
   // Determine temporary device storage requirements
-  void* d_temp_storage = nullptr;
+  void *d_temp_storage = nullptr;
   size_t temp_storage_bytes = 0;
   //<BEGIN-CLANG-TIDY-SKIP>//
-  cub::DeviceScan::ExclusiveSum(
-    d_temp_storage, temp_storage_bytes, d_target_rev_conn_size_64, d_target_rev_conn_cumul, n_spike_buffers + 1 );
+  cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
+                                d_target_rev_conn_size_64,
+                                d_target_rev_conn_cumul, n_spike_buffers + 1);
   //<END-CLANG-TIDY-SKIP>//
 
   // Allocate temporary storage
-  CUDAMALLOCCTRL( "&d_temp_storage", &d_temp_storage, temp_storage_bytes );
+  CUDAMALLOCCTRL("&d_temp_storage", &d_temp_storage, temp_storage_bytes);
   // Run exclusive prefix sum
   //<BEGIN-CLANG-TIDY-SKIP>//
-  cub::DeviceScan::ExclusiveSum(
-    d_temp_storage, temp_storage_bytes, d_target_rev_conn_size_64, d_target_rev_conn_cumul, n_spike_buffers + 1 );
+  cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes,
+                                d_target_rev_conn_size_64,
+                                d_target_rev_conn_cumul, n_spike_buffers + 1);
   //<END-CLANG-TIDY-SKIP>//
 
   // The last element is the total number of reverse connections
-  gpuErrchk( cudaMemcpy(
-    &n_rev_conn_, &d_target_rev_conn_cumul[ n_spike_buffers ], sizeof( int64_t ), cudaMemcpyDeviceToHost ) );
-  if ( n_rev_conn_ > 0 )
-  {
+  gpuErrchk(cudaMemcpy(&n_rev_conn_, &d_target_rev_conn_cumul[n_spike_buffers],
+                       sizeof(int64_t), cudaMemcpyDeviceToHost));
+  if (n_rev_conn_ > 0) {
     // Allocate array of reverse connection indexes
     // CHECK THAT d_RevConnections is of type int64_t array
-    CUDAMALLOCCTRL( "&d_rev_conn_", &d_rev_conn_, n_rev_conn_ * sizeof( int64_t ) );
+    CUDAMALLOCCTRL("&d_rev_conn_", &d_rev_conn_, n_rev_conn_ * sizeof(int64_t));
     // For each target node evaluate the pointer
     // to its first reverse connection using the exclusive sum
     // CHECK THAT d_target_rev_conn_ is of type int64_t* pointer
-    CUDAMALLOCCTRL( "&d_target_rev_conn_", &d_target_rev_conn_, n_spike_buffers * sizeof( int64_t* ) );
-    setTargetRevConnectionsPtKernel<<< ( n_spike_buffers + 1023 ) / 1024, 1024 >>>(
-      n_spike_buffers, d_target_rev_conn_cumul, d_target_rev_conn_, d_rev_conn_ );
+    CUDAMALLOCCTRL("&d_target_rev_conn_", &d_target_rev_conn_,
+                   n_spike_buffers * sizeof(int64_t *));
+    setTargetRevConnectionsPtKernel<<<(n_spike_buffers + 1023) / 1024, 1024>>>(
+        n_spike_buffers, d_target_rev_conn_cumul, d_target_rev_conn_,
+        d_rev_conn_);
 
     // alloc 32 bit array of number of reverse connections per target node
-    CUDAMALLOCCTRL( "&d_target_rev_conn_size_", &d_target_rev_conn_size_, n_spike_buffers * sizeof( int ) );
+    CUDAMALLOCCTRL("&d_target_rev_conn_size_", &d_target_rev_conn_size_,
+                   n_spike_buffers * sizeof(int));
     // and initialize it to 0
-    gpuErrchk( cudaMemset( d_target_rev_conn_size_, 0, n_spike_buffers * sizeof( int ) ) );
+    gpuErrchk(
+        cudaMemset(d_target_rev_conn_size_, 0, n_spike_buffers * sizeof(int)));
     // Fill array of reverse connection indexes
-    setRevConnectionsIndexKernel< ConnKeyT, ConnStructT > <<< ( n_conn_ + 1023 ) / 1024, 1024 >>>(
-      n_conn_, d_target_rev_conn_size_, d_target_rev_conn_ );
+    setRevConnectionsIndexKernel<ConnKeyT, ConnStructT>
+        <<<(n_conn_ + 1023) / 1024, 1024>>>(n_conn_, d_target_rev_conn_size_,
+                                            d_target_rev_conn_);
 
-    revConnectionInitKernel<<< 1, 1 >>>( d_rev_conn_, d_target_rev_conn_size_, d_target_rev_conn_ );
+    revConnectionInitKernel<<<1, 1>>>(d_rev_conn_, d_target_rev_conn_size_,
+                                      d_target_rev_conn_);
 
-    setConnectionSpikeTime <<< ( n_conn_ + 1023 ) / 1024, 1024 >>>( n_conn_, 0x8000 );
-    gpuErrchk( cudaPeekAtLastError() );
-    gpuErrchk( cudaDeviceSynchronize() );
+    setConnectionSpikeTime<<<(n_conn_ + 1023) / 1024, 1024>>>(n_conn_, 0x8000);
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
 
-    CUDAMALLOCCTRL( "&d_rev_spike_num_", &d_rev_spike_num_, sizeof( uint ) );
+    CUDAMALLOCCTRL("&d_rev_spike_num_", &d_rev_spike_num_, sizeof(uint));
 
-    CUDAMALLOCCTRL( "&d_rev_spike_target_", &d_rev_spike_target_, n_spike_buffers * sizeof( uint ) );
+    CUDAMALLOCCTRL("&d_rev_spike_target_", &d_rev_spike_target_,
+                   n_spike_buffers * sizeof(uint));
 
-    CUDAMALLOCCTRL( "&d_rev_spike_n_conn", &d_rev_spike_n_conn_, n_spike_buffers * sizeof( int ) );
+    CUDAMALLOCCTRL("&d_rev_spike_n_conn", &d_rev_spike_n_conn_,
+                   n_spike_buffers * sizeof(int));
 
-    deviceRevSpikeInit<<< 1, 1 >>>( d_rev_spike_num_, d_rev_spike_target_, d_rev_spike_n_conn_ );
-    gpuErrchk( cudaPeekAtLastError() );
-    gpuErrchk( cudaDeviceSynchronize() );
+    deviceRevSpikeInit<<<1, 1>>>(d_rev_spike_num_, d_rev_spike_target_,
+                                 d_rev_spike_n_conn_);
+    gpuErrchk(cudaPeekAtLastError());
+    gpuErrchk(cudaDeviceSynchronize());
   }
 
-  CUDAFREECTRL( "d_temp_storage", d_temp_storage );
-  CUDAFREECTRL( "d_target_rev_conn_size_64", d_target_rev_conn_size_64 );
-  CUDAFREECTRL( "d_target_rev_conn_cumul", d_target_rev_conn_cumul );
+  CUDAFREECTRL("d_temp_storage", d_temp_storage);
+  CUDAFREECTRL("d_target_rev_conn_size_64", d_target_rev_conn_size_64);
+  CUDAFREECTRL("d_target_rev_conn_cumul", d_target_rev_conn_cumul);
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::revSpikeFree()
-{
-  CUDAFREECTRL( "&d_rev_spike_num_", &d_rev_spike_num_ );
-  CUDAFREECTRL( "&d_rev_spike_target_", &d_rev_spike_target_ );
-  CUDAFREECTRL( "&d_rev_spike_n_conn_", &d_rev_spike_n_conn_ );
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::revSpikeFree() {
+  CUDAFREECTRL("&d_rev_spike_num_", &d_rev_spike_num_);
+  CUDAFREECTRL("&d_rev_spike_target_", &d_rev_spike_target_);
+  CUDAFREECTRL("&d_rev_spike_n_conn_", &d_rev_spike_n_conn_);
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::resetConnectionSpikeTimeUp()
-{
-  resetConnectionSpikeTimeUpKernel <<< ( n_conn_ + 1023 ) / 1024, 1024 >>>( n_conn_ );
-  gpuErrchk( cudaPeekAtLastError() );
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::resetConnectionSpikeTimeUp() {
+  resetConnectionSpikeTimeUpKernel<<<(n_conn_ + 1023) / 1024, 1024>>>(n_conn_);
+  gpuErrchk(cudaPeekAtLastError());
 
   return 0;
 }
 
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::resetConnectionSpikeTimeDown()
-{
-  resetConnectionSpikeTimeDownKernel <<< ( n_conn_ + 1023 ) / 1024, 1024 >>>( n_conn_ );
-  gpuErrchk( cudaPeekAtLastError() );
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::resetConnectionSpikeTimeDown() {
+  resetConnectionSpikeTimeDownKernel<<<(n_conn_ + 1023) / 1024, 1024>>>(
+      n_conn_);
+  gpuErrchk(cudaPeekAtLastError());
 
   return 0;
 }
 
-
-// Method to get the the index of the first connection outgoing from each image node in CPU memory
-template < class ConnKeyT, class ConnStructT >
-int
-ConnectionTemplate< ConnKeyT, ConnStructT >::getFirstOutConnectionInHost
-(inode_t n_local_nodes, inode_t n_total_nodes)
-{
+// Method to get the the index of the first connection outgoing from each image
+// node in CPU memory
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::getFirstOutConnectionInHost(
+    inode_t n_local_nodes, inode_t n_total_nodes) {
 
   if (n_conn_ > 0 && n_total_nodes > n_local_nodes) {
     int64_t n_image_nodes = n_total_nodes - n_local_nodes;
-    // allocate the vector in CPU memory to store the index of the first connections
-    // an extra element is used to evaluate the number of outgoing connections of each node
-    // from the difference between consecutive connection indexes
+    // allocate the vector in CPU memory to store the index of the first
+    // connections an extra element is used to evaluate the number of outgoing
+    // connections of each node from the difference between consecutive
+    // connection indexes
     h_first_out_connection_.resize(n_image_nodes + 1, -1);
     h_first_out_connection_[n_image_nodes] = n_conn_;
     h_n_out_connections_.resize(n_image_nodes);
     // allocate d_first_out_connection (first_out_conn_block_size_)
-    CUDAMALLOCCTRL( "&d_first_out_connection_", &d_first_out_connection_, first_out_conn_block_size_ * sizeof( int64_t ) );
+    CUDAMALLOCCTRL("&d_first_out_connection_", &d_first_out_connection_,
+                   first_out_conn_block_size_ * sizeof(int64_t));
 
-    // loop on blocks of first_out_conn_block_size_ nodes to limit the temporary storage requirements on GPU memory
-    for (inode_t i_node_0 = n_local_nodes; i_node_0<n_total_nodes; i_node_0+=first_out_conn_block_size_) {
+    // loop on blocks of first_out_conn_block_size_ nodes to limit the temporary
+    // storage requirements on GPU memory
+    for (inode_t i_node_0 = n_local_nodes; i_node_0 < n_total_nodes;
+         i_node_0 += first_out_conn_block_size_) {
       // i_node_1 is the one-after-the-last node of the block
-      inode_t i_node_1 = min(i_node_0 + first_out_conn_block_size_, n_total_nodes);
+      inode_t i_node_1 =
+          min(i_node_0 + first_out_conn_block_size_, n_total_nodes);
       inode_t n_nodes = i_node_1 - i_node_0;
-      // the first connection index is initialized to -1 and remains unchanged for nodes without outgoing connections 
-      input_spike_buffer_ns::initFirstOutConnectionKernel<<< ( n_nodes + 1023 ) / 1024, 1024 >>>( n_nodes, d_first_out_connection_ );
+      // the first connection index is initialized to -1 and remains unchanged
+      // for nodes without outgoing connections
+      input_spike_buffer_ns::
+          initFirstOutConnectionKernel<<<(n_nodes + 1023) / 1024, 1024>>>(
+              n_nodes, d_first_out_connection_);
       DBGCUDASYNC;
 
-      // write i_node_0 and i_node_1 in the ConnKeyT representation with minimum delay -> conn_key_0, conn_key_1
+      // write i_node_0 and i_node_1 in the ConnKeyT representation with minimum
+      // delay -> conn_key_0, conn_key_1
       ConnKeyT conn_key_0 = 0;
       setConnSource(conn_key_0, i_node_0);
       ConnKeyT conn_key_1 = 0;
       setConnSource(conn_key_1, i_node_1);
-      // Find number of connections with key < conn_key_0, i.e. source index < i_node_0
-      int64_t i_conn_0 = search_block_array_down<ConnKeyT>(&conn_key_vect_[0], n_conn_, conn_block_size_, conn_key_0);
-      // Find number of connections with key < conn_key_1, i.e. source index < i_node_1
-      int64_t i_conn_1 = search_block_array_down<ConnKeyT>(&conn_key_vect_[0], n_conn_, conn_block_size_, conn_key_1);
+      // Find number of connections with key < conn_key_0, i.e. source index <
+      // i_node_0
+      int64_t i_conn_0 = search_block_array_down<ConnKeyT>(
+          &conn_key_vect_[0], n_conn_, conn_block_size_, conn_key_0);
+      // Find number of connections with key < conn_key_1, i.e. source index <
+      // i_node_1
+      int64_t i_conn_1 = search_block_array_down<ConnKeyT>(
+          &conn_key_vect_[0], n_conn_, conn_block_size_, conn_key_1);
       // number of connections with source index >= i_node_0 and < i_node_1
       int64_t n_conn = i_conn_1 - i_conn_0;
       if (n_conn > 0) {
-	// get index of first outgoing connection for each node index in the block
-	// (remains -1 for nodes without outgoing connections) 
-	input_spike_buffer_ns::getFirstOutConnectionKernel< ConnKeyT > <<< ( n_conn + 1023 ) / 1024, 1024 >>>
-	  ( i_node_0, i_conn_0, n_conn, d_first_out_connection_, n_nodes, this_host_ );
-	DBGCUDASYNC;
-	// copy d_first_out_connection_ to the appropriate slice of h_first_out_connection_ in CPU memory
-	gpuErrchk( cudaMemcpy( &h_first_out_connection_[i_node_0 - n_local_nodes], d_first_out_connection_,
-			       n_nodes * sizeof( int64_t ), cudaMemcpyDeviceToHost ) );
+        // get index of first outgoing connection for each node index in the
+        // block (remains -1 for nodes without outgoing connections)
+        input_spike_buffer_ns::getFirstOutConnectionKernel<ConnKeyT>
+            <<<(n_conn + 1023) / 1024, 1024>>>(i_node_0, i_conn_0, n_conn,
+                                               d_first_out_connection_, n_nodes,
+                                               this_host_);
+        DBGCUDASYNC;
+        // copy d_first_out_connection_ to the appropriate slice of
+        // h_first_out_connection_ in CPU memory
+        gpuErrchk(cudaMemcpy(&h_first_out_connection_[i_node_0 - n_local_nodes],
+                             d_first_out_connection_, n_nodes * sizeof(int64_t),
+                             cudaMemcpyDeviceToHost));
       }
     }
 
     // compute the number of connections outgoing from each image node
     // loop on image nodes
     for (inode_t i_node = 0; i_node < n_image_nodes; i_node++) {
-      int64_t i_conn0 = h_first_out_connection_[ i_node ];
-      if ( i_conn0 < 0 ) {
-	h_n_out_connections_[ i_node ] = 0;
-	continue;
+      int64_t i_conn0 = h_first_out_connection_[i_node];
+      if (i_conn0 < 0) {
+        h_n_out_connections_[i_node] = 0;
+        continue;
       }
       int64_t i_conn1 = n_conn_;
-      for ( inode_t i_node1 = i_node + 1; i_node1 < n_image_nodes; i_node1++ ) {
-	int64_t ic = h_first_out_connection_[ i_node1 ];
-	if ( ic >= 0 ) {
-	  i_conn1 = ic;
-	  break;
-	}
+      for (inode_t i_node1 = i_node + 1; i_node1 < n_image_nodes; i_node1++) {
+        int64_t ic = h_first_out_connection_[i_node1];
+        if (ic >= 0) {
+          i_conn1 = ic;
+          break;
+        }
       }
-      h_n_out_connections_[ i_node ] = i_conn1 - i_conn0;
-    }      
+      h_n_out_connections_[i_node] = i_conn1 - i_conn0;
+    }
   }
 
   return 0;
 }
 
-
-
-
 bool isSequence(inode_t);
 
-bool isSequence(inode_t*);
+bool isSequence(inode_t *);
 
 inode_t firstNodeIndex(inode_t node);
 
-inode_t firstNodeIndex(inode_t*);
+inode_t firstNodeIndex(inode_t *);
 
 #endif // CONNECT_H

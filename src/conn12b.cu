@@ -3,17 +3,12 @@
 
 #include <iostream>
 
-__global__ void
-setMaxNodeNBitsKernel( int max_node_nbits,
-  int max_port_syn_nbits,
-  int max_delay_nbits,
-  int max_port_nbits,
-  uint port_syn_mask,
-  uint delay_mask,
-  uint source_mask,
-  uint target_mask,
-  uint port_mask )
-{
+__global__ void setMaxNodeNBitsKernel(int max_node_nbits,
+                                      int max_port_syn_nbits,
+                                      int max_delay_nbits, int max_port_nbits,
+                                      uint port_syn_mask, uint delay_mask,
+                                      uint source_mask, uint target_mask,
+                                      uint port_mask) {
   MaxNodeNBits = max_node_nbits;
   MaxPortSynNBits = max_port_syn_nbits;
   MaxDelayNBits = max_delay_nbits;
@@ -25,9 +20,8 @@ setMaxNodeNBitsKernel( int max_node_nbits,
   PortMask = port_mask;
 }
 
-__global__ void
-setMaxSynNBitsKernel( int max_syn_nbits, int max_port_nbits, uint syn_mask, uint port_mask )
-{
+__global__ void setMaxSynNBitsKernel(int max_syn_nbits, int max_port_nbits,
+                                     uint syn_mask, uint port_mask) {
   MaxSynNBits = max_syn_nbits;
   MaxPortNBits = max_port_nbits;
   SynMask = syn_mask;
@@ -37,21 +31,20 @@ setMaxSynNBitsKernel( int max_syn_nbits, int max_port_nbits, uint syn_mask, uint
 // Set maximum number of bits used to represent node index
 // and other dependent variables
 template <>
-int
-ConnectionTemplate< conn12b_key, conn12b_struct >::_setMaxNodeNBits( int max_node_nbits )
-{
+int ConnectionTemplate<conn12b_key, conn12b_struct>::_setMaxNodeNBits(
+    int max_node_nbits) {
   if (max_node_nbits > 31) {
-    throw ngpu_exception( "max_node_n_bits cannot be larger than 31" );
+    throw ngpu_exception("max_node_n_bits cannot be larger than 31");
   }
   // maximum number of bits used to represent node index
   max_node_nbits_ = max_node_nbits;
   // std::cout << "max_node_nbits_ " << max_node_nbits_ << "\n";
-  
+
   // maximum number of bits used to represent receptor port index
   // and synapse group index
   max_port_syn_nbits_ = 32 - max_node_nbits_;
   // std::cout << "max_port_syn_nbits_ " << max_port_syn_nbits_ << "\n";
-  
+
   // maximum number of bits used to represent delays
   max_delay_nbits_ = max_port_syn_nbits_;
   // std::cout << "max_delay_nbits_ " << max_delay_nbits_  << "\n";
@@ -60,11 +53,11 @@ ConnectionTemplate< conn12b_key, conn12b_struct >::_setMaxNodeNBits( int max_nod
   if (max_port_nbits_ < 0) {
     max_port_nbits_ = 0;
     max_syn_nbits_ = max_port_syn_nbits_ - 1;
-  } 
+  }
   // std::cout << "max_port_nbits_ " << max_port_nbits_  << "\n";
-  
+
   // bit mask used to extract port and synapse group index
-  port_syn_mask_ = ( 1 << max_port_syn_nbits_ ) - 1;
+  port_syn_mask_ = (1 << max_port_syn_nbits_) - 1;
 
   // bit mask used to extract delay
   delay_mask_ = port_syn_mask_;
@@ -76,18 +69,12 @@ ConnectionTemplate< conn12b_key, conn12b_struct >::_setMaxNodeNBits( int max_nod
   target_mask_ = source_mask_;
 
   // bit mask used to extract port index
-  port_mask_ = ( ( 1 << max_port_nbits_ ) - 1 ) << ( max_syn_nbits_ + 1 );
+  port_mask_ = ((1 << max_port_nbits_) - 1) << (max_syn_nbits_ + 1);
 
   // call CUDA kernel to initialize variables in device memory
-  setMaxNodeNBitsKernel<<< 1, 1 >>>( max_node_nbits_,
-    max_port_syn_nbits_,
-    max_delay_nbits_,
-    max_port_nbits_,
-    port_syn_mask_,
-    delay_mask_,
-    source_mask_,
-    target_mask_,
-    port_mask_ );
+  setMaxNodeNBitsKernel<<<1, 1>>>(
+      max_node_nbits_, max_port_syn_nbits_, max_delay_nbits_, max_port_nbits_,
+      port_syn_mask_, delay_mask_, source_mask_, target_mask_, port_mask_);
 
   DBGCUDASYNC;
 
@@ -97,18 +84,16 @@ ConnectionTemplate< conn12b_key, conn12b_struct >::_setMaxNodeNBits( int max_nod
 // Set maximum number of bits used to represent delay
 // and other dependent variables
 template <>
-int
-ConnectionTemplate< conn12b_key, conn12b_struct >::_setMaxDelayNBits( int max_delay_nbits )
-{
-  return _setMaxNodeNBits( 32 - max_delay_nbits );
+int ConnectionTemplate<conn12b_key, conn12b_struct>::_setMaxDelayNBits(
+    int max_delay_nbits) {
+  return _setMaxNodeNBits(32 - max_delay_nbits);
 }
 
 // Set maximum number of bits used to represent synapse group index
 // and other dependent variables
 template <>
-int
-ConnectionTemplate< conn12b_key, conn12b_struct >::_setMaxSynNBits( int max_syn_nbits )
-{
+int ConnectionTemplate<conn12b_key, conn12b_struct>::_setMaxSynNBits(
+    int max_syn_nbits) {
   // maximum number of bits used to represent synapse group index
   max_syn_nbits_ = max_syn_nbits;
   // std::cout << "max_syn_nbits_ " << max_syn_nbits_ << "\n";
@@ -117,43 +102,41 @@ ConnectionTemplate< conn12b_key, conn12b_struct >::_setMaxSynNBits( int max_syn_
   if (max_port_nbits_ < 0) {
     max_port_nbits_ = 0;
     max_port_syn_nbits_ = max_syn_nbits_ + 1;
-  } 
+  }
   // std::cout << "max_port_nbits_ " << max_port_nbits_ << "\n";
-    
+
   // bit mask used to extract synapse group index
-  syn_mask_ = ( 1 << max_syn_nbits_ ) - 1;
+  syn_mask_ = (1 << max_syn_nbits_) - 1;
 
   // bit mask used to extract port index
-  port_mask_ = ( ( 1 << max_port_nbits_ ) - 1 ) << ( max_syn_nbits_ + 1 );
+  port_mask_ = ((1 << max_port_nbits_) - 1) << (max_syn_nbits_ + 1);
 
   // call CUDA kernel to initialize variables in device memory
-  setMaxSynNBitsKernel<<< 1, 1 >>>( max_syn_nbits_, max_port_nbits_, syn_mask_, port_mask_ );
+  setMaxSynNBitsKernel<<<1, 1>>>(max_syn_nbits_, max_port_nbits_, syn_mask_,
+                                 port_mask_);
   DBGCUDASYNC;
 
   return 0;
 }
 
 template <>
-void
-ConnectionTemplate< conn12b_key, conn12b_struct >::setConnSource( conn12b_key& conn_key, inode_t source )
-{
-  conn_key = ( conn_key & ( ~source_mask_ ) ) | ( source << max_delay_nbits_ );
+void ConnectionTemplate<conn12b_key, conn12b_struct>::setConnSource(
+    conn12b_key &conn_key, inode_t source) {
+  conn_key = (conn_key & (~source_mask_)) | (source << max_delay_nbits_);
 }
 
 template <>
-int
-ConnectionTemplate< conn12b_key, conn12b_struct >::getConnDelay( const conn12b_key& conn_key )
-{
+int ConnectionTemplate<conn12b_key, conn12b_struct>::getConnDelay(
+    const conn12b_key &conn_key) {
   return (conn_key & delay_mask_) + min_allowed_delay_;
 }
 
 template <>
-ConnectionTemplate< conn12b_key, conn12b_struct >::ConnectionTemplate()
-{
+ConnectionTemplate<conn12b_key, conn12b_struct>::ConnectionTemplate() {
   // std::cout << "In Connectiontemplate<conn12b_key, conn12b_struct> "
   //"specialized constructor\n";
   init();
-  _setMaxNodeNBits( 20 ); // maximum number of nodes is 2^20
+  _setMaxNodeNBits(20); // maximum number of nodes is 2^20
   // std::cout << "max_node_nbits_: " << max_node_nbits_ << "\n";
-  _setMaxSynNBits( 6 ); // maximum number of synapse groups is 2^6
+  _setMaxSynNBits(6); // maximum number of synapse groups is 2^6
 }

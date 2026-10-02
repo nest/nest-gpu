@@ -62,13 +62,13 @@ function clang_format_cuda {
   cat $1 | sed 's/<<</$$</g;s/>>>/$ >/g;' > $TEMPD/tmp1~
   #echo "CLANG_FORMAT_FILE: $CLANG_FORMAT_FILE"
   clang-format -style=file:$CLANG_FORMAT_FILE $TEMPD/tmp1~ > $TEMPD/tmp2~
-  cat $TEMPD/tmp2~ | sed 's/$$</<<</g;s/$ >/>>>/g;s/$>/>>>/g;' > $TEMPD/tmp1~  
+  cat $TEMPD/tmp2~ | sed 's/$$</<<</g;s/$ >/>>>/g;s/$>/>>>/g;' > $TEMPD/tmp1~
   if ! cmp -s $TEMPD/tmp1~ $1; then # file changed by clang-format
       /bin/cp -f $TEMPD/tmp1~  $1
       CHANGE_COUNT=$((CHANGE_COUNT+1))
       echo "     FILE CHANGED BY FORMATTING"
   fi
-}  
+}
 
 # Recursively process all C/C++/CUDA files in all sub-directories.
 function process_dir {
@@ -125,7 +125,7 @@ function make_temp_dir {
   # Exit if the temp directory wasn't created successfully.
   if [ ! -e "$TEMPD" ]; then
     >&2 echo "Failed to create temp directory"
-    exit 1    
+    exit 1
   fi
 
 

@@ -1,11 +1,12 @@
 import nestgpu as ngpu
-n=ngpu.Create('iaf_psc_exp_g',3)
+
+n = ngpu.Create("iaf_psc_exp_g", 3)
 print(ngpu.GetStatus(n))
 print(ngpu.GetStatus(n, "V_m_rel"))
 print(ngpu.GetStatus(n, "C_m"))
 print(ngpu.GetStatus(n, "tau_m"))
 print(ngpu.GetStatus(n, "I_syn"))
-ngpu.SetStatus(n, {"C_m":120.0, "V_m_rel":17.0, "tau_m":7.0, "I_syn":600.0})
+ngpu.SetStatus(n, {"C_m": 120.0, "V_m_rel": 17.0, "tau_m": 7.0, "I_syn": 600.0})
 print(ngpu.GetStatus(n))
 print(ngpu.GetStatus(n, "V_m_rel"))
 print(ngpu.GetStatus(n, "C_m"))

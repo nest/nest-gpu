@@ -13,4 +13,3 @@ Here you can find details on some topics about NEST GPU:
     multigpu_simulations
 
 Further examples are in the directory `python/examples <https://github.com/nest/nest-gpu/tree/main/python/examples>`_.
-    

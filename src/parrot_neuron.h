@@ -64,16 +64,15 @@ a `stdp` onto port 1 on the postsynaptic parrot neuron.
 
 EndUserDocs */
 
-class parrot_neuron : public BaseNeuron
-{
+class parrot_neuron : public BaseNeuron {
 public:
   ~parrot_neuron();
 
-  int Init( int i_node_0, int n_node, int n_port, int i_group );
+  int Init(int i_node_0, int n_node, int n_port, int i_group);
 
   int Free();
 
-  int Update( long long it, double t1 );
+  int Update(long long it, double t1);
 };
 
 #endif

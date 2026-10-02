@@ -112,9 +112,9 @@ A [PyNN version](https://github.com/NeuralEnsemble/PyNN/tree/master/examples/Pot
         network model. Cerebral Cortex. 24(3):785–806. DOI: [10.1093/cercor/bhs358](https://doi.org/10.1093/cercor/bhs358).
 
 - [2]  Golosio B., Tiddia G., De Luca C., Pastorelli E., Simula F. and Paolucci PS. 2021
-        Fast Simulations of Highly-Connected Spiking Cortical Models Using GPUs. 
+        Fast Simulations of Highly-Connected Spiking Cortical Models Using GPUs.
         Front. Comput. Neurosci. 15:627620. DOI: [10.3389/fncom.2021.627620](https://doi.org/10.3389/fncom.2021.627620).
 
-- [3]  Golosio B., Villamar J., Tiddia G., Pastorelli E., Stapmanns J., Fanti V., Paolucci PS., Morrison A. and Senk J. 2023 
-        Runtime Construction of Large-Scale Spiking Neuronal Network Models on GPU Devices. 
+- [3]  Golosio B., Villamar J., Tiddia G., Pastorelli E., Stapmanns J., Fanti V., Paolucci PS., Morrison A. and Senk J. 2023
+        Runtime Construction of Large-Scale Spiking Neuronal Network Models on GPU Devices.
         Applied Sciences; 13(17):9598. DOI: [10.3390/app13179598](https://doi.org/10.3390/app13179598).

@@ -89,50 +89,44 @@ See also
 
 EndUserDocs */
 
-class Record
-{
+class Record {
 public:
   bool data_vect_flag_;
   bool out_file_flag_;
-  std::vector< std::vector< float > > data_vect_;
-  std::vector< BaseNeuron* > neuron_vect_;
+  std::vector<std::vector<float>> data_vect_;
+  std::vector<BaseNeuron *> neuron_vect_;
   std::string file_name_;
-  std::vector< std::string > var_name_vect_;
-  std::vector< int > i_neuron_vect_;
-  std::vector< int > port_vect_;
-  std::vector< float* > var_pt_vect_;
-  FILE* fp_;
+  std::vector<std::string> var_name_vect_;
+  std::vector<int> i_neuron_vect_;
+  std::vector<int> port_vect_;
+  std::vector<float *> var_pt_vect_;
+  FILE *fp_;
 
-  Record( std::vector< BaseNeuron* > neur_vect,
-    std::string file_name,
-    std::vector< std::string > var_name_vect,
-    std::vector< int > i_neur_vect,
-    std::vector< int > port_vect );
+  Record(std::vector<BaseNeuron *> neur_vect, std::string file_name,
+         std::vector<std::string> var_name_vect, std::vector<int> i_neur_vect,
+         std::vector<int> port_vect);
 
   int OpenFile();
 
   int CloseFile();
 
-  int WriteRecord( float t, long long time_idx );
+  int WriteRecord(float t, long long time_idx);
 };
 
-class Multimeter
-{
+class Multimeter {
 public:
-  std::vector< Record > record_vect_;
+  std::vector<Record> record_vect_;
 
-  int CreateRecord( std::vector< BaseNeuron* > neur_vect,
-    std::string file_name,
-    std::vector< std::string > var_name_vect,
-    std::vector< int > i_neur_vect,
-    std::vector< int > port_vect );
+  int CreateRecord(std::vector<BaseNeuron *> neur_vect, std::string file_name,
+                   std::vector<std::string> var_name_vect,
+                   std::vector<int> i_neur_vect, std::vector<int> port_vect);
   int OpenFiles();
 
   int CloseFiles();
 
-  int WriteRecords( float t, long long time_idx );
+  int WriteRecords(float t, long long time_idx);
 
-  std::vector< std::vector< float > >* GetRecordData( int i_record );
+  std::vector<std::vector<float>> *GetRecordData(int i_record);
 };
 
 #endif

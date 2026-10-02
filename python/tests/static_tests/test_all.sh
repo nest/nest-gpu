@@ -15,6 +15,6 @@ for fn in syn_group connect getarr setvar2 group_param; do
     python3 -u test_$fn.py 2>&1 | grep -v dyl | grep -v 'Time:' | grep -v 'storage bytes:' | grep -v Indexing | grep -v 'Total number' | grep -v 'Time from' > tmp
     diff -qs tmp logp3_$fn.txt 2>&1 >> log.txt
     res=$?
-    echo $fn : ${pass_str[$res]}    
+    echo $fn : ${pass_str[$res]}
 done
 rm -f tmp

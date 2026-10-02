@@ -30,55 +30,38 @@
 #include <iostream>
 #include <string>
 
-namespace ext_neuron_ns
-{
-enum ScalVarIndexes
-{
-  N_SCAL_VAR = 0
-};
+namespace ext_neuron_ns {
+enum ScalVarIndexes { N_SCAL_VAR = 0 };
 
-enum PortVarIndexes
-{
-  i_port_input = 0,
-  i_port_value,
-  N_PORT_VAR
-};
+enum PortVarIndexes { i_port_input = 0, i_port_value, N_PORT_VAR };
 
-enum ScalParamIndexes
-{
-  i_den_delay = 0,
-  N_SCAL_PARAM
-};
+enum ScalParamIndexes { i_den_delay = 0, N_SCAL_PARAM };
 
-enum PortParamIndexes
-{
-  i_port_weight = 0,
-  N_PORT_PARAM
-};
+enum PortParamIndexes { i_port_weight = 0, N_PORT_PARAM };
 
 // const std::string *ext_neuron_scal_var_name[N_SCAL_VAR] = {};
 
-const std::string ext_neuron_port_var_name[ N_PORT_VAR ] = { "port_input", "port_value" };
+const std::string ext_neuron_port_var_name[N_PORT_VAR] = {"port_input",
+                                                          "port_value"};
 
-const std::string ext_neuron_scal_param_name[ N_SCAL_PARAM ] = { "den_delay" };
+const std::string ext_neuron_scal_param_name[N_SCAL_PARAM] = {"den_delay"};
 
-const std::string ext_neuron_port_param_name[ N_PORT_PARAM ] = { "port_weight" };
+const std::string ext_neuron_port_param_name[N_PORT_PARAM] = {"port_weight"};
 
 } // namespace ext_neuron_ns
 
-class ext_neuron : public BaseNeuron
-{
+class ext_neuron : public BaseNeuron {
 public:
   ~ext_neuron();
-  int Init( int i_node_0, int n_neuron, int n_port, int i_group );
+  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
 
   // int Calibrate(double time_min, float time_resolution);
 
-  int Update( long long it, double t1 );
+  int Update(long long it, double t1);
 
   int Free();
 
-  float* GetExtNeuronInputSpikes( int* n_node, int* n_port );
+  float *GetExtNeuronInputSpikes(int *n_node, int *n_port);
 };
 
 #endif

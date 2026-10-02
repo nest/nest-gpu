@@ -89,16 +89,15 @@ multimeter
 
 EndUserDocs */
 
-class spike_detector : public BaseNeuron
-{
+class spike_detector : public BaseNeuron {
 public:
   ~spike_detector();
 
-  int Init( int i_node_0, int n_node, int n_port, int i_group );
+  int Init(int i_node_0, int n_node, int n_port, int i_group);
 
   int Free();
 
-  int Update( long long it, double t1 );
+  int Update(long long it, double t1);
 };
 
 #endif

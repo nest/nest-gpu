@@ -10,14 +10,14 @@ Requirements
 
 * To build NEST GPU you need `CMake <https://cmake.org/install>`_ (version 3.17 or higher).
   You also need the `NVIDIA drivers <https://www.nvidia.com/Download/index.aspx?lang=en-us>`_
-  for the GPU card installed in your machine and the 
+  for the GPU card installed in your machine and the
   `NVIDIA CUDA development toolkit <https://developer.nvidia.com/cuda-toolkit>`_.
   If you are using Ubuntu, `here <https://linuxhint.com/install-nvidia-drivers-on-ubuntu/>`_
   you can find a guide to install the NVIDIA drivers for the GPU card on your machine.
 
 * If you want to run parallel simulations with MPI (on per default), you can use `Open MPI <https://www.open-mpi.org/>`_.
 
-* You can obtain the base packages from your system, for example: 
+* You can obtain the base packages from your system, for example:
 
 .. code-block:: sh
 
@@ -52,7 +52,7 @@ NEST GPU installation from source
 
 * Get the source code from GitHub. If you want to use the main branch, run:
 
-.. code-block:: sh 
+.. code-block:: sh
 
    git clone git@github.com:nest/nest-gpu.git $SOURCE_DIR
 

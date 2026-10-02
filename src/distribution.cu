@@ -27,66 +27,53 @@
 #include <curand.h>
 #include <vector>
 
-__global__ void
-randomNormalClippedKernel( float* arr,
-  int64_t n,
-  float mu,
-  float sigma,
-  float low,
-  float high,
-  double normal_cdf_alpha,
-  double normal_cdf_beta,
-  bool is_log )
-{
+__global__ void randomNormalClippedKernel(float *arr, int64_t n, float mu,
+                                          float sigma, float low, float high,
+                                          double normal_cdf_alpha,
+                                          double normal_cdf_beta, bool is_log) {
   const double epsilon = 1.0e-15;
   int64_t tid = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( tid >= n )
-  {
+  if (tid >= n) {
     return;
   }
-  float uniform = arr[ tid ];
-  double p = normal_cdf_alpha + ( normal_cdf_beta - normal_cdf_alpha ) * uniform;
+  float uniform = arr[tid];
+  double p = normal_cdf_alpha + (normal_cdf_beta - normal_cdf_alpha) * uniform;
   double v = p * 2.0 - 1.0;
-  v = max( v, epsilon - 1.0 );
-  v = min( v, -epsilon + 1.0 );
+  v = max(v, epsilon - 1.0);
+  v = min(v, -epsilon + 1.0);
 
-  double x = ( double ) sigma * sqrt( 2.0 ) * erfinv( v ) + mu;
+  double x = (double)sigma * sqrt(2.0) * erfinv(v) + mu;
   if (is_log) {
     x = exp(x);
   }
-  x = max( x, low );
-  x = min( x, high );
-  arr[ tid ] = ( float ) x;
+  x = max(x, low);
+  x = min(x, high);
+  arr[tid] = (float)x;
 }
 
-double
-normalCDF( double value )
-{
-  return 0.5 * erfc( -value * M_SQRT1_2 );
-}
+double normalCDF(double value) { return 0.5 * erfc(-value * M_SQRT1_2); }
 
-int
-randomNormalClipped( float* arr, int64_t n, float mu, float sigma, float low, float high, bool is_log = false )
-{
+int randomNormalClipped(float *arr, int64_t n, float mu, float sigma, float low,
+                        float high, bool is_log = false) {
   double alpha_val = (double)low;
   double beta_val = (double)high;
 
   if (is_log) {
     // If lognormal, the underlying normal is clipped at log(low) and log(high)
-    alpha_val = (low > 0) ? log((double)low) : -1e38; 
+    alpha_val = (low > 0) ? log((double)low) : -1e38;
     beta_val = log((double)high);
   }
 
-  double alpha = ( alpha_val - mu ) / sigma;
-  double beta = ( beta_val - mu ) / sigma;
-  double normal_cdf_alpha = normalCDF( alpha );
-  double normal_cdf_beta = normalCDF( beta );
+  double alpha = (alpha_val - mu) / sigma;
+  double beta = (beta_val - mu) / sigma;
+  double normal_cdf_alpha = normalCDF(alpha);
+  double normal_cdf_beta = normalCDF(beta);
 
   // printf("mu: %f\tsigma: %f\tlow: %f\thigh: %f\tn: %ld\n",
   //	 mu, sigma, low, high, n);
   // n = 10000;
-  randomNormalClippedKernel<<< ( n + 1023 ) / 1024, 1024 >>>(
-    arr, n, mu, sigma, low, high, normal_cdf_alpha, normal_cdf_beta, is_log );
+  randomNormalClippedKernel<<<(n + 1023) / 1024, 1024>>>(
+      arr, n, mu, sigma, low, high, normal_cdf_alpha, normal_cdf_beta, is_log);
   DBGCUDASYNC
   // temporary test, remove!!!!!!!!!!!!!
   // gpuErrchk( cudaDeviceSynchronize() );
@@ -100,207 +87,144 @@ randomNormalClipped( float* arr, int64_t n, float mu, float sigma, float low, fl
   return 0;
 }
 
-bool
-Distribution::isDistribution( int distr_idx )
-{
-  if ( distr_idx > DISTR_TYPE_ARRAY && distr_idx < N_DISTR_TYPE )
-  {
+bool Distribution::isDistribution(int distr_idx) {
+  if (distr_idx > DISTR_TYPE_ARRAY && distr_idx < N_DISTR_TYPE) {
     return true;
-  }
-  else
-  {
+  } else {
     return false;
   }
 }
 
-bool
-Distribution::isArray( int distr_idx )
-{
-  if ( distr_idx == DISTR_TYPE_ARRAY )
-  {
+bool Distribution::isArray(int distr_idx) {
+  if (distr_idx == DISTR_TYPE_ARRAY) {
     return true;
-  }
-  else
-  {
+  } else {
     return false;
   }
 }
 
-void
-Distribution::checkDistributionInitialized()
-{
-  if ( distr_idx_ < DISTR_TYPE_ARRAY || distr_idx_ >= N_DISTR_TYPE )
-  {
-    throw ngpu_exception( "Distribution was not initialized" );
+void Distribution::checkDistributionInitialized() {
+  if (distr_idx_ < DISTR_TYPE_ARRAY || distr_idx_ >= N_DISTR_TYPE) {
+    throw ngpu_exception("Distribution was not initialized");
   }
 }
 
-int
-Distribution::vectSize()
-{
-  return vect_size_;
-}
+int Distribution::vectSize() { return vect_size_; }
 
-float*
-Distribution::getArray( curandGenerator_t& gen, int64_t n_elem, int i_vect )
-{
+float *Distribution::getArray(curandGenerator_t &gen, int64_t n_elem,
+                              int i_vect) {
   checkDistributionInitialized();
-  if ( distr_idx_ >= DISTR_TYPE_ARRAY )
-  {
-    CUDAMALLOCCTRL( "&d_array_pt_", &d_array_pt_, n_elem * sizeof( float ) );
+  if (distr_idx_ >= DISTR_TYPE_ARRAY) {
+    CUDAMALLOCCTRL("&d_array_pt_", &d_array_pt_, n_elem * sizeof(float));
   }
-  if ( distr_idx_ == DISTR_TYPE_ARRAY )
-  {
-    gpuErrchk( cudaMemcpy( d_array_pt_, h_array_pt_, n_elem * sizeof( float ), cudaMemcpyHostToDevice ) );
-  }
-  else if ( distr_idx_ == DISTR_TYPE_NORMAL_CLIPPED )
-  {
-    CURAND_CALL( curandGenerateUniform( gen, d_array_pt_, n_elem ) );
-    randomNormalClipped( d_array_pt_, n_elem, mu_[ i_vect ], sigma_[ i_vect ], low_[ i_vect ], high_[ i_vect ], false );
-  }
-  else if ( distr_idx_ == DISTR_TYPE_NORMAL )
-  {
-    float low = mu_[ i_vect ] - 5.0 * sigma_[ i_vect ];
-    float high = mu_[ i_vect ] + 5.0 * sigma_[ i_vect ];
-    CURAND_CALL( curandGenerateUniform( gen, d_array_pt_, n_elem ) );
-    randomNormalClipped( d_array_pt_, n_elem, mu_[ i_vect ], sigma_[ i_vect ], low, high, false );
-  }
-  else if ( distr_idx_ == DISTR_TYPE_LOGNORMAL_CLIPPED )
-  {
-    CURAND_CALL( curandGenerateUniform( gen, d_array_pt_, n_elem ) );
-    randomNormalClipped( d_array_pt_, n_elem, mu_[ i_vect ], sigma_[ i_vect ], low_[ i_vect ], high_[ i_vect ], true );
+  if (distr_idx_ == DISTR_TYPE_ARRAY) {
+    gpuErrchk(cudaMemcpy(d_array_pt_, h_array_pt_, n_elem * sizeof(float),
+                         cudaMemcpyHostToDevice));
+  } else if (distr_idx_ == DISTR_TYPE_NORMAL_CLIPPED) {
+    CURAND_CALL(curandGenerateUniform(gen, d_array_pt_, n_elem));
+    randomNormalClipped(d_array_pt_, n_elem, mu_[i_vect], sigma_[i_vect],
+                        low_[i_vect], high_[i_vect], false);
+  } else if (distr_idx_ == DISTR_TYPE_NORMAL) {
+    float low = mu_[i_vect] - 5.0 * sigma_[i_vect];
+    float high = mu_[i_vect] + 5.0 * sigma_[i_vect];
+    CURAND_CALL(curandGenerateUniform(gen, d_array_pt_, n_elem));
+    randomNormalClipped(d_array_pt_, n_elem, mu_[i_vect], sigma_[i_vect], low,
+                        high, false);
+  } else if (distr_idx_ == DISTR_TYPE_LOGNORMAL_CLIPPED) {
+    CURAND_CALL(curandGenerateUniform(gen, d_array_pt_, n_elem));
+    randomNormalClipped(d_array_pt_, n_elem, mu_[i_vect], sigma_[i_vect],
+                        low_[i_vect], high_[i_vect], true);
   }
   return d_array_pt_;
 }
 
-int
-Distribution::SetIntParam( std::string param_name, int val )
-{
-  if ( param_name == "distr_idx" )
-  {
-    if ( isDistribution( val ) || isArray( val ) )
-    {
+int Distribution::SetIntParam(std::string param_name, int val) {
+  if (param_name == "distr_idx") {
+    if (isDistribution(val) || isArray(val)) {
       distr_idx_ = val;
       vect_size_ = 0;
       mu_.clear();
       sigma_.clear();
       low_.clear();
       high_.clear();
+    } else {
+      throw ngpu_exception("Invalid distribution type");
     }
-    else
-    {
-      throw ngpu_exception( "Invalid distribution type" );
-    }
-  }
-  else if ( param_name == "vect_size" )
-  {
+  } else if (param_name == "vect_size") {
     vect_size_ = val;
-    mu_.resize( vect_size_ );
-    sigma_.resize( vect_size_ );
-    low_.resize( vect_size_ );
-    high_.resize( vect_size_ );
-  }
-  else
-  {
-    throw ngpu_exception( std::string( "Unrecognized distribution "
-                                       "integer parameter " )
-      + param_name );
+    mu_.resize(vect_size_);
+    sigma_.resize(vect_size_);
+    low_.resize(vect_size_);
+    high_.resize(vect_size_);
+  } else {
+    throw ngpu_exception(std::string("Unrecognized distribution "
+                                     "integer parameter ") +
+                         param_name);
   }
 
   return 0;
 }
 
-int
-Distribution::SetScalParam( std::string param_name, float val )
-{
+int Distribution::SetScalParam(std::string param_name, float val) {
   checkDistributionInitialized();
-  if ( vect_size_ <= 0 )
-  {
-    throw ngpu_exception(
-      "Distribution parameter vector dimension "
-      "was not initialized" );
+  if (vect_size_ <= 0) {
+    throw ngpu_exception("Distribution parameter vector dimension "
+                         "was not initialized");
+  } else if (vect_size_ > 1) {
+    throw ngpu_exception("Distribution parameter vector dimension"
+                         " inconsistent for scalar parameter");
   }
-  else if ( vect_size_ > 1 )
-  {
-    throw ngpu_exception(
-      "Distribution parameter vector dimension"
-      " inconsistent for scalar parameter" );
-  }
-  SetVectParam( param_name, val, 0 );
+  SetVectParam(param_name, val, 0);
 
   return 0;
 }
 
-int
-Distribution::SetVectParam( std::string param_name, float val, int i )
-{
+int Distribution::SetVectParam(std::string param_name, float val, int i) {
   checkDistributionInitialized();
-  if ( vect_size_ <= 0 )
-  {
-    throw ngpu_exception(
-      "Distribution parameter vector dimension "
-      "was not initialized" );
+  if (vect_size_ <= 0) {
+    throw ngpu_exception("Distribution parameter vector dimension "
+                         "was not initialized");
   }
-  if ( i > vect_size_ )
-  {
-    throw ngpu_exception(
-      "Vector parameter index for distribution "
-      "out of range" );
+  if (i > vect_size_) {
+    throw ngpu_exception("Vector parameter index for distribution "
+                         "out of range");
   }
-  if ( param_name == "mu" )
-  {
+  if (param_name == "mu") {
     // aggiungere && distr_idx==NORMAL || distr_idx==NORMAL_CLIPPED
-    mu_[ i ] = val;
-  }
-  else if ( param_name == "sigma" )
-  {
-    sigma_[ i ] = val;
-  }
-  else if ( param_name == "low" )
-  {
-    low_[ i ] = val;
-  }
-  else if ( param_name == "high" )
-  {
-    high_[ i ] = val;
-  }
-  else
-  {
-    throw ngpu_exception( std::string( "Unrecognized distribution "
-                                       "float parameter " )
-      + param_name );
+    mu_[i] = val;
+  } else if (param_name == "sigma") {
+    sigma_[i] = val;
+  } else if (param_name == "low") {
+    low_[i] = val;
+  } else if (param_name == "high") {
+    high_[i] = val;
+  } else {
+    throw ngpu_exception(std::string("Unrecognized distribution "
+                                     "float parameter ") +
+                         param_name);
   }
 
   return 0;
 }
 
-int
-Distribution::SetFloatPtParam( std::string param_name, float* h_array_pt )
-{
-  if ( param_name == "array_pt" )
-  {
+int Distribution::SetFloatPtParam(std::string param_name, float *h_array_pt) {
+  if (param_name == "array_pt") {
     distr_idx_ = DISTR_TYPE_ARRAY;
     h_array_pt_ = h_array_pt;
-  }
-  else
-  {
-    throw ngpu_exception( std::string( "Unrecognized distribution "
-                                       "float pointer parameter " )
-      + param_name );
+  } else {
+    throw ngpu_exception(std::string("Unrecognized distribution "
+                                     "float pointer parameter ") +
+                         param_name);
   }
 
   return 0;
 }
 
-bool
-Distribution::IsFloatParam( std::string param_name )
-{
-  if ( ( param_name == "mu" ) || ( param_name == "sigma" ) || ( param_name == "low" ) || ( param_name == "high" ) )
-  {
+bool Distribution::IsFloatParam(std::string param_name) {
+  if ((param_name == "mu") || (param_name == "sigma") ||
+      (param_name == "low") || (param_name == "high")) {
     return true;
-  }
-  else
-  {
+  } else {
     return false;
   }
 }

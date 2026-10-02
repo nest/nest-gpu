@@ -90,10 +90,8 @@ https://doi.org/10.1109/TNN.2003.820440
 
 EndUserDocs */
 
-namespace izhikevich_psc_exp_ns
-{
-enum ScalVarIndexes
-{
+namespace izhikevich_psc_exp_ns {
+enum ScalVarIndexes {
   i_I_syn = 0, // postsynaptic current for exc. inputs
   i_V_m,       // membrane potential
   i_u,
@@ -101,15 +99,13 @@ enum ScalVarIndexes
   N_SCAL_VAR
 };
 
-enum ScalParamIndexes
-{
+enum ScalParamIndexes {
   i_I_e = 0, // External current in pA
   i_den_delay,
   N_SCAL_PARAM
 };
 
-enum GroupParamIndexes
-{
+enum GroupParamIndexes {
   i_V_th = 0,
   i_a,
   i_b,
@@ -120,32 +116,31 @@ enum GroupParamIndexes
   N_GROUP_PARAM
 };
 
-const std::string izhikevich_psc_exp_scal_var_name[ N_SCAL_VAR ] = { "I_syn", "V_m", "u", "refractory_step" };
+const std::string izhikevich_psc_exp_scal_var_name[N_SCAL_VAR] = {
+    "I_syn", "V_m", "u", "refractory_step"};
 
-const std::string izhikevich_psc_exp_scal_param_name[ N_SCAL_PARAM ] = { "I_e", "den_delay" };
+const std::string izhikevich_psc_exp_scal_param_name[N_SCAL_PARAM] = {
+    "I_e", "den_delay"};
 
-const std::string
-  izhikevich_psc_exp_group_param_name[ N_GROUP_PARAM ] = { "V_th", "a", "b", "c", "d", "tau_syn", "t_ref" };
+const std::string izhikevich_psc_exp_group_param_name[N_GROUP_PARAM] = {
+    "V_th", "a", "b", "c", "d", "tau_syn", "t_ref"};
 
 } // namespace izhikevich_psc_exp_ns
 
-class izhikevich_psc_exp : public BaseNeuron
-{
+class izhikevich_psc_exp : public BaseNeuron {
   float time_resolution_;
 
 public:
   ~izhikevich_psc_exp();
 
-  int Init( int i_node_0, int n_neuron, int n_port, int i_group );
+  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
 
-  int
-  Calibrate( double /*time_min*/, float time_res )
-  {
+  int Calibrate(double /*time_min*/, float time_res) {
     time_resolution_ = time_res;
     return 0;
   }
 
-  int Update( long long it, double t1 );
+  int Update(long long it, double t1);
 
   int Free();
 };

@@ -110,10 +110,8 @@ iaf_psc_exp
 
 EndUserDocs */
 
-namespace iaf_psc_alpha_ns
-{
-enum ScalVarIndexes
-{
+namespace iaf_psc_alpha_ns {
+enum ScalVarIndexes {
   i_I_ex = 0, // postsynaptic current for exc. inputs
   i_I_in,     // postsynaptic current for inh. inputs
   i_dI_ex,
@@ -123,8 +121,7 @@ enum ScalVarIndexes
   N_SCAL_VAR
 };
 
-enum ScalParamIndexes
-{
+enum ScalParamIndexes {
   i_tau_m = 0,   // Membrane time constant in ms
   i_C_m,         // Membrane capacitance in pF
   i_E_L,         // Resting potential in mV
@@ -157,51 +154,47 @@ enum ScalParamIndexes
   N_SCAL_PARAM
 };
 
-const std::string iaf_psc_alpha_scal_var_name[ N_SCAL_VAR ] = { "I_syn_ex",
-  "I_syn_in",
-  "dI_ex",
-  "dI_in",
-  "V_m_rel",
-  "refractory_step" };
+const std::string iaf_psc_alpha_scal_var_name[N_SCAL_VAR] = {
+    "I_syn_ex", "I_syn_in", "dI_ex", "dI_in", "V_m_rel", "refractory_step"};
 
-const std::string iaf_psc_alpha_scal_param_name[ N_SCAL_PARAM ] = { "tau_m",
-  "C_m",
-  "E_L",
-  "I_e",
-  "Theta_rel",
-  "V_reset_rel",
-  "tau_syn_ex",
-  "tau_syn_in",
-  "t_ref",
-  "den_delay",
-  "P11ex",
-  "P11in",
-  "P21ex",
-  "P21in",
-  "P22ex",
-  "P22in",
-  "P31ex",
-  "P31in",
-  "P32ex",
-  "P32in",
-  "P30",
-  "P33",
-  "expm1_tau_m",
-  "EPSCInitialValue",
-  "IPSCInitialValue" };
+const std::string iaf_psc_alpha_scal_param_name[N_SCAL_PARAM] = {
+    "tau_m",
+    "C_m",
+    "E_L",
+    "I_e",
+    "Theta_rel",
+    "V_reset_rel",
+    "tau_syn_ex",
+    "tau_syn_in",
+    "t_ref",
+    "den_delay",
+    "P11ex",
+    "P11in",
+    "P21ex",
+    "P21in",
+    "P22ex",
+    "P22in",
+    "P31ex",
+    "P31in",
+    "P32ex",
+    "P32in",
+    "P30",
+    "P33",
+    "expm1_tau_m",
+    "EPSCInitialValue",
+    "IPSCInitialValue"};
 
 } // namespace iaf_psc_alpha_ns
 
-class iaf_psc_alpha : public BaseNeuron
-{
+class iaf_psc_alpha : public BaseNeuron {
 public:
   ~iaf_psc_alpha();
 
-  int Init( int i_node_0, int n_neuron, int n_port, int i_group );
+  int Init(int i_node_0, int n_neuron, int n_port, int i_group);
 
-  int Calibrate( double, float time_resolution );
+  int Calibrate(double, float time_resolution);
 
-  int Update( long long it, double t1 );
+  int Update(long long it, double t1);
 
   int Free();
 };

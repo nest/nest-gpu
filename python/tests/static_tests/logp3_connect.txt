@@ -98,5 +98,3 @@ Even to 3,4,5,6
 {'index': 32, 'source': 6, 'target': 5, 'port': 0, 'syn_group': 0, 'delay': 65.0, 'weight': 6500.0}
 {'index': 33, 'source': 6, 'target': 7, 'port': 0, 'syn_group': 0, 'delay': 67.0, 'weight': 6700.0}
 {'index': 34, 'source': 6, 'target': 9, 'port': 0, 'syn_group': 0, 'delay': 69.0, 'weight': 6900.0}
-
-

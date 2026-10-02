@@ -69,12 +69,12 @@ if [ ! -f $1 ]; then
     exit 1
 fi
 
-if [ "$include_path" != "" ]; then    
+if [ "$include_path" != "" ]; then
     include_path=$(echo ":$include_path" | sed 's/::*/:/g;s/:$//;s/:/ -I /g')
 fi
 
 # Searches the paths of CUDA headers
-if [ "$cuda_path" == "" ]; then    
+if [ "$cuda_path" == "" ]; then
     cuda_path=":/usr/local/cuda/include"
 else
     cuda_path=$(echo ":$cuda_path" | sed 's/::*/:/g;s/:$//')
@@ -101,11 +101,11 @@ fi
 cuda_include=$(echo $cuda_path | sed 's/:/ -isystem /g')
 
 #cat $1 | sed 's://<BEGIN-CLANG-TIDY-SKIP>//:#if 0:;s://<END-CLANG-TIDY-SKIP>//:#endif:' > tmp~
-    
+
 #cat ../build_cmake/compile_commands.json | sed "s:-Xcompiler=-fPIC::;s:-forward-unknown-to-host-compiler::;s:--compiler-options='.*'::;s:--generate-code=arch=compute_80,code=\[compute_80,sm_80\]::;s:--maxrregcount=55::" > compile_commands.json
 
 # Searches the paths of MPI headers
-if [ "$mpi_path" == "" ]; then    
+if [ "$mpi_path" == "" ]; then
     mpi_include=$( \
 		   for l in  $(mpicc -showme); do \
 		       echo $l; \

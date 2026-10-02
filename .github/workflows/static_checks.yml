@@ -1,0 +1,98 @@
+# detailed syntax defined in
+# https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions
+#
+name: "NEST GPU CI"
+
+on: [push, pull_request]
+
+jobs:
+  clang-format:
+    runs-on: "ubuntu-26.04"
+
+    env:
+      CLANG_REQUIRE_VERSION: 23.1.1
+      CLANG_FORMAT_FILE: ".clang-format"
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+          disable-telemetry: true
+
+      - name: "Setup Python"
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+
+      - name: "Checkout repository content"
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: "Install dependencies"
+        run: |
+          python -m pip install --force-reinstall clang-format==${{ env.CLANG_REQUIRE_VERSION }}
+
+      - name: "Run format"
+        run: |
+          find src/ -type f -iregex ".*\.\(h\|cpp\|cu\)" -exec clang-format --style=file:${{ env.CLANG_FORMAT_FILE }} --dry-run --Werror {} +
+
+
+  ruff-format:
+    runs-on: "ubuntu-26.04"
+
+    env:
+      RUFF_REQUIRE_VERSION: 0.16.8
+      RUFF_FORMAT_FILE: ".ruff.toml"
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+          disable-telemetry: true
+
+      - name: "Setup Python"
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+
+      - name: "Checkout repository content"
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: "Install dependencies"
+        run: |
+          python -m pip install --force-reinstall ruff==${{ env.RUFF_REQUIRE_VERSION }}
+
+      - name: "Run format"
+        run: |
+          ruff format --config ${{ env.RUFF_FORMAT_FILE }} --check .
+
+
+  pre-commit-hooks:
+    runs-on: "ubuntu-26.04"
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+          disable-telemetry: true
+
+      - name: "Setup Python"
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+
+      - name: "Checkout repository content"
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: "Run hooks"
+        uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --show-diff-on-failure --color=always --all-files

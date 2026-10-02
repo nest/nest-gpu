@@ -34,23 +34,23 @@ The ``RemoteCreate`` call is required especially when instantiating different mo
 When nodes belonging to different MPI processes need to be connected, a ``RemoteConnect`` call is required:
 
 .. code-block:: python
-    
+
     nestgpu.RemoteConnect(source_host_id, source_pop, target_host_id, target_pop, conn_dict, syn_dict)
 
-This connects the population ``source_pop`` instantiated on Rank ``source_host_id`` to ``target_pop`` instantiated on ``target_host_id``. 
+This connects the population ``source_pop`` instantiated on Rank ``source_host_id`` to ``target_pop`` instantiated on ``target_host_id``.
 Essentially, you must declare the MPI process ID where each population is instantiated alongside the populations themselves.
 
 .. warning::
     Although each rank can independently construct its share of the network, the correct way to use remote creation and connections in NEST GPU is to have all ranks call all creation and connection functions.
     For this reason, ``RemoteCreate`` and ``RemoteConnect`` calls should not be specified inside a rank conditional block.
     In principle, if both the ranks involved in a connection are included in the condition block, e.g.,
-    
+
     .. code-block:: python
 
         # don't try this at home!
         if rank == 1 or rank == 3:
             nestgpu.RemoteConnect(1 ,pop_1, 3, pop_3, ...)
-    
+
     the connections would be correctly instantiated. However, this is highly discouraged for regular users.
 
 
@@ -89,11 +89,11 @@ This is the default communication method in NEST GPU. The code block below shows
 
     exc_conn_dict = {"rule": "fixed_indegree", "indegree": CE*3//4}
     exc_syn_dict = {"weight": Wex, "delay": delay}
-    
+
     # Connection taking place locally, inside every MPI process
     ngpu.Connect(exc_neuron, neuron, exc_conn_dict, exc_syn_dict)
 
-    # Creating remote connections between the excitatory population 
+    # Creating remote connections between the excitatory population
     # of Rank 0 and the neurons of Rank 1, and vice versa
     re_conn_dict = {"rule": "fixed_indegree", "indegree": CE//4}
     re_syn_dict = {"weight": Wex, "delay": delay}
@@ -173,6 +173,6 @@ While this example demonstrates ``ConnectDistributedFixedIndegree``, other conne
 References
 ----------
 
-[1] Golosio B, Villamar J, Tiddia G, Pastorelli E, Stapmanns J, Fanti V, Paolucci PS, Morrison A and Senk J. (2023) Runtime Construction of Large-Scale Spiking Neuronal Network Models on GPU Devices. Applied Sciences; 13(17):9598. doi: https://doi.org/10.3390/app13179598 
+[1] Golosio B, Villamar J, Tiddia G, Pastorelli E, Stapmanns J, Fanti V, Paolucci PS, Morrison A and Senk J. (2023) Runtime Construction of Large-Scale Spiking Neuronal Network Models on GPU Devices. Applied Sciences; 13(17):9598. doi: https://doi.org/10.3390/app13179598
 
 [2] Golosio B, Tiddia G, Villamar J, Pontisso L, Sergi L, Simula F, Babu P, Pastorelli E, Morrison A, Lonardo A, Paolucci PS and Senk J. (2026) Scalable construction of spiking neural networks using up to thousands of GPUs. Neuromorph. Comput. Eng. 6 024012. doi: https://doi.org/10.1088/2634-4386/ae65d2

@@ -31,7 +31,7 @@ function make_temp_dir {
   # Exit if the temp directory wasn't created successfully.
   if [ ! -e "$TEMPD" ]; then
     >&2 echo "Error: failed to create temp directory"
-    exit 1    
+    exit 1
   fi
 
 
@@ -54,7 +54,7 @@ if [ ! -f $CLANG_TIDY ]; then
 fi
 
 SRC_DIR=$1
-if [ -d "$SRC_DIR" ]; then 
+if [ -d "$SRC_DIR" ]; then
     if [ -L "$SRC_DIR" ]; then
 	# It is a symlink
 	echo "Error: cannot pass a symboloc link as source path"

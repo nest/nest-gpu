@@ -67,12 +67,9 @@ __constant__ float exp_dec = -0.25;
 __constant__ float err_min = 1.889568e-4; //(5/coeff)^(1/exp_inc)
 __constant__ float scal_min = 1.0e-1;
 
-__global__ void
-SetFloatArray( float* arr, int n_elem, int step, float val )
-{
+__global__ void SetFloatArray(float *arr, int n_elem, int step, float val) {
   int array_idx = threadIdx.x + blockIdx.x * blockDim.x;
-  if ( array_idx < n_elem )
-  {
-    arr[ array_idx * step ] = val;
+  if (array_idx < n_elem) {
+    arr[array_idx * step] = val;
   }
 }

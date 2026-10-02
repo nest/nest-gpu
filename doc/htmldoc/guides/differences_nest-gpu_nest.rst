@@ -4,7 +4,7 @@ Differences in usage between NEST GPU and NEST
 Aeif neuron models
 ------------------
 
-Aeif neuron models in NEST GPU have both a non-multisynapse and 
+Aeif neuron models in NEST GPU have both a non-multisynapse and
 a multisynapse implementation.
 For the multisynapse implementation, the number
 of receptor ports must be specified at neuron creation:
@@ -20,7 +20,7 @@ not from 1 as in NEST multisynapse models).
 
 The non-multisynapse implementation of aeif neuron models has two receptor
 ports (i.e. excitatory and inhibitory), and thus the connections require to
-specify the receptor port through the synapse property ``receptor`` (0 
+specify the receptor port through the synapse property ``receptor`` (0
 for the excitatory port and 1 for the inhibitory port). Differently from
 NEST, the connection weights related to the inhibitory port must be positive.
 
@@ -39,7 +39,7 @@ following example:
 
    import nestgpu as ngpu
 
-   neuron = ngpu.Create("aeif_cond_beta", 3) # create a population of 3 neurons 
+   neuron = ngpu.Create("aeif_cond_beta", 3) # create a population of 3 neurons
 
    ngpu.SetStatus(neuron, {"I_e":1000.0}) # set a constant input current
 

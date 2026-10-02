@@ -36,9 +36,11 @@ from stimulus_params import stim_dict
 from network_params import net_dict
 from sim_params import sim_dict
 import network
-#import nestgpu as ngpu
+
+# import nestgpu as ngpu
 import numpy as np
 import time
+
 time_start = time.time()
 
 ###############################################################################
@@ -60,10 +62,10 @@ time_create = time.time()
 net.connect()
 time_connect = time.time()
 
-net.simulate(sim_dict['t_presim'])
+net.simulate(sim_dict["t_presim"])
 time_presimulate = time.time()
 
-net.simulate(sim_dict['t_sim'])
+net.simulate(sim_dict["t_sim"])
 time_simulate = time.time()
 
 ###############################################################################
@@ -74,10 +76,12 @@ time_simulate = time.time()
 # The computation of spike rates discards the presimulation time to exclude
 # initialization artifacts.
 
-raster_plot_interval = np.array([stim_dict['th_start'] - 100.0,
-                                 stim_dict['th_start'] + 100.0])
-firing_rates_interval = np.array([sim_dict['t_presim'],
-                                  sim_dict['t_presim'] + sim_dict['t_sim']])
+raster_plot_interval = np.array(
+    [stim_dict["th_start"] - 100.0, stim_dict["th_start"] + 100.0]
+)
+firing_rates_interval = np.array(
+    [sim_dict["t_presim"], sim_dict["t_presim"] + sim_dict["t_sim"]]
+)
 net.evaluate(raster_plot_interval, firing_rates_interval)
 time_evaluate = time.time()
 
@@ -86,25 +90,12 @@ time_evaluate = time.time()
 # data evaluation and print calls.
 
 print(
-    '\nTimes:\n' + # of Rank {}:\n'.format( .Rank()) +
-    '  Total time:          {:.3f} s\n'.format(
-        time_evaluate -
-        time_start) +
-    '  Time to initialize:  {:.3f} s\n'.format(
-        time_network -
-        time_start) +
-    '  Time to create:      {:.3f} s\n'.format(
-        time_create -
-        time_network) +
-    '  Time to connect:     {:.3f} s\n'.format(
-        time_connect -
-        time_create) +
-    '  Time to presimulate: {:.3f} s\n'.format(
-        time_presimulate -
-        time_connect) +
-    '  Time to simulate:    {:.3f} s\n'.format(
-        time_simulate -
-        time_presimulate) +
-    '  Time to evaluate:    {:.3f} s\n'.format(
-        time_evaluate -
-        time_simulate))
+    "\nTimes:\n"  # of Rank {}:\n'.format( .Rank()) +
+    + "  Total time:          {:.3f} s\n".format(time_evaluate - time_start)
+    + "  Time to initialize:  {:.3f} s\n".format(time_network - time_start)
+    + "  Time to create:      {:.3f} s\n".format(time_create - time_network)
+    + "  Time to connect:     {:.3f} s\n".format(time_connect - time_create)
+    + "  Time to presimulate: {:.3f} s\n".format(time_presimulate - time_connect)
+    + "  Time to simulate:    {:.3f} s\n".format(time_simulate - time_presimulate)
+    + "  Time to evaluate:    {:.3f} s\n".format(time_evaluate - time_simulate)
+)

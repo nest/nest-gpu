@@ -75,24 +75,23 @@ The following parameters can be set in the status dictionary.
 
 EndUserDocs */
 
-class poiss_gen : public BaseNeuron
-{
+class poiss_gen : public BaseNeuron {
   // Connection *conn_;
-  curandState* d_curand_state_;
-  void* d_poiss_key_array_;
+  curandState *d_curand_state_;
+  void *d_poiss_key_array_;
   int64_t i_conn0_;
   int64_t n_dir_conn_;
-  float* d_mu_arr_;
+  float *d_mu_arr_;
   int max_delay_;
 
 public:
-  int Init( int i_node_0, int n_node, int n_port, int i_group );
+  int Init(int i_node_0, int n_node, int n_port, int i_group);
 
-  int Calibrate( double, float );
+  int Calibrate(double, float);
 
-  int Update( long long it, double t1 );
+  int Update(long long it, double t1);
 
-  int SendDirectSpikes( long long time_idx );
+  int SendDirectSpikes(long long time_idx);
 
   int buildDirectConnections();
 };

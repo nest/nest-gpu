@@ -25,19 +25,18 @@
 
 #define MAX_N_NODE_GROUPS 512
 
-struct NodeGroupStruct
-{
+struct NodeGroupStruct {
   int node_type_;
   int i_node_0_;
   int n_node_;
   int n_port_;
   int n_param_;
-  double* get_spike_array_;
-  int* spike_count_;
-  float* rec_spike_times_;
-  int* n_rec_spike_times_;
+  double *get_spike_array_;
+  int *spike_count_;
+  float *rec_spike_times_;
+  int *n_rec_spike_times_;
   int max_n_rec_spike_times_;
-  float* den_delay_arr_;
+  float *den_delay_arr_;
 };
 
 #endif

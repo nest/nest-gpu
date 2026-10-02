@@ -29,23 +29,19 @@
 
 using namespace test_syn_model_ns;
 
-__device__ void
-TestSynModelUpdate( float* w, float Dt, float* param )
-{
-  float fact = param[ 0 ];
-  float offset = param[ 1 ];
+__device__ void TestSynModelUpdate(float *w, float Dt, float *param) {
+  float fact = param[0];
+  float offset = param[1];
   *w += offset + fact * Dt;
 }
 
-int
-TestSynModel::_Init()
-{
+int TestSynModel::_Init() {
   type_ = i_test_syn_model;
   n_param_ = N_PARAM;
   param_name_ = test_syn_model_param_name;
-  CUDAMALLOCCTRL( "&d_param_arr_", &d_param_arr_, n_param_ * sizeof( float ) );
-  SetParam( "fact", 0.1 );
-  SetParam( "offset", 0.0 );
+  CUDAMALLOCCTRL("&d_param_arr_", &d_param_arr_, n_param_ * sizeof(float));
+  SetParam("fact", 0.1);
+  SetParam("offset", 0.0);
 
   return 0;
 }

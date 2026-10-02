@@ -23,8 +23,7 @@
 #ifndef PREFIXSCAN_H
 #define PREFIXSCAN_H
 
-class PrefixScan
-{
+class PrefixScan {
 public:
   static const unsigned int AllocSize;
 
@@ -42,7 +41,7 @@ public:
 
   int Init();
 
-  int Scan( int* d_Output, int* d_Input, int n );
+  int Scan(int *d_Output, int *d_Input, int n);
 
   int Free();
 };

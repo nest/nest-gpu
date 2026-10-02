@@ -11,7 +11,7 @@ for syn in cond_alpha cond_beta psc_alpha psc_exp psc_delta; do
 	cat $fn | sed "s/aeif_${syn}/$um/g; s/AEIF${SYN}/$UM/g" > \
 		  $fn1
     done
-	      
+
     umf=user_m2_$syn
     um=user_m2
     UM=USERM2
@@ -35,7 +35,7 @@ for syn in psc_exp psc_exp_g; do
 	cat $fn | sed "s/iaf_${syn}/$um/g; s/IAF${SYN}/$UM/g" > \
 		  $fn1
     done
-	      
+
     umf=user_m2_iaf_$syn
     um=user_m2
     UM=USERM2
@@ -44,7 +44,7 @@ for syn in psc_exp psc_exp_g; do
 	echo "$fn $fn1"
 	cat $fn | sed "s/iaf_${syn}/$um/g; s/IAF${SYN}/$UM/g" > \
 		  $fn1
-    done    
+    done
 done
 
 /bin/cp user_m1_cond_beta.cu user_m1.cu
@@ -56,4 +56,3 @@ done
 /bin/cp user_m2_cond_beta.h user_m2.h
 /bin/cp user_m2_cond_beta_kernel.h user_m2_kernel.h
 /bin/cp user_m2_cond_beta_rk5.h user_m2_rk5.h
-

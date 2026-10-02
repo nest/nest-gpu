@@ -15,14 +15,11 @@ spike_mul2 = [0.1, 0.3, 0.2]
 
 
 # set spike times and multiplicities
-ngpu.SetStatus(spike0, {"spike_times": spike_time0,
-                        "spike_gen_mul":spike_mul0})
+ngpu.SetStatus(spike0, {"spike_times": spike_time0, "spike_gen_mul": spike_mul0})
 
-ngpu.SetStatus(spike1, {"spike_times": spike_time1,
-                        "spike_gen_mul":spike_mul1})
+ngpu.SetStatus(spike1, {"spike_times": spike_time1, "spike_gen_mul": spike_mul1})
 
-ngpu.SetStatus(spike2, {"spike_times": spike_time2,
-                        "spike_gen_mul":spike_mul2})
+ngpu.SetStatus(spike2, {"spike_times": spike_time2, "spike_gen_mul": spike_mul2})
 
 print(ngpu.GetStatus(spike0, "spike_times"))
 print(ngpu.GetStatus(spike0, "spike_gen_mul"))
@@ -44,7 +41,3 @@ print(ngpu.GetStatus(spike1))
 print()
 print()
 print(ngpu.GetStatus(neuron_list))
-
-
-      
-      

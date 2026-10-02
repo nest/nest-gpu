@@ -26,4 +26,3 @@ To check memory consumption you need to open a report with Nsight-Systems, for a
   * execute with: ```bash run.sh [NP]```
 * bash script to run the parameter space exploration benchmark.sh it will run a grid scan using 2 to 6 MPI processes, 1 to 10K neurons (by multiples of 10), 1 to 10K synapses per neuron (by multiples of 10), with no connections, fixed indegree rule, fixed outdegree rule, fixed total number rule, and all to all connections.
   * execute with: ```bash benchmark.sh```
- 
