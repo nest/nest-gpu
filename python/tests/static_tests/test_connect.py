@@ -91,5 +91,3 @@ print("########################################")
 print("3,4,5,6 to odd")
 for i in range(len(conn_status_dict)):
     print(conn_status_dict[i])
-print()
-print()
