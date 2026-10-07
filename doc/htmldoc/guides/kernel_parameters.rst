@@ -124,7 +124,6 @@ These parameters regulate fine-grained memory allocation, buffer capacities, har
      - Frees image node map structures to reclaim device/host memory post-setup. Default: False.
 
 
-
 .. _spike_buffer_algorithms:
 
 Spike buffer algorithms
