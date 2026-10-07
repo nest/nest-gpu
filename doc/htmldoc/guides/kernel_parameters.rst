@@ -39,16 +39,16 @@ These parameters are commonly accessed and modified by standard users to control
      - Simulation time step (resolution) :math:`h` in milliseconds. Default: 0.1.
    * - ``rnd_seed``
      - int
-     - Base random number generator (RNG) seed for stochastic processes and network initialization as mentioned in :ref:`random_number_seed`.
+     - Base random number generator (RNG) seed for stochastic processes and network initialization as mentioned in :ref:`random_number_seed`. Default: 123456789.
    * - ``min_allowed_delay``
      - float
-     - Minimum allowed synaptic delay in the network (typically bounded by the simulation resolution).
+     - Minimum allowed synaptic delay in the network (typically bounded by the simulation resolution). Default: 0.1.
    * - ``verbosity_level``
      - int
-     - Controls the amount of logging information and runtime messages printed to standard output.
+     - Controls the amount of logging information and runtime messages printed to standard output. Default: 1.
    * - ``print_time``
      - bool
-     - Enables or disables periodic printing of the simulation progress (current simulation time) to stdout.
+     - Enables or disables periodic printing of the simulation progress (current simulation time) to stdout. Default: False.
 
 
 .. _kernel-advanced-parameters:
@@ -67,61 +67,61 @@ These parameters regulate fine-grained memory allocation, buffer capacities, har
      - Description
    * - ``max_spike_num_fact``
      - float
-     - Scaling factor used to allocate memory buffers for spikes on the GPU dynamically.
+     - Scaling factor used to allocate memory buffers for spikes on the GPU dynamically. Default: 1.0.
    * - ``max_spike_per_host_fact``
      - float
-     - Safety factor for estimating the maximum number of spikes handled per host/node.
+     - Safety factor for estimating the maximum number of spikes handled per host/node. Default: 1.0.
    * - ``max_remote_spike_num_fact``
      - float
-     - Scaling factor for remote spike communication buffers across MPI ranks.
+     - Scaling factor for remote spike communication buffers across MPI ranks. Default: 1.0.
    * - ``use_all_source_node_fact``
      - float
-     - Factor regulating memory allocation strategies when handling all-to-all or dense source-node mappings.
+     - Factor regulating memory allocation strategies when handling all-to-all or dense source-node mappings. Default: 2.0.
    * - ``max_spike_buffer_size``
      - int
-     - Maximum capacity of the spike buffers allocated during simulation.
+     - Maximum capacity of the spike buffers allocated during simulation. Default: 20.
    * - ``max_node_n_bits``
      - int
-     - Bit-width allocated for encoding node identifiers (IDs) in data structures.
+     - Bit-width allocated for encoding node identifiers (IDs) in data structures. Default: 2o.
    * - ``max_syn_n_bits``
      - int
-     - Bit-width allocated for synapse identification and indexing.
+     - Bit-width allocated for synapse identification and indexing. Defulat: 6.
    * - ``max_delay_n_bits``
      - int
-     - Bit-width allocated for representing discrete synaptic delays.
+     - Bit-width allocated for representing discrete synaptic delays. Default: 12.
    * - ``conn_struct_type``
      - int
-     - Selects the structural representation format for network connectivity.
+     - Selects the structural representation format for network connectivity. Default: 0.
    * - ``spike_buffer_algo``
      - int
-     - Selects the underlying algorithm used for managing and sorting spike buffers as listed in :ref:`spike_buffer_algorithms`.
+     - Selects the underlying algorithm used for managing and sorting spike buffers as listed in :ref:`spike_buffer_algorithms`. Default: 1.
    * - ``remove_conn_key``
      - bool
-     - If enabled, removes connection keys to optimize memory footprint after initialization.
+     - If enabled, removes connection keys to optimize memory footprint after initialization. Default: False.
    * - ``remote_spike_mul``
      - bool
-     - Multiplier/modifier policy for remote spike exchange optimization across MPI processes.
+     - Multiplier/modifier policy for remote spike exchange optimization across MPI processes. Default: False.
    * - ``check_node_maps``
      - bool
-     - Enables rigorous consistency checks on node mapping structures between host and device.
+     - Enables rigorous consistency checks on node mapping structures between host and device. Default: False.
    * - ``mpi_bitpack``
      - bool
-     - Enables bitpacking techniques for MPI communication to reduce network traffic bandwidth.
+     - Enables bitpacking techniques for MPI communication to reduce network traffic bandwidth. Default: True.
    * - ``max_n_ports_warning``
      - bool
-     - Toggles warning messages when approaching or exceeding the maximum number of structural ports.
+     - Toggles warning messages when approaching or exceeding the maximum number of structural ports. Default: True.
    * - ``first_out_conn_in_device``
      - bool
-     - Optimization flag determining placement of the first outgoing connection structures within device memory.
+     - Optimization flag determining placement of the first outgoing connection structures within device memory. Default: True.
    * - ``have_n_out_conn``
      - bool
-     - Flag indicating whether nodes track the total count of outgoing connections explicitly.
+     - Flag indicating whether nodes track the total count of outgoing connections explicitly. Default: True.
    * - ``delete_remote_node_map``
      - bool
-     - Frees remote node mapping data structures from memory once they are no longer required.
+     - Frees remote node mapping data structures from memory once they are no longer required. Default: False.
    * - ``delete_image_node_map``
      - bool
-     - Frees image node map structures to reclaim device/host memory post-setup.
+     - Frees image node map structures to reclaim device/host memory post-setup. Default: False.
 
 
 
