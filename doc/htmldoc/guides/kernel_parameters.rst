@@ -129,8 +129,8 @@ These parameters regulate fine-grained memory allocation, buffer capacities, har
 Spike buffer algorithms
 -----------------------
 
-When constructing large-scale spiking neural networks, NEST GPU executes 
-intensive iteration patterns over populations and synapses. 
+When constructing large-scale spiking neural networks, NEST GPU executes
+intensive iteration patterns over populations and synapses.
 To optimize performance and maximize hardware utilization across different
 network topologies and densities, NEST GPU implements several **nested loop algorithms**.
 These algorithms dictate how the iteration spaces (loops over source and target neurons)
@@ -173,7 +173,7 @@ The available algorithms, which can be selected via configuration scripts, inclu
      - **Smart2D**
      - An adaptive, heuristic-driven 2D algorithm designed to dynamically select the best spatial mapping strategy for complex 2D network topographies.
 
-The default choice for the ``spike_buffer_algo`` parameter is 0, i.e., the BlockStep algorithm. 
+The default choice for the ``spike_buffer_algo`` parameter is 0, i.e., the BlockStep algorithm.
 This was verified to be the most efficient algorithm in several large-scale simulations :footcite:p:`Golosio2023`.
 
 References
