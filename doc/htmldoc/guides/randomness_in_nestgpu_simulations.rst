@@ -5,8 +5,8 @@ Randomness in NEST GPU simulations
 ==================================
 
 As in NEST, random numbers are used in several occasions for neural network creation, such
-as the randomization of node and connection parameters and when stochastic input or stochastic 
-connection rules are employed in the simulation (see the :ref:`nest:random_numbers`). NEST GPU uses random generators from the 
+as the randomization of node and connection parameters and when stochastic input or stochastic
+connection rules are employed in the simulation (see the :ref:`nest:random_numbers`). NEST GPU uses random generators from the
 `curand <https://docs.nvidia.com/cuda/curand/index.html>`_ library of CUDA to obtain random
 numbers following different distributions.
 
@@ -16,9 +16,9 @@ Random numbers for simulation
 =============================
 
 Similar to the CPU version of NEST, the randomness for a simulation can be set
-throughout a master seed, which is part of the kernel parameters (see 
+throughout a master seed, which is part of the kernel parameters (see
 :doc:`kernel_parameters` for more information in this regard). This is used
-both for the probabilistic connection rules, the creation of parameter 
+both for the probabilistic connection rules, the creation of parameter
 distributions as described below and the stochastic input generation. It can be
 set as follows:
 
@@ -28,8 +28,8 @@ set as follows:
 
 
 .. note::
-   
-   In the CPU version of NEST, the kernel parameter indicating the seed for random 
+
+   In the CPU version of NEST, the kernel parameter indicating the seed for random
    number generation is called ``rng_seed``.
 
 
@@ -73,9 +73,9 @@ Lognormal clipped distribution
 ------------------------------
 
 Draws a lognormal clipped distribution with mean ``mu`` and standard deviation ``sigma``,
-where the mean and standard deviation are of the underlying normal distribution. This is 
+where the mean and standard deviation are of the underlying normal distribution. This is
 the same approach used in Python libraries such as Numpy, and also in the CPU version of
-NEST. The following code shows how to lognormally distribute connection parameters such 
+NEST. The following code shows how to lognormally distribute connection parameters such
 as synaptic weights and delays.
 
 .. code-block:: python
