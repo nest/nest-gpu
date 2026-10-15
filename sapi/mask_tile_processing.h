@@ -109,8 +109,8 @@ void insert_leaf_tiles_within_range(
     const auto p_sub_tiles = pool.sub_tiles_.data();
     const auto rem_splits = splits - 1;
 
-#pragma omp taskloop collapse(2) num_tasks(4) nogroup mergeable final(         \
-        rem_splits < 2) default(none) shared(leaf_pairs, mc_array)             \
+#pragma omp taskloop collapse(2) num_tasks(strict : 4) nogroup mergeable       \
+final(rem_splits < 2) default(none) shared(leaf_pairs, mc_array)               \
     firstprivate(d_st_count, d_sub_tiles, p_st_count, p_sub_tiles,             \
                      image_index, is_shifted, rem_splits)
     for (std::size_t d_st = 0; d_st < d_st_count; ++d_st) {

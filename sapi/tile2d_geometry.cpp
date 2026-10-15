@@ -160,8 +160,9 @@ void split_rectangle(std::vector<Tile<Coord2D>> &sub_tiles,
     split_tree.children_.emplace_back(partition, &split_tree);
   }
 
-#pragma omp taskloop num_tasks(4) mergeable final(rem_splits < 3) default(     \
-        none) shared(sub_tiles, leaf_tiles, split_tree, possible_branches)     \
+#pragma omp taskloop num_tasks(strict : 4)                                     \
+    mergeable final(rem_splits < 3) default(none)                              \
+    shared(sub_tiles, leaf_tiles, split_tree, possible_branches)               \
     firstprivate(rem_splits, generate_total_leaves_vector)
   for (vertidx_t partition = 0; partition < 4; ++partition) {
     const auto st_it = sub_tiles.begin() + partition;
@@ -219,8 +220,9 @@ void split_triangle(std::vector<Tile<Coord2D>> &sub_tiles,
       TILE_SHAPE::TRIANGLE, compute_c_radius(right), std::move(right)));
   split_tree.children_.emplace_back(1, &split_tree);
 
-#pragma omp taskloop num_tasks(2) mergeable final(rem_splits < 5) default(     \
-        none) shared(sub_tiles, leaf_tiles, split_tree, possible_branches)     \
+#pragma omp taskloop num_tasks(strict : 2)                                     \
+    mergeable final(rem_splits < 5) default(none)                              \
+    shared(sub_tiles, leaf_tiles, split_tree, possible_branches)               \
     firstprivate(rem_splits, generate_total_leaves_vector)
   for (vertidx_t partition = 0; partition < 2; ++partition) {
     const auto st_it = sub_tiles.begin() + partition;
@@ -276,8 +278,9 @@ void split_hexagon(std::vector<Tile<Coord2D>> &sub_tiles,
     split_tree.children_.emplace_back(partition, &split_tree);
   }
 
-#pragma omp taskloop num_tasks(3) mergeable final(rem_splits < 4) default(     \
-        none) shared(sub_tiles, leaf_tiles, split_tree, possible_branches)     \
+#pragma omp taskloop num_tasks(strict : 3)                                     \
+    mergeable final(rem_splits < 4) default(none)                              \
+    shared(sub_tiles, leaf_tiles, split_tree, possible_branches)               \
     firstprivate(rem_splits, generate_total_leaves_vector)
   for (split_t partition = 0; partition < 6; ++partition) {
     const auto st_it = sub_tiles.begin() + partition;

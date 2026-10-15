@@ -209,7 +209,7 @@ void consolidate_partitions(
   assert(total_partitions < std::numeric_limits<nodeidx_t>::max());
   consolidated_partitions.resize(total_partitions);
 
-#pragma omp taskloop num_tasks(num_threads) default(none)                      \
+#pragma omp taskloop num_tasks(strict : num_threads) default(none)             \
     shared(procedural_partitions, consolidated_partitions)                     \
     firstprivate(total_partitions)
   for (std::size_t p_index = 0; p_index < total_partitions; ++p_index) {

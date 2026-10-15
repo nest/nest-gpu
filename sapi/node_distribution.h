@@ -116,8 +116,8 @@ void left_merge_buffers(
 ) {
   vp_t step = 1, step2 = 2;
   do {
-#pragma omp taskloop num_tasks(num_buffers) default(none) shared(buffer_vec)   \
-    firstprivate(num_buffers, step, step2)
+#pragma omp taskloop num_tasks(strict : num_buffers) default(none)             \
+    shared(buffer_vec) firstprivate(num_buffers, step, step2)
     for (vp_t curr_idx = 0; curr_idx < num_buffers; curr_idx += step2) {
       const auto next_idx = curr_idx + step;
       if (next_idx < num_buffers)
@@ -209,7 +209,7 @@ uniform_distribute_node_counts(I num_nodes, const tileidx_t num_bins,
   if (0 < full_batches) {
     std::vector<std::vector<I>> buffers(num_threads);
 
-#pragma omp taskloop num_tasks(num_threads) default(none)                      \
+#pragma omp taskloop num_tasks(strict : num_threads) default(none)             \
     shared(rng_manager, buffers)                                               \
     firstprivate(num_threads, num_bins, full_batches, tile_idx_dist)
     for (vp_t curr_idx = 0; curr_idx < num_threads; ++curr_idx) {
@@ -277,7 +277,7 @@ uniform_distribute_node_counts(I num_nodes, const tileidx_t num_bins,
   if (0 < full_batches) {
     std::vector<std::vector<I>> buffers(num_threads);
 
-#pragma omp taskloop num_tasks(num_threads) default(none)                      \
+#pragma omp taskloop num_tasks(strict : num_threads) default(none)             \
     shared(rng_manager, buffers) firstprivate(                                 \
             num_threads, num_bins, full_batches, distributions, dimensions)
     for (vp_t curr_idx = 0; curr_idx < num_threads; ++curr_idx) {

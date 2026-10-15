@@ -215,7 +215,7 @@ void compute_displacement_checks_across_tile_pairs(
     const std::size_t total_tasks = task_queue.size();
     rci.procedural_connections_.resize(total_tasks);
 
-#pragma omp taskloop num_tasks(num_threads) default(none)                      \
+#pragma omp taskloop num_tasks(strict : num_threads) default(none)             \
     shared(rci, cg_array, mc_array, rng_manager, task_queue)                   \
     firstprivate(target_rank, total_tasks)
     for (std::size_t task_index = 0; task_index < total_tasks; ++task_index) {
