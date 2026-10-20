@@ -8,6 +8,8 @@ Here you can find details on some topics about NEST GPU:
 
     differences_nest-gpu_nest
     connectivity_concepts
+    randomness_in_nestgpu_simulations
+    kernel_parameters
     implement_new_neuron_models
     how_to_record_spikes
     multigpu_simulations
