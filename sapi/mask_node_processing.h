@@ -24,6 +24,7 @@
 #define MASK_NODE_PROCESSING_H
 
 #include "connection_generator.h"
+#include "random_manager.h"
 
 namespace sapi {
 // Forward definition to link with vp_interface.h
@@ -178,8 +179,8 @@ void generate_connection_tasks(TaskQueue<CoordT> &task_queue,
 template <typename CoordT, bool inverted_source_target>
 void compute_displacement_checks_across_tile_pairs(
     RankConnectionInfo &rci, RankPairInfo<CoordT> &rpi,
-    const TAArray<MaskCollection<CoordT>> &mc_array,
-    const TAArray<ConnectionGenerator> &cg_array,
+    const TAArray<MaskCollection<CoordT>, true> &mc_array,
+    const TAArray<ConnectionGenerator, true> &cg_array,
     const RandomManager &rng_manager, const vp_t target_rank) {
   assert(rci.procedural_connections_.empty() && mc_array.is_initialized() &&
          cg_array.is_initialized() && rng_manager.is_initialized());

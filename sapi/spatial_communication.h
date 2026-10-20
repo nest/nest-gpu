@@ -25,7 +25,6 @@
 
 #include "mask_node_processing.h"
 #include "mask_tile_processing.h"
-#include "random_manager.h"
 #include "timer_manager.h"
 #include "vp_interface.h"
 
@@ -176,7 +175,11 @@ DistributedConnectionInfo compute_distributed_spatial_connections(
             timer_manager, emplace_it->first);
       }
 
-      if (grid_neighborhood.num_processes_ > 1) {
+      const bool empty_dpi =
+          dpi.source_side_info_.empty() && dpi.target_side_info_.empty();
+      assert(empty_dpi <= available_targets.first);
+
+      if (!empty_dpi && grid_neighborhood.num_processes_ > 1) {
         const auto communicate_timer = rank_timer_registry->get_register_timer(
             "dispatch_communicate_node_positions_time");
         communicate_timer->start();
