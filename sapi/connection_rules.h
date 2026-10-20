@@ -53,8 +53,7 @@ inline count_t draw_connections(AnyRNG &rng, DistributionT &dist,
                                std::uniform_real_distribution<conn_param_t>>) {
     return std::isless(dist(rng), probability);
   } else {
-    dist.param(typename DistributionT::param_type(
-        static_cast<typename DistributionT::result_type>(probability)));
+    dist.param(typename DistributionT::param_type(probability));
     if constexpr (allow_multiplicity) {
       return dist(rng);
     } else {
