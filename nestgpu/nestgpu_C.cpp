@@ -20,6 +20,7 @@
  *
  */
 
+#include <array>
 #include <config.h>
 #include <cstdlib>
 #include <cstring>
@@ -30,7 +31,13 @@
 #include "nestgpu_C.h"
 #include "propagate_error.h"
 
+#include "api_converters.h"
+#include "c_api.h"
+
 extern "C" {
+static sapi::CAPI capi;
+static std::unordered_map<std::size_t, sapi::RankNodeSequenceMap>
+    spatial_node_sequence_map;
 static NESTGPU *NESTGPU_instance = nullptr;
 ConnSpec ConnSpec_instance;
 SynSpec SynSpec_instance;
@@ -619,7 +626,11 @@ int NESTGPU_PrintTimers() {
 
 int NESTGPU_ConnectMpiInit(int argc, char **argv) {
   int ret = 0;
-  BEGIN_ERR_PROP { ret = NESTGPU_instance->ConnectMpiInit(argc, argv); }
+  BEGIN_ERR_PROP {
+    ret = NESTGPU_instance->ConnectMpiInit(argc, argv);
+    capi.set_rank(NESTGPU_instance->HostId());
+    capi.set_num_processes(NESTGPU_instance->HostNum());
+  }
   END_ERR_PROP return ret;
 }
 
@@ -1661,5 +1672,449 @@ int NESTGPU_ConnectDistributedFixedIndegreeGroupGroup(
         i_host_group, SynSpec_instance);
   }
   END_ERR_PROP return ret;
+}
+
+sapi::ParameterNamesPairArray *get_parameter_names() {
+  BEGIN_ERR_PROP { return capi.get_parameter_names(); }
+  END_ERR_PROP
+  return nullptr;
+}
+
+bool free_gc() {
+  BEGIN_ERR_PROP {
+    capi.free_gc();
+    return true;
+  }
+  END_ERR_PROP
+  return false;
+}
+
+bool free_view_gc() {
+  BEGIN_ERR_PROP {
+    capi.free_view_gc();
+    return true;
+  }
+  END_ERR_PROP
+  return false;
+}
+
+sapi::OptionalIndex get_rank() {
+  sapi::OptionalIndex opt;
+  BEGIN_ERR_PROP {
+    opt.second_ = static_cast<std::size_t>(capi.get_rank());
+    opt.first_ = true;
+    return opt;
+  }
+  END_ERR_PROP
+  opt.first_ = false;
+  return opt;
+}
+
+sapi::OptionalIndex get_num_processes() {
+  sapi::OptionalIndex opt;
+  BEGIN_ERR_PROP {
+    opt.second_ = static_cast<std::size_t>(capi.get_num_processes());
+    opt.first_ = true;
+    return opt;
+  }
+  END_ERR_PROP
+  opt.first_ = false;
+  return opt;
+}
+
+sapi::OptionalIndex get_num_threads() {
+  sapi::OptionalIndex opt;
+  BEGIN_ERR_PROP {
+    opt.second_ = static_cast<std::size_t>(capi.get_num_threads());
+    opt.first_ = true;
+    return opt;
+  }
+  END_ERR_PROP
+  opt.first_ = false;
+  return opt;
+}
+
+bool set_num_threads(sapi::vp_t num_threads) {
+  BEGIN_ERR_PROP {
+    capi.set_num_threads(num_threads);
+    return true;
+  }
+  END_ERR_PROP
+  return false;
+}
+
+sapi::OptionalIndex get_rng_seed() {
+  sapi::OptionalIndex opt;
+  BEGIN_ERR_PROP {
+    opt.second_ = static_cast<std::size_t>(capi.get_rng_seed());
+    opt.first_ = true;
+    return opt;
+  }
+  END_ERR_PROP
+  opt.first_ = false;
+  return opt;
+}
+
+bool set_rng_seed(sapi::rng_seed_t seed) {
+  BEGIN_ERR_PROP {
+    capi.set_rng_seed(seed);
+    NESTGPU_instance->SetRandomSeed(seed);
+    return true;
+  }
+  END_ERR_PROP
+  return false;
+}
+
+sapi::CharArray *get_rng_type() {
+  BEGIN_ERR_PROP { return capi.get_rng_type(); }
+  END_ERR_PROP
+  return nullptr;
+}
+
+bool set_rng_type(const sapi::CharArray &rng_type) {
+  BEGIN_ERR_PROP {
+    capi.set_rng_type(rng_type);
+    return true;
+  }
+  END_ERR_PROP
+  return false;
+}
+
+bool generate_tile_grid(const sapi::NestedTileIdxArray &rank_tiles_ownership,
+                        const sapi::GPStruct &grid_parameters) {
+  BEGIN_ERR_PROP {
+    capi.generate_tile_grid(rank_tiles_ownership, grid_parameters);
+    return true;
+  }
+  END_ERR_PROP
+  return false;
+}
+
+sapi::RankNodeSequenceMap
+update_node_counts_per_rank(const sapi::NodeCountVector &nodes_per_rank,
+                            const sapi::CharArray &model_name,
+                            const int num_ports) {
+  sapi::RankNodeSequenceMap rns_map;
+  const auto model = sapi::charray_to_string(model_name);
+  if (1 < capi.get_num_processes()) {
+    sapi::vp_t rank = 0;
+    for (const auto &node_count : nodes_per_rank) {
+      if (0 < node_count) {
+        const auto remote_nodeseq = NESTGPU_instance->RemoteCreate(
+            static_cast<int>(rank), model, static_cast<inode_t>(node_count),
+            num_ports);
+
+        const auto emplace_res = rns_map.emplace(
+            rank, sapi::NodeSequence(remote_nodeseq.node_seq.i0,
+                                     remote_nodeseq.node_seq.n));
+
+        if (!emplace_res.second)
+          throw std::runtime_error("Corrupted rank node sequence map");
+      }
+      ++rank;
+    }
+  } else {
+    const auto local_rank = capi.get_rank();
+    const auto nodeseq = NESTGPU_instance->Create(
+        model, static_cast<inode_t>(nodes_per_rank[local_rank]), num_ports);
+
+    const auto emplace_res =
+        rns_map.emplace(local_rank, sapi::NodeSequence(nodeseq.i0, nodeseq.n));
+
+    if (!emplace_res.second)
+      throw std::runtime_error("Corrupted rank node sequence map");
+  }
+
+  return rns_map;
+}
+
+sapi::PairT<bool, sapi::SpatialNodeSequence> generate_nodes_in_grid(
+    const sapi::CharArray &model_name, sapi::largenodeidx_t num_nodes,
+    const sapi::TileIdxArray &target_tiles, int num_ports,
+    uint8_t grid_distribution_mode, uint8_t tile_distribution_mode) {
+  sapi::PairT<bool, sapi::SpatialNodeSequence> pair;
+  BEGIN_ERR_PROP {
+    const auto nodes_per_rank = capi.generate_nodes_in_grid(
+        num_nodes, target_tiles, grid_distribution_mode);
+
+    auto rank_map =
+        update_node_counts_per_rank(nodes_per_rank, model_name, num_ports);
+
+    if (const auto search = rank_map.find(capi.get_rank());
+        search != rank_map.end()) {
+      pair.second_.second_ = search->second.first;
+      pair.second_.third_ = search->second.second;
+    } else {
+      pair.second_.second_ = -1;
+      pair.second_.third_ = -1;
+    }
+
+    pair.second_.first_ =
+        capi.generate_nodes_in_tiles(rank_map, tile_distribution_mode);
+
+    const auto emplace_res = spatial_node_sequence_map.emplace(
+        pair.second_.first_, std::move(rank_map));
+    if (!emplace_res.second)
+      throw std::runtime_error("Corrupted spatial node sequence map");
+
+    pair.first_ = true;
+    return pair;
+  }
+  END_ERR_PROP
+  pair.first_ = false;
+  return pair;
+}
+
+sapi::TripletT<bool, sapi::SpatialNodeSequence, sapi::PositionViewStruct *>
+insert_positions_in_grid(const sapi::CharArray &model_name,
+                         const sapi::PositionViewStruct &positions,
+                         int num_ports) {
+  sapi::TripletT<bool, sapi::SpatialNodeSequence, sapi::PositionViewStruct *>
+      triplet;
+  BEGIN_ERR_PROP {
+    const auto [nodes_per_rank, leftovers] =
+        capi.insert_positions_in_grid(positions);
+
+    if (leftovers->coord_count_ == positions.coord_count_)
+      throw std::runtime_error("Failed to insert any provided node position");
+
+    auto rank_map =
+        update_node_counts_per_rank(nodes_per_rank, model_name, num_ports);
+
+    if (const auto search = rank_map.find(capi.get_rank());
+        search != rank_map.end()) {
+      triplet.second_.second_ = search->second.first;
+      triplet.second_.third_ = search->second.second;
+    } else {
+      triplet.second_.second_ = -1;
+      triplet.second_.third_ = -1;
+    }
+
+    triplet.second_.first_ = capi.insert_positions_in_tiles(rank_map);
+
+    const auto emplace_res = spatial_node_sequence_map.emplace(
+        triplet.second_.first_, std::move(rank_map));
+    if (!emplace_res.second)
+      throw std::runtime_error("Corrupted spatial node sequence map");
+
+    triplet.first_ = true;
+    triplet.third_ = leftovers;
+    return triplet;
+  }
+  END_ERR_PROP
+  triplet.first_ = false;
+  triplet.third_ = nullptr;
+  return triplet;
+}
+
+void create_spatial_connections(const int source_rank, const int target_rank,
+                                sapi::ConnectionVectors &conn_vec,
+                                const bool remote, const bool remote_source) {
+  if (conn_vec.sizes_ < 1)
+    return;
+
+  ConnSpec_instance.rule_ = ConnectionRules::ASSIGNED_CONNECTIONS;
+  ConnSpec_instance.use_all_remote_source_nodes_ = false;
+  ConnSpec_instance.assigned_connections_ = conn_vec.sizes_;
+
+  if (remote) {
+    for (auto &source : conn_vec.connection_sources_)
+      source -= conn_vec.bounds_.first_source_index_;
+
+    NESTGPU_instance->manual_assign_connections(
+        conn_vec.connection_sources_.data(),
+        conn_vec.connection_targets_.data(),
+        conn_vec.connection_weights_.data(), conn_vec.connection_delays_.data(),
+        conn_vec.sizes_, remote_source, SynSpec_instance);
+
+    for (auto &source : conn_vec.connection_sources_)
+      source += conn_vec.bounds_.first_source_index_;
+
+    NESTGPU_instance->RemoteConnect(
+        source_rank, conn_vec.bounds_.first_source_index_,
+        conn_vec.bounds_.last_source_index_ -
+            conn_vec.bounds_.first_source_index_ + 1,
+        target_rank, conn_vec.bounds_.first_target_index_,
+        conn_vec.bounds_.last_target_index_ -
+            conn_vec.bounds_.last_target_index_ + 1,
+        -1, ConnSpec_instance, SynSpec_instance);
+  } else {
+    NESTGPU_instance->manual_assign_connections(
+        conn_vec.connection_sources_.data(),
+        conn_vec.connection_targets_.data(),
+        conn_vec.connection_weights_.data(), conn_vec.connection_delays_.data(),
+        conn_vec.sizes_, false, SynSpec_instance);
+
+    NESTGPU_instance->Connect(conn_vec.bounds_.first_source_index_,
+                              conn_vec.bounds_.last_source_index_ -
+                                  conn_vec.bounds_.first_source_index_ + 1,
+                              conn_vec.bounds_.first_target_index_,
+                              conn_vec.bounds_.last_target_index_ -
+                                  conn_vec.bounds_.last_target_index_ + 1,
+                              ConnSpec_instance, SynSpec_instance);
+  }
+}
+
+sapi::OptionalIndex
+compute_spatial_connections(std::size_t source_index, std::size_t target_index,
+                            const sapi::MPStruct &mask_parameters,
+                            const sapi::CPStruct &connection_parameters) {
+  sapi::OptionalIndex opt;
+  BEGIN_ERR_PROP {
+    const auto [conn_index, conn_map_ptr] = capi.compute_spatial_connections(
+        source_index, target_index, mask_parameters, connection_parameters);
+
+    try {
+      if (NESTGPU_instance->GetBoolParam("check_node_maps")) {
+        const std::array<std::unordered_map<
+                             std::size_t, sapi::RankNodeSequenceMap>::iterator,
+                         2>
+            dtns_it_array = {spatial_node_sequence_map.find(source_index),
+                             spatial_node_sequence_map.find(target_index)};
+        if (std::any_of(dtns_it_array.cbegin(), dtns_it_array.cend(),
+                        [&](const auto &it) {
+                          return it == spatial_node_sequence_map.end();
+                        }))
+          throw std::runtime_error("Corrupted spatial node sequence map");
+
+        uint8_t idx = 0;
+        const auto host_str = "KERNEL RANK " + std::to_string(capi.get_rank());
+        const auto check_str =
+            host_str + std::string(": checking spatial node sequence maps on ");
+        for (const auto dtns_it : dtns_it_array) {
+          const auto check_incoming = idx == 0;
+          if (const auto local_ns = dtns_it->second.find(capi.get_rank());
+              local_ns != dtns_it->second.end()) {
+            std::cout << check_str +
+                             std::string(check_incoming
+                                             ? "incoming connections\n"
+                                             : "outgoing connections\n");
+            const auto first_local = local_ns->second.first;
+            const auto one_after_last_local =
+                first_local + local_ns->second.second;
+            for (const auto &[rank, conn_map] :
+                 check_incoming ? conn_map_ptr->incoming_connections_
+                                : conn_map_ptr->outgoing_connections_) {
+              const auto rank_ns =
+                  &dtns_it_array[(idx + 1) % 2]->second.at(rank);
+              const auto first_remote = rank_ns->first;
+              const auto one_after_last_remote = first_remote + rank_ns->second;
+              for (const auto &conn_vec : conn_map.partitioned_connections_) {
+                for (std::size_t idx = 0; idx < conn_vec.sizes_; ++idx) {
+                  const auto source = static_cast<sapi::nodeidx_t>(
+                      conn_vec.connection_sources_[idx]);
+                  const auto target = static_cast<sapi::nodeidx_t>(
+                      conn_vec.connection_targets_[idx]);
+
+                  if (check_incoming) {
+                    if (target < first_local || one_after_last_local <= target)
+                      throw std::runtime_error(
+                          "Corrupted incoming connection map local side");
+                    if (source < first_remote ||
+                        one_after_last_remote <= source)
+                      throw std::runtime_error(
+                          "Corrupted incoming connection map remote side");
+                  } else {
+                    if (source < first_local || one_after_last_local <= source)
+                      throw std::runtime_error("Corrupted inverted outgoing "
+                                               "connection map local side");
+                    if (target < first_remote ||
+                        one_after_last_remote <= target)
+                      throw std::runtime_error("Corrupted inverted outgoing "
+                                               "connection map remote side");
+                  }
+                }
+              }
+            }
+          }
+          ++idx;
+        }
+
+        std::cout << host_str + " finished check successfully\n";
+      }
+
+      const auto local_rank = static_cast<int>(capi.get_rank());
+
+      if (!conn_map_ptr->incoming_connections_.empty()) {
+        for (auto &[remote_rank, rank_connection_info] :
+             conn_map_ptr->incoming_connections_) {
+          const auto is_remote = remote_rank != local_rank;
+          for (auto &conn_vec : rank_connection_info.partitioned_connections_)
+            create_spatial_connections(static_cast<int>(remote_rank),
+                                       local_rank, conn_vec, is_remote, false);
+        }
+      }
+
+      if (!conn_map_ptr->outgoing_connections_.empty()) {
+        for (auto &[remote_rank, rank_connection_info] :
+             conn_map_ptr->outgoing_connections_) {
+          const auto is_remote = remote_rank != local_rank;
+          for (auto &conn_vec : rank_connection_info.partitioned_connections_)
+            create_spatial_connections(local_rank,
+                                       static_cast<int>(remote_rank), conn_vec,
+                                       is_remote, is_remote);
+        }
+      }
+    } catch (const std::exception &e) {
+      std::cerr << e.what() << "\n";
+      capi.clear_spatial_connections(conn_index);
+      throw e;
+    }
+
+    opt.second_ = conn_index;
+    opt.first_ = true;
+    return opt;
+  }
+  END_ERR_PROP
+  opt.first_ = false;
+  return opt;
+}
+
+sapi::NodesViewStruct *
+view_node_positions(sapi::OptionalIndex index,
+                    const sapi::MPStruct &mask_parameters) {
+  BEGIN_ERR_PROP { return capi.view_node_positions(index, mask_parameters); }
+  END_ERR_PROP
+  return nullptr;
+}
+
+sapi::RemoteConnectionViewPair *view_spatial_connections(std::size_t index) {
+  BEGIN_ERR_PROP { return capi.view_spatial_connections(index); }
+  END_ERR_PROP
+  return nullptr;
+}
+
+sapi::ConnectionCountsViewStruct *view_connection_counts(std::size_t index) {
+  BEGIN_ERR_PROP { return capi.view_connection_counts(index); }
+  END_ERR_PROP
+  return nullptr;
+}
+
+sapi::GridViewStruct *view_grid_vertices() {
+  BEGIN_ERR_PROP { return capi.view_grid_vertices(); }
+  END_ERR_PROP
+  return nullptr;
+}
+
+sapi::TiledNodeSequencePairArray *
+get_distributed_node_sequences(std::size_t index) {
+  BEGIN_ERR_PROP { return capi.get_distributed_node_sequences(index); }
+  END_ERR_PROP
+  return nullptr;
+}
+
+sapi::RecordedTimesArrayPair *get_timer_data() {
+  BEGIN_ERR_PROP { return capi.get_timer_data(); }
+  END_ERR_PROP
+  return nullptr;
+}
+
+bool clear_spatial_connections(std::size_t index) {
+  BEGIN_ERR_PROP {
+    capi.clear_spatial_connections(index);
+    return true;
+  }
+  END_ERR_PROP
+  return false;
 }
 }

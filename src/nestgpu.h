@@ -878,6 +878,12 @@ public:
                                       inode_t **target_arr,
                                       inode_t *n_target_arr, int indegree,
                                       int i_host_group, SynSpec &syn_spec);
+
+  // Assignment operation for full connection data passed as arrays
+  // currently meant to be used only for spatial connectivity generation
+  int manual_assign_connections(inode_t *sources, inode_t *targets,
+                                float *weights, float *delays, uint64_t count,
+                                bool remote_source_flag, SynSpec &syn_spec);
 };
 
 #endif

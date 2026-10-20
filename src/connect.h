@@ -462,6 +462,11 @@ public:
       inode_t **h_target_arr, inode_t *n_target_arr, int indegree,
       int i_host_group, SynSpec &syn_spec) = 0;
 
+  virtual int manual_assign_connections(inode_t *sources, inode_t *targets,
+                                        float *weights, float *delays,
+                                        uint64_t count, bool remote_source_flag,
+                                        SynSpec &syn_spec) = 0;
+
   int InitTimers() {
     InsertHostGroupSourceNode_time_ = 0;
     ConnectRemoteConnectSource_time_ = 0;
@@ -1257,6 +1262,10 @@ public:
                                        int indegree, int i_host_group,
                                        SynSpec &syn_spec);
 
+  int manual_assign_connections(inode_t *sources, inode_t *targets,
+                                float *weights, float *delays, uint64_t count,
+                                bool remote_source_flag, SynSpec &syn_spec);
+
   int addOffsetToExternalNodeIds(uint n_local_nodes);
 
   // REMOTE CONNECT FUNCTION for target_host matching this_host
@@ -1611,6 +1620,42 @@ __global__ void setPortSynGroup(ConnKeyT *conn_key_subarray,
                                      conn_struct_subarray[i_conn], port);
   setConnSyn<ConnKeyT, ConnStructT>(conn_key_subarray[i_conn],
                                     conn_struct_subarray[i_conn], syn_group);
+}
+
+template <class ConnKeyT, class ConnStructT>
+__global__ void
+set_connection_data(ConnKeyT *conn_key_subarray,
+                    ConnStructT *conn_struct_subarray, int64_t n_block_conn,
+                    int64_t n_prev_conn, inode_t *sources, inode_t *targets,
+                    float *weights, float *delays, int port, int syn_group,
+                    float time_resolution, int min_allowed_delay,
+                    int max_allowed_delay, int *delayError) {
+  int64_t i_block_conn = threadIdx.x + blockIdx.x * blockDim.x;
+  if (i_block_conn >= n_block_conn) {
+    return;
+  }
+
+  int64_t cidx = n_prev_conn + i_block_conn;
+  setConnSource<ConnKeyT>(conn_key_subarray[i_block_conn], sources[cidx]);
+  setConnTarget<ConnStructT>(conn_struct_subarray[i_block_conn], targets[cidx]);
+
+  int delay = (int)round(delays[cidx] / time_resolution);
+  if (delay < min_allowed_delay) {
+    delayError[0] = 1;
+    return;
+  }
+  if (delay > max_allowed_delay) {
+    delayError[1] = 1;
+    return;
+  }
+  setConnDelay<ConnKeyT>(conn_key_subarray[i_block_conn], delay);
+
+  conn_struct_subarray[i_block_conn].weight = weights[cidx];
+  setConnPort<ConnKeyT, ConnStructT>(conn_key_subarray[i_block_conn],
+                                     conn_struct_subarray[i_block_conn], port);
+  setConnSyn<ConnKeyT, ConnStructT>(conn_key_subarray[i_block_conn],
+                                    conn_struct_subarray[i_block_conn],
+                                    syn_group);
 }
 
 __global__ void setSourceTargetIndexKernel(uint64_t n_src_tgt, inode_t n_source,
@@ -3098,6 +3143,10 @@ int ConnectionTemplate<ConnKeyT, ConnStructT>::_Connect(
                                         conn_spec.total_num_, syn_spec,
                                         remote_source_flag);
     break;
+  case ASSIGNED_CONNECTIONS:
+    conn_spec.use_all_remote_source_nodes_ = false;
+    n_conn_ += conn_spec.assigned_connections_;
+    break;
   default:
     throw ngpu_exception("Unknown connection rule");
   }
@@ -3605,6 +3654,143 @@ int ConnectionTemplate<ConnKeyT, ConnStructT>::connectFixedOutdegree(
 
     n_prev_conn += n_block_conn;
   }
+
+  return 0;
+}
+
+template <class ConnKeyT, class ConnStructT>
+int ConnectionTemplate<ConnKeyT, ConnStructT>::manual_assign_connections(
+    inode_t *sources, inode_t *targets, float *weights, float *delays,
+    uint64_t count, bool remote_source_flag, SynSpec &syn_spec) {
+  // Necessary check as this call is done outside the _Connect switch
+  int max_n_ports = (int)(IntPow(2, max_port_nbits_));
+  if (syn_spec.port_ >= max_n_ports)
+    throw ngpu_exception(
+        "Port larger than maximum allowed by bits reserved for it" +
+        std::to_string(max_n_ports));
+  if (first_connection_flag_ == true && n_hosts_ > 1)
+    remoteConnectionMapInit();
+
+  first_connection_flag_ = false;
+  if (d_conn_storage_ == nullptr) {
+    CUDAMALLOCCTRL("&d_conn_storage_", &d_conn_storage_,
+                   conn_block_size_ * sizeof(uint));
+  }
+
+  ////////////////////////
+  // TEMPORARY, TO BE IMPROVED
+  if ((syn_spec.syn_group_ & syn_mask_) >= 1) {
+    // printf("Error, syn_spec.syn_group_: %d\n", syn_spec.syn_group_);
+    // printf("max_syn_nbits: %d syn_mask: %x\n", max_syn_nbits_,  syn_mask_);
+    // printf("syn_mask & syn_spec.syn_group: %d\n",
+    //	   syn_mask_ & syn_spec.syn_group_);
+    // exit(-1);
+    spike_time_flag_ = true;
+    rev_conn_flag_ = true;
+  }
+
+  // Necessary to NOT update n_conn_ so that when _Connect switch is called
+  // from RemoteConnectSource|Target the update in n_conn_ can be checked
+  // against
+  int64_t n_conn_copy = n_conn_, old_n_conn = n_conn_;
+  int64_t n_new_conn = count;
+  n_conn_copy += n_new_conn; // new number of connections
+  int new_n_block =
+      (int)((n_conn_copy + conn_block_size_ - 1) / conn_block_size_);
+
+  if (remote_source_flag) {
+    inode_t *d_sources;
+    CUDAMALLOCCTRL("&d_sources", &d_sources, count * sizeof(inode_t));
+    gpuErrchk(cudaMemcpyAsync(d_sources, sources, count * sizeof(inode_t),
+                              cudaMemcpyHostToDevice));
+    reallocConnSourceIds(n_new_conn);
+    setOneToOneSource<inode_t *><<<(n_new_conn + 1023) / 1024, 1024>>>(
+        d_conn_source_ids_, n_new_conn, d_sources);
+    CUDASYNC;
+    CUDAFREECTRL("d_sources", d_sources);
+
+    return 0;
+  }
+
+  // Copy connection data
+  // here it is assumed that all arrays are correctly of size == count
+  inode_t *d_sources;
+  CUDAMALLOCCTRL("&d_sources", &d_sources, count * sizeof(inode_t));
+  gpuErrchk(cudaMemcpyAsync(d_sources, sources, count * sizeof(inode_t),
+                            cudaMemcpyHostToDevice));
+  inode_t *d_targets;
+  CUDAMALLOCCTRL("&d_targets", &d_targets, count * sizeof(inode_t));
+  gpuErrchk(cudaMemcpyAsync(d_targets, targets, count * sizeof(inode_t),
+                            cudaMemcpyHostToDevice));
+  float *d_weights;
+  CUDAMALLOCCTRL("&d_weights", &d_weights, count * sizeof(float));
+  gpuErrchk(cudaMemcpyAsync(d_weights, weights, count * sizeof(float),
+                            cudaMemcpyHostToDevice));
+  float *d_delays;
+  CUDAMALLOCCTRL("&d_delays", &d_delays, count * sizeof(float));
+  gpuErrchk(cudaMemcpyAsync(d_delays, delays, count * sizeof(float),
+                            cudaMemcpyHostToDevice));
+
+  // Prepare delay parameters
+  int max_allowed_delay = (1 << max_delay_nbits_) - 1 + min_allowed_delay_;
+  int *d_delayError;
+  CUDAMALLOCCTRL("&d_delayError", &d_delayError, 2 * sizeof(int));
+  gpuErrchk(cudaMemsetAsync(d_delayError, 0, 2 * sizeof(int)));
+
+  allocateNewBlocks(new_n_block);
+
+  // printf("Generating connections with manual assignment...\n");
+  int64_t n_prev_conn = 0;
+  int ib0 = (int)(old_n_conn / conn_block_size_);
+  for (int ib = ib0; ib < new_n_block; ib++) {
+    int64_t n_block_conn;         // number of connections in a block
+    int64_t i_conn0;              // index of first connection in a block
+    if (new_n_block == ib0 + 1) { // all connections are in the same block
+      i_conn0 = old_n_conn % conn_block_size_;
+      n_block_conn = n_new_conn;
+    } else if (ib == ib0) { // first block
+      i_conn0 = old_n_conn % conn_block_size_;
+      n_block_conn = conn_block_size_ - i_conn0;
+    } else if (ib == new_n_block - 1) { // last block
+      i_conn0 = 0;
+      n_block_conn = (n_conn_copy - 1) % conn_block_size_ + 1;
+    } else {
+      i_conn0 = 0;
+      n_block_conn = conn_block_size_;
+    }
+
+    set_connection_data<ConnKeyT, ConnStructT>
+        <<<(n_block_conn + 1023) / 1024, 1024>>>(
+            static_cast<ConnKeyT *>(conn_key_vect_[ib] + i_conn0),
+            static_cast<ConnStructT *>(conn_struct_vect_[ib] + i_conn0),
+            n_block_conn, n_prev_conn, d_sources, d_targets, d_weights,
+            d_delays, syn_spec.port_, syn_spec.syn_group_, time_resolution_,
+            min_allowed_delay_, max_allowed_delay, d_delayError);
+    DBGCUDASYNC;
+    // CUDASYNC;
+
+    n_prev_conn += n_block_conn;
+  }
+  CUDASYNC;
+
+  CUDAFREECTRL("d_sources", d_sources);
+  CUDAFREECTRL("d_targets", d_targets);
+  CUDAFREECTRL("d_weights", d_weights);
+  CUDAFREECTRL("d_delays", d_delays);
+
+  int h_delayError[2];
+  gpuErrchk(cudaMemcpy(h_delayError, d_delayError, 2 * sizeof(int),
+                       cudaMemcpyDeviceToHost));
+  CUDAFREECTRL("d_delayError", d_delayError);
+  if (h_delayError[0])
+    throw ngpu_exception(
+        "Delay generated by distribution smaller than allowed minimum " +
+        std::to_string(min_allowed_delay_ * time_resolution_) + " ms");
+  if (h_delayError[1])
+    throw ngpu_exception("Delay generated by distribution larger than maximum "
+                         "allowed by bits reserved for it" +
+                         std::to_string(max_allowed_delay * time_resolution_) +
+                         " ms");
 
   return 0;
 }

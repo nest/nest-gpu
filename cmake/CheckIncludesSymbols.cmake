@@ -18,34 +18,8 @@
 # along with NEST GPU.  If not, see <http://www.gnu.org/licenses/>.
 
 # Here we check for all required include headers, types, symbols and functions.
-
-include( CheckIncludeFiles )
-check_include_files( "dlfcn.h" HAVE_DLFCN_H )
-check_include_files( "inttypes.h" HAVE_INTTYPES_H )
-check_include_files( "limits.h" HAVE_LIMITS_H )
-check_include_files( "memory.h" HAVE_MEMORY_H )
-check_include_files( "stdint.h" HAVE_STDINT_H )
-check_include_files( "stdio.h" HAVE_STDIO_H )
-check_include_files( "stdlib.h" HAVE_STDLIB_H )
-check_include_files( "strings.h" HAVE_STRINGS_H )
-check_include_files( "string.h" HAVE_STRING_H )
-check_include_files( "sys/stat.h" HAVE_SYS_STAT_H )
-check_include_files( "sys/types.h" HAVE_SYS_TYPES_H )
-check_include_files( "unistd.h" HAVE_UNISTD_H )
-
-
-find_library( HAVE_LIBM m )
-if ( HAVE_LIBM )
-    link_libraries( m )
-endif ()
-
-include(CheckLibraryExists)
-check_library_exists( m pow "" HAVE_POW )
-
-find_package( CUDAToolkit REQUIRED )
-link_libraries( cuda )
-link_libraries( CUDA::cudart )
-link_libraries( CUDA::curand )
+find_package( CUDAToolkit REQUIRED COMPONENTS CXX )
+find_library( MATH_LIBRARY m REQUIRED COMPONENTS CXX )
 
 
 # Localize the Python interpreter and ABI
@@ -55,12 +29,13 @@ if ( NOT Python_FOUND )
   string( CONCAT PYABI_WARN "Could not locate Python ABI"
     ", using shared libraries and header file instead."
     " Please clear your CMake cache and build folder and verify that CMake"
-    " is up-to-date (3.17+)."
+    " is up-to-date (3.18+)."
   )
   printWarning("${PYABI_WARN}")
 else()
   find_package( Python 3.8 REQUIRED Interpreter Development.Module )
 endif()
+
 
 if ( Python_FOUND )
   if ( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
@@ -96,13 +71,6 @@ function( NEST_POST_PROCESS_WITH_PYTHON )
     set( PYEXECDIR "${CMAKE_INSTALL_LIBDIR}/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages" PARENT_SCOPE )
   endif()
 endfunction()
-
-
-# Enable dynamic library compiling with run-time search PATH
-set( BUILD_SHARED_LIBS ON )
-
-# reverse the search order for lib extensions
-set( CMAKE_FIND_LIBRARY_SUFFIXES ".so;.dylib;.a;.lib" )
 
 
 # given a list, filter all header files
