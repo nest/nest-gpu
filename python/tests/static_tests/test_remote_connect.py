@@ -57,6 +57,4 @@ conn_id = ngpu.GetConnections()
 conn_status_dict = ngpu.GetStatus(conn_id)
 for i in range(len(conn_status_dict)):
     print("CHECK", mpi_id, conn_status_dict[i])
-print()
-print()
 ngpu.MpiFinalize()
