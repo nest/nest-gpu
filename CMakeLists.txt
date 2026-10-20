@@ -70,6 +70,7 @@ set( with-static-libc OFF CACHE STRING "Statically link to libc and libc++ [defa
 
 # generic build configuration
 set( with-version-suffix OFF CACHE STRING "Set a user defined version suffix [default='']." )
+set( with-cpp-tests OFF CACHE STRING "Compile C++ tests [default=ON]." )
 
 ################################################################################
 ##################      Project Directory variables           ##################
@@ -138,6 +139,7 @@ add_subdirectory( src )
 add_subdirectory( nestgpu )
 add_subdirectory( pythonlib )
 add_subdirectory( bin )
+add_subdirectory( testsuite )
 
 ################################################################################
 ##################           Summary of flags                 ##################
