@@ -28,9 +28,6 @@
 #include "numerics.h"
 
 namespace sapi {
-// Forward definition to link with coordinates.h
-struct Coord3D;
-
 // Forward definition to link with coordinate_geometry.h
 template <typename CoordT> std::pair<CoordT, CoordT> minmax_coords();
 template <typename CoordT> void update_min(CoordT &, const CoordT &);
