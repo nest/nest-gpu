@@ -101,7 +101,7 @@ const std::string aeif_psc_alpha_group_param_name[N_GROUP_PARAM] = {"h_min_rel",
 //
 // I know that defines are "bad", but the defines below make the
 // following equations much more readable.
-// For every rule there is some exceptions!
+// For every rule there are some exceptions!
 //
 #define I_syn_ex y[i_I_syn_ex]
 #define I_syn_in y[i_I_syn_in]
