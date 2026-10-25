@@ -109,7 +109,7 @@ const std::string aeif_cond_beta_group_param_name[N_GROUP_PARAM] = {"h_min_rel",
 //
 // I know that defines are "bad", but the defines below make the
 // following equations much more readable.
-// For every rule there is some exceptions!
+// For every rule there are some exceptions!
 //
 #define g_ex y[i_g_ex]
 #define g1_ex y[i_g1_ex]

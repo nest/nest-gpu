@@ -81,7 +81,7 @@ When the neuron fires a spike, the adaptation current `w <- w + b`.
 
   The number of receptor ports must be specified at neuron creation (default
 value is 1) and the receptor index starts from 0 (and not from 1 as in NEST
-multisynapse models). The time constants are supplied by by two arrays,
+multisynapse models). The time constants are supplied by two arrays,
 ``tau_rise`` and ``tau_decay`` for the synaptic rise time and decay time,
 respectively. The synaptic reversal potentials are supplied by the array
 ``E_rev``. Port numbers are automatically assigned in the range 0 to

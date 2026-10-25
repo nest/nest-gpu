@@ -95,7 +95,7 @@ const std::string aeif_cond_alpha_multisynapse_group_param_name[N_GROUP_PARAM] =
 //
 // I know that defines are "bad", but the defines below make the
 // following equations much more readable.
-// For every rule there is some exceptions!
+// For every rule there are some exceptions!
 //
 #define V_m y[i_V_m]
 #define w y[i_w]
