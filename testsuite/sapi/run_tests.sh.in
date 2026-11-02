@@ -1,0 +1,47 @@
+#!/bin/bash
+
+set -euxo pipefail
+
+use_mpi="@USE_MPI@"
+mpi_executable="@MPIEXEC_EXECUTABLE@"
+mpi_np_flag="@MPIEXEC_NUMPROC_FLAG@"
+mpi_pre_exec_flag="@MPIEXEC_PREFLAGS@"
+mpi_post_exec_flag="@MPIEXEC_POSTFLAGS@"
+mpi_max_procs="@MPIEXEC_MAX_NUMPROCS@"
+
+all_tests="@ALL_TESTS@"
+
+if [[ "${use_mpi}" == "false" ]]; then
+    for test in ${all_tests}; do
+        $test
+    done
+else
+    for test in ${all_tests}; do
+        ${mpi_executable} ${mpi_np_flag} 1 ${mpi_pre_exec_flag} ${test} ${mpi_post_exec_flag}
+    done
+
+    mpi_tests="@MPI_TESTS@"
+
+    if [ ! -z "${mpi_max_procs}" ]; then
+        if [ "4" -lt "${mpi_max_procs}" ]; then
+            # Limit the maximum number of processes used to 4
+            mpi_max_procs=4
+        else if [ "${mpi_max_procs}" -lt "2" ]; then
+                # If the maximum is less than two then empty the variable
+                mpi_max_procs=""
+            fi
+        fi
+    else
+            # If no information about the maximum number of processes then default to 4
+            mpi_max_procs=4
+    fi
+
+    # Condition is only false if the maximum number of processes is less than 2
+    if [ ! -z "${mpi_max_procs}" ]; then
+        for test in ${mpi_tests}; do
+            for np in $(seq 2 ${mpi_max_procs}); do
+                ${mpi_executable} ${mpi_np_flag} ${np} ${mpi_pre_exec_flag} ${test} ${mpi_post_exec_flag}
+            done
+        done
+    fi
+fi

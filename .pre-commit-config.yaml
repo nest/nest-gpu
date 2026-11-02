@@ -1,4 +1,5 @@
 fail_fast: true
+exclude: sapi/thirdparty
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0

@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with NEST GPU.  If not, see <http://www.gnu.org/licenses/>.
 
-set ( nestgpu_sources
+set ( nestgpu_kernel_sources
 input_spike_buffer.h
 connect.h
 conn12b.h
@@ -71,7 +71,6 @@ izhikevich_psc_exp_5s.h
 izhikevich_psc_exp.h
 multimeter.h
 nested_loop.h
-nestgpu_C.h
 neuron_models.h
 ngpu_exception.h
 node_group.h
@@ -79,7 +78,6 @@ parrot_neuron.h
 poiss_gen.h
 poiss_gen_variables.h
 prefix_scan.h
-propagate_error.h
 propagator_stability.h
 random.h
 rev_spike.h
@@ -159,45 +157,29 @@ test_syn_model.cu
 user_m1.cu
 user_m2.cu
 utilities.cu
-nestgpu_C.cpp
-    )
-
-# MPI inclusions are handled by context switching directly in source code
-# NEEDS REFACTOR TO REENABLE CMAKE LEVEL SWITCHING
-#if ( HAVE_MPI )
-#  set( nestgpu_sources
-#    ${nestgpu_sources}
-#    connect_mpi.h connect_mpi.cu
-#  )
-#endif ()
-
-add_library( nestgpukernel ${nestgpu_sources} )
-set_target_properties( nestgpukernel
-    PROPERTIES
-    VERSION ${NEST_GPU_VERSION}
-    SOVERSION 1
-    )
-
-target_link_libraries( nestgpukernel
-    ${LTDL_LIBRARIES}
-    ${MPI_CXX_LIBRARIES}
-    )
-
-target_include_directories( nestgpukernel PRIVATE
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_BINARY_DIR}/libnestutil
-    )
-
-set_target_properties(nestgpukernel PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-set_target_properties(nestgpukernel PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-
-install( TARGETS nestgpukernel
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/nestgpu
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/nestgpu
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-FILTER_HEADERS("${nestgpu_sources}" install_headers )
+add_library( nestgpu_kernel STATIC ${nestgpu_kernel_sources} )
+set_target_properties( nestgpu_kernel PROPERTIES
+    CUDA_SEPARABLE_COMPILATION ON
+    CUDA_RESOLVE_DEVICE_SYMBOLS ON
+    POSITION_INDEPENDENT_CODE ON
+)
+
+target_link_libraries( nestgpu_kernel PUBLIC
+    ${LTDL_LIBRARIES}
+    m
+    cuda
+    CUDA::cudart
+    CUDA::curand
+    MPI::MPI_CXX
+)
+
+target_include_directories( nestgpu_kernel PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/libnestutil
+)
+
+FILTER_HEADERS( "${nestgpu_kernel_sources}" install_headers )
 install( FILES ${install_headers}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/nestgpu )

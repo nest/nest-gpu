@@ -20,14 +20,14 @@
 # Determine NEST GPU version based on git branch
 #
 # This module defines
-#  NEST_GPU_VERSION_BRANCH, the current git branch (nest-3.0)
+#  NEST_GPU_VERSION_BRANCH, the current git branch (nestgpu-2.0)
 #  NEST_GPU_VERSION_SUFFIX, set using -Dwith-version-suffix=<suffix>. ("-pre")
-#  NEST_GPU_VERSION, the numeric version number plus the suffix  ("3.0-pre")
+#  NEST_GPU_VERSION, the numeric version number plus the suffix  ("2.0-pre")
 #  NEST_GPU_VERSION_GITHASH, the current git revision hash (empty for tarballs) ("dd47c39ce")
-#  NEST_GPU_VERSION_STRING, the full NEST version string ("nest-3.0-pre@dd47c39ce")
+#  NEST_GPU_VERSION_STRING, the full NEST version string ("nestgpu-2.0-pre@dd47c39ce")
 #
 # In release branches, the string "UNKNOWN" below has to be replaced
-# with the proper version (e.g. "nest-2.20") in order to get the
+# with the proper version (e.g. "nestgpu-2.20") in order to get the
 # correct version number if building from tarballs.
 
 

@@ -23,9 +23,9 @@
 #ifndef NESTGPUC_H
 #define NESTGPUC_H
 
-#ifdef __cplusplus
+#include "api_containers.h"
+
 extern "C" {
-#endif
 
 char *NESTGPU_GetErrorMessage();
 
@@ -418,8 +418,62 @@ int NESTGPU_ConnectDistributedFixedIndegreeGroupGroup(
     uint *n_source_arr, int *target_host_arr, int n_target_host,
     uint **target_arr, uint *n_target_arr, int indegree, int i_host_group);
 
-#ifdef __cplusplus
+sapi::ParameterNamesPairArray *get_parameter_names();
+
+bool free_gc();
+
+bool free_view_gc();
+
+sapi::OptionalIndex get_rank();
+
+sapi::OptionalIndex get_num_processes();
+
+sapi::OptionalIndex get_num_threads();
+
+bool set_num_threads(sapi::vp_t num_threads);
+
+sapi::OptionalIndex get_rng_seed();
+
+bool set_rng_seed(sapi::rng_seed_t seed);
+
+sapi::CharArray *get_rng_type();
+
+bool set_rng_type(const sapi::CharArray &rng_type);
+
+bool generate_tile_grid(const sapi::NestedTileIdxArray &rank_tiles_ownership,
+                        const sapi::GPStruct &grid_parameters);
+
+sapi::PairT<bool, sapi::SpatialNodeSequence> generate_nodes_in_grid(
+    const sapi::CharArray &model_name, sapi::largenodeidx_t num_nodes,
+    const sapi::TileIdxArray &target_tiles, int num_ports,
+    uint8_t grid_distribution_mode, uint8_t tile_distribution_mode);
+
+sapi::TripletT<bool, sapi::SpatialNodeSequence, sapi::PositionViewStruct *>
+insert_positions_in_grid(const sapi::CharArray &model_name,
+                         const sapi::PositionViewStruct &positions,
+                         int num_ports);
+
+sapi::OptionalIndex
+compute_spatial_connections(std::size_t source_index, std::size_t target_index,
+                            const sapi::MPStruct &mask_parameters,
+                            const sapi::CPStruct &connection_parameters);
+
+sapi::NodesViewStruct *
+view_node_positions(sapi::OptionalIndex index,
+                    const sapi::MPStruct &mask_parameters);
+
+sapi::RemoteConnectionViewPair *view_spatial_connections(std::size_t index);
+
+sapi::ConnectionCountsViewStruct *view_connection_counts(std::size_t index);
+
+sapi::GridViewStruct *view_grid_vertices();
+
+sapi::TiledNodeSequencePairArray *
+get_distributed_node_sequences(std::size_t index);
+
+sapi::RecordedTimesArrayPair *get_timer_data();
+
+bool clear_spatial_connections(std::size_t index);
 }
-#endif
 
 #endif
