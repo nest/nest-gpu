@@ -4,6 +4,7 @@ import ctypes
 import nestgpu as ngpu
 from random import randrange
 import numpy as np
+from mpi4py import MPI
 
 
 ngpu.ConnectMpiInit()
@@ -55,6 +56,12 @@ for ish in range(3):
 ngpu.Simulate(1)
 conn_id = ngpu.GetConnections()
 conn_status_dict = ngpu.GetStatus(conn_id)
-for i in range(len(conn_status_dict)):
-    print("CHECK", mpi_id, conn_status_dict[i])
+# Gather the connections of all ranks on rank 0, which prints them ordered
+# by rank, source and target ids, so that the output is deterministic
+all_conn = MPI.COMM_WORLD.gather(conn_status_dict, root=0)
+if mpi_id == 0:
+    for rank, rank_conn in enumerate(all_conn):
+        for c in sorted(rank_conn, key=lambda c: (c["source"], c["target"])):
+            print("CHECK", rank, c)
+    sys.stdout.flush()
 ngpu.MpiFinalize()
